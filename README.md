@@ -1,3 +1,3 @@
-# Welcome to the Bubbling User Action Library
+# Welcome to the Reactive Dialog Logic Library
 
-Bua is a reactive library for interactive real-time systems, and southern German slang for "little boy".
+Dialogic is a reactive library for interactive real-time dialog systems.
