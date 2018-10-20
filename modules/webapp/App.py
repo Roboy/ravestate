@@ -16,11 +16,10 @@ def get_data():
         for prop in state.triggers:
             set['source'] = prop[0]
             set['target'] = state.name
-            set['type'] = 'licencing'
+            set['type'] = 'licensing'
         sets.append(set)
     return jsonify(sets)
 
 app.debug=True
 app.run("0.0.0.0", 5000)
-url_for('static', filename='w3.css')
-url_for('static/js', filename='bubblechart.js')
+url_for('static', filename='graph.css')
