@@ -1,0 +1,128 @@
+{
+  "INTRO": {
+    "Q": [
+      "Now you will undergo the naturalization process for the republic of Uzupis"
+    ],
+    "A": {
+      "SUCCESS": [
+        "Let's get going"
+      ],
+      "FAILURE": [
+        "Not gonna ask you twice, you know"
+      ]
+    }
+  },
+  "NAME": {
+    "Q": [
+      "How can I call you?",
+      "What is your name?",
+      "Who are you?"
+    ],
+    "A": {
+      "SUCCESS": [
+        "Nice to meet you %s"
+      ],
+      "FAILURE": [
+        "My ears are failing me today."
+      ]
+    }
+  },
+  "APPLES": {
+    "Q": [
+      "Ok, great! This one is an important question! You know, an apple a day... Uzupis is the apple republic and it cares for the wellbeing of its citizens - so do you like apples?",
+      "An attitude towards apples plays a crucial role in our community. So the question is, do you fancy apples?",
+      "As you might know apples are extremely good for you. And on behalf of Uzupiz, a republic that cares about its citizens, I gotta ask you: do you like apples? "
+    ],
+    "A": {
+      "SUCCESS": [
+        "Very good life attitude, I must say",
+        "Alright, we are on a good track"
+      ],
+      "FAILURE": [
+        "Hm, well, what should I say",
+        "Are you sure about your choices though?",
+        "No comments here, really our of words..."
+      ]
+    }
+  },
+  "ANIMAL": {
+    "Q": [
+      "What is your favorite animal?",
+      "What kind of animal do you like the most?",
+      "Are you more of a cat or a dog person?",
+      "Do you have a favorite animal? What is it?"
+    ],
+    "A": {
+      "SUCCESS": [
+        "You are just like me, I love %s too"
+      ],
+      "FAILURE": [
+        "Don't know what that is, but great for you!"
+      ]
+    }
+  },
+  "FRUIT": {
+    "Q": [
+      "What is your favorite fruit?",
+      "What kind of fruit do you like the most?",
+      "Do you have a favorite fruit? What is it?"
+    ],
+    "A": {
+      "SUCCESS": [
+        "You are just like me, I love %s too"
+      ],
+      "FAILURE": [
+        "Don't know what that is, but great for you!"
+      ]
+    }
+  },
+  "WORD": {
+    "Q": [
+      "What is your favorite word?",
+      "What word do you think is the best word?",
+      "From all the words you know, and I hope it's a lot. Which one would you pick as your favorite?"
+    ],
+    "A": {
+      "SUCCESS": [
+        "I should use %s more often",
+        "Truly beautiful word!",
+        "%s is a good choice! Very nice"
+      ],
+      "FAILURE": [
+        "Oh, I have never heard that before. Gotta tell my developers to extend my lexicon"
+      ]
+    }
+  },
+  "COLOR": {
+    "Q": [
+      "In Uzupis we like to know our citizens! And ... you know ... we're an artist Republic. So what's your favorite Color?",
+      "You should know that we value arts. Therefore, I gotta ask what color do you like the most?"
+    ],
+    "A": {
+      "SUCCESS": [
+        "Oh, I find %s a very pleasing color!",
+        "Alright, that was a very important piece of information!"
+      ],
+      "FAILURE": [
+        "Oh, what a pity. I do not that color yet. But you know, everyday you live, every day you learn"
+      ]
+    }
+  },
+  "PLANT": {
+    "Q": [
+      "What about your favourite plant?",
+      "Another crucial piece of information. What is your most beloved plant?",
+      "Which plant you like the most?"
+    ],
+    "A": {
+      "SUCCESS": [
+        "%s must be a very beautiful plant.",
+        "Wow, I wish I could touch %s",
+        "Nice, one day, I will see it"
+      ],
+      "FAILURE": [
+        "Oh well, I think I did not get that right"
+      ]
+    }
+  }
+}
