@@ -3,6 +3,8 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/modules")
 
+global sess
+
 from dialogic.session import Session
 from dialogic.state import state
 from dialogic import registry
@@ -16,7 +18,6 @@ def hello_world(sess):
 @state(read="rawio:in", write="rawio:out")
 def generic_answer(sess):
     sess["rawio:out"] = "Your input contains {} characters!".format(len(sess["rawio:in"]))
-
 
 registry.register(name="hi", states=(hello_world, generic_answer))
 
