@@ -61,6 +61,7 @@ class SessionWrapper:
     """
     def __init__(self, sess: isession.ISession, st: state.State):
         self.st = st
+        self.sess = sess
         self.properties = {
             propname : PropertyWrapper(
                 prop=sess[propname], sess=sess,
@@ -80,6 +81,9 @@ class SessionWrapper:
             return self.properties[key].get()
         else:
             print("State `{}` attempted to access property `{}` without permission!".format(self.st.name, key))
+
+    def shutdown(self):
+        self.sess.shutdown()
 
 
 if __name__ == '__main__':

@@ -17,6 +17,12 @@ class ISession:
     def add_prop(self, *, mod: module.Module, prop: property.PropertyBase):
         pass
 
+    def shutting_down(self):
+        pass
+
+    def shutdown(self):
+        pass
+
     def __setitem__(self, key, value):
         pass
 

@@ -9,6 +9,8 @@ from dialogic import activation
 from dialogic import module
 from dialogic import state
 from dialogic import property
+from dialogic import registry
+
 
 class Session(isession.ISession):
 
@@ -39,14 +41,19 @@ class Session(isession.ISession):
         self.run_task.start()
         self.emit(":startup")
 
+    def shutting_down(self):
+        return self.shutdown_flag
+
     def shutdown(self):
         self.shutdown_flag = True
         self.emit(":shutdown")
         self.run_task.join()
 
     def add_module(self, module_name: str):
-        # importlib.import_module(module_name)
-        pass
+        if registry.has_module(module_name):
+            self._module_registration_callback(registry.get_module(module_name))
+            return
+        registry.import_module(module_name=module_name, callback=self._module_registration_callback)
 
     def add_state(self, *, mod: module.Module, st: state.State):
         if st in self.states:
@@ -97,6 +104,12 @@ class Session(isession.ISession):
 
     def __getitem__(self, key):
         return self.properties[key]
+
+    def _module_registration_callback(self, mod: module.Module):
+        for st in mod.states:
+            self.add_state(mod=mod, st=st)
+        for prop in mod.props:
+            self.add_prop(mod=mod, prop=prop)
 
     def _run_private(self):
         while not self.shutdown_flag:
