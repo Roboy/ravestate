@@ -77,7 +77,7 @@ class SessionWrapper:
 
     def __getitem__(self, key):
         if key in self.properties:
-            return self.properties[key]
+            return self.properties[key].get()
         else:
             print("State `{}` attempted to access property `{}` without permission!".format(self.st.name, key))
 

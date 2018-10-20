@@ -83,14 +83,14 @@ class Session(isession.ISession):
             return
 
         # prepend module name to property name
-        prop.name = "{}:{}".format(mod.name, prop.name)
+        prop.module_name = mod.name
 
         # register property
-        self.properties[prop.name] = property
+        self.properties[prop.fullname()] = prop
 
         # register all of the property's signals
         for signal in self.default_property_signals:
-            self.states_per_signal[prop.name+signal] = []
+            self.states_per_signal[prop.fullname()+signal] = []
 
     def __setitem__(self, key, value):
         pass
