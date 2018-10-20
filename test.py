@@ -3,6 +3,8 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/modules")
 
+global sess
+
 from dialogic.session import Session
 from dialogic.state import state
 from dialogic.module import Module
@@ -16,7 +18,6 @@ def hello_world(sess):
 @state(read="hi:coolerName")
 def hello_world2(sess):
     print(sess["hi:coolerName"])
-
 
 
 sess = Session()
