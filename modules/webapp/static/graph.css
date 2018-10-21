@@ -4,14 +4,6 @@
   stroke-width: 1.5px;
 }
 
-#licensing {
-  fill: green;
-}
-
-.link.licensing {
-  stroke: green;
-}
-
 .link.notifies {
   stroke-dasharray: 0,2 1;
 }
@@ -35,7 +27,7 @@ circle {
 }
 
 .prop {
-fill: blue;
+fill: white;
 stroke: #333;
 stroke-width: 1.5px;
 }

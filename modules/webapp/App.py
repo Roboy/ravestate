@@ -18,6 +18,12 @@ def get_data():
             set['target'] = state.name
             set['type'] = 'notifies'
             sets.append(set)
+        for target in state.write_props:
+            set = {}
+            set['source'] = state.name
+            set['target'] = target
+            set['type'] = 'changes'
+            sets.append(set)
     for prop in sess.properties.keys():
         for type in sess.default_property_signals:
             set = {}
@@ -25,7 +31,20 @@ def get_data():
             set['target'] = "{}{}".format(prop, type)
             set['type'] = 'creates'
             sets.append(set)
-    return jsonify(sets)
+
+    cleanSet = []
+    for set in sets: # Don't display unused signals
+        if set['type'] == 'creates':
+            used = False
+            for compare in sets:
+                if set['target'] == compare['source']:
+                    used = True
+                    break
+            if used:
+                cleanSet.append(set)
+        else:
+            cleanSet.append(set)
+    return jsonify(cleanSet)
 
 app.debug=True
 app.run("0.0.0.0", 5000)
