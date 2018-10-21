@@ -56,7 +56,7 @@ class PropertyBase:
         if not self.allow_write:
             print("Unauthorized write access in property {}!".format(self.name))
             return False
-        if self.value is not value:
+        if self.value != value:
             self.value = value
             return True
         else:

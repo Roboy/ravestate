@@ -19,9 +19,17 @@ def hello_world(sess):
 def generic_answer(sess):
     sess["rawio:out"] = "Your input contains {} characters!".format(len(sess["rawio:in"]))
 
-registry.register(name="hi", states=(hello_world, generic_answer))
+
+@state(read="facerec:face")
+def face_recognized(sess):
+    print("I see you, {}!".format(sess["facerec:face"]))
+
+
+registry.register(name="hi", states=(hello_world, generic_answer, face_recognized))
 
 sess = Session()
-sess.add_module("dialogic_consoleio")
+sess.add_module("dialogic_rawio")
+#sess.add_module("dialogic_consoleio")
+sess.add_module("dialogic_facerec")
 sess.add_module("hi")
 sess.run()

@@ -34,6 +34,7 @@ class State:
         self.read_props = read
         self.triggers = triggers
         self.action = action
+        self.module_name = ""
 
     def __call__(self, session):
         return self.action(session)
