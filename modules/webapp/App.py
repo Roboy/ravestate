@@ -12,15 +12,40 @@ def index():
 def get_data():
     sets = []
     for state in sess.states:
-        set = {}
-        for prop in state.triggers:
-            set['source'] = prop[0]
+        for trigger in state.triggers:
+            set = {}
+            set['source'] = trigger[0]
             set['target'] = state.name
-            set['type'] = 'licencing'
-        sets.append(set)
-    return jsonify(sets)
+            set['type'] = 'notifies'
+            sets.append(set)
+        for target in state.write_props:
+            set = {}
+            set['source'] = state.name
+            set['target'] = target
+            set['type'] = 'changes'
+            sets.append(set)
+    for prop in sess.properties.keys():
+        for type in sess.default_property_signals:
+            set = {}
+            set['source'] = prop
+            set['target'] = "{}{}".format(prop, type)
+            set['type'] = 'creates'
+            sets.append(set)
+
+    cleanSet = []
+    for set in sets: # Don't display unused signals
+        if set['type'] == 'creates':
+            used = False
+            for compare in sets:
+                if set['target'] == compare['source']:
+                    used = True
+                    break
+            if used:
+                cleanSet.append(set)
+        else:
+            cleanSet.append(set)
+    return jsonify(cleanSet)
 
 app.debug=True
 app.run("0.0.0.0", 5000)
-url_for('static', filename='w3.css')
-url_for('static/js', filename='bubblechart.js')
+url_for('static', filename='graph.css')

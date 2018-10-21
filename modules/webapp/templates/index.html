@@ -3,8 +3,7 @@
 <head>
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 <link rel="stylesheet" href="static/graph.css">
-<script src="https://d3js.org/d3.v5.min.js"></script>
-<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="https://d3js.org/d3.v3.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 </head>
 <body>
@@ -15,28 +14,38 @@ $.getJSON("/data", function(data)
 {
 
 //var links = [{source: "propery1", target: "state1", type: "licensing"},]
-var links = data
+var links = data;
 var nodes = {};
+var signals = {};
+var states = {};
+var properties = {}
 
 // Compute the distinct nodes from the links.
 links.forEach(function(link) {
-link.source = nodes[link.source] || (nodes[link.source] = {
-name: link.source
-});
-link.target = nodes[link.target] || (nodes[link.target] = {
-name: link.target
-});
+  if(link.type == 'notifies') { // Relationship signal -> state
+    link.source = signals[link.source] || (signals[link.source] = {name: link.source});
+    link.target = states[link.target] || (states[link.target] = {name: link.target});
+  } else if (link.type == 'creates') { // Relationship property -> signal
+    link.source = properties[link.source] || (properties[link.source] = {name: link.source});
+    link.target = signals[link.target] || (signals[link.target] = {name: link.target});
+  } else if (link.type == 'changes') {
+    link.source = states[link.source] || (states[link.source] = {name: link.source});
+    link.target = properties[link.target] || (properties[link.target] = {name: link.target});
+  }
 });
 
-var width = 960,
-height = 500;
-
+nodes = Object.assign({}, signals, states, properties);
+console.log(nodes)
+console.log(links)
+var width = window.innerWidth,
+height = window.innerHeight;
 var force = d3.layout.force()
     .nodes(d3.values(nodes))
     .links(links)
     .size([width, height])
-    .linkDistance(60)
-    .charge(-300)
+    .linkDistance(300)
+    .charge(-100)
+    .gravity(0.005)
     .on("tick", tick)
     .start();
 
@@ -46,16 +55,14 @@ var svg = d3.select("body").append("svg")
 
 // Per-type markers, as they don't inherit styles.
 svg.append("defs").selectAll("marker")
-    .data(["suit", "licensing", "resolved"])
+    .data(["notifies", "creates", "changes"])
     .enter().append("marker")
-    .attr("id", function(d) {
-return d;
-})
+    .attr("id", function(d) { return d; })
     .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 15)
-    .attr("refY", -1.5)
-    .attr("markerWidth", 6)
-    .attr("markerHeight", 6)
+    .attr("refX", 42) // Increase with larger circle radius
+    .attr("refY", -4)  // Decrease with increasing radius to counter arc
+    .attr("markerWidth", 10)
+    .attr("markerHeight", 10)
     .attr("orient", "auto")
     .append("path")
     .attr("d", "M0,-5L10,0L0,5");
@@ -63,44 +70,40 @@ return d;
 var path = svg.append("g").selectAll("path")
     .data(force.links())
     .enter().append("path")
-    .attr("class", function(d) {
-return "link " + d.type;
-})
-    .attr("marker-end", function(d) {
-return "url(#" + d.type + ")";
-});
+    .attr("class", function(d) { return "link " + d.type; })
+    .attr("marker-end", function(d) { return "url(#" + d.type + ")"; });
 
 var circle = svg.append("g").selectAll("circle")
     .data(force.nodes())
     .enter().append("circle")
-    .attr("r", 10)
+    .attr("r", 50)
+    .attr("class", function(d) {return (d.name in signals) ? "signal" :
+    ((d.name in states) ? "state" : "prop") })
     .call(force.drag);
 
 var text = svg.append("g").selectAll("text")
     .data(force.nodes())
     .enter().append("text")
-    .attr("x", 8)
-    .attr("y", ".31em")
-    .text(function(d) {
-return d.name;
-});
+    .attr("x", -45)
+    .attr("y", 5)
+    .text(function(d) { return d.name; });
 
 // Use elliptical arc path segments to doubly-encode directionality.
 function tick() {
-path.attr("d", linkArc);
-circle.attr("transform", transform);
-text.attr("transform", transform);
+  path.attr("d", linkArc);
+  circle.attr("transform", transform);
+  text.attr("transform", transform);
 }
 
 function linkArc(d) {
-var dx = d.target.x - d.source.x,
-dy = d.target.y - d.source.y,
-dr = Math.sqrt(dx * dx + dy * dy);
-return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+  var dx = d.target.x - d.source.x,
+      dy = d.target.y - d.source.y,
+      dr = Math.sqrt(dx * dx + dy * dy);
+  return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
 }
 
 function transform(d) {
-return "translate(" + d.x + "," + d.y + ")";
+  return "translate(" + d.x + "," + d.y + ")";
 }
 
 })
