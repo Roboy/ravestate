@@ -26,12 +26,15 @@ def rcl_spin(sess):
     rclpy.spin(node)
 
 
+
 @state(triggers=((":startup",),("facerec:value-handover",)), signal="value-handover")
 def wait_for_recognition(sess):
     recognition_queue_size.acquire()
     with recognition_queue_lock:
         msg = recognition_queue.pop(0)
 
+    # Use a small handover state to actually write the property,
+    # such that facerec:face is not blocked by wait_for_recognition.
     @state(triggers="facerec:value-handover", write="facerec:face")
     def face_value_handover(sess):
         sess["facerec:face"] = msg
