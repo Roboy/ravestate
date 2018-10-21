@@ -1,17 +1,19 @@
 from flask import Flask, url_for, render_template, send_from_directory
-from test import sess
 from flask import jsonify
 
 app = Flask(__name__)
+session = None
 
 @app.route('/')
 def index():
+    global session
     return render_template('index.html')
 
 @app.route('/data')
 def get_data():
+    global session
     sets = []
-    for state in sess.states:
+    for state in session.states:
         for trigger in state.triggers:
             set = {}
             set['source'] = trigger[0]
@@ -24,8 +26,8 @@ def get_data():
             set['target'] = target
             set['type'] = 'changes'
             sets.append(set)
-    for prop in sess.properties.keys():
-        for type in sess.default_property_signals:
+    for prop in session.properties.keys():
+        for type in session.default_property_signals:
             set = {}
             set['source'] = prop
             set['target'] = "{}{}".format(prop, type)
@@ -46,6 +48,10 @@ def get_data():
             cleanSet.append(set)
     return jsonify(cleanSet)
 
-app.debug=True
-app.run("0.0.0.0", 5000)
-url_for('static', filename='graph.css')
+
+def advertise(*, sess, ip="0.0.0.0", port=5000):
+    global session
+    session = sess
+    app.debug=True
+    app.run(ip, port)
+    url_for('static', filename='graph.css')
