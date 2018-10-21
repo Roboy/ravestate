@@ -12,12 +12,19 @@ def index():
 def get_data():
     sets = []
     for state in sess.states:
-        set = {}
-        for prop in state.triggers:
-            set['source'] = prop[0]
+        for trigger in state.triggers:
+            set = {}
+            set['source'] = trigger[0]
             set['target'] = state.name
             set['type'] = 'notifies'
-        sets.append(set)
+            sets.append(set)
+    for prop in sess.properties.keys():
+        for type in sess.default_property_signals:
+            set = {}
+            set['source'] = prop
+            set['target'] = "{}{}".format(prop, type)
+            set['type'] = 'creates'
+            sets.append(set)
     return jsonify(sets)
 
 app.debug=True

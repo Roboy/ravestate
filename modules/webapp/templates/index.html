@@ -18,14 +18,21 @@ var links = data;
 var nodes = {};
 var signals = {};
 var states = {};
+var properties = {}
 
 // Compute the distinct nodes from the links.
 links.forEach(function(link) {
-  link.source = signals[link.source] || (signals[link.source] = {name: link.source});
-  link.target = states[link.target] || (states[link.target] = {name: link.target});
+  if(link.type == 'notifies') { // Relationship signal -> state
+    link.source = signals[link.source] || (signals[link.source] = {name: link.source});
+    link.target = states[link.target] || (states[link.target] = {name: link.target});
+  } else if (link.type == 'creates') { // Relationship property -> signal
+    link.source = properties[link.source] || (properties[link.source] = {name: link.source});
+    link.target = signals[link.target] || (signals[link.target] = {name: link.target});
+  }
 });
 
-nodes = Object.assign({}, signals, states);
+console.log(properties)
+nodes = Object.assign({}, signals, states, properties);
 
 var width = window.innerWidth,
 height = window.innerHeight;
@@ -36,7 +43,7 @@ var force = d3.layout.force()
     .size([width, height])
     .linkDistance(300)
     .charge(-100)
-    .gravity(0.01)
+    .gravity(0.005)
     .on("tick", tick)
     .start();
 
@@ -68,7 +75,8 @@ var circle = svg.append("g").selectAll("circle")
     .data(force.nodes())
     .enter().append("circle")
     .attr("r", 50)
-    .attr("class", function(d) {return (d.name in signals) ? "signal" : "state" })
+    .attr("class", function(d) {return (d.name in signals) ? "signal" :
+    ((d.name in states) ? "state" : "prop") })
     .call(force.drag);
 
 var text = svg.append("g").selectAll("text")
