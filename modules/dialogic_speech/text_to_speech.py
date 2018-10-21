@@ -18,7 +18,7 @@ class Text2Speech:
     def synthesize(self, text):
         try:
             # Invoke a Text to Speech method
-            with open('hello_world.wav', 'wb') as audio_file:
+            with open('audio.wav', 'wb') as audio_file:
                 audio_file.write(
                     self.text_to_speech.synthesize(
                         text,
