@@ -15,19 +15,19 @@ circle {
 }
 
 .signal {
-  fill: red;
+  fill: #ffb3b3;
   stroke: #333;
   stroke-width: 1.5px;
 }
 
 .state {
-  fill: purple;
+  fill: #bbff99;
   stroke: #333;
   stroke-width: 1.5px;
 }
 
 .prop {
-fill: white;
+fill: #b3ecff;
 stroke: #333;
 stroke-width: 1.5px;
 }
