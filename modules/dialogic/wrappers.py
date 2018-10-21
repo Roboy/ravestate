@@ -4,6 +4,8 @@ from dialogic import property
 from dialogic import state
 from dialogic import isession
 
+from dialogic import registry
+
 
 class PropertyWrapper:
     """
@@ -59,6 +61,11 @@ class SessionWrapper:
     Encapsulates a session towards a state, only offering properties with permissions
     as declared by the state beforehand.
     """
+
+    DoNothing = 0
+    EmitSignal = 1
+    DeleteMe = 2
+
     def __init__(self, sess: isession.ISession, st: state.State):
         self.st = st
         self.sess = sess
@@ -81,6 +88,10 @@ class SessionWrapper:
             return self.properties[key].get()
         else:
             print("State `{}` attempted to access property `{}` without permission!".format(self.st.name, key))
+
+    def add_state(self, st: state.State):
+        mod = registry.get_module(self.st.module_name)
+        self.sess.add_state(mod=mod, st=st)
 
     def shutdown(self):
         self.sess.shutdown()

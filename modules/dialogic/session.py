@@ -23,10 +23,12 @@ class Session(isession.ISession):
         self.signal_queue_counter = Semaphore(0)
         self.run_task = None
         self.shutdown_flag = False
-        self.states = set()
         self.properties = {}
         self.activation_candidates = []
-        self.states_per_signal = {signal_name: [] for signal_name in self.default_signals}
+
+        self.states = set()
+        self.states_per_signal = {signal_name: set() for signal_name in self.default_signals}
+        self.states_lock = Lock()
 
     def emit(self, signal_name: str):
         with self.signal_queue_lock:
@@ -63,16 +65,7 @@ class Session(isession.ISession):
         # annotate the state's signal name with it's module name
         if len(st.signal) > 0:
             st.signal = "{}:{}".format(mod.name, st.signal)
-
-        # make sure that all of the state's depended-upon signals exist
-        for clause in st.triggers:
-            for signal in clause:
-                if signal in self.states_per_signal:
-                    self.states_per_signal[signal].append(st)
-                else:
-                    print("Attempt to add state which depends on unknown signal `{}`!".format(signal))
-
-        # TODO: Duplicate state for every dnf clause
+        st.module_name = mod.name
 
         # make sure that all of the state's depended-upon properties exist
         for prop in st.read_props+st.write_props:
@@ -80,24 +73,42 @@ class Session(isession.ISession):
                 print("Attempt to add state which depends on unknown property `{}`!".format(prop))
 
         # register the state's signal
-        if st.signal:
-            self.states_per_signal[st.signal] = st
-        self.states.add(st)
+        with self.states_lock:
+            if st.signal:
+                self.states_per_signal[st.signal] = set()
+            # make sure that all of the state's depended-upon signals exist
+            for clause in st.triggers:
+                for signal in clause:
+                    if signal in self.states_per_signal:
+                        self.states_per_signal[signal].add(st)
+                    else:
+                        print("Attempt to add state which depends on unknown signal `{}`!".format(signal))
+            self.states.add(st)
+
+    def rm_state(self, *, st: state.State):
+        if st not in self.states:
+            print("Attempt to remove unknown state `{}`!".format(st.name))
+            return
+        with self.states_lock:
+            if st.signal:
+                self.states_per_signal.pop(st.signal)
+            for clause in st.triggers:
+                for signal in clause:
+                    self.states_per_signal[signal].remove(st)
+            self.states.remove(st)
 
     def add_prop(self, *, mod: module.Module, prop: property.PropertyBase):
         if prop.name in self.properties.values():
             print("Attempt to add property `{}` twice!".format(prop.name))
             return
-
         # prepend module name to property name
         prop.module_name = mod.name
-
         # register property
         self.properties[prop.fullname()] = prop
-
         # register all of the property's signals
-        for signal in self.default_property_signals:
-            self.states_per_signal[prop.fullname()+signal] = []
+        with self.states_lock:
+            for signal in self.default_property_signals:
+                self.states_per_signal[prop.fullname()+signal] = set()
 
     def __setitem__(self, key, value):
         pass
@@ -119,8 +130,9 @@ class Session(isession.ISession):
                 signal_name = self.signal_queue.pop(0)
 
             # collect states which depend on the new signal, and create state activation objects for them
-            self.activation_candidates += [
-                activation.StateActivation(state, self) for state in self.states_per_signal[signal_name]]
+            with self.states_lock:
+                self.activation_candidates += [
+                    activation.StateActivation(state, self) for state in self.states_per_signal[signal_name]]
 
             old_activation_candidates = self.activation_candidates
             self.activation_candidates = []

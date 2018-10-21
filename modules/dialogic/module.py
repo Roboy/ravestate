@@ -8,6 +8,10 @@ class Module:
     """
 
     def __init__(self, *, name: str, props=(), states=(), config={}):
+        if not isinstance(props, tuple):
+            props = (props,)
+        if not isinstance(states, tuple):
+            props = (states,)
         self.name = name
         self.props = props
         self.states = states
