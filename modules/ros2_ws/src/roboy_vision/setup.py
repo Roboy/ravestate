@@ -1,8 +1,8 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 
 DIR = os.path.dirname(os.path.realpath(__file__))
-package_name = 'face_recognition'
+package_name = 'roboy_vision'
 
 
 with open(os.path.join(DIR, 'README.rst')) as readme_file:
@@ -27,29 +27,23 @@ test_requirements = [
 setup(
     name=package_name,
     version='1.2.3',
-    packages=[
-        'face_recognition',
-    ],
-    py_modules=[
-        'examples/facerec_ros_webcam'],
-    description="Recognize faces from Python or from the command line",
+    packages=find_packages(),
+    description="Roboy complete vision pack",
     long_description=readme + '\n\n' + history,
-    author="Adam Geitgey",
-    author_email='ageitgey@gmail.com',
+    author="Emilia Lozinska",
+    author_email='em.lozinska@gmail.com',
     url='https://github.com/ageitgey/face_recognition',
-    package_dir={'face_recognition': 'face_recognition'},
     package_data={
         'face_recognition': ['models/*.dat']
     },
     entry_points={
         'console_scripts': [
-            'face_recognition=face_recognition.face_recognition_cli:main',
-            'face_detection=face_recognition.face_detection_cli:main',
-            'ros_face=examples.facerec_ros_webcam:main',
+            'face_recognition=face_recognition.examples.facerec_ros_webcam:main',
+            'webcam=webcam_publisher.webcam:main'
         ]
     },
     install_requires=requirements,
-    license="MIT license",
+    license="BSD",
     zip_safe=False,
     keywords='face_recognition',
     classifiers=[
