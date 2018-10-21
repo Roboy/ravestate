@@ -1,0 +1,2 @@
+stanford-corenlp
+watson-developer-cloud>=2.2.6
