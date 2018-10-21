@@ -14,14 +14,18 @@ $.getJSON("/data", function(data)
 {
 
 //var links = [{source: "propery1", target: "state1", type: "licensing"},]
-var links = data
+var links = data;
 var nodes = {};
+var signals = {};
+var states = {};
 
 // Compute the distinct nodes from the links.
 links.forEach(function(link) {
-  link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
-  link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
+  link.source = signals[link.source] || (signals[link.source] = {name: link.source});
+  link.target = states[link.target] || (states[link.target] = {name: link.target});
 });
+
+nodes = Object.assign({}, signals, states);
 
 var width = window.innerWidth,
 height = window.innerHeight;
@@ -42,12 +46,12 @@ var svg = d3.select("body").append("svg")
 
 // Per-type markers, as they don't inherit styles.
 svg.append("defs").selectAll("marker")
-    .data(["suit", "licensing", "resolved"])
+    .data(["notifies"])
     .enter().append("marker")
     .attr("id", function(d) { return d; })
     .attr("viewBox", "0 -5 10 10")
     .attr("refX", 42) // Increase with larger circle radius
-    .attr("refY", -3)  // Decrease with increasing radius to counter arc
+    .attr("refY", -4)  // Decrease with increasing radius to counter arc
     .attr("markerWidth", 10)
     .attr("markerHeight", 10)
     .attr("orient", "auto")
@@ -64,13 +68,14 @@ var circle = svg.append("g").selectAll("circle")
     .data(force.nodes())
     .enter().append("circle")
     .attr("r", 50)
+    .attr("class", function(d) {return (d.name in signals) ? "signal" : "state" })
     .call(force.drag);
 
 var text = svg.append("g").selectAll("text")
     .data(force.nodes())
     .enter().append("text")
-    .attr("x", -50)
-    .attr("y", -5)
+    .attr("x", -45)
+    .attr("y", 5)
     .text(function(d) { return d.name; });
 
 // Use elliptical arc path segments to doubly-encode directionality.

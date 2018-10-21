@@ -16,7 +16,7 @@ def get_data():
         for prop in state.triggers:
             set['source'] = prop[0]
             set['target'] = state.name
-            set['type'] = 'licensing'
+            set['type'] = 'notifies'
         sets.append(set)
     return jsonify(sets)
 
