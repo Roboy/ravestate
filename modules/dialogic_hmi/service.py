@@ -49,9 +49,9 @@ def get_data():
     return jsonify(cleanSet)
 
 
-def advertise(*, sess, ip="0.0.0.0", port=5000):
+def advertise(*, sess, ip="0.0.0.0", port=5000, debug=False):
     global session
     session = sess
-    app.debug=True
+    app.debug=debug
     app.run(ip, port)
     url_for('static', filename='graph.css')

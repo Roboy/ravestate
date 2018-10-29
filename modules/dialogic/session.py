@@ -24,7 +24,7 @@ class Session(isession.ISession):
         self.run_task = None
         self.shutdown_flag = False
         self.properties = {}
-        self.activation_candidates = []
+        self.activation_candidates = dict()
 
         self.states = set()
         self.states_per_signal = {signal_name: set() for signal_name in self.default_signals}
@@ -129,22 +129,29 @@ class Session(isession.ISession):
             with self.signal_queue_lock:
                 signal_name = self.signal_queue.pop(0)
 
-            # collect states which depend on the new signal, and create state activation objects for them
+            # collect states which depend on the new signal,
+            # and create state activation objects for them if necessary
+            print ("Received {} ...".format(signal_name))
             with self.states_lock:
-                self.activation_candidates += [
-                    activation.StateActivation(state, self) for state in self.states_per_signal[signal_name]]
+                for state in self.states_per_signal[signal_name]:
+                    if state.name not in self.activation_candidates:
+                        self.activation_candidates[state.name] = activation.StateActivation(state, self)
 
-            old_activation_candidates = self.activation_candidates
-            self.activation_candidates = []
+            print ("State activation candidates: \n"+"\n".join(
+                "- "+state_name for state_name in self.activation_candidates))
+
+            current_activation_candidates = self.activation_candidates
+            self.activation_candidates = dict()
             consider_for_immediate_activation = []
 
             # go through candidates and remove those which want to be removed,
             # remember those which want to be remembered, forget those which want to be forgotten
-            for act in old_activation_candidates:
-                act_state = act.notify_signal(signal_name)
-                if act_state == 0:
-                    self.activation_candidates.append(act)
-                elif act_state > 0:
+            for state_name, act in current_activation_candidates.items():
+                notify_return = act.notify_signal(signal_name)
+                print ("-> {} returned {} on notify_signal {}".format(act.state_to_activate.name, notify_return, signal_name))
+                if notify_return == 0:
+                    self.activation_candidates[state_name] = act
+                elif notify_return > 0:
                     consider_for_immediate_activation.append(act)
                 # ignore act_state -1: Means that state activation is considering itself canceled
 
@@ -157,12 +164,13 @@ class Session(isession.ISession):
             claimed_write_props = set()
             for act in consider_for_immediate_activation:
                 all_write_props_free = True
-                for wprop in act.state_to_activate.write_props:
-                    if wprop in claimed_write_props:
+                for write_prop in act.state_to_activate.write_props:
+                    if write_prop in claimed_write_props:
                         all_write_props_free = False
                         break
                 if all_write_props_free:
+                    print ("-> Activating {}".format(act.state_to_activate.name))
                     thread = act.run()
                     thread.start()
                 else:
-                    print("Dropping activation of `{}`.".format(act.state_to_activate.name))
+                    print ("-> Dropping activation of `{}`.".format(act.state_to_activate.name))

@@ -8,23 +8,22 @@ class Text2Speech:
     """
     text_to_speech = None
 
-    def __init__(self, username, password, url):
+    def __init__(self, **kwargs):
         self.text_to_speech = TextToSpeechV1(
-            username=username,
-            password=password,
-            url=url
+            username=kwargs["t2s_username"],
+            password=kwargs["t2s_password"],
+            url=kwargs["t2s_url"]
         )
 
-    def synthesize(self, text):
+    def synthesize(self, text, filename):
         try:
             # Invoke a Text to Speech method
-            with open('audio.wav', 'wb') as audio_file:
-                audio_file.write(
+            with open(filename, 'wb') as file:
+                file.write(
                     self.text_to_speech.synthesize(
                         text,
                         'audio/wav',
                         'en-US_AllisonVoice'
                     ).get_result().content)
-                return audio_file
         except WatsonApiException as ex:
             print("Method failed with status code " + str(ex.code) + ": " + ex.message)
