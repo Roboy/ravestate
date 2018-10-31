@@ -38,3 +38,42 @@ text {
   align-items: center;
   justify-content: space-around;
 }
+
+.svg-container {
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  vertical-align: middle;
+}
+
+.svg-content-responsive {
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+h1 {
+  margin: 0;
+  padding: 0;
+}
+
+.bars {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
