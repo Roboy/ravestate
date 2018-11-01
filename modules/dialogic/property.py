@@ -5,7 +5,7 @@ from threading import Lock
 
 class PropertyBase:
     """
-    Base class for session properties. Controls read/write/push/pop/delete permissions,
+    Base class for context properties. Controls read/write/push/pop/delete permissions,
     property name basic impls. for the property value, parent/child mechanism.
     """
 

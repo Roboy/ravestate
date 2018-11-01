@@ -35,8 +35,8 @@ def play_audio(waveform):
 
 # Say the utterance
 @state(read="rawio:out")
-def audio_talk(sess):
-    raw_out = sess["rawio:out"]
+def audio_talk(ctx):
+    raw_out = ctx["rawio:out"]
     t2s.synthesize(raw_out, "tts.wav")
     with wave.open("tts.wav", 'rb') as waveform:
         play_audio(waveform)

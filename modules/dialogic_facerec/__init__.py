@@ -11,11 +11,11 @@ rclpy.init()
 node = rclpy.create_node("vision_node")
 
 @state(triggers=":startup")
-def facerec_run(sess):
+def facerec_run(ctx):
 
-    @invocable(sess=sess, write="facerec:face")
-    def face_recognition_callback(sess, msg):
-        sess["facerec:face"] = msg
+    @invocable(ctx=ctx, write="facerec:face")
+    def face_recognition_callback(ctx, msg):
+        ctx["facerec:face"] = msg
 
     node.create_subscription(String, "/roboy/vision/recognized_faces", face_recognition_callback)
     rclpy.spin(node)

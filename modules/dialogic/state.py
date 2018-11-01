@@ -36,8 +36,8 @@ class State:
         self.action = action
         self.module_name = ""
 
-    def __call__(self, session):
-        return self.action(session)
+    def __call__(self, context):
+        return self.action(context)
 
 
 def state(*, signal: str="", write: tuple=(), read: tuple=(), triggers: tuple=()):
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     # test basic decorating annotation
     @state(signal="test-signal", read="myprop", write="myprop", triggers=":idle")
-    def test_state(session):
+    def test_state(context):
         return "Hello world!"
     assert(test_state.signal == "test-signal")
     assert(test_state.read_props == ("myprop",))
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     # test whether default signals are assigned
     @state(read="myprop")
-    def test_default_trigger_assignment(session):
+    def test_default_trigger_assignment(context):
         return "Hello universe!"
     assert(test_default_trigger_assignment.triggers == (("myprop:changed",),))
 

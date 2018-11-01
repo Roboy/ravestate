@@ -1,4 +1,4 @@
-# Interface for the session (needed to preempt cyclic dependencies)
+# Interface for the context (needed to preempt cyclic dependencies)
 
 
 from dialogic import property
@@ -6,7 +6,7 @@ from dialogic import module
 from dialogic import state
 
 
-class ISession:
+class IContext:
 
     def emit(self, signal_name: str):
         pass
