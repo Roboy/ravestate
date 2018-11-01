@@ -11,7 +11,7 @@ _registration_callback = None
 
 def import_module(*, module_name: str, callback):
     """
-    Called by session to import a particular dialogic python module.
+    Called by context to import a particular dialogic python module.
     :param module_name: The name of the python module to be imported (must be in pythonpath).
     :param callback: A callback which should be called when a module calls register() while it is being imported.
     """

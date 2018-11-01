@@ -2,16 +2,16 @@
 
 from dialogic import state
 from dialogic import wrappers
-from dialogic import isession
+from dialogic import icontext
 from threading import Thread
 
 
 class StateActivation:
 
-    def __init__(self, st: state.State, sess: isession.ISession):
+    def __init__(self, st: state.State, ctx: icontext.IContext):
         self.state_to_activate = st
         self.unfulfilled = [set(trigger_clause) for trigger_clause in st.triggers]
-        self.sess = sess
+        self.ctx = ctx
 
     def specificity(self):
         # TODO: Calculate specificity properly
@@ -29,9 +29,9 @@ class StateActivation:
         return Thread(target=self._run_private)
 
     def _run_private(self):
-        session_wrapper = wrappers.SessionWrapper(self.sess, self.state_to_activate)
+        session_wrapper = wrappers.ContextWrapper(self.ctx, self.state_to_activate)
         result = self.state_to_activate(session_wrapper)
         if result == session_wrapper.EmitSignal and self.state_to_activate.signal:
-            self.sess.emit(self.state_to_activate.signal)
+            self.ctx.emit(self.state_to_activate.signal)
         if result == session_wrapper.DeleteMe:
-            self.sess.rm_state(st=self.state_to_activate)
+            self.ctx.rm_state(st=self.state_to_activate)

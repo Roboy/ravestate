@@ -1,10 +1,10 @@
-# Dialogic session class
+# Dialogic context class
 
 
 import importlib
 from threading import Thread, Lock, Semaphore
 
-from dialogic import isession
+from dialogic import icontext
 from dialogic import activation
 from dialogic import module
 from dialogic import state
@@ -12,7 +12,7 @@ from dialogic import property
 from dialogic import registry
 
 
-class Session(isession.ISession):
+class Context(icontext.IContext):
 
     default_signals = (":startup", ":shutdown", ":idle")
     default_property_signals = (":changed", ":pushed", ":popped", ":deleted")
@@ -37,7 +37,7 @@ class Session(isession.ISession):
 
     def run(self):
         if self.run_task:
-            print("Attempt to start session twice!")
+            print("Attempt to start context twice!")
             return
         self.run_task = Thread(target=self._run_private)
         self.run_task.start()

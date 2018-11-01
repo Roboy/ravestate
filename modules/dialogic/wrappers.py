@@ -1,23 +1,23 @@
-# Dialogic wrapper classes which limit a state's session access
+# Dialogic wrapper classes which limit a state's context access
 
 from dialogic import property
 from dialogic import state
-from dialogic import isession
+from dialogic import icontext
 
 from dialogic import registry
 
 
 class PropertyWrapper:
     """
-    Encapsulates a property, and annotates it with additional r/w perms and a session.
-    The session is used to trigger the proper :changed, :pushed, :popped, :deleted
+    Encapsulates a property, and annotates it with additional r/w perms and a context.
+    The context is used to trigger the proper :changed, :pushed, :popped, :deleted
     signals when the property is accessed. The wrapper also takes care of locking the property
     when it is supposed to be written to, and freezing the property's value if it is supposed to
     be read from.
     """
-    def __init__(self, *, prop: property.PropertyBase, sess: isession.ISession, allow_read, allow_write):
+    def __init__(self, *, prop: property.PropertyBase, ctx: icontext.IContext, allow_read, allow_write):
         self.prop = prop
-        self.sess = sess
+        self.ctx = ctx
         self.allow_read = allow_read and prop.allow_read
         self.allow_write = allow_write and prop.allow_write
         self.frozen_value = None
@@ -53,12 +53,12 @@ class PropertyWrapper:
             print("Unauthorized write access in property-wrapper {}!".format(self.prop.name))
             return False
         if self.prop.write(value):
-            self.sess.emit("{}:changed".format(self.prop.fullname()))
+            self.ctx.emit("{}:changed".format(self.prop.fullname()))
 
 
-class SessionWrapper:
+class ContextWrapper:
     """
-    Encapsulates a session towards a state, only offering properties with permissions
+    Encapsulates a context towards a state, only offering properties with permissions
     as declared by the state beforehand.
     """
 
@@ -66,12 +66,12 @@ class SessionWrapper:
     EmitSignal = 1
     DeleteMe = 2
 
-    def __init__(self, sess: isession.ISession, st: state.State):
+    def __init__(self, ctx: icontext.IContext, st: state.State):
         self.st = st
-        self.sess = sess
+        self.ctx = ctx
         self.properties = {
             propname : PropertyWrapper(
-                prop=sess[propname], sess=sess,
+                prop=ctx[propname], ctx=ctx,
                 allow_read=propname in st.read_props,
                 allow_write=propname in st.write_props)
             for propname in st.write_props+st.read_props
@@ -91,10 +91,10 @@ class SessionWrapper:
 
     def add_state(self, st: state.State):
         mod = registry.get_module(self.st.module_name)
-        self.sess.add_state(mod=mod, st=st)
+        self.ctx.add_state(mod=mod, st=st)
 
     def shutdown(self):
-        self.sess.shutdown()
+        self.ctx.shutdown()
 
 
 if __name__ == '__main__':
@@ -105,13 +105,13 @@ if __name__ == '__main__':
     assert(prop.read() == "Kruder")
 
     # Make sure that writing to read-only wrapper is ineffective
-    wrap = PropertyWrapper(prop=prop, sess=isession.ISession(), allow_read=True, allow_write=False)
+    wrap = PropertyWrapper(prop=prop, ctx=icontext.IContext(), allow_read=True, allow_write=False)
     assert(not prop._lock.locked())
     wrap.set("Dorfmeister")
     assert(wrap.get() == "Kruder")
 
     # Make sure that writing to writable wrapper is effective
-    wrap = PropertyWrapper(prop=prop, sess=isession.ISession(), allow_read=True, allow_write=True)
+    wrap = PropertyWrapper(prop=prop, ctx=icontext.IContext(), allow_read=True, allow_write=True)
     assert(prop._lock.locked())
     wrap.set("Dorfmeister")
     assert(wrap.get() == "Dorfmeister")
