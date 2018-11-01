@@ -13,7 +13,7 @@ node = rclpy.create_node("vision_node")
 @state(triggers=":startup")
 def facerec_run(ctx):
 
-    @invocable(ctx=ctx, write="facerec:face")
+    @receptor(ctx=ctx, write="facerec:face")
     def face_recognition_callback(ctx, msg):
         ctx["facerec:face"] = msg
 

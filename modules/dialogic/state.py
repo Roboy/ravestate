@@ -3,12 +3,12 @@
 
 class State:
 
-    def __init__(self, *, signal, write, read, triggers, action):
+    def __init__(self, *, signal, write, read, triggers, action, is_receptor=False):
         assert(callable(action))
         self.name = "{}".format(action.__name__)
 
         # catch the insane case
-        if not len(read) and not len(triggers):
+        if not len(read) and not len(triggers) and not is_receptor:
             print(
                 "The state `{}` is not reading any properties, nor waiting for any triggers. ".format(self.name) +
                 "It will never be activated!")

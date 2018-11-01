@@ -12,6 +12,8 @@ class StateActivation:
         self.state_to_activate = st
         self.unfulfilled = [set(trigger_clause) for trigger_clause in st.triggers]
         self.ctx = ctx
+        self.args = []
+        self.kwargs = {}
 
     def specificity(self):
         # TODO: Calculate specificity properly
@@ -25,13 +27,15 @@ class StateActivation:
                     return 1
         return 0
 
-    def run(self):
+    def run(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
         return Thread(target=self._run_private)
 
     def _run_private(self):
-        session_wrapper = wrappers.ContextWrapper(self.ctx, self.state_to_activate)
-        result = self.state_to_activate(session_wrapper)
-        if result == session_wrapper.EmitSignal and self.state_to_activate.signal:
+        context_wrapper = wrappers.ContextWrapper(self.ctx, self.state_to_activate)
+        result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
+        if result == context_wrapper.EmitSignal and self.state_to_activate.signal:
             self.ctx.emit(self.state_to_activate.signal)
-        if result == session_wrapper.DeleteMe:
+        if result == context_wrapper.DeleteMe:
             self.ctx.rm_state(st=self.state_to_activate)
