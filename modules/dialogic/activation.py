@@ -27,14 +27,14 @@ class StateActivation:
                     return 1
         return 0
 
-    def run(self, *args, **kwargs):
+    def run(self, args=(), kwargs={}):
         self.args = args
         self.kwargs = kwargs
         return Thread(target=self._run_private)
 
     def _run_private(self):
         context_wrapper = wrappers.ContextWrapper(self.ctx, self.state_to_activate)
-        result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
+        result = self.state_to_activate(context_wrapper, self.args, self.kwargs)
         if result == context_wrapper.EmitSignal and self.state_to_activate.signal:
             self.ctx.emit(self.state_to_activate.signal)
         if result == context_wrapper.DeleteMe:

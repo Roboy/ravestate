@@ -1,6 +1,7 @@
 
 from dialogic import registry
 from dialogic.state import state
+from dialogic.receptor import receptor
 import dialogic_rawio
 
 
@@ -11,9 +12,16 @@ def console_shutdown(ctx):
         ctx.shutdown()
 
 
-@state(write="rawio:in", triggers="rawio:out:changed")
+@state(triggers=":startup")
 def console_input(ctx):
-    ctx["rawio:in"] = input("> ")
+
+    @receptor(ctx_wrap=ctx, write="rawio:in")
+    def write_console_input(ctx_input, value: str):
+        ctx_input["rawio:in"] = value
+
+    while not ctx.shutting_down():
+        input_value = input("> ")
+        write_console_input(input_value)
 
 
 @state(read="rawio:out")

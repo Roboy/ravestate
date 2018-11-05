@@ -96,6 +96,9 @@ class ContextWrapper:
     def shutdown(self):
         self.ctx.shutdown()
 
+    def shutting_down(self):
+        return self.ctx.shutting_down()
+
 
 if __name__ == '__main__':
     prop = property.PropertyBase(name="foo", default="Kruder")

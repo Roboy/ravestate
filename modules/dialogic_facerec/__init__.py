@@ -1,11 +1,11 @@
 
 import rclpy
 from dialogic import registry
-from dialogic.state import state, invocable
+from dialogic.state import state
+from dialogic.receptor import receptor
 from dialogic.property import PropertyBase
 from std_msgs.msg import String
-from threading import Semaphore
-from threading import Lock
+
 
 rclpy.init()
 node = rclpy.create_node("vision_node")
@@ -13,7 +13,7 @@ node = rclpy.create_node("vision_node")
 @state(triggers=":startup")
 def facerec_run(ctx):
 
-    @receptor(ctx=ctx, write="facerec:face")
+    @receptor(ctx_wrap=ctx, write="facerec:face")
     def face_recognition_callback(ctx, msg):
         ctx["facerec:face"] = msg
 
