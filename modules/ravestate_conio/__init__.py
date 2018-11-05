@@ -1,8 +1,8 @@
 
-from dialogic import registry
-from dialogic.state import state
-from dialogic.receptor import receptor
-import dialogic_rawio
+from ravestate import registry
+from ravestate.state import state
+from ravestate.receptor import receptor
+import ravestate_rawio
 
 
 @state(read="rawio:in")

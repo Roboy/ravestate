@@ -1,6 +1,6 @@
 
-from dialogic import registry
-from dialogic.property import PropertyBase
+from ravestate import registry
+from ravestate.property import PropertyBase
 
 
 registry.register(

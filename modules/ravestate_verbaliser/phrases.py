@@ -1,4 +1,4 @@
-from dialogic_util.random_tuple import RandomTuple
+from ravestate_util.random_tuple import RandomTuple
 
 
 class Phrases:

@@ -1,4 +1,4 @@
-# Dialogic property classes
+# Ravestate property classes
 
 from threading import Lock
 

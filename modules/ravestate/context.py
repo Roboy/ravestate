@@ -1,15 +1,15 @@
-# Dialogic context class
+# Ravestate context class
 
 
 import importlib
 from threading import Thread, Lock, Semaphore
 
-from dialogic import icontext
-from dialogic import activation
-from dialogic import module
-from dialogic import state
-from dialogic import property
-from dialogic import registry
+from ravestate import icontext
+from ravestate import activation
+from ravestate import module
+from ravestate import state
+from ravestate import property
+from ravestate import registry
 
 
 class Context(icontext.IContext):

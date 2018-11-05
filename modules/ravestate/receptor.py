@@ -1,8 +1,8 @@
-# Dialogic receptor state decorator
+# Ravestate receptor state decorator
 
-from dialogic.state import State
-from dialogic.wrappers import ContextWrapper
-from dialogic.activation import StateActivation
+from ravestate.state import State
+from ravestate.wrappers import ContextWrapper
+from ravestate.activation import StateActivation
 
 
 def receptor(*, ctx_wrap: ContextWrapper, write):

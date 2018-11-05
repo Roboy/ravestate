@@ -1,8 +1,8 @@
-# Dialogic class which encapsualtes the activation of a single state
+# Ravestate class which encapsualtes the activation of a single state
 
-from dialogic import state
-from dialogic import wrappers
-from dialogic import icontext
+from ravestate import state
+from ravestate import wrappers
+from ravestate import icontext
 from threading import Thread
 
 

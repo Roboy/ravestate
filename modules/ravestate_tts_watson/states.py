@@ -1,10 +1,10 @@
-import dialogic_rawio
+import ravestate_rawio
 import pyaudio
 import wave
 import yaml
 
-from dialogic.state import state
-from dialogic_tts_watson.text_to_speech import Text2Speech
+from ravestate.state import state
+from ravestate_tts_watson.text_to_speech import Text2Speech
 
 with open("resources/api.key") as keyfile:
     keys = yaml.load(keyfile)

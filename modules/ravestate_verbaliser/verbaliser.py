@@ -1,6 +1,6 @@
-from dialogic_util.random_tuple import RandomTuple
-from dialogic_verbaliser.phrases import Phrases
-from modules.dialogic_verbaliser.qa_parser import QAParser
+from ravestate_util.random_tuple import RandomTuple
+from ravestate_verbaliser.phrases import Phrases
+from modules.ravestate_verbaliser.qa_parser import QAParser
 
 
 class Verbaliser:

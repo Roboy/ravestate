@@ -1,4 +1,4 @@
-# Dialogic State-related definitions
+# Ravestate State-related definitions
 
 
 class State:

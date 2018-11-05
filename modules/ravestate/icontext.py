@@ -1,9 +1,9 @@
 # Interface for the context (needed to preempt cyclic dependencies)
 
 
-from dialogic import property
-from dialogic import module
-from dialogic import state
+from ravestate import property
+from ravestate import module
+from ravestate import state
 
 
 class IContext:

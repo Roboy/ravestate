@@ -1,4 +1,4 @@
-# Dialogic module class
+# Ravestate module class
 
 
 class Module:

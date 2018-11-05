@@ -1,10 +1,10 @@
-# Dialogic wrapper classes which limit a state's context access
+# Ravestate wrapper classes which limit a state's context access
 
-from dialogic import property
-from dialogic import state
-from dialogic import icontext
+from ravestate import property
+from ravestate import state
+from ravestate import icontext
 
-from dialogic import registry
+from ravestate import registry
 
 
 class PropertyWrapper:

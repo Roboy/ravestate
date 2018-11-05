@@ -1,9 +1,9 @@
 
 import rclpy
-from dialogic import registry
-from dialogic.state import state
-from dialogic.receptor import receptor
-from dialogic.property import PropertyBase
+from ravestate import registry
+from ravestate.state import state
+from ravestate.receptor import receptor
+from ravestate.property import PropertyBase
 from std_msgs.msg import String
 
 
