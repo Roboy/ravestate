@@ -3,6 +3,7 @@
 
 from ravestate.module import Module
 import importlib
+import logging
 
 
 _registered_modules = dict()
@@ -37,7 +38,7 @@ def register(*, name: str="", props=(), states=(), config={}):
     global _registration_callback
 
     if name in _registered_modules:
-        print(f"Attempt to add module {name} twice!")
+        logging.error(f"Attempt to add module {name} twice!")
         return
 
     _registered_modules[name] = Module(name=name, props=props, states=states, config=config)

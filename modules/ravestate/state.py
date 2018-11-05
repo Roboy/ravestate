@@ -1,5 +1,7 @@
 # Ravestate State-related definitions
 
+import logging
+
 
 class State:
 
@@ -9,7 +11,7 @@ class State:
 
         # catch the insane case
         if not len(read) and not len(triggers) and not is_receptor:
-            print(
+            logging.warning(
                 f"The state `{self.name}` is not reading any properties, nor waiting for any triggers. " +
                 "It will never be activated!")
 
@@ -71,6 +73,6 @@ if __name__ == '__main__':
 
     @state()
     def insane_state():
-        print("You will never see this.")
+        logging.error("You will never see this.")
 
-    print(test_state(None))
+    logging.debug(test_state(None))
