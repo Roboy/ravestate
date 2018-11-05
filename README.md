@@ -1,3 +1,3 @@
-# Welcome to the Reactive Dialog Logic Library
+# Welcome to the Reactive Dialog State Library
 
-Dialogic is a reactive library for interactive real-time dialog systems.
+Ravestate is a reactive library for interactive real-time natural language dialog systems.

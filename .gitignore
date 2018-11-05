@@ -1,0 +1,4 @@
+*.key
+.idea
+__pycache__
+tts.wav
