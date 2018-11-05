@@ -30,7 +30,7 @@ class PropertyBase:
         self.module_name = ""
 
     def fullname(self):
-        return "{}:{}".format(self.module_name, self.name)
+        return f"{self.module_name}:{self.name}"
 
     def lock(self):
         self._lock.acquire()
@@ -43,7 +43,7 @@ class PropertyBase:
         Read the current property value.
         """
         if not self.allow_read:
-            print("Unauthorized read access in property {}!".format(self.name))
+            print(f"Unauthorized read access in property {self.name}!")
             return None
         return self.value
 
@@ -54,7 +54,7 @@ class PropertyBase:
         :return: True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
-            print("Unauthorized write access in property {}!".format(self.name))
+            print(f"Unauthorized write access in property {self.name}!")
             return False
         if self.value != value:
             self.value = value

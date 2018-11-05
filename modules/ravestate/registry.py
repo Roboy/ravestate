@@ -37,7 +37,7 @@ def register(*, name: str="", props=(), states=(), config={}):
     global _registration_callback
 
     if name in _registered_modules:
-        print("Attempt to add module `{}` twice!".format(name))
+        print(f"Attempt to add module {name} twice!")
         return
 
     _registered_modules[name] = Module(name=name, props=props, states=states, config=config)

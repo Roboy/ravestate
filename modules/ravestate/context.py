@@ -59,18 +59,18 @@ class Context(icontext.IContext):
 
     def add_state(self, *, mod: module.Module, st: state.State):
         if st in self.states:
-            print("Attempt to add state `{}` twice!".format(st.name))
+            print(f"Attempt to add state `{st.name}` twice!")
             return
 
         # annotate the state's signal name with it's module name
         if len(st.signal) > 0:
-            st.signal = "{}:{}".format(mod.name, st.signal)
+            st.signal = f"{mod.name}:{st.signal}"
         st.module_name = mod.name
 
         # make sure that all of the state's depended-upon properties exist
         for prop in st.read_props+st.write_props:
             if prop not in self.properties:
-                print("Attempt to add state which depends on unknown property `{}`!".format(prop))
+                print(f"Attempt to add state which depends on unknown property `{prop}`!")
 
         # register the state's signal
         with self.states_lock:
@@ -82,12 +82,12 @@ class Context(icontext.IContext):
                     if signal in self.states_per_signal:
                         self.states_per_signal[signal].add(st)
                     else:
-                        print("Attempt to add state which depends on unknown signal `{}`!".format(signal))
+                        print(f"Attempt to add state which depends on unknown signal `{signal}`!")
             self.states.add(st)
 
     def rm_state(self, *, st: state.State):
         if st not in self.states:
-            print("Attempt to remove unknown state `{}`!".format(st.name))
+            print(f"Attempt to remove unknown state `{st.name}`!")
             return
         with self.states_lock:
             if st.signal:
@@ -99,7 +99,7 @@ class Context(icontext.IContext):
 
     def add_prop(self, *, mod: module.Module, prop: property.PropertyBase):
         if prop.name in self.properties.values():
-            print("Attempt to add property `{}` twice!".format(prop.name))
+            print(f"Attempt to add property {prop.name} twice!")
             return
         # prepend module name to property name
         prop.module_name = mod.name
@@ -131,13 +131,13 @@ class Context(icontext.IContext):
 
             # collect states which depend on the new signal,
             # and create state activation objects for them if necessary
-            print ("Received {} ...".format(signal_name))
+            print(f"Received {signal_name} ...")
             with self.states_lock:
                 for state in self.states_per_signal[signal_name]:
                     if state.name not in self.activation_candidates:
                         self.activation_candidates[state.name] = activation.StateActivation(state, self)
 
-            print ("State activation candidates: \n"+"\n".join(
+            print("State activation candidates: \n"+"\n".join(
                 "- "+state_name for state_name in self.activation_candidates))
 
             current_activation_candidates = self.activation_candidates
@@ -148,7 +148,7 @@ class Context(icontext.IContext):
             # remember those which want to be remembered, forget those which want to be forgotten
             for state_name, act in current_activation_candidates.items():
                 notify_return = act.notify_signal(signal_name)
-                print ("-> {} returned {} on notify_signal {}".format(act.state_to_activate.name, notify_return, signal_name))
+                print(f"-> {act.state_to_activate.name} returned {notify_return} on notify_signal {signal_name}")
                 if notify_return == 0:
                     self.activation_candidates[state_name] = act
                 elif notify_return > 0:
@@ -169,8 +169,8 @@ class Context(icontext.IContext):
                         all_write_props_free = False
                         break
                 if all_write_props_free:
-                    print ("-> Activating {}".format(act.state_to_activate.name))
+                    print(f"-> Activating {act.state_to_activate.name}")
                     thread = act.run()
                     thread.start()
                 else:
-                    print ("-> Dropping activation of `{}`.".format(act.state_to_activate.name))
+                    print(f"-> Dropping activation of {act.state_to_activate.name}.")

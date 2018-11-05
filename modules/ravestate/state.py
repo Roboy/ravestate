@@ -5,12 +5,12 @@ class State:
 
     def __init__(self, *, signal, write, read, triggers, action, is_receptor=False):
         assert(callable(action))
-        self.name = "{}".format(action.__name__)
+        self.name = action.__name__
 
         # catch the insane case
         if not len(read) and not len(triggers) and not is_receptor:
             print(
-                "The state `{}` is not reading any properties, nor waiting for any triggers. ".format(self.name) +
+                f"The state `{self.name}` is not reading any properties, nor waiting for any triggers. " +
                 "It will never be activated!")
 
         # convert read/write properties to tuples
@@ -22,7 +22,7 @@ class State:
         # listen to default changed-signals if no signals are given.
         # convert triggers to disjunctive normal form.
         if not len(triggers):
-            triggers = tuple(("{}:changed".format(rprop_name),) for rprop_name in read)
+            triggers = tuple((f"{rprop_name}:changed",) for rprop_name in read)
         else:
             if isinstance(triggers, str):
                 triggers = (triggers,)

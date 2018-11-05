@@ -37,7 +37,7 @@ class PropertyWrapper:
         Read the current property value.
         """
         if not self.allow_read:
-            print("Unauthorized read access in property-wrapper for {}!".format(self.prop.name))
+            print(f"Unauthorized read access in property-wrapper for {self.prop.name}!")
             return None
         elif self.allow_write:
             return self.prop.read()
@@ -50,10 +50,10 @@ class PropertyWrapper:
         :return: True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
-            print("Unauthorized write access in property-wrapper {}!".format(self.prop.name))
+            print(f"Unauthorized write access in property-wrapper {self.prop.name}!")
             return False
         if self.prop.write(value):
-            self.ctx.emit("{}:changed".format(self.prop.fullname()))
+            self.ctx.emit(f"{self.prop.fullname()}:changed")
 
 
 class ContextWrapper:
@@ -81,13 +81,13 @@ class ContextWrapper:
         if key in self.properties:
             self.properties[key].set(value)
         else:
-            print("State `{}` attempted to write property `{}` without permission!".format(self.st.name, key))
+            print(f"State {self.st.name} attempted to write property {key} without permission!")
 
     def __getitem__(self, key):
         if key in self.properties:
             return self.properties[key].get()
         else:
-            print("State `{}` attempted to access property `{}` without permission!".format(self.st.name, key))
+            print(f"State {self.st.name}` attempted to access property {key} without permission!")
 
     def add_state(self, st: state.State):
         mod = registry.get_module(self.st.module_name)
