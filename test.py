@@ -1,4 +1,3 @@
-
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/modules")
@@ -7,6 +6,7 @@ from ravestate.context import Context
 from ravestate.state import state
 from ravestate import registry
 from ravestate_ui import service
+from ravestate_verbaliser import verbaliser
 
 
 @state(triggers=":startup", write="rawio:out")
@@ -26,9 +26,11 @@ def face_recognized(ctx):
 
 
 registry.register(name="hi", states=(hello_world, generic_answer, face_recognized))
+verbaliser.add_folder('/home/dolp/git/ravestate/resources/phrase_lists/')
 
 ctx = Context()
 ctx.add_module("ravestate_conio")
+ctx.add_module("ravestate_verbaliser")
 # ctx.add_module("ravestate_tts_watson")
 # ctx.add_module("ravestate_facerec")
 ctx.add_module("hi")

@@ -2,3 +2,4 @@ stanfordcorenlp
 watson-developer-cloud>=2.2.6
 PyAudio
 Flask
+PyYAML
