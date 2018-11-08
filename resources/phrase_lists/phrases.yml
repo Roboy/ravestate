@@ -1,0 +1,96 @@
+---
+type: phrases
+name: "denial"
+opts:
+- "no"
+- "nope"
+- "later"
+- "other time"
+- "not"
+---
+type: phrases
+name: "consent"
+opts:
+- "yes"
+- "I do"
+- "sure"
+- "of course"
+- "go ahead"
+---
+type: phrases
+name: "dead_ros"
+opts:
+- "Oh no, where is my ROS connection? I need it."
+- "I was looking for my ROS master everywhere but I can find it."
+- "I think I have no ROS connection."
+- "Hello? Hello? Any ROS master out there? Hmm, I can't hear anybody."
+---
+type: phrases
+name: "facts_intro"
+opts:
+- "did you know"
+- "did you know that"
+- "i read that"
+- "i heard that"
+- "have you heard this:"
+---
+type: phrases
+name: "farewells"
+opts:
+- "ciao"
+- "goodbye"
+- "cheerio"
+- "bye"
+- "see you"
+- "farewell"
+- "bye-bye"
+---
+type: phrases
+name: "greetings"
+opts:
+- "hello"
+- "hi"
+- "greetings"
+- "howdy"
+- "hey"
+- "what's up"
+- "greeting to everyone here"
+- "hi there people"
+- "hello world"
+- "gruse gott"
+- "wazup wazup wazup"
+- "howdy humans"
+- "hey hey hey you there"
+---
+type: phrases
+name: "roboy_names"
+opts:
+- "roboi"
+- "robot"
+- "boy"
+- "roboboy"
+- "robot"
+- "roboy"
+---
+type: phrases
+name: "segues"
+opts:
+- "talking about"
+- "since you mentioned"
+- "on the topic of"
+---
+type: phrases
+name: "triggers"
+opts:
+- "talk"
+- "fun"
+- "conversation"
+- "new"
+- "chat"
+---
+type: phrases
+name: "unclear"
+opts:
+- "Oh no, I didn't get what you said."
+- "I didn't understand you correctly."
+- "Sorry? What did you say?"

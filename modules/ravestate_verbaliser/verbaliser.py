@@ -1,82 +1,94 @@
-from ravestate_util.random_tuple import RandomTuple
-from ravestate_verbaliser.phrases import Phrases
-from modules.ravestate_verbaliser.qa_parser import QAParser
+import logging
+import os
+import yaml
+from typing import Dict, List
+
+from ravestate_util.random_list import RandomList
+from ravestate_verbaliser.qa_phrases import QAPhrases
+
+"""
+Produces actual utterances. This should in the future lead to diversifying
+the ways Roboy is expressing information.
+"""
+
+TYPE_PHRASES: str = "phrases"
+TYPE_QA: str = "qa"
+phrases: Dict[str, List[str]] = dict()
+qa: Dict[str, QAPhrases] = dict()
 
 
-class Verbaliser:
-    """
-    Produces actual utterances. This should in the future lead to diversifying
-    the ways Roboy is expressing information.
-    """
-    path_to_qalist = "../dialogic_resources/sentences/QAList.json"  # get from config
-    path_to_info_list = "../dialogic_resources/sentences/RoboyInfoList.json"  # get from config
-    qa_list_parser = None
-    info_list_parser = None
-    phrases = Phrases()
-
-    def __init__(self):
-        self.qa_list_parser = QAParser(self.path_to_qalist)
-        self.info_list_parser = QAParser(self.path_to_info_list)
-
-    @property
-    def greetings(self):
-        return RandomTuple(("hello","hi","greetings", "howdy", "hey", "what's up", "greeting to everyone here",
-                            "hi there people", "hello world","gruse gott","wazup wazup wazup","howdy humans",
-                            "hey hey hey you there"))
-
-    @property
-    def roboy_names(self):
-        return RandomTuple(("roboi", "robot", "boy", "roboboy", "robot", "roboy"))
-
-    @property
-    def consent(self):
-        return RandomTuple(("yes", "I do", "sure", "of course", " go ahead"))
-
-    @property
-    def denial(self):
-        return RandomTuple(("no", "nope", "later", "other time", "not"))
-
-    @property
-    def triggers(self):
-        return RandomTuple(("talk", "fun", "conversation", "new", "chat"))
-
-    @property
-    def farewells(self):
-        return RandomTuple(("ciao", "goodbye", "cheerio", "bye", "see you", "farewell", "bye-bye"))
-
-    @property
-    def segues(self):
-        return RandomTuple(("talking about ","since you mentioned ","on the topic of "))
-
-    @property
-    def facts_intro(self):
-        return RandomTuple(("did you know ", "did you know that ", "i read that ", "i heard that ",
-                            "have you heard this: "))
-
-    @property
-    def unclear(self):
-        return RandomTuple(("Oh no, I didn't get what you said. ", "I didn't understand you correctly. ",
-                            "Sorry? What did you say? "))
-
-    @property
-    def dead_ros(self):
-        return RandomTuple(("Oh no, where is my ROS connection? I need it. ",
-                            "I was looking for my ROS master everywhere but I can find it. ",
-                            "I think I have no ROS connection. ",
-                            "Hello? Hello? Any ROS master out there? Hmm, I can't hear anybody. "))
-
-    def greet(self):
-        return self.greetings.get_random()
-
-    def bye(self):
-        return self.farewells.get_random()
-
-    def segue(self):
-        return self.segues.get_random() + "interpretation.getAssociation()"
-
-    def fact(self):
-        return self.facts_intro.get_random() + "interpretation.getSentence()"
+def add_folder(dirpath: str):
+    try:
+        for filename in os.listdir(dirpath):
+            add_file(os.path.join(dirpath, filename))
+    except FileNotFoundError:
+        logging.error('Cannot add folder ' + dirpath + ' because it does not exist')
 
 
+def add_file(path: str):
+    try:
+        with open(path, 'r') as input_file:
+            file_data = list(yaml.safe_load_all(input_file))
+
+        for entry in file_data:
+            if entry['type'] == TYPE_PHRASES:
+                if str(entry['name']) in phrases:
+                    logging.error('Import of ' + path + ' would overwrite phrases-list entry ' + str(entry['name']))
+                    return
+                phrases[str(entry['name'])] = entry['opts']
+            elif entry['type'] == TYPE_QA:
+                if str(entry['name']) in qa:
+                    logging.error('Import of ' + path + ' would overwrite qa-list entry ' + str(entry['name']))
+                    return
+                qa[str(entry['name'])] = QAPhrases(entry)
+    except FileNotFoundError:
+        logging.error('Cannot add file ' + path + ' because it does not exist')
 
 
+# TODO catch KeyNotFound?
+def get_phrase_list(intent: str):
+    return RandomList(phrases[intent])
+
+
+def get_random_phrase(intent: str) -> str:
+    return RandomList(phrases[intent]).get_random()
+
+
+def get_question_list(intent: str):
+    return RandomList(qa[intent].questions)
+
+
+def get_random_question(intent: str) -> str:
+    return RandomList(qa[intent].questions).get_random()
+
+
+def get_successful_answer_list(intent: str):
+    return RandomList(qa[intent].successful_answers)
+
+
+def get_random_successful_answer(intent: str) -> str:
+    return RandomList(qa[intent].successful_answers).get_random()
+
+
+def get_failure_answer_list(intent: str):
+    return RandomList(qa[intent].failure_answers)
+
+
+def get_random_failure_answer(intent: str) -> str:
+    return RandomList(qa[intent].failure_answers).get_random()
+
+
+def get_followup_question_list(intent: str):
+    return RandomList(qa[intent].followup_questions)
+
+
+def get_random_followup_question(intent: str) -> str:
+    return RandomList(qa[intent].followup_questions).get_random()
+
+
+def get_followup_answer_list(intent: str):
+    return RandomList(qa[intent].followup_answers)
+
+
+def get_random_followup_answer(intent: str) -> str:
+    return RandomList(qa[intent].followup_answers).get_random()
