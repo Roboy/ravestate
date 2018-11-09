@@ -29,6 +29,7 @@ registry.register(name="hi", states=(hello_world, generic_answer, face_recognize
 
 ctx = Context()
 ctx.add_module("ravestate_conio")
+ctx.add_module("ravestate_telegramio")
 # ctx.add_module("ravestate_tts_watson")
 # ctx.add_module("ravestate_facerec")
 ctx.add_module("hi")
