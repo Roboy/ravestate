@@ -1,9 +1,12 @@
+from os.path import dirname, realpath, join
+
 from ravestate import registry
 from ravestate.state import state
 from ravestate_verbaliser import verbaliser
 
 
 # TODO this is just a testdummy for a verbaliser state
+verbaliser.add_folder(join(dirname(dirname(dirname(realpath(__file__)))), "resources", "phrase_lists"))
 
 @state(read="rawio:in", write="rawio:out")
 def react_to_input(ctx):

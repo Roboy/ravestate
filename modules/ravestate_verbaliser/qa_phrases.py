@@ -6,6 +6,7 @@ class QAPhrases:
     Getting values from a yml file
     Parses files containing predefined questions and answers
     Expects the following input pattern:
+    ---
     type: qa
     name: "INTENT"
     Q:
@@ -26,13 +27,20 @@ class QAPhrases:
 
     See more examples in resources / sentences
     """
-    questions: List[str] = []
-    successful_answers: List[str] = []
-    failure_answers: List[str] = []
-    followup_questions: List[str] = []
-    followup_answers: List[str] = []
+    # TODO initialize with None or with []?
+    questions: List[str] = None
+    successful_answers: List[str] = None
+    failure_answers: List[str] = None
+    followup_questions: List[str] = None
+    followup_answers: List[str] = None
 
     def __init__(self, yaml_data: dict):
+        """
+        Initializes the lists for the different QA-elements with the data in the yaml_data-dict
+
+        :param yaml_data: dict of one section of a yml file with the structure of the above example
+            converted to a dict by yaml.safe_load_all(path)
+        """
         for key in yaml_data:
             if key == 'Q':
                 self.questions = yaml_data[key]
