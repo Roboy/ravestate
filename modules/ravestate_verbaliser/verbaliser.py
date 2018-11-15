@@ -41,27 +41,26 @@ def add_file(path: str):
         with open(path, 'r') as input_file:
             file_data = list(yaml.safe_load_all(input_file))
 
-        # TODO read in yaml file without sections, but one main section
         for entry in file_data:
             if entry['type'] == TYPE_PHRASES:
                 if str(entry['name']) in phrases:
-                    logging.error('Import of ' + path + ' would overwrite phrases-list entry ' + str(entry['name']))
-                    return False
-                # TODO pytest if only one entry. still a list?
+                    logging.error('Import of section ' + str(entry['name']) + ' in ' + path +
+                                  ' would overwrite phrases-list entry ' + str(entry['name']))
                 phrases[str(entry['name'])] = entry['opts']
             elif entry['type'] == TYPE_QA:
                 if str(entry['name']) in qa:
-                    logging.error('Import of ' + path + ' would overwrite qa-list entry ' + str(entry['name']))
-                    return False
+                    logging.error('Import of section ' + str(entry['name']) + ' in ' + path +
+                                  ' would overwrite qa-list entry ' + str(entry['name']))
                 qa[str(entry['name'])] = QAPhrases(entry)
+            else:
+                logging.error('Unknown type given for section ' + str(entry['name']) + ' in ' + path)
+
         return True
     except (FileNotFoundError, KeyError):
-        # TODO pytest for filenotfound and wrong file format
         logging.error('Cannot add file ' + path + ' because it does not exist or is in the wrong format.')
         return False
 
 
-# TODO docstring
 def random_or_none(list_or_none: Optional) -> Optional:
     """
     Get a random element from a list if it is not empty.
@@ -72,7 +71,6 @@ def random_or_none(list_or_none: Optional) -> Optional:
     return random.choice(list_or_none) if list_or_none else list_or_none
 
 
-# TODO pytest KeyError
 def get_phrase_list(intent: str) -> List[str]:
     """
     Get all imported phrases for this intent as a list
@@ -131,7 +129,7 @@ def get_random_successful_answer(intent: str) -> str:
     :return: None if no successful answers are known for this intent,
         otherwise a random element of the successful answers for this intent
     """
-    return random_or_none(get_random_successful_answer(intent))
+    return random_or_none(get_successful_answer_list(intent))
 
 
 def get_failure_answer_list(intent: str) -> List[str]:

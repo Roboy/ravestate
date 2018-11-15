@@ -1,6 +1,12 @@
 from typing import List
 
 
+def check_if_list(value):
+    if isinstance(value, List):
+        return value
+    raise AttributeError("Value is not a list: " + str(value))
+
+
 class QAPhrases:
     """
     Getting values from a yml file
@@ -27,7 +33,6 @@ class QAPhrases:
 
     See more examples in resources / sentences
     """
-    # TODO initialize with None or with []?
     questions: List[str] = None
     successful_answers: List[str] = None
     failure_answers: List[str] = None
@@ -41,18 +46,19 @@ class QAPhrases:
         :param yaml_data: dict of one section of a yml file with the structure of the above example
             converted to a dict by yaml.safe_load_all(path)
         """
+
         for key in yaml_data:
             if key == 'Q':
-                self.questions = yaml_data[key]
+                self.questions = check_if_list(yaml_data[key])
             elif key == 'A':
                 for subkey in yaml_data[key]:
                     if subkey == 'SUCCESS':
-                        self.successful_answers = yaml_data[key][subkey]
+                        self.successful_answers = check_if_list(yaml_data[key][subkey])
                     elif subkey == 'FAILURE':
-                        self.failure_answers = yaml_data[key][subkey]
+                        self.failure_answers = check_if_list(yaml_data[key][subkey])
             elif key == 'FUP':
                 for subkey in yaml_data[key]:
                     if subkey == 'Q':
-                        self.followup_questions = yaml_data[key][subkey]
+                        self.followup_questions = check_if_list(yaml_data[key][subkey])
                     elif subkey == 'A':
-                        self.followup_answers = yaml_data[key][subkey]
+                        self.followup_answers = check_if_list(yaml_data[key][subkey])
