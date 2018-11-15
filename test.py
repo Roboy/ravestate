@@ -26,6 +26,7 @@ def face_recognized(ctx):
 
 
 registry.register(name="hi", states=(hello_world, generic_answer, face_recognized))
+verbaliser.add_folder('/home/dolp/git/ravestate/resources/phrase_lists/')
 
 ctx = Context()
 ctx.add_module("ravestate_conio")
