@@ -88,4 +88,6 @@ def test_add_module_present(mocker, under_test, default_module):
             under_test.add_module(default_module)
             under_test._module_registration_callback.assert_called_once()
 
+
 def test_add_state():
+    pass
