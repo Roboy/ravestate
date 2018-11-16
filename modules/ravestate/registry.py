@@ -22,7 +22,7 @@ def import_module(*, module_name: str, callback):
     _registration_callback = None
 
 
-def register(*, name: str="", props=(), states=(), config={}):
+def register(*, name: str="", props=(), states=(), config=None):
     """
     May be called to register a named set of states, properties and config entries,
     which form a coherent bundle.
@@ -40,6 +40,9 @@ def register(*, name: str="", props=(), states=(), config={}):
     if name in _registered_modules:
         logging.error(f"Attempt to add module {name} twice!")
         return
+
+    if not config:
+        config = {}
 
     _registered_modules[name] = Module(name=name, props=props, states=states, config=config)
     if _registration_callback:
