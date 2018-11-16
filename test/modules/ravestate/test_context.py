@@ -1,5 +1,4 @@
 import pytest
-import logging
 from testfixtures import LogCapture
 
 from ravestate.icontext import IContext
