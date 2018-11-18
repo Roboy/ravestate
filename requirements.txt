@@ -5,3 +5,4 @@ watson-developer-cloud>=2.2.6
 PyAudio
 Flask
 python-telegram-bot
+pyyaml-include

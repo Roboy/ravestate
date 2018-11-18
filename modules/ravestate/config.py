@@ -5,7 +5,10 @@ from ravestate import module
 from collections import defaultdict
 from typing import List, Any
 import logging
+
 import yaml
+from yamlinclude import YamlIncludeConstructor
+YamlIncludeConstructor.add_to_loader_class(yaml.SafeLoader)
 
 
 class Configuration:
@@ -124,9 +127,13 @@ class Configuration:
         :param path: The yaml file path from which to load config documents.
         """
         with open(path, mode='r') as file:
-            configs = yaml.safe_load_all(file)
+            try:
+                configs = yaml.safe_load_all(file)
+            except Exception as e:
+                logging.warning(f"Could not load config file {path}")
+                return
             for config in configs:
-                if "module" not in config or "config" not in config:
+                if not isinstance(config, dict) or "module" not in config or "config" not in config:
                     logging.warning(f"Skipping invalid entry for config file {path}.")
                     continue
                 module_name = config["module"]
