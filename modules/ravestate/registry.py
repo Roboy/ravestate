@@ -1,7 +1,7 @@
 # Ravestate static implementations for registering modules
 
 
-from ravestate.module import Module
+from ravestate import module
 import importlib
 import logging
 
@@ -22,7 +22,7 @@ def import_module(*, module_name: str, callback):
     _registration_callback = None
 
 
-def register(*, name: str="", props=(), states=(), config={}):
+def register(*, name: str="", props=(), states=(), config=None):
     """
     May be called to register a named set of states, properties and config entries,
     which form a coherent bundle.
@@ -41,7 +41,10 @@ def register(*, name: str="", props=(), states=(), config={}):
         logging.error(f"Attempt to add module {name} twice!")
         return
 
-    _registered_modules[name] = Module(name=name, props=props, states=states, config=config)
+    if not config:
+        config = {}
+
+    _registered_modules[name] = module.Module(name=name, props=props, states=states, config=config)
     if _registration_callback:
         _registration_callback(_registered_modules[name])
 

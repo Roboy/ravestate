@@ -1,5 +1,7 @@
-PyYAML
-stanford-corenlp
+stanfordcorenlp
+argparse
+pyyaml
 watson-developer-cloud>=2.2.6
 PyAudio
+Flask
 python-telegram-bot

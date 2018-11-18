@@ -35,7 +35,7 @@ class StateActivation:
     def _run_private(self):
         context_wrapper = wrappers.ContextWrapper(self.ctx, self.state_to_activate)
         result = self.state_to_activate(context_wrapper, self.args, self.kwargs)
-        if result == context_wrapper.EmitSignal and self.state_to_activate.signal:
+        if isinstance(result, state.Emit) and self.state_to_activate.signal:
             self.ctx.emit(self.state_to_activate.signal)
-        if result == context_wrapper.DeleteMe:
+        if isinstance(result, state.Delete):
             self.ctx.rm_state(st=self.state_to_activate)
