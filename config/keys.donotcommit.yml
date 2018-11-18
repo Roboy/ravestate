@@ -1,0 +1,5 @@
+---
+module: telegramio
+config:
+  telegram-token: sexycactus
+---

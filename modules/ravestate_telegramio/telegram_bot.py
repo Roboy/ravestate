@@ -1,9 +1,8 @@
 import os
 from typing import Set
 
-from ravestate.context import Context
 from ravestate.receptor import receptor
-from ravestate.state import state
+from ravestate.state import state, Delete
 from ravestate.wrappers import ContextWrapper
 from telegram import Bot, Update, TelegramError
 from telegram.ext import Updater, MessageHandler, Filters, Dispatcher
@@ -11,38 +10,18 @@ import logging
 from yaml import load
 
 
-def get_bot_token(path):
-    """
-    Get the telegram_bot_token from the API.key file
-    :param path: the path to the API.key file
-    :return: None if there was an error getting the token, otherwise the telegram_bot_token
-    """
-    try:
-        with open(path, 'r') as keyfile:
-            keydict = load(keyfile)
-    except FileNotFoundError:
-        logging.error('API.key for telegram_bot_token not found')
-        return None
-    try:
-        return keydict['telegram_bot_token']
-    except KeyError:
-        logging.error('No telegram_bot_token in the API.key file found')
-        return None
-
-
-TELEGRAM_BOT_TOKEN: str = get_bot_token(
-    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "resources", "API.key"))
+TOKEN_CONFIG_KEY: str = "telegram-token"
 active_chats: Set[int] = set()
 
 
 @state(triggers=":startup")
-def telegram_run(ctx: Context):
+def telegram_run(ctx: ContextWrapper):
     """
     Starts up the telegram bot and adds a handler to write incoming messages to rawio:in
     """
 
     @receptor(ctx_wrap=ctx, write="rawio:in")
-    def telegram_callback(ctx: Context, message_text: str):
+    def telegram_callback(ctx: ContextWrapper, message_text: str):
         """
         Writes the message_text to rawio:in
         """
@@ -64,12 +43,13 @@ def telegram_run(ctx: Context):
         logging.warning('Update "%s" caused error "%s"', update, error)
 
     """Start the bot."""
-    # Create the EventHandler and pass it your bot's token.
-    if not TELEGRAM_BOT_TOKEN:
-        logging.error('TELEGRAM_BOT_TOKEN is not set. Shutting down telegramio')
-        return ContextWrapper.DeleteMe
+    # Create the EventHandler and pass it your bots token.
+    token = ctx.conf(key=TOKEN_CONFIG_KEY)
+    if not token:
+        logging.error('telegram-token is not set. Shutting down telegramio')
+        return Delete()
 
-    updater: Updater = Updater(TELEGRAM_BOT_TOKEN)
+    updater: Updater = Updater(token)
     # Get the dispatcher to register handlers
     dp: Dispatcher = updater.dispatcher
     # handle noncommand-messages with handle_input
@@ -81,15 +61,16 @@ def telegram_run(ctx: Context):
 
 
 @state(read="rawio:out")
-def telegram_output(ctx: Context):
+def telegram_output(ctx: ContextWrapper):
     """
     Sends the content of rawio:out to every currently active chat
     """
     # TODO don't instantiate the updater every time
-    if not TELEGRAM_BOT_TOKEN:
-        logging.error('TELEGRAM_BOT_TOKEN is not set. Shutting down telegramio')
-        return ContextWrapper.DeleteMe
+    token = ctx.conf(key=TOKEN_CONFIG_KEY)
+    if not token:
+        logging.error('telegram-token is not set. Shutting down telegramio')
+        return Delete()
 
-    updater: Updater = Updater(TELEGRAM_BOT_TOKEN)
+    updater: Updater = Updater(token)
     for chat_id in active_chats:
         updater.bot.send_message(chat_id=chat_id, text=ctx["rawio:out"])
