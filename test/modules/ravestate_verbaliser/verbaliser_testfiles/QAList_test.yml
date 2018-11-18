@@ -1,0 +1,33 @@
+---
+type: qa
+name: "INTENT"
+Q:
+- "Q1"
+- "Q2"
+- "Q3"
+A:
+  SUCCESS:
+  - "SA1"
+  - "SA2"
+  FAILURE:
+  - "FA1"
+FUP:
+  Q:
+  - "FUPQ1"
+  A:
+  - "FUPA1"
+---
+type: qa
+name: "INTENT2"
+Q:
+- "Q1"
+A:
+  FAILURE:
+  - "FA1"
+  - "FA2"
+FUP:
+  Q:
+  - "FUPQ1"
+  - "FUPQ2"
+  A:
+  - "FUPA1"

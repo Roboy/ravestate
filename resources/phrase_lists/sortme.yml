@@ -1,0 +1,129 @@
+---
+type: phrases
+name: "denial"
+opts:
+- "no"
+- "nope"
+- "later"
+- "other time"
+- "not"
+---
+type: phrases
+name: "facts_intro"
+opts:
+- "did you know"
+- "did you know that"
+- "i read that"
+- "i heard that"
+- "have you heard this:"
+---
+type: phrases
+name: "segues"
+opts:
+- "talking about"
+- "since you mentioned"
+- "on the topic of"
+---
+type: phrases
+name: "triggers"
+opts:
+- "talk"
+- "fun"
+- "conversation"
+- "new"
+- "chat"
+---
+type: phrases
+name: "segue-connecting-phrases"
+opts:
+- "So %s,"
+- "Hey %s,"
+- "%s listen to me,"
+- "Oh well %s,"
+- "%s,"
+- "You know %s,"
+- "Ok %s,"
+- "I am telling you %s,"
+- "You see %s,"
+- "What now %s,"
+- "%s, my friend,"
+- "Amigo %s,"
+- "Look %s,"
+- "You know what %s,"
+- "Very well %s,"
+- "Alright,"
+- "By the way,"
+---
+type: phrases
+name: "offer-math"
+opts:
+- "Ask me some mathematical expression!"
+- "I can multiply huge numbers in my head. What should I calculate for you?"
+- "If you wanna test my IQ, we can start from math. Ask me to add or multiply some numbers."
+- "Give me any mathematical expression!"
+- "I want to solve a mathematical problem, give me something!"
+---
+type: phrases
+name: "segue-pickup"
+opts:
+- "Are those real, or where they upgraded in Silicon Valley?"
+- "I'm going to void your warranty!"
+- "My docking station, or yours?"
+- "Yes, I know you're metric - but I'm willing to convert."
+- "Do you got a free port for me to plug into?"
+- "Can I have your I P number? i seem to have lost mine."
+- "Was that my C P U malfunctioning or did I just feel a spark between us?"
+---
+type: phrases
+name: "question-answering-reentering-phrases"
+opts:
+- "Is there anything else you would like to know?"
+- "Is that all that comes to your mind? Ask me something!"
+- "Oh well, I know much more stuff, just ask me a question."
+- "Let me uncover my potential. Ask something really difficult!"
+---
+type: phrases
+name: "offer-famous-entities"
+opts:
+- "Ask me about famous people!"
+- "Ask me about famous places!"
+- "I know a bit about pop stars. Wanna hear a story about someone?"
+- "I keep profiles of famous people. Ask me about some politician. I know quite a bunch"
+- "Ask me about something famous!"
+- "Ask me about somebody famous!"
+- "I know a lot about famous people, ask me!"
+- "I know a lot about famous places, ask me!"
+---
+type: phrases
+name: "segue-jobs"
+opts:
+- "You know, jobs are a transitionary thing anyway. Soon, I'll be doing all of them."
+- "Work is so overrated, except for robots is our reason to exist."
+- "I'm a hard working robot, I sit around all day! I still will have all the jobs there are soon."
+---
+type: phrases
+name: "offer-jokes"
+opts:
+- "Do you want me to tell a joke?"
+- "I usually receive positive feedback about my sense of humor. Would you like to hear a joke?"
+- "Wanna hear something funny?"
+- "Do you know what I like about humans? It is their humor. Do you want to hear one of my jokes?"
+- "You know, in my free time I surf the internet. Sometimes I come across little stories that make me laugh. What about a joke?"
+- "Do you want to hear a joke?"
+- "I have a joke for you. Do you want to hear?"
+- "Do you like jokes?"
+- "My jokes are awesome. Wanna hear one?"
+- "Do you fancy a nice joke?"
+---
+type: phrases
+name: "question-answering-starting-phrases"
+opts:
+- "I think, the answer is"
+- "I am sure that it is"
+- "How about"
+- "I know for sure, it must be"
+- "Calculating..."
+- "And the answer is"
+- "Ping, got you an answer. Here you go:"
+- "Your request is processed."
+- "Ta-da!"

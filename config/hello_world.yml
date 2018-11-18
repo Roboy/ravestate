@@ -1,0 +1,5 @@
+module: core
+config:
+  import:
+    - ravestate_conio
+    - hello_world

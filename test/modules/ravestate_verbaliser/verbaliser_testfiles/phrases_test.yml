@@ -1,0 +1,19 @@
+---
+type: phrases
+name: "test1"
+opts:
+- "a"
+- "b"
+- "c"
+- "d"
+---
+type: phrases
+name: "test2"
+opts:
+- "a"
+---
+type: phrases
+name: "test3"
+opts:
+- "a"
+- "b"
