@@ -1,0 +1,16 @@
+# keys.yml should contain at least the following yaml document:
+#
+# module: telegramio
+# config:
+#   telegram-token: sexycactus
+
+
+!include config/keys.yml
+
+---
+module: core
+config:
+  import:
+    - ravestate_telegramio
+    - ravestate_conio
+    - hello_world
