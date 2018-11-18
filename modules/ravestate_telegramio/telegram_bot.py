@@ -1,3 +1,4 @@
+import os
 from typing import Set
 
 from ravestate.context import Context
@@ -7,9 +8,30 @@ from ravestate.wrappers import ContextWrapper
 from telegram import Bot, Update, TelegramError
 from telegram.ext import Updater, MessageHandler, Filters, Dispatcher
 import logging
+from yaml import load
 
-# TODO Put the token of your bot here
-TELEGRAM_BOT_TOKEN: str = None
+
+def get_bot_token(path):
+    """
+    Get the telegram_bot_token from the API.key file
+    :param path: the path to the API.key file
+    :return: None if there was an error getting the token, otherwise the telegram_bot_token
+    """
+    try:
+        with open(path, 'r') as keyfile:
+            keydict = load(keyfile)
+    except FileNotFoundError:
+        logging.error('API.key for telegram_bot_token not found')
+        return None
+    try:
+        return keydict['telegram_bot_token']
+    except KeyError:
+        logging.error('No telegram_bot_token in the API.key file found')
+        return None
+
+
+TELEGRAM_BOT_TOKEN: str = get_bot_token(
+    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), "resources", "API.key"))
 active_chats: Set[int] = set()
 
 
