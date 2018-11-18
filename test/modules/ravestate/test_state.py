@@ -1,7 +1,7 @@
 import pytest
 
 from ravestate.state import State, state
-
+from ravestate.wrappers import ContextWrapper
 
 @pytest.fixture
 def default_signal():
@@ -21,6 +21,11 @@ def default_write():
 @pytest.fixture
 def default_triggers():
     return ":idle"
+
+
+@pytest.fixture
+def default_context_wrapper(mocker):
+    return mocker.Mock(name=ContextWrapper.__class__)
 
 
 @pytest.fixture
@@ -51,7 +56,7 @@ def test_decorator(under_test, default_signal, default_read, default_write, defa
     assert (test_state.read_props == under_test.read_props)
     assert (test_state.write_props == under_test.write_props)
     assert (test_state.triggers == under_test.triggers)
-    assert (test_state(default_action) == "Hello world!")
+    assert (test_state(default_context_wrapper, [], {}) == "Hello world!")
     assert (isinstance(test_state.action, type(under_test.action)))
 
 
@@ -64,5 +69,5 @@ def test_decorator_default(under_test):
     assert (test_state.read_props == ())
     assert (test_state.write_props == ())
     assert (test_state.triggers == ())
-    assert (test_state(default_action) == "Hello world!")
+    assert (test_state(default_context_wrapper, [], {}) == "Hello world!")
     assert (isinstance(test_state.action, type(under_test.action)))

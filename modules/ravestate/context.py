@@ -11,14 +11,25 @@ from ravestate import module
 from ravestate import state
 from ravestate import property
 from ravestate import registry
+from ravestate import argparse
+from ravestate.config import Configuration
 
 
 class Context(icontext.IContext):
 
     default_signals = (":startup", ":shutdown", ":idle")
     default_property_signals = (":changed", ":pushed", ":popped", ":deleted")
+    core_module_name = "core"
+    import_modules_config = "import"
 
-    def __init__(self, configfile: str=""):
+    def __init__(self, *arguments):
+        modules, overrides, config_files = argparse.handle_args(*arguments)
+        self.config = Configuration(config_files)
+        self.core_config = {
+            self.import_modules_config: []
+        }
+        self.config.add_conf(module.Module(name=self.core_module_name, config=self.core_config))
+
         self.signal_queue = []
         self.signal_queue_lock = Lock()
         self.signal_queue_counter = Semaphore(0)
@@ -30,6 +41,13 @@ class Context(icontext.IContext):
         self.states = set()
         self.states_per_signal = {signal_name: set() for signal_name in self.default_signals}
         self.states_lock = Lock()
+
+        # Set required config overrides
+        for module_name, key, value in overrides:
+            self.config.set(module_name, key, value)
+        # Load required modules
+        for module_name in self.core_config[self.import_modules_config]+modules:
+            self.add_module(module_name)
 
     def emit(self, signal_name: str):
         with self.signal_queue_lock:
@@ -111,13 +129,16 @@ class Context(icontext.IContext):
             for signal in self.default_property_signals:
                 self.states_per_signal[prop.fullname()+signal] = set()
 
-    def __setitem__(self, key, value):
-        pass
-
-    def __getitem__(self, key):
+    def get_prop(self, key):
         return self.properties[key]
 
+    def conf(self, *, mod, key=None):
+        if key:
+            return self.config.get(mod, key)
+        return self.config.get_conf(mod)
+
     def _module_registration_callback(self, mod: module.Module):
+        self.config.add_conf(mod)
         for st in mod.states:
             self.add_state(mod=mod, st=st)
         for prop in mod.props:
@@ -125,7 +146,7 @@ class Context(icontext.IContext):
 
     def _run_private(self):
         while not self.shutdown_flag:
-            # TODO: Recognize and signal Idle-ness
+            # TODO: Recognize and signal Idleness
             self.signal_queue_counter.acquire()
             with self.signal_queue_lock:
                 signal_name = self.signal_queue.pop(0)
