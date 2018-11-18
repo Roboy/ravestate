@@ -6,6 +6,7 @@ from ravestate import property
 from ravestate import state
 from ravestate import icontext
 from ravestate import registry
+from typing import Any
 
 
 class PropertyWrapper:
@@ -68,7 +69,7 @@ class ContextWrapper:
         self.ctx = ctx
         self.properties = {
             propname : PropertyWrapper(
-                prop=ctx[propname], ctx=ctx,
+                prop=ctx.get_prop(propname), ctx=ctx,
                 allow_read=propname in st.read_props,
                 allow_write=propname in st.write_props)
             for propname in st.write_props+st.read_props
@@ -80,7 +81,7 @@ class ContextWrapper:
         else:
             logging.error(f"State {self.st.name} attempted to write property {key} without permission!")
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Any:
         if key in self.properties:
             return self.properties[key].get()
         else:
@@ -95,3 +96,8 @@ class ContextWrapper:
 
     def shutting_down(self):
         return self.ctx.shutting_down()
+
+    def conf(self, *, mod=None, key=None):
+        if not mod:
+            mod = self.st.module_name
+        return self.ctx.conf(mod=mod, key=key)

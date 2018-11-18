@@ -129,11 +129,13 @@ class Context(icontext.IContext):
             for signal in self.default_property_signals:
                 self.states_per_signal[prop.fullname()+signal] = set()
 
-    def __setitem__(self, key, value):
-        pass
-
-    def __getitem__(self, key):
+    def get_prop(self, key):
         return self.properties[key]
+
+    def conf(self, *, mod, key=None):
+        if key:
+            return self.config.get(mod, key)
+        return self.config.get_conf(mod)
 
     def _module_registration_callback(self, mod: module.Module):
         self.config.add_conf(mod)
