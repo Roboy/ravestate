@@ -62,7 +62,7 @@ class Configuration:
             return {}
         return self.config_per_module[module_name]
 
-    def get(self, module_name: str, key: str):
+    def get(self, module_name: str, key: str) -> Any:
         """
         Gte the current value of a config entry.
         :param module_name: The module that provides the config entry.
@@ -70,12 +70,12 @@ class Configuration:
         :return: The current value, or None, if the entry does not exist.
         """
         if module_name not in self.config_per_module:
-            logging.error(f"Attempt to run set() for unknown modname {module_name}!")
-            return
+            logging.error(f"Attempt to run get() for unknown modname {module_name}!")
+            return None
         target_conf = self.config_per_module[module_name]
         if key not in target_conf:
             logging.warning(f"Cannot read unknown conf key {key} for module {module_name}.")
-            return
+            return None
         return target_conf[key]
 
     def set(self, module_name: str, key: str, value: Any):
@@ -126,7 +126,7 @@ class Configuration:
         with open(path, mode='r') as file:
             configs = yaml.safe_load_all(file)
             for config in configs:
-                if not config["module"] or not config["config"]:
+                if "module" not in config or "config" not in config:
                     logging.warning(f"Skipping invalid entry for config file {path}.")
                     continue
                 module_name = config["module"]

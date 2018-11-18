@@ -53,8 +53,13 @@ usage:
             nonlocal config_value_overrides
             if isinstance(values, str):
                 values = [values]
-            if len(values) < 3 or not isinstance(values, list):
+            if len(values) < 3:
                 logging.error(f"Not enough values for -d argument: expecting 3, got {len(values)}!")
+                return
+            if len(values) > 3:
+                values = (values[0], values[1], tuple(values[2:]))
+            else:
+                values = tuple(values)
             config_value_overrides += [values]
 
     class ConfigFileAction(Action):

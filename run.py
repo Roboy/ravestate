@@ -1,10 +1,11 @@
 
 import sys
-import os
+from os.path import join, dirname, realpath
+sys.path.append(join(dirname(realpath(__file__)), "modules"))
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/modules")
 from ravestate.context import Context
 from ravestate_ui import service
+
 
 ctx = Context(*sys.argv[1:])
 ctx.run()

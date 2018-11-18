@@ -1,0 +1,15 @@
+---
+# invalid entry
+config:
+---
+module: foo
+config:
+  a: True
+  b: haha
+
+---
+module: poo
+config:
+  c: 1
+  d: hehe
+
