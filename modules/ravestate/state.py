@@ -1,9 +1,33 @@
 # Ravestate State-related definitions
 
 import logging
+from typing import Callable, Optional, Any
+
+
+class StateActivationResult:
+    """
+    Base class for return values of state activation functions.
+    """
+    pass
+
+
+class Delete(StateActivationResult):
+    """
+    Return an instance of this class, if the invoked state should be deleted.
+    """
+    pass
+
+
+class Emit(StateActivationResult):
+    """
+    Return an instance of this class, if the invoked state's signal should be emitted.
+    """
+    pass
 
 
 class State:
+
+    action: Callable[[Any], Optional[StateActivationResult]]
 
     def __init__(self, *, signal, write, read, triggers, action, is_receptor=False):
         assert(callable(action))
@@ -38,7 +62,7 @@ class State:
         self.action = action
         self.module_name = ""
 
-    def __call__(self, context, args, kwargs):
+    def __call__(self, context, args, kwargs) -> StateActivationResult:
         return self.action(context, *args, **kwargs)
 
 
@@ -52,27 +76,3 @@ def state(*, signal: str="", write: tuple=(), read: tuple=(), triggers: tuple=()
         nonlocal signal, write, read, triggers
         return State(signal=signal, write=write, read=read, triggers=triggers, action=action)
     return state_decorator
-
-
-if __name__ == '__main__':
-
-    # test basic decorating annotation
-    @state(signal="test-signal", read="myprop", write="myprop", triggers=":idle")
-    def test_state(context):
-        return "Hello world!"
-    assert(test_state.signal == "test-signal")
-    assert(test_state.read_props == ("myprop",))
-    assert(test_state.triggers == ((":idle",),))
-    assert(test_state(None) == "Hello world!")
-
-    # test whether default signals are assigned
-    @state(read="myprop")
-    def test_default_trigger_assignment(context):
-        return "Hello universe!"
-    assert(test_default_trigger_assignment.triggers == (("myprop:changed",),))
-
-    @state()
-    def insane_state():
-        logging.error("You will never see this.")
-
-    logging.debug(test_state(None))

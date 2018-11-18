@@ -26,8 +26,8 @@ class IContext:
     def shutdown(self):
         pass
 
-    def __setitem__(self, key, value):
+    def conf(self, *, mod, key=None):
         pass
 
-    def __getitem__(self, key):
+    def get_prop(self, key):
         pass
