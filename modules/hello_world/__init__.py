@@ -1,11 +1,14 @@
 from ravestate.state import state
 from ravestate import registry
+
 import ravestate_rawio
+import ravestate_verbaliser
+import ravestate_phrases_basic_en
 
 
-@state(triggers=":startup", write="rawio:out")
+@state(triggers=":startup", write="verbaliser:intent")
 def hello_world(ctx):
-    ctx["rawio:out"] = "Hello fucking world!"
+    ctx["verbaliser:intent"] = "greeting"
 
 
 @state(read="rawio:in", write="rawio:out")

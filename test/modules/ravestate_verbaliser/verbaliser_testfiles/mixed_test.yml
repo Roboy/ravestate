@@ -1,0 +1,31 @@
+---
+type: phrases
+name: "mixed_phrases1"
+opts:
+- "a"
+- "b"
+- "c"
+- "d"
+---
+type: qa
+name: "mixed_INTENT"
+Q:
+- "Q1"
+- "Q2"
+- "Q3"
+A:
+  SUCCESS:
+  - "SA1"
+  - "SA2"
+  FAILURE:
+  - "FA1"
+FUP:
+  Q:
+  - "FUPQ1"
+  A:
+  - "FUPA1"
+---
+type: phrases
+name: "mixed_phrases2"
+opts:
+- "a"

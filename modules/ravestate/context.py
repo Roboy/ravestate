@@ -139,10 +139,11 @@ class Context(icontext.IContext):
 
     def _module_registration_callback(self, mod: module.Module):
         self.config.add_conf(mod)
-        for st in mod.states:
-            self.add_state(mod=mod, st=st)
         for prop in mod.props:
             self.add_prop(mod=mod, prop=prop)
+        for st in mod.states:
+            self.add_state(mod=mod, st=st)
+        logging.info(f"Module {mod.name} added to session.")
 
     def _run_private(self):
         while not self.shutdown_flag:
