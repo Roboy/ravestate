@@ -1,7 +1,7 @@
 # Ravestate static implementations for registering modules
 
 
-from ravestate.module import Module
+from ravestate import module
 import importlib
 import logging
 
@@ -44,7 +44,7 @@ def register(*, name: str="", props=(), states=(), config=None):
     if not config:
         config = {}
 
-    _registered_modules[name] = Module(name=name, props=props, states=states, config=config)
+    _registered_modules[name] = module.Module(name=name, props=props, states=states, config=config)
     if _registration_callback:
         _registration_callback(_registered_modules[name])
 

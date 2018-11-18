@@ -63,10 +63,6 @@ class ContextWrapper:
     as declared by the state beforehand.
     """
 
-    DoNothing = 0
-    EmitSignal = 1
-    DeleteMe = 2
-
     def __init__(self, ctx: icontext.IContext, st: state.State):
         self.st = st
         self.ctx = ctx
@@ -99,23 +95,3 @@ class ContextWrapper:
 
     def shutting_down(self):
         return self.ctx.shutting_down()
-
-
-if __name__ == '__main__':
-    prop = property.PropertyBase(name="foo", default="Kruder")
-    prop.module_name = "poo"
-    assert(prop.fullname() == "poo:foo")
-    assert(not prop._lock.locked())
-    assert(prop.read() == "Kruder")
-
-    # Make sure that writing to read-only wrapper is ineffective
-    wrap = PropertyWrapper(prop=prop, ctx=icontext.IContext(), allow_read=True, allow_write=False)
-    assert(not prop._lock.locked())
-    wrap.set("Dorfmeister")
-    assert(wrap.get() == "Kruder")
-
-    # Make sure that writing to writable wrapper is effective
-    wrap = PropertyWrapper(prop=prop, ctx=icontext.IContext(), allow_read=True, allow_write=True)
-    assert(prop._lock.locked())
-    wrap.set("Dorfmeister")
-    assert(wrap.get() == "Dorfmeister")
