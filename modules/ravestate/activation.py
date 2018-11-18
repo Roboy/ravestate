@@ -36,6 +36,6 @@ class StateActivation:
         context_wrapper = wrappers.ContextWrapper(self.ctx, self.state_to_activate)
         result = self.state_to_activate(context_wrapper, self.args, self.kwargs)
         if isinstance(result, state.Emit) and self.state_to_activate.signal:
-            self.ctx.emit(self.state_to_activate.signal)
+            self.ctx.emit(self.state_to_activate.signal_name())
         if isinstance(result, state.Delete):
             self.ctx.rm_state(st=self.state_to_activate)

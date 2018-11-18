@@ -65,6 +65,9 @@ class State:
     def __call__(self, context, args, kwargs) -> StateActivationResult:
         return self.action(context, *args, **kwargs)
 
+    def signal_name(self):
+        return f"{self.module_name}:{self.signal}"
+
 
 def state(*, signal: str="", write: tuple=(), read: tuple=(), triggers: tuple=()):
     """

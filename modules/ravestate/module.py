@@ -12,9 +12,9 @@ class Module:
     """
 
     def __init__(self, *, name: str,
-                 props: Optional[List[PropertyBase]]=(),
-                 states: Optional[List[State]]=(),
-                 config: Optional[Dict[str, Any]]=None):
+                 props: List[PropertyBase]=(),
+                 states: List[State]=(),
+                 config: Dict[str, Any]=None):
 
         if not isinstance(props, tuple):
             props = (props,)
@@ -26,5 +26,7 @@ class Module:
         self.props = props
         self.states = states
         self.conf = config
-
-
+        for prop in props:
+            prop.module_name = name
+        for st in states:
+            st.module_name = name

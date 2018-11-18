@@ -3,6 +3,7 @@
 
 import importlib
 from threading import Thread, Lock, Semaphore
+from typing import Optional, Any
 import logging
 
 from ravestate import icontext
@@ -23,6 +24,11 @@ class Context(icontext.IContext):
     import_modules_config = "import"
 
     def __init__(self, *arguments):
+        """
+        Construct a context from command line arguments.
+        :param arguments: A series of command line arguments which can be parsed
+         by the ravestate command line parser (see argparse.py).
+        """
         modules, overrides, config_files = argparse.handle_args(*arguments)
         self.config = Configuration(config_files)
         self.core_config = {
@@ -49,12 +55,20 @@ class Context(icontext.IContext):
         for module_name in self.core_config[self.import_modules_config]+modules:
             self.add_module(module_name)
 
-    def emit(self, signal_name: str):
+    def emit(self, signal_name: str) -> None:
+        """
+        Emit a signal to the signal processing loop. Note:
+         The signal will only be processed if run() has been called!
+        :param signal_name: The name of the signal to be emitted.
+        """
         with self.signal_queue_lock:
             self.signal_queue.append(signal_name)
             self.signal_queue_counter.release()
 
-    def run(self):
+    def run(self) -> None:
+        """
+        Creates a signal processing thread, starts it, and emits the :startup signal.
+        """
         if self.run_task:
             logging.error("Attempt to start context twice!")
             return
@@ -62,29 +76,42 @@ class Context(icontext.IContext):
         self.run_task.start()
         self.emit(":startup")
 
-    def shutting_down(self):
+    def shutting_down(self) -> bool:
+        """
+        Retrieve the shutdown flag value, which indicates whether shutdown() has been called.
+        """
         return self.shutdown_flag
 
-    def shutdown(self):
+    def shutdown(self) -> None:
+        """
+        Sets the shutdown flag and waits for the signal processing thread to join.
+        """
         self.shutdown_flag = True
         self.emit(":shutdown")
         self.run_task.join()
 
-    def add_module(self, module_name: str):
+    def add_module(self, module_name: str) -> None:
+        """
+        Add a module by python module folder name, or by ravestate module name.
+        :param module_name: The name of the module to be added. If it is the
+         name of a python module that has not been imported yet, the python module
+         will be imported, and any ravestate modules registered during the python
+         import will also be added to this context.
+        """
         if registry.has_module(module_name):
             self._module_registration_callback(registry.get_module(module_name))
             return
         registry.import_module(module_name=module_name, callback=self._module_registration_callback)
 
-    def add_state(self, *, mod: module.Module, st: state.State):
+    def add_state(self, *, st: state.State) -> None:
+        """
+        Add a state to this context. It will be indexed wrt/ the properties/signals
+         it depends on. Error messages will be generated for unknown signals/properties.
+        :param st: The state which should be added to this context.
+        """
         if st in self.states:
             logging.error(f"Attempt to add state `{st.name}` twice!")
             return
-
-        # annotate the state's signal name with it's module name
-        if len(st.signal) > 0:
-            st.signal = f"{mod.name}:{st.signal}"
-        st.module_name = mod.name
 
         # make sure that all of the state's depended-upon properties exist
         for prop in st.read_props+st.write_props:
@@ -104,7 +131,12 @@ class Context(icontext.IContext):
                         logging.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
             self.states.add(st)
 
-    def rm_state(self, *, st: state.State):
+    def rm_state(self, *, st: state.State) -> None:
+        """
+        Remove a state from this context.
+        :param st: The state to remove. An error message will be generated,
+         if the state was not previously added to this context with add_state().
+        """
         if st not in self.states:
             logging.error(f"Attempt to remove unknown state `{st.name}`!")
             return
@@ -116,12 +148,15 @@ class Context(icontext.IContext):
                     self.states_per_signal[signal].remove(st)
             self.states.remove(st)
 
-    def add_prop(self, *, mod: module.Module, prop: property.PropertyBase):
-        if prop.name in self.properties.values():
+    def add_prop(self, *, prop: property.PropertyBase) -> None:
+        """
+        Add a property to this context. An error message will be generated, if a property with
+         the same name has already been added previously.
+        :param prop: The property object that should be added.
+        """
+        if prop.fullname() in self.properties.values():
             logging.error(f"Attempt to add property {prop.name} twice!")
             return
-        # prepend module name to property name
-        prop.module_name = mod.name
         # register property
         self.properties[prop.fullname()] = prop
         # register all of the property's signals
@@ -129,10 +164,34 @@ class Context(icontext.IContext):
             for signal in self.default_property_signals:
                 self.states_per_signal[prop.fullname()+signal] = set()
 
-    def get_prop(self, key):
+    def get_prop(self, key: str) -> Optional[property.PropertyBase]:
+        """
+        Retrieve a property object by that was previously added through add_prop()
+         by it's full name. The full name is always the combination of the property's
+         name and it's parent's name, joined with a colon: For example, if the name
+         of a property is `foo` and it belongs to the module `bar` it's full name
+         will be `bar:foo`.
+        An error message will be generated if no property with the given name was
+         added to the context, and None will be returned/
+        :param key: The full name of the property.
+        :return: The property object, or None, if no property with the given name
+         was added to the context.
+        """
+        if key not in self.properties:
+            logging.error(f"Attempt to retrieve unknown property by key `{key}`!")
+            return None
         return self.properties[key]
 
-    def conf(self, *, mod, key=None):
+    def conf(self, *, mod: str, key: Optional[str]=None) -> Any:
+        """
+        Get a single config value, or all config values for a particular module.
+        :param mod: The module whose configuration should be retrieved.
+        :param key: A specific config key of the given module, if only a single
+         config value should be retrieved.
+        :return: The value of a single config entry if key and module are both
+         specified and valid, or a dictionary of config entries if only the
+         module name is specified (and valid).
+        """
         if key:
             return self.config.get(mod, key)
         return self.config.get_conf(mod)
@@ -140,9 +199,9 @@ class Context(icontext.IContext):
     def _module_registration_callback(self, mod: module.Module):
         self.config.add_conf(mod)
         for prop in mod.props:
-            self.add_prop(mod=mod, prop=prop)
+            self.add_prop(prop=prop)
         for st in mod.states:
-            self.add_state(mod=mod, st=st)
+            self.add_state(st=st)
         logging.info(f"Module {mod.name} added to session.")
 
     def _run_private(self):

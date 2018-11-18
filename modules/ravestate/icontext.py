@@ -11,13 +11,13 @@ class IContext:
     def emit(self, signal_name: str):
         pass
 
-    def add_state(self, *, mod: module.Module, st: state.State):
+    def add_state(self, *, st: state.State):
         pass
 
     def rm_state(self, *, st: state.State):
         pass
 
-    def add_prop(self, *, mod: module.Module, prop: property.PropertyBase):
+    def add_prop(self, *, prop: property.PropertyBase):
         pass
 
     def shutting_down(self):

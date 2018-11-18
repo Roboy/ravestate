@@ -88,8 +88,7 @@ class ContextWrapper:
             logging.error(f"State {self.st.name}` attempted to access property {key} without permission!")
 
     def add_state(self, st: state.State):
-        mod = registry.get_module(self.st.module_name)
-        self.ctx.add_state(mod=mod, st=st)
+        self.ctx.add_state(st=st)
 
     def shutdown(self):
         self.ctx.shutdown()

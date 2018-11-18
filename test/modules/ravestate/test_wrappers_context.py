@@ -36,11 +36,9 @@ def under_test(state_mock: State, context_mock: Context):
 
 
 def test_add_state(mocker, under_test: PropertyWrapper, context_mock: Context, state_mock: State):
-    from ravestate import registry
     with mocker.patch('ravestate.registry.get_module', return_value=DEFAULT_MODULE_NAME):
         under_test.add_state(state_mock)
-        registry.get_module.assert_called_once_with(state_mock.module_name)
-        context_mock.add_state.assert_called_once_with(mod=DEFAULT_MODULE_NAME, st=state_mock)
+        context_mock.add_state.assert_called_once_with(st=state_mock)
 
 
 def test_context_shutdown(under_test: PropertyWrapper, context_mock: Context):
