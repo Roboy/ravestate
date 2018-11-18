@@ -1,4 +1,4 @@
 #!/bin/bash
 
 export PYTHONPATH=$PYTHONPATH:$(pwd)/modules
-pytest --ignore ros2
+python3 run.py ravestate_conio hello_world
