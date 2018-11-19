@@ -1,5 +1,5 @@
 pytest-mock
 pytest
 testfixtures
-pytest-cov 
+pytest-cov
 twine
