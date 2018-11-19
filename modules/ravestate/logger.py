@@ -72,4 +72,3 @@ class ColorConsoleAndFileLogger(logging.Logger):
 
 logging.setLoggerClass(ColorConsoleAndFileLogger)
 Logger = logging.getLogger('ravestate')
-Logger.info(os.path.dirname(os.path.abspath(__file__)))
