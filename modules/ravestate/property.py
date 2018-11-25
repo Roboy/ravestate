@@ -3,6 +3,7 @@
 from threading import Lock
 import logging
 
+
 class PropertyBase:
     """
     Base class for context properties. Controls read/write/push/pop/delete permissions,
