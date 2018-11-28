@@ -4,8 +4,8 @@
 import importlib
 from threading import Thread, Lock, Semaphore
 from typing import Optional, Any
-import logging
 
+from ravestate import Logger
 from ravestate import icontext
 from ravestate import activation
 from ravestate import module
@@ -70,7 +70,7 @@ class Context(icontext.IContext):
         Creates a signal processing thread, starts it, and emits the :startup signal.
         """
         if self.run_task:
-            logging.error("Attempt to start context twice!")
+            Logger.error("Attempt to start context twice!")
             return
         self.run_task = Thread(target=self._run_private)
         self.run_task.start()
@@ -110,13 +110,13 @@ class Context(icontext.IContext):
         :param st: The state which should be added to this context.
         """
         if st in self.states:
-            logging.error(f"Attempt to add state `{st.name}` twice!")
+            Logger.error(f"Attempt to add state `{st.name}` twice!")
             return
 
         # make sure that all of the state's depended-upon properties exist
         for prop in st.read_props+st.write_props:
             if prop not in self.properties:
-                logging.error(f"Attempt to add state which depends on unknown property `{prop}`!")
+                Logger.error(f"Attempt to add state which depends on unknown property `{prop}`!")
 
         # register the state's signal
         with self.states_lock:
@@ -128,7 +128,7 @@ class Context(icontext.IContext):
                     if signal in self.states_per_signal:
                         self.states_per_signal[signal].add(st)
                     else:
-                        logging.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
+                        Logger.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
             self.states.add(st)
 
     def rm_state(self, *, st: state.State) -> None:
@@ -138,7 +138,7 @@ class Context(icontext.IContext):
          if the state was not previously added to this context with add_state().
         """
         if st not in self.states:
-            logging.error(f"Attempt to remove unknown state `{st.name}`!")
+            Logger.error(f"Attempt to remove unknown state `{st.name}`!")
             return
         with self.states_lock:
             if st.signal:
@@ -155,7 +155,7 @@ class Context(icontext.IContext):
         :param prop: The property object that should be added.
         """
         if prop.fullname() in self.properties.values():
-            logging.error(f"Attempt to add property {prop.name} twice!")
+            Logger.error(f"Attempt to add property {prop.name} twice!")
             return
         # register property
         self.properties[prop.fullname()] = prop
@@ -178,7 +178,7 @@ class Context(icontext.IContext):
          was added to the context.
         """
         if key not in self.properties:
-            logging.error(f"Attempt to retrieve unknown property by key `{key}`!")
+            Logger.error(f"Attempt to retrieve unknown property by key `{key}`!")
             return None
         return self.properties[key]
 
@@ -202,7 +202,7 @@ class Context(icontext.IContext):
             self.add_prop(prop=prop)
         for st in mod.states:
             self.add_state(st=st)
-        logging.info(f"Module {mod.name} added to session.")
+        Logger.info(f"Module {mod.name} added to session.")
 
     def _run_private(self):
         while not self.shutdown_flag:
@@ -213,13 +213,13 @@ class Context(icontext.IContext):
 
             # collect states which depend on the new signal,
             # and create state activation objects for them if necessary
-            logging.debug(f"Received {signal_name} ...")
+            Logger.debug(f"Received {signal_name} ...")
             with self.states_lock:
                 for state in self.states_per_signal[signal_name]:
                     if state.name not in self.activation_candidates:
                         self.activation_candidates[state.name] = activation.StateActivation(state, self)
 
-            logging.debug("State activation candidates: \n"+"\n".join(
+            Logger.debug("State activation candidates: \n"+"\n".join(
                 "- "+state_name for state_name in self.activation_candidates))
 
             current_activation_candidates = self.activation_candidates
@@ -230,7 +230,7 @@ class Context(icontext.IContext):
             # remember those which want to be remembered, forget those which want to be forgotten
             for state_name, act in current_activation_candidates.items():
                 notify_return = act.notify_signal(signal_name)
-                logging.debug(f"-> {act.state_to_activate.name} returned {notify_return} on notify_signal {signal_name}")
+                Logger.debug(f"-> {act.state_to_activate.name} returned {notify_return} on notify_signal {signal_name}")
                 if notify_return == 0:
                     self.activation_candidates[state_name] = act
                 elif notify_return > 0:
@@ -251,8 +251,8 @@ class Context(icontext.IContext):
                         all_write_props_free = False
                         break
                 if all_write_props_free:
-                    logging.debug(f"-> Activating {act.state_to_activate.name}")
+                    Logger.debug(f"-> Activating {act.state_to_activate.name}")
                     thread = act.run()
                     thread.start()
                 else:
-                    logging.debug(f"-> Dropping activation of {act.state_to_activate.name}.")
+                    Logger.debug(f"-> Dropping activation of {act.state_to_activate.name}.")

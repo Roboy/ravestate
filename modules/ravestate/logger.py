@@ -36,6 +36,7 @@ class ColoredFormatter(logging.Formatter):
         levelname = record.levelname
         try:
             msg = record.msg.split(_SEPARATOR, 1)
+            msg[0] = f'{record.name}:{msg[0]}'
             if len(msg) == 2:
                 record.msg = f'[\x1b[1;3{CYAN}m%s\x1b[0m]%s' % (msg[0], msg[1])
         except:
@@ -51,11 +52,11 @@ class ColorConsoleAndFileLogger(logging.Logger):
     FORMAT = "[%(levelname)-20s]  %(message)s"
     COLOR_FORMAT = formatter_message(FORMAT, True)
 
-    def __init__(self, name):
-        logging.Logger.__init__(self, name, logging.DEBUG)
+    def __init__(self, name, level=logging.DEBUG, log_path=_LOG_PATH):
+        logging.Logger.__init__(self, name, level)
 
         file_name = f"log_{time.strftime('%Y%m%d_%H%M%S')}.log"
-        path = os.path.join(_LOG_PATH, file_name)
+        path = os.path.join(log_path, file_name)
         file = logging.FileHandler(path)
         file_formatter = logging.Formatter("%(asctime)s - %(levelname)s - "
                                            "%(message)-80s : FILE %(filename)s - %(lineno)d", "%Y-%m-%d %H:%M:%S")
@@ -68,7 +69,3 @@ class ColorConsoleAndFileLogger(logging.Logger):
         console.setFormatter(color_formatter)
         self.addHandler(console)
         return
-
-
-logging.setLoggerClass(ColorConsoleAndFileLogger)
-Logger = logging.getLogger('ravestate')

@@ -1,8 +1,6 @@
 # Ravestate wrapper classes which limit a state's context access
 
-import logging
-
-from ravestate import property
+from ravestate import property, Logger
 from ravestate import state
 from ravestate import icontext
 from ravestate import registry
@@ -39,7 +37,7 @@ class PropertyWrapper:
         Read the current property value.
         """
         if not self.allow_read:
-            logging.error(f"Unauthorized read access in property-wrapper for {self.prop.name}!")
+            Logger.error(f"Unauthorized read access in property-wrapper for {self.prop.name}!")
             return None
         elif self.allow_write:
             return self.prop.read()
@@ -52,7 +50,7 @@ class PropertyWrapper:
         :return: True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
-            logging.error(f"Unauthorized write access in property-wrapper {self.prop.name}!")
+            Logger.error(f"Unauthorized write access in property-wrapper {self.prop.name}!")
             return False
         if self.prop.write(value):
             self.ctx.emit(f"{self.prop.fullname()}:changed")
@@ -79,13 +77,13 @@ class ContextWrapper:
         if key in self.properties:
             self.properties[key].set(value)
         else:
-            logging.error(f"State {self.st.name} attempted to write property {key} without permission!")
+            Logger.error(f"State {self.st.name} attempted to write property {key} without permission!")
 
     def __getitem__(self, key) -> Any:
         if key in self.properties:
             return self.properties[key].get()
         else:
-            logging.error(f"State {self.st.name}` attempted to access property {key} without permission!")
+            Logger.error(f"State {self.st.name}` attempted to access property {key} without permission!")
 
     def add_state(self, st: state.State):
         self.ctx.add_state(st=st)

@@ -4,7 +4,9 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 from argparse import Action
 from typing import List, Tuple, Any
-import logging
+
+from ravestate import Logger
+
 
 def handle_args(*args) -> Tuple[List[str], List[Tuple[str, str, Any]], List[str]]:
     """
@@ -54,7 +56,7 @@ usage:
             if isinstance(values, str):
                 values = [values]
             if len(values) < 3:
-                logging.error(f"Not enough values for -d argument: expecting 3, got {len(values)}!")
+                Logger.error(f"Not enough values for -d argument: expecting 3, got {len(values)}!")
                 return
             if len(values) > 3:
                 values = (values[0], values[1], tuple(values[2:]))

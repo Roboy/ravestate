@@ -1,9 +1,8 @@
 # Ravestate static implementations for registering modules
 
 
-from ravestate import module
+from ravestate import module, Logger
 import importlib
-import logging
 
 
 _registered_modules = dict()
@@ -38,7 +37,7 @@ def register(*, name: str="", props=(), states=(), config=None):
     global _registration_callback
 
     if name in _registered_modules:
-        logging.error(f"Attempt to add module {name} twice!")
+        Logger.error(f"Attempt to add module {name} twice!")
         return
 
     if not config:

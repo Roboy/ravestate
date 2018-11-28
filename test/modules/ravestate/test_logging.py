@@ -9,7 +9,7 @@ LOG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.
 
 @pytest.mark.serial
 def test_file():
-    from ravestate.logger import Logger
+    from ravestate import Logger
     import fnmatch
     log_files = [f for f in os.listdir(LOG_PATH) if os.path.isfile(os.path.join(LOG_PATH, f))
                  and fnmatch.fnmatch(f, f"{time.strftime('log_%Y%m%d_%H%M')}*.log")]
@@ -24,7 +24,7 @@ def test_file():
 @log_capture()
 @pytest.mark.serial
 def test_basic(capture):
-    from ravestate.logger import Logger
+    from ravestate import Logger
     Logger.info('a message')
     Logger.error('a message')
     Logger.debug('a message')
@@ -37,4 +37,15 @@ def test_basic(capture):
         ('ravestate', '\x1b[1;34mDEBUG\x1b[0m', 'a message'),
         ('ravestate', '\x1b[1;33mWARNING\x1b[0m', 'a message'),
         ('ravestate', '\x1b[1;35mCRITICAL\x1b[0m', 'a message'),
+    )
+
+
+@log_capture()
+@pytest.mark.serial
+def test_module(capture):
+    from ravestate import Logger
+    Logger.info('module -> a message')
+
+    capture.check(
+        ('ravestate', '\x1b[1;32mINFO\x1b[0m', '[\x1b[1;36mmodule \x1b[0m] a message'),
     )

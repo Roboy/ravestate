@@ -1,7 +1,8 @@
 # Ravestate State-related definitions
 
-import logging
 from typing import Callable, Optional, Any
+
+from ravestate import Logger
 
 
 class StateActivationResult:
@@ -35,7 +36,7 @@ class State:
 
         # catch the insane case
         if not len(read) and not len(triggers) and not is_receptor:
-            logging.warning(
+            Logger.warning(
                 f"The state `{self.name}` is not reading any properties, nor waiting for any triggers. " +
                 "It will never be activated!")
 
