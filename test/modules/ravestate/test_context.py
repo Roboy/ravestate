@@ -1,4 +1,5 @@
 import pytest
+from ravestate.constraint import s
 from testfixtures import LogCapture
 
 from ravestate.icontext import IContext
@@ -38,7 +39,7 @@ def test_run(mocker, under_test):
     under_test.emit = mocker.stub()
     under_test.shutdown_flag = True
     under_test.run()
-    under_test.emit.assert_called_once_with(':startup')
+    under_test.emit.assert_called_once_with(s(':startup'))
 
 
 def test_run_error(under_test):
@@ -66,7 +67,7 @@ def test_shutdown(mocker, under_test):
 
     under_test.emit = mocker.stub(name='emit')
     under_test.shutdown()
-    under_test.emit.assert_called_once_with(':shutdown')
+    under_test.emit.assert_called_once_with(s(':shutdown'))
     under_test.run_task.join.assert_called_once()
 
 

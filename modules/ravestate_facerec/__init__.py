@@ -1,6 +1,7 @@
 
 import rclpy
 from ravestate import registry
+from ravestate.constraint import s
 from ravestate.state import state
 from ravestate.receptor import receptor
 from ravestate.property import PropertyBase
@@ -10,7 +11,7 @@ from std_msgs.msg import String
 rclpy.init()
 node = rclpy.create_node("vision_node")
 
-@state(triggers=":startup")
+@state(triggers=s(":startup"))
 def facerec_run(ctx):
 
     @receptor(ctx_wrap=ctx, write="facerec:face")
@@ -21,7 +22,7 @@ def facerec_run(ctx):
     rclpy.spin(node)
 
 
-@state(triggers=":shutdown")
+@state(triggers=s(":shutdown"))
 def facerec_shutdown():
     node.destroy_node()
     rclpy.shutdown()
