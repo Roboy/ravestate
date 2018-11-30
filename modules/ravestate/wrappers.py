@@ -8,6 +8,8 @@ from ravestate import icontext
 from ravestate import registry
 from typing import Any
 
+from ravestate.constraint import s
+
 
 class PropertyWrapper:
     """
@@ -55,7 +57,7 @@ class PropertyWrapper:
             logging.error(f"Unauthorized write access in property-wrapper {self.prop.name}!")
             return False
         if self.prop.write(value):
-            self.ctx.emit(f"{self.prop.fullname()}:changed")
+            self.ctx.emit(s(f"{self.prop.fullname()}:changed"))
 
 
 class ContextWrapper:

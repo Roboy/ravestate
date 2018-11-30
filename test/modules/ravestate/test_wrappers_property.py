@@ -1,4 +1,5 @@
 import pytest
+from ravestate.constraint import s
 from testfixtures import LogCapture
 
 from ravestate.icontext import IContext
@@ -80,4 +81,4 @@ def test_property_write(under_test_read_write: PropertyWrapper, default_property
     assert (default_property_base._lock.locked())
     under_test_read_write.set(NEW_PROPERTY_VALUE)
     assert (under_test_read_write.get() == NEW_PROPERTY_VALUE)
-    context_mock.emit.assert_called_once_with(f"{under_test_read_write.prop.fullname()}:changed")
+    context_mock.emit.assert_called_once_with(s(f"{under_test_read_write.prop.fullname()}:changed"))

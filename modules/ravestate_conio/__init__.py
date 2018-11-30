@@ -1,5 +1,6 @@
 
 from ravestate import registry
+from ravestate.constraint import s
 from ravestate.state import state
 from ravestate.receptor import receptor
 import ravestate_rawio
@@ -12,7 +13,7 @@ def console_shutdown(ctx):
         ctx.shutdown()
 
 
-@state(triggers=":startup")
+@state(triggers=s(":startup"))
 def console_input(ctx):
 
     @receptor(ctx_wrap=ctx, write="rawio:in")

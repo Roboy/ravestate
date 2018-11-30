@@ -5,8 +5,10 @@ import ravestate_rawio
 import ravestate_verbaliser
 import ravestate_phrases_basic_en
 
+from ravestate.constraint import s
 
-@state(triggers=":startup", write="verbaliser:intent")
+
+@state(triggers=s(":startup"), write="verbaliser:intent")
 def hello_world(ctx):
     ctx["verbaliser:intent"] = "greeting"
 

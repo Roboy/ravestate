@@ -3,6 +3,8 @@
 import logging
 from typing import Callable, Optional, Any
 
+from ravestate.constraint import Conjunct, Disjunct, s, Constraint
+
 
 class StateActivationResult:
     """
@@ -34,7 +36,7 @@ class State:
         self.name = action.__name__
 
         # catch the insane case
-        if not len(read) and not len(triggers) and not is_receptor:
+        if not len(read) and not triggers and not is_receptor:
             logging.warning(
                 f"The state `{self.name}` is not reading any properties, nor waiting for any triggers. " +
                 "It will never be activated!")
@@ -47,13 +49,8 @@ class State:
 
         # listen to default changed-signals if no signals are given.
         # convert triggers to disjunctive normal form.
-        if not len(triggers):
-            triggers = tuple((f"{rprop_name}:changed",) for rprop_name in read)
-        else:
-            if isinstance(triggers, str):
-                triggers = (triggers,)
-            if isinstance(triggers[0], str):
-                triggers = (triggers,)
+        if not triggers and len(read) > 0:
+            triggers = Disjunct(*list(Conjunct(s(f"{rprop_name}:changed")) for rprop_name in read))
 
         self.signal = signal
         self.write_props = write
@@ -66,10 +63,10 @@ class State:
         return self.action(context, *args, **kwargs)
 
     def signal_name(self):
-        return f"{self.module_name}:{self.signal}"
+        return f"{self.module_name}:{self.signal.signalname}"
 
 
-def state(*, signal: str="", write: tuple=(), read: tuple=(), triggers: tuple=()):
+def state(*, signal: str="", write: tuple=(), read: tuple=(), triggers: Constraint=None):
     """
     Decorator to declare a new state, which may emit a certain signal,
     write to a certain set of properties (calling set, push, pop, delete),
