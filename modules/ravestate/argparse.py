@@ -27,11 +27,11 @@ def handle_args(*args) -> Tuple[List[str], List[Tuple[str, str, Any]], List[str]
         formatter_class=RawDescriptionHelpFormatter,
         epilog="""
 usage:
-  > run.py ravestate_facerec hello_world
+  > rasta ravestate_facerec ravestate_hello_world
     Import two python modules and run a context.
 
-  > run.py \\
-      -d core import ravestate_facerec hello_world \\
+  > rasta \\
+      -d core import ravestate_facerec ravestate_hello_world \\
       -f generic.yml \\
       -f user.yml
     Import two python modules and run a context,

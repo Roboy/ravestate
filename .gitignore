@@ -1,6 +1,11 @@
 *.key
 *.default
+.coverage
+.pytest_cache
 .idea
 __pycache__
 tts.wav
 keys.yml
+dist/*
+build/*
+*.egg-info
