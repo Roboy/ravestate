@@ -13,4 +13,4 @@ config:
   import:
     - ravestate_telegramio
     - ravestate_conio
-    - hello_world
+    - ravestate_hello_world
