@@ -57,6 +57,15 @@ def test_notify_signal_mismatched_2(under_test):
     assert under_test.notify_signal(s('notest')) == 0
 
 
+def test_multiple_activation(state_mock, context_mock):
+    sa1 = StateActivation(state_mock, context_mock)
+    assert sa1.notify_signal(s('test1')) == 0
+    assert sa1.notify_signal(s('test3')) == 1
+    sa2 = StateActivation(state_mock, context_mock)
+    assert sa2.notify_signal(s('test1')) == 0
+    assert sa2.notify_signal(s('test3')) == 1
+
+
 # TODO: Add tests for private run
 def test_run(under_test, default_args, default_kwargs):
     result = under_test.run(default_args, default_kwargs)

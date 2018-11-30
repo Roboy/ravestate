@@ -1,5 +1,5 @@
 # Ravestate class which encapsualtes the activation of a single state
-from typing import List, Set
+import copy
 
 from ravestate import state
 from ravestate import wrappers
@@ -13,7 +13,7 @@ class StateActivation:
 
     def __init__(self, st: state.State, ctx: icontext.IContext):
         self.state_to_activate = st
-        self.unfulfilled: Constraint = st.triggers
+        self.unfulfilled: Constraint = copy.deepcopy(st.triggers)
         self.ctx = ctx
         self.args = []
         self.kwargs = {}

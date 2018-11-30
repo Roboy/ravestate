@@ -19,8 +19,8 @@ from ravestate.constraint import s, Signal
 
 class Context(icontext.IContext):
 
-    default_signals: Tuple[Signal] = (s(":startup"), s(":shutdown"), s(":idle"))
-    default_property_signals: Tuple[Signal] = (s(":changed"), s(":pushed"), s(":popped"), s(":deleted"))
+    default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
+    default_property_signal_names: Tuple[str] = (":changed", ":pushed", ":popped", ":deleted")
     core_module_name = "core"
     import_modules_config = "import"
 
@@ -46,7 +46,7 @@ class Context(icontext.IContext):
         self.activation_candidates = dict()
 
         self.states = set()
-        self.states_per_signal: Dict[Signal, Set] = {signal: set() for signal in self.default_signals}
+        self.states_per_signal: Dict[Signal, Set] = {s(signal_name): set() for signal_name in self.default_signal_names}
         self.states_lock = Lock()
 
         # Set required config overrides
@@ -165,8 +165,8 @@ class Context(icontext.IContext):
         self.properties[prop.fullname()] = prop
         # register all of the property's signals
         with self.states_lock:
-            for signal in self.default_property_signals:
-                self.states_per_signal[s(prop.fullname()+signal.name)] = set()
+            for signalname in self.default_property_signal_names:
+                self.states_per_signal[s(prop.fullname() + signalname)] = set()
 
     def get_prop(self, key: str) -> Optional[property.PropertyBase]:
         """

@@ -125,11 +125,7 @@ class Conjunct(Constraint):
         return all(map(lambda si: si.evaluate(), self._signals))
 
     def __str__(self):
-        ret_str = ""
-        for si in self._signals:
-            ret_str += f" {si.name} &"
-        ret_str = ret_str.strip('&')
-        return ret_str
+        return "(" + " & ".join(map(lambda si: si.__str__(), self._signals)) + ")"
 
 
 class Disjunct(Constraint):
@@ -183,8 +179,4 @@ class Disjunct(Constraint):
         return any(map(lambda si: si.evaluate(), self._conjunctions))
 
     def __str__(self):
-        ret_str = ""
-        for conjunct in self._conjunctions:
-            ret_str += f"({conjunct}) |"
-        ret_str = ret_str.strip('|')
-        return ret_str
+        return " | ".join(map(lambda conjunct: conjunct.__str__(), self._conjunctions))
