@@ -2,4 +2,4 @@ module: core
 config:
   import:
     - ravestate_conio
-    - ravestate_hello_world
+    - ravestate_nlp
