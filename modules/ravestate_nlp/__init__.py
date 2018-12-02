@@ -6,80 +6,58 @@ from ravestate.state import state
 from ravestate.receptor import receptor
 
 import spacy
+import logging
 
+logger = logging.getLogger(__name__)
 
 def init_model():
     global nlp
     nlp = spacy.load('en_core_web_sm')
-    roboy_getter = lambda doc: any(roboy in doc.text.lower() for roboy in ('you', 'roboy', 'robot', 'roboboy'))
+    roboy_names = ('you', 'roboy', 'robot', 'roboboy')
+    roboy_getter = lambda doc: any(roboy in doc.text.lower() for roboy in roboy_names)
     from spacy.tokens import Doc
     Doc.set_extension('about_roboy', getter=roboy_getter)
 
 
-@state(read="rawio:in")
+@state(read="rawio:in", write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:roboy"))
 def nlp_preprocess(ctx):
-
-    @receptor(ctx_wrap=ctx, write="nlp:tokens")
-    def write_tokens(ctx_input, nlp_doc):
-        ctx_input["nlp:tokens"] = [str(token) for token in nlp_doc]
-
-    @receptor(ctx_wrap=ctx, write="nlp:postags")
-    def write_postags(ctx_input, nlp_doc):
-        ctx_input["nlp:postags"] = [str(token.pos_) for token in nlp_doc]
-
-    @receptor(ctx_wrap=ctx, write="nlp:lemmas")
-    def write_lemmas(ctx_input, nlp_doc):
-        ctx_input["nlp:lemmas"] = [str(token.lemma_) for token in nlp_doc]
-
-    @receptor(ctx_wrap=ctx, write="nlp:tags")
-    def write_tags(ctx_input, nlp_doc):
-        ctx_input["nlp:tags"] = [str(token.tag_) for token in nlp_doc]
-
-    @receptor(ctx_wrap=ctx, write="nlp:ner")
-    def write_named_enities(ctx_input, nlp_doc):
-        ctx_input["nlp:ner"] = [(str(ents.text), str(ents.label_)) for ents in nlp_doc.ents]
-
-    @receptor(ctx_wrap=ctx, write="nlp:roboy")
-    def write_roboy_detected(ctx_input, nlp_doc):
-        ctx_input["nlp:roboy"] = nlp_doc._.about_roboy
-
-    doc = nlp(ctx["rawio:in"])
-    write_tokens(doc)
-    write_postags(doc)
-    write_lemmas(doc)
-    write_tags(doc)
-    write_named_enities(doc)
-    write_roboy_detected(doc)
+    nlp_doc = nlp(ctx["rawio:in"])
+    ctx["nlp:tokens"] = tuple(str(token) for token in nlp_doc)
+    ctx["nlp:postags"] = tuple(str(token.pos_) for token in nlp_doc)
+    ctx["nlp:lemmas"] = tuple(str(token.lemma_) for token in nlp_doc)
+    ctx["nlp:tags"] = tuple(str(token.tag_) for token in nlp_doc)
+    ctx["nlp:ner"] = tuple((str(ents.text), str(ents.label_)) for ents in nlp_doc.ents)
+    ctx["nlp:roboy"] = nlp_doc._.about_roboy
 
 
 @state(read="nlp:tokens")
 def tokens_output(ctx):
-    print('[NLP:tokens]:', ctx["nlp:tokens"])
+    logger.info('[NLP:tokens]:', ctx["nlp:tokens"])
 
 
 @state(read="nlp:postags")
 def postags_output(ctx):
-    print('[NLP:postags]:', ctx["nlp:postags"])
+    logger.info('[NLP:postags]:', ctx["nlp:postags"])
 
 
 @state(read="nlp:lemmas")
 def lemmas_output(ctx):
-    print('[NLP:lemmas]:', ctx["nlp:lemmas"])
+    logger.info('[NLP:lemmas]:', ctx["nlp:lemmas"])
 
 
 @state(read="nlp:ner")
 def ner_output(ctx):
-    print('[NLP:ner]:', ctx["nlp:ner"])
+    logger.info('[NLP:ner]:', ctx["nlp:ner"])
 
 
 @state(read="nlp:tags")
 def tags_output(ctx):
-    print('[NLP:tags]:', ctx["nlp:tags"])
+    logger.info('[NLP:tags]:', ctx["nlp:tags"])
 
 
 @state(read="nlp:roboy")
 def roboy_output(ctx):
-    print('[NLP:roboy]:', ctx["nlp:roboy"])
+    logger.info('[NLP:roboy]:', ctx["nlp:roboy"])
 
 
 init_model()
@@ -87,11 +65,11 @@ registry.register(
     name="nlp",
     states=(nlp_preprocess, tokens_output, postags_output, lemmas_output, ner_output, tags_output, roboy_output),
     props=(
-        PropertyBase(name="tokens", default=""),
-        PropertyBase(name="postags", default=""),
-        PropertyBase(name="lemmas", default=""),
-        PropertyBase(name="tags", default=""),
-        PropertyBase(name="ner", default=""),
-        PropertyBase(name="roboy", default="")
+        PropertyBase(name="tokens", default="", always_signal_changed=True),
+        PropertyBase(name="postags", default="", always_signal_changed=True),
+        PropertyBase(name="lemmas", default="", always_signal_changed=True),
+        PropertyBase(name="tags", default="", always_signal_changed=True),
+        PropertyBase(name="ner", default="", always_signal_changed=True),
+        PropertyBase(name="roboy", default="", always_signal_changed=True)
     )
 )
