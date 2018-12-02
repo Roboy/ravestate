@@ -1,5 +1,8 @@
 # Ravestate context class
 
+from reggol import get_logger
+logger = get_logger(__name__)
+
 
 import importlib
 from threading import Thread, Lock, Semaphore
@@ -14,9 +17,6 @@ from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
 from ravestate.constraint import s, Signal
-
-from reggol import get_logger
-logger = get_logger(__name__)
 
 
 class Context(icontext.IContext):
