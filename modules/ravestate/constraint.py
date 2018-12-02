@@ -1,6 +1,7 @@
-import logging
 from typing import List, Set
 
+from reggol import get_logger
+logger = get_logger(__name__)
 
 def s(signalname: str):
     """
@@ -17,15 +18,15 @@ class Constraint:
     """
 
     def get_all_signals(self) -> Set:
-        logging.error("Don't call this method on the super class Constraint")
+        logger.error("Don't call this method on the super class Constraint")
         return set()
 
     def set_signal_true(self, signal):
-        logging.error("Don't call this method on the super class Constraint")
+        logger.error("Don't call this method on the super class Constraint")
         pass
 
     def evaluate(self) -> bool:
-        logging.error("Don't call this method on the super class Constraint")
+        logger.error("Don't call this method on the super class Constraint")
         return False
 
 
@@ -87,7 +88,7 @@ class Conjunct(Constraint):
     def __init__(self, *args):
         for arg in args:
             if not isinstance(arg, Signal):
-                logging.error("Conjunct can only be constructed with Signals.")
+                logger.error("Conjunct can only be constructed with Signals.")
                 raise ValueError
         self._signals = set(args)
 
@@ -137,7 +138,7 @@ class Disjunct(Constraint):
     def __init__(self, *args):
         for arg in args:
             if not isinstance(arg, Conjunct):
-                logging.error("Disjunct can only be constructed with conjuncts.")
+                logger.error("Disjunct can only be constructed with conjuncts.")
                 raise ValueError
         self._conjunctions = set(args)
 
@@ -165,7 +166,7 @@ class Disjunct(Constraint):
                 conjunct_list.append(Conjunct(*conjunct, *other))
             return Disjunct(*conjunct_list)
         elif isinstance(other, Disjunct):
-            logging.error("Can't conjunct two disjunctions.")
+            logger.error("Can't conjunct two disjunctions.")
             raise ValueError("Can't conjunct two disjunctions.")
 
     def get_all_signals(self) -> Set[Signal]:

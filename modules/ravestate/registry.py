@@ -3,8 +3,9 @@
 
 from ravestate import module
 import importlib
-import logging
 
+from reggol import get_logger
+logger = get_logger(__name__)
 
 _registered_modules = dict()
 _registration_callback = None
@@ -38,7 +39,7 @@ def register(*, name: str="", props=(), states=(), config=None):
     global _registration_callback
 
     if name in _registered_modules:
-        logging.error(f"Attempt to add module {name} twice!")
+        logger.error(f"Attempt to add module {name} twice!")
         return
 
     if not config:
