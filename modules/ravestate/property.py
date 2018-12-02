@@ -18,7 +18,8 @@ class PropertyBase:
             allow_push=True,
             allow_pop=True,
             allow_delete=True,
-            default=None):
+            default=None,
+            always_signal_changed=False):
 
         self.name = name
         self.allow_read = allow_read
@@ -29,6 +30,7 @@ class PropertyBase:
         self.value = default
         self._lock = Lock()
         self.module_name = ""
+        self.always_signal_changed = always_signal_changed
 
     def fullname(self):
         return f"{self.module_name}:{self.name}"
@@ -57,7 +59,7 @@ class PropertyBase:
         if not self.allow_write:
             logging.error(f"Unauthorized write access in property {self.name}!")
             return False
-        if self.value != value:
+        if self.always_signal_changed or self.value != value:
             self.value = value
             return True
         else:
