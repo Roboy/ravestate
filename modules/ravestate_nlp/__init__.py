@@ -8,8 +8,6 @@ from ravestate.receptor import receptor
 import spacy
 import logging
 
-logger = logging.getLogger(__name__)
-
 def init_model():
     global nlp
     nlp = spacy.load('en_core_web_sm')
@@ -29,35 +27,12 @@ def nlp_preprocess(ctx):
     ctx["nlp:ner"] = tuple((str(ents.text), str(ents.label_)) for ents in nlp_doc.ents)
     ctx["nlp:roboy"] = nlp_doc._.about_roboy
 
-
-@state(read="nlp:tokens")
-def tokens_output(ctx):
-    logger.info('[NLP:tokens]:', ctx["nlp:tokens"])
-
-
-@state(read="nlp:postags")
-def postags_output(ctx):
-    logger.info('[NLP:postags]:', ctx["nlp:postags"])
-
-
-@state(read="nlp:lemmas")
-def lemmas_output(ctx):
-    logger.info('[NLP:lemmas]:', ctx["nlp:lemmas"])
-
-
-@state(read="nlp:ner")
-def ner_output(ctx):
-    logger.info('[NLP:ner]:', ctx["nlp:ner"])
-
-
-@state(read="nlp:tags")
-def tags_output(ctx):
-    logger.info('[NLP:tags]:', ctx["nlp:tags"])
-
-
-@state(read="nlp:roboy")
-def roboy_output(ctx):
-    logger.info('[NLP:roboy]:', ctx["nlp:roboy"])
+    logging.info('[NLP:tokens]:', ctx["nlp:tokens"])
+    logging.info('[NLP:postags]:', ctx["nlp:postags"])
+    logging.info('[NLP:lemmas]:', ctx["nlp:lemmas"])
+    logging.info('[NLP:ner]:', ctx["nlp:ner"])
+    logging.info('[NLP:tags]:', ctx["nlp:tags"])
+    logging.info('[NLP:roboy]:', ctx["nlp:roboy"])
 
 
 init_model()
