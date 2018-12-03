@@ -2,6 +2,7 @@ import pytest
 from threading import Thread
 
 from ravestate.activation import StateActivation
+from ravestate.constraint import s
 from ravestate.state import State
 from ravestate.icontext import IContext
 
@@ -9,7 +10,7 @@ from ravestate.icontext import IContext
 @pytest.fixture
 def state_mock(mocker):
     state = mocker.Mock(name=State.__class__)
-    state.triggers = [['test']]
+    state.triggers = (s('test1') & s('test2')) | s('test3')
     return state
 
 
@@ -38,11 +39,31 @@ def test_specifity(under_test):
 
 
 def test_notify_signal(under_test):
-    assert under_test.notify_signal('test') == 1
+    assert under_test.notify_signal(s('test1')) == 0
+    assert under_test.notify_signal(s('test2')) == 1
+
+
+def test_notify_signal_2(under_test):
+    assert under_test.notify_signal(s('test1')) == 0
+    assert under_test.notify_signal(s('test3')) == 1
 
 
 def test_notify_signal_mismatched(under_test):
     assert under_test.notify_signal('') == 0
+
+
+def test_notify_signal_mismatched_2(under_test):
+    assert under_test.notify_signal(s('test1')) == 0
+    assert under_test.notify_signal(s('notest')) == 0
+
+
+def test_multiple_activation(state_mock, context_mock):
+    sa1 = StateActivation(state_mock, context_mock)
+    assert sa1.notify_signal(s('test1')) == 0
+    assert sa1.notify_signal(s('test3')) == 1
+    sa2 = StateActivation(state_mock, context_mock)
+    assert sa2.notify_signal(s('test1')) == 0
+    assert sa2.notify_signal(s('test3')) == 1
 
 
 # TODO: Add tests for private run

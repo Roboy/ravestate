@@ -3,7 +3,7 @@
 
 import importlib
 from threading import Thread, Lock, Semaphore
-from typing import Optional, Any
+from typing import Optional, Any, Tuple, List, Set, Dict
 import logging
 
 from ravestate import icontext
@@ -14,12 +14,13 @@ from ravestate import property
 from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
+from ravestate.constraint import s, Signal
 
 
 class Context(icontext.IContext):
 
-    default_signals = (":startup", ":shutdown", ":idle")
-    default_property_signals = (":changed", ":pushed", ":popped", ":deleted")
+    default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
+    default_property_signal_names: Tuple[str] = (":changed", ":pushed", ":popped", ":deleted")
     core_module_name = "core"
     import_modules_config = "import"
 
@@ -36,7 +37,7 @@ class Context(icontext.IContext):
         }
         self.config.add_conf(module.Module(name=self.core_module_name, config=self.core_config))
 
-        self.signal_queue = []
+        self.signal_queue: List[Signal] = []
         self.signal_queue_lock = Lock()
         self.signal_queue_counter = Semaphore(0)
         self.run_task = None
@@ -45,7 +46,7 @@ class Context(icontext.IContext):
         self.activation_candidates = dict()
 
         self.states = set()
-        self.states_per_signal = {signal_name: set() for signal_name in self.default_signals}
+        self.states_per_signal: Dict[Signal, Set] = {s(signal_name): set() for signal_name in self.default_signal_names}
         self.states_lock = Lock()
 
         # Set required config overrides
@@ -55,14 +56,14 @@ class Context(icontext.IContext):
         for module_name in self.core_config[self.import_modules_config]+modules:
             self.add_module(module_name)
 
-    def emit(self, signal_name: str) -> None:
+    def emit(self, signal: Signal) -> None:
         """
         Emit a signal to the signal processing loop. Note:
          The signal will only be processed if run() has been called!
-        :param signal_name: The name of the signal to be emitted.
+        :param signal: The signal to be emitted.
         """
         with self.signal_queue_lock:
-            self.signal_queue.append(signal_name)
+            self.signal_queue.append(signal)
             self.signal_queue_counter.release()
 
     def run(self) -> None:
@@ -74,7 +75,7 @@ class Context(icontext.IContext):
             return
         self.run_task = Thread(target=self._run_private)
         self.run_task.start()
-        self.emit(":startup")
+        self.emit(s(":startup"))
 
     def shutting_down(self) -> bool:
         """
@@ -87,7 +88,7 @@ class Context(icontext.IContext):
         Sets the shutdown flag and waits for the signal processing thread to join.
         """
         self.shutdown_flag = True
-        self.emit(":shutdown")
+        self.emit(s(":shutdown"))
         self.run_task.join()
 
     def add_module(self, module_name: str) -> None:
@@ -122,13 +123,17 @@ class Context(icontext.IContext):
         with self.states_lock:
             if st.signal:
                 self.states_per_signal[st.signal] = set()
+            # check to recognize states using old signal implementation
+            if isinstance(st.triggers, str):
+                logging.error(f"Attempt to add state which depends on a signal `{st.triggers}`  "
+                              f"defined as a String and not Signal.")
+
             # make sure that all of the state's depended-upon signals exist
-            for clause in st.triggers:
-                for signal in clause:
-                    if signal in self.states_per_signal:
-                        self.states_per_signal[signal].add(st)
-                    else:
-                        logging.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
+            for signal in st.triggers.get_all_signals():
+                if signal in self.states_per_signal:
+                    self.states_per_signal[signal].add(st)
+                else:
+                    logging.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
             self.states.add(st)
 
     def rm_state(self, *, st: state.State) -> None:
@@ -143,8 +148,7 @@ class Context(icontext.IContext):
         with self.states_lock:
             if st.signal:
                 self.states_per_signal.pop(st.signal)
-            for clause in st.triggers:
-                for signal in clause:
+            for signal in st.triggers.get_all_signals():
                     self.states_per_signal[signal].remove(st)
             self.states.remove(st)
 
@@ -161,8 +165,8 @@ class Context(icontext.IContext):
         self.properties[prop.fullname()] = prop
         # register all of the property's signals
         with self.states_lock:
-            for signal in self.default_property_signals:
-                self.states_per_signal[prop.fullname()+signal] = set()
+            for signalname in self.default_property_signal_names:
+                self.states_per_signal[s(prop.fullname() + signalname)] = set()
 
     def get_prop(self, key: str) -> Optional[property.PropertyBase]:
         """
@@ -209,13 +213,13 @@ class Context(icontext.IContext):
             # TODO: Recognize and signal Idleness
             self.signal_queue_counter.acquire()
             with self.signal_queue_lock:
-                signal_name = self.signal_queue.pop(0)
+                signal = self.signal_queue.pop(0)
 
             # collect states which depend on the new signal,
             # and create state activation objects for them if necessary
-            logging.debug(f"Received {signal_name} ...")
+            logging.debug(f"Received {signal.name} ...")
             with self.states_lock:
-                for state in self.states_per_signal[signal_name]:
+                for state in self.states_per_signal[signal]:
                     if state.name not in self.activation_candidates:
                         self.activation_candidates[state.name] = activation.StateActivation(state, self)
 
@@ -229,8 +233,8 @@ class Context(icontext.IContext):
             # go through candidates and remove those which want to be removed,
             # remember those which want to be remembered, forget those which want to be forgotten
             for state_name, act in current_activation_candidates.items():
-                notify_return = act.notify_signal(signal_name)
-                logging.debug(f"-> {act.state_to_activate.name} returned {notify_return} on notify_signal {signal_name}")
+                notify_return = act.notify_signal(signal)
+                logging.debug(f"-> {act.state_to_activate.name} returned {notify_return} on notify_signal {signal.name}")
                 if notify_return == 0:
                     self.activation_candidates[state_name] = act
                 elif notify_return > 0:

@@ -1,6 +1,7 @@
 import os
 from typing import Set
 
+from ravestate.constraint import s
 from ravestate.receptor import receptor
 from ravestate.state import state, Delete
 from ravestate.wrappers import ContextWrapper
@@ -14,7 +15,7 @@ TOKEN_CONFIG_KEY: str = "telegram-token"
 active_chats: Set[int] = set()
 
 
-@state(triggers=":startup")
+@state(triggers=s(":startup"))
 def telegram_run(ctx: ContextWrapper):
     """
     Starts up the telegram bot and adds a handler to write incoming messages to rawio:in
