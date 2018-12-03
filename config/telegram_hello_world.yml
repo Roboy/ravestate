@@ -13,5 +13,5 @@ config:
   import:
     - ravestate_telegramio
     - ravestate_conio
-    - ravestate_hello_world
+    - ravestate_wildtalk
     - ravestate_nlp
