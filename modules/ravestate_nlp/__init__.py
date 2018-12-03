@@ -20,25 +20,36 @@ def init_model():
 @state(read="rawio:in", write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:roboy"))
 def nlp_preprocess(ctx):
     nlp_doc = nlp(ctx["rawio:in"])
-    ctx["nlp:tokens"] = tuple(str(token) for token in nlp_doc)
-    ctx["nlp:postags"] = tuple(str(token.pos_) for token in nlp_doc)
-    ctx["nlp:lemmas"] = tuple(str(token.lemma_) for token in nlp_doc)
-    ctx["nlp:tags"] = tuple(str(token.tag_) for token in nlp_doc)
-    ctx["nlp:ner"] = tuple((str(ents.text), str(ents.label_)) for ents in nlp_doc.ents)
-    ctx["nlp:roboy"] = nlp_doc._.about_roboy
+    
+    nlp_tokens = tuple(str(token) for token in nlp_doc)
+    ctx["nlp:tokens"] = nlp_tokens
+    logging.info(f"[NLP:tokens]: {nlp_tokens}")
 
-    logging.info('[NLP:tokens]:', ctx["nlp:tokens"])
-    logging.info('[NLP:postags]:', ctx["nlp:postags"])
-    logging.info('[NLP:lemmas]:', ctx["nlp:lemmas"])
-    logging.info('[NLP:ner]:', ctx["nlp:ner"])
-    logging.info('[NLP:tags]:', ctx["nlp:tags"])
-    logging.info('[NLP:roboy]:', ctx["nlp:roboy"])
+    nlp_postags = tuple(str(token.pos_) for token in nlp_doc)
+    ctx["nlp:postags"] = nlp_postags
+    logging.info(f"[NLP:postags]: {nlp_postags}")
+
+    nlp_lemmas = tuple(str(token.lemma_) for token in nlp_doc)
+    ctx["nlp:lemmas"] = nlp_lemmas
+    logging.info(f"[NLP:lemmas]: {nlp_lemmas}")
+    
+    nlp_tags = tuple(str(token.tag_) for token in nlp_doc)
+    ctx["nlp:tags"] = nlp_tags
+    logging.info(f"[NLP:tags]: {nlp_tags}")
+
+    nlp_ner = tuple((str(ents.text), str(ents.label_)) for ents in nlp_doc.ents)
+    ctx["nlp:ner"] = nlp_ner
+    logging.info(f"[NLP:ner]: {nlp_ner}")
+
+    nlp_roboy = nlp_doc._.about_roboy
+    ctx["nlp:roboy"] = nlp_roboy
+    logging.info(f"[NLP:roboy]: {nlp_roboy}")
 
 
 init_model()
 registry.register(
     name="nlp",
-    states=(nlp_preprocess, tokens_output, postags_output, lemmas_output, ner_output, tags_output, roboy_output),
+    states=(nlp_preprocess,),
     props=(
         PropertyBase(name="tokens", default="", always_signal_changed=True),
         PropertyBase(name="postags", default="", always_signal_changed=True),
