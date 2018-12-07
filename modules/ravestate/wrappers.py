@@ -3,7 +3,6 @@
 from ravestate import property
 from ravestate import state
 from ravestate import icontext
-from ravestate import registry
 from typing import Any
 
 from ravestate.constraint import s

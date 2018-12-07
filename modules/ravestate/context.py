@@ -3,8 +3,6 @@
 from reggol import get_logger
 logger = get_logger(__name__)
 
-
-import importlib
 from threading import Thread, Lock, Semaphore
 from typing import Optional, Any, Tuple, List, Set, Dict
 

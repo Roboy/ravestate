@@ -18,17 +18,16 @@ setuptools.setup(
     long_description_content_type="text/markdown",
 
     package_dir={'': 'modules'},
-    packages=setuptools.find_packages("modules"),
+    packages=setuptools.find_packages("modules", exclude=["reggol*"]),
     include_package_data=True,
     scripts=["rasta"],
 
     install_requires=required,
     python_requires='>=3.6',
 
-    # TODO: Add classifiers
-    # classifiers=[
-    #     "Programming Language :: Python :: 3",
-    #     "License :: OSI Approved :: MIT License",
-    #     "Operating System :: OS Independent",
-    # ],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
 )

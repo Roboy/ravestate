@@ -5,7 +5,7 @@ from argparse import RawDescriptionHelpFormatter
 from argparse import Action
 from typing import List, Tuple, Any
 
-from reggol import get_logger
+from reggol import get_logger, help_string
 logger = get_logger(__name__)
 
 
@@ -28,7 +28,9 @@ def handle_args(*args) -> Tuple[List[str], List[Tuple[str, str, Any]], List[str]
     argdef = ArgumentParser(
         description="Run a reactive state machine! It's weird, you'll like it.",
         formatter_class=RawDescriptionHelpFormatter,
-        epilog="""
+        epilog=f"""
+{help_string()}
+
 usage:
   > rasta ravestate_facerec ravestate_hello_world
     Import two python modules and run a context.

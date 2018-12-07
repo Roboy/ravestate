@@ -13,6 +13,7 @@ YamlIncludeConstructor.add_to_loader_class(yaml.SafeLoader)
 from reggol import get_logger
 logger = get_logger(__name__)
 
+
 class Configuration:
     """
     The Configuration class maintains a dictionary of key-value stores, which
