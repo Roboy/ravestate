@@ -3,7 +3,7 @@
 from ravestate import property
 from ravestate import state
 from ravestate import icontext
-from typing import Any
+from typing import Any, List
 
 from ravestate.constraint import s
 
@@ -36,7 +36,7 @@ class PropertyWrapper:
         if self.allow_write:
             self.prop.unlock()
 
-    def get(self):
+    def get(self, child: List[str] = None):  # TODO maybe in get() and set() also accept parent:child
         """
         Read the current property value.
         """
@@ -44,10 +44,10 @@ class PropertyWrapper:
             logger.error(f"Unauthorized read access in property-wrapper for {self.prop.name}!")
             return None
         elif self.allow_write:
-            return self.prop.read()
+            return self.prop.read(child=child)
         return self.frozen_value
 
-    def set(self, value):
+    def set(self, value, child: List[str] = None):
         """
         Write a new value to the property.
         :param value: The new value.
@@ -56,8 +56,19 @@ class PropertyWrapper:
         if not self.allow_write:
             logger.error(f"Unauthorized write access in property-wrapper {self.prop.name}!")
             return False
-        if self.prop.write(value):
-            self.ctx.emit(s(f"{self.prop.fullname()}:changed"))
+        if self.prop.write(value, child=child):
+            childname = ':' + ':'.join(child) if child else ''
+            self.ctx.emit(s(f"{self.prop.fullname()}{childname}:changed"))
+            return True
+        return False
+
+    def push(self, child: List[str]):
+        # TODO permission?
+        return self.prop.push(child)
+
+    def pop(self, child: List[str]):
+        # TODO permission?
+        return self.prop.pop(child)
 
 
 class ContextWrapper:
@@ -78,14 +89,20 @@ class ContextWrapper:
         }
 
     def __setitem__(self, key, value):
-        if key in self.properties:
-            self.properties[key].set(value)
+        keyList = key.split(':')
+        if len(keyList) == 1 and keyList[0] in self.properties:
+            return self.properties[keyList[0]].set(value)
+        elif keyList[0] in self.properties:
+            return self.properties[keyList[0]].set(value, child=keyList[1:])
         else:
             logger.error(f"State {self.st.name} attempted to write property {key} without permission!")
 
     def __getitem__(self, key) -> Any:
-        if key in self.properties:
-            return self.properties[key].get()
+        keyList = key.split(':')
+        if len(keyList) == 1 and keyList[0] in self.properties:
+            return self.properties[keyList[0]].get()
+        elif keyList[0] in self.properties:
+            return self.properties[keyList[0]].get(child=keyList[1:])
         else:
             logger.error(f"State {self.st.name}` attempted to access property {key} without permission!")
 
@@ -102,3 +119,36 @@ class ContextWrapper:
         if not mod:
             mod = self.st.module_name
         return self.ctx.conf(mod=mod, key=key)
+
+    def push(self, childpath: str):
+        """
+
+        :param childpath: Path of the child-property in the form of parent-path:child-name
+        """
+        # TODO permission?
+        try:
+            parent, children = childpath.split(':', 1)
+            if not children:
+                raise ValueError
+        except ValueError:
+            logger.error(f'Could not add child-property because the format of {childpath} is incorrect')
+            return False
+        if parent in self.properties:
+            childrenList: List[str] = children.split(':')
+            self.properties[parent].push(childrenList)
+        else:
+            logger.error(f'Attempted to add child-property {children} to non-existent parent-property {parent}')
+            return False
+
+    def pop(self, childpath: str):
+        # TODO permission?
+        try:
+            parent, children = childpath.split(':', 1)
+        except ValueError:
+            logger.error(f'Could not remove child-property because the format of {childpath} is incorrect')
+            return
+        if parent in self.properties:
+            childrenList: List[str] = children.split(':')
+            self.properties[parent].pop(childrenList)
+        else:
+            logger.error(f'Attempted to remove child-property {children} from non-existent parent-property {parent}')

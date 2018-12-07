@@ -12,6 +12,10 @@ DEFAULT_MODULE_NAME = 'poo'
 DEFAULT_PROPERTY_NAME = 'foo'
 DEFAULT_PROPERTY_VALUE = 'Kruder'
 NEW_PROPERTY_VALUE = 'Dorfmeister'
+CHILD_PROPERTY_NAME = 'child'
+CHILD_PROPERTY_VALUE = 'I am a child'
+GRANDCHILD_PROPERTY_NAME = 'grandchild'
+GRANDCHILD_PROPERTY_VALUE = 'I am a grandchild'
 
 
 @pytest.fixture
@@ -83,3 +87,54 @@ def test_property_write(under_test_read_write: PropertyWrapper, default_property
     under_test_read_write.set(NEW_PROPERTY_VALUE)
     assert (under_test_read_write.get() == NEW_PROPERTY_VALUE)
     context_mock.emit.assert_called_once_with(s(f"{under_test_read_write.prop.fullname()}:changed"))
+
+
+def test_property_child(under_test_read_write: PropertyWrapper, default_property_base, context_mock):
+    assert under_test_read_write.push([CHILD_PROPERTY_NAME])
+    assert under_test_read_write.set(CHILD_PROPERTY_VALUE, child=[CHILD_PROPERTY_NAME])
+    assert under_test_read_write.get(child=[CHILD_PROPERTY_NAME]) == CHILD_PROPERTY_VALUE
+    context_mock.emit.assert_called_once_with(
+        s(f"{under_test_read_write.prop.fullname()}:{CHILD_PROPERTY_NAME}:changed"))
+
+
+def test_property_nested_child(under_test_read_write: PropertyWrapper, default_property_base, context_mock):
+    # test adding child and grandchild in one step
+    assert under_test_read_write.push([CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
+    assert_child(context_mock, under_test_read_write)
+    assert_grandchild(context_mock, under_test_read_write)
+    # test popping of child
+    assert under_test_read_write.pop(child=[CHILD_PROPERTY_NAME])
+    with LogCapture(attributes=strip_prefix) as log_capture:
+        under_test_read_write.get([CHILD_PROPERTY_NAME])
+        log_capture.check(
+            f'Tried to read non-existent child-property {under_test_read_write.prop.fullname()}:{CHILD_PROPERTY_NAME}',
+        )
+    # test adding child and grandchild in two steps
+    assert under_test_read_write.push([CHILD_PROPERTY_NAME])
+    assert_child(context_mock, under_test_read_write)
+    assert under_test_read_write.push([CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
+    assert_grandchild(context_mock, under_test_read_write)
+    # test popping of grandchild
+    assert under_test_read_write.pop(child=[CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
+    assert_child(context_mock, under_test_read_write)
+    with LogCapture(attributes=strip_prefix) as log_capture:
+        under_test_read_write.get([GRANDCHILD_PROPERTY_NAME])
+        log_capture.check(
+            f'Tried to read non-existent child-property {under_test_read_write.prop.fullname()}:{GRANDCHILD_PROPERTY_NAME}',
+        )
+
+
+def assert_child(context_mock, under_test_read_write):
+    under_test_read_write.set(CHILD_PROPERTY_VALUE + "old", child=[CHILD_PROPERTY_NAME])
+    assert under_test_read_write.set(CHILD_PROPERTY_VALUE, child=[CHILD_PROPERTY_NAME])
+    assert under_test_read_write.get(child=[CHILD_PROPERTY_NAME]) == CHILD_PROPERTY_VALUE
+    context_mock.emit.assert_called_with(
+        s(f"{under_test_read_write.prop.fullname()}:{CHILD_PROPERTY_NAME}:changed"))
+
+
+def assert_grandchild(context_mock, under_test_read_write):
+    under_test_read_write.set(GRANDCHILD_PROPERTY_VALUE + "old", child=[CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
+    assert under_test_read_write.set(GRANDCHILD_PROPERTY_VALUE, child=[CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
+    assert under_test_read_write.get(child=[CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME]) == GRANDCHILD_PROPERTY_VALUE
+    context_mock.emit.assert_called_with(
+        s(f"{under_test_read_write.prop.fullname()}:{CHILD_PROPERTY_NAME}:{GRANDCHILD_PROPERTY_NAME}:changed"))
