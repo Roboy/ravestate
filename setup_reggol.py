@@ -29,9 +29,10 @@ beautiful synced console-file logging. Woah!
     long_description_content_type="text/markdown",
 
     package_dir={'': 'modules'},
-    packages=setuptools.find_packages("modules", exclude=["reggol*"]),
+    packages=setuptools.find_packages("modules", exclude=["ravestate*"]),
+    include_package_data=False,
 
-    install_requires=required,
+    install_requires=[],
     python_requires='>=3.6',
 
     classifiers=[

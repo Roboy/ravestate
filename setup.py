@@ -3,8 +3,16 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+required_url = []
+required = []
 with open("requirements.txt", "r") as freq:
-    required = freq.read().split()
+    for line in freq.read().split():
+        if "://" in line:
+            required_url.append(line)
+        else:
+            required.append(line)
+
+packages = setuptools.find_packages("modules", exclude=["reggol*"])
 
 setuptools.setup(
     name="ravestate",
@@ -17,17 +25,18 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
 
-    package_dir={'': 'modules'},
-    packages=setuptools.find_packages("modules", exclude=["reggol*"]),
+    package_dir={package: 'modules/'+package for package in packages},
+    packages=packages,
     include_package_data=True,
+    package_data={'ravestate_phrases_basic_en': ['en/*.yml']},
     scripts=["rasta"],
 
-    install_requires=required,
+    install_requires=required + ["reggol"],
+    dependency_links=required_url,
     python_requires='>=3.6',
 
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
 )
