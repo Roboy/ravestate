@@ -72,6 +72,15 @@ def help_string() -> str:
     return "\n".join(argparser.format_help().split("\n")[2:])
 
 
+def strip_prefix(lr: logging.LogRecord) -> str:
+    """
+    Split the prefix from a logging record, such that the
+     original message may be recovered for tests.
+    :return: The original message from the log record,
+     without `[module] [level] ` prefix.
+    """
+    return "".join(lr.msg.split("] ")[2:])
+
 args, unknown_args = argparser.parse_known_args()
 sys.argv[1:] = unknown_args
 set_default_loglevel(args.loglevel)

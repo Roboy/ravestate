@@ -4,6 +4,8 @@ from os.path import join, dirname, realpath
 
 from ravestate.config import Configuration
 from ravestate.module import Module
+from reggol import strip_prefix
+
 
 @pytest.fixture
 def config_file_paths():
@@ -20,11 +22,9 @@ def under_test():
 
 def test_read_config_1(under_test: Configuration, config_file_paths):
     assert len(under_test.parsed_config_per_module) == 0
-    with LogCapture() as log_capture:
+    with LogCapture(attributes=strip_prefix) as log_capture:
         under_test.read(config_file_paths[0])
-        log_capture.check(
-            ('root', 'WARNING', f"Skipping invalid entry for config file {config_file_paths[0]}.")
-        )
+        log_capture.check(f"Skipping invalid entry for config file {config_file_paths[0]}.")
         assert len(under_test.parsed_config_per_module) == 2
         assert under_test.parsed_config_per_module["foo"]["a"] == True
         assert under_test.parsed_config_per_module["poo"]["c"] == 1
@@ -42,15 +42,13 @@ def test_read_config_2(under_test: Configuration, config_file_paths):
 def test_apply_config(under_test: Configuration, config_file_paths):
     under_test.read(config_file_paths[0])
     under_test.read(config_file_paths[1])
-    with LogCapture() as log_capture:
+    with LogCapture(attributes=strip_prefix) as log_capture:
         under_test.add_conf(Module(name="foo", config={
             "a": "hehe",
             "b": "hoho",
             "c": "lol"
         }))
-        log_capture.check((
-            'root', 'WARNING',
-            f"Config entry for foo.a has conflicting type bool (should be str)."))
+        log_capture.check(f"Config entry for foo.a has conflicting type bool (should be str).")
         assert under_test.get("foo", "a") == False
         assert under_test.get("foo", "b") == "haha"
         assert under_test.get("foo", "c") == "lol"

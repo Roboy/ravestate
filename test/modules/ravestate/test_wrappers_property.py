@@ -5,6 +5,7 @@ from testfixtures import LogCapture
 from ravestate.icontext import IContext
 from ravestate.property import PropertyBase
 from ravestate.wrappers import PropertyWrapper
+from reggol import strip_prefix
 
 
 DEFAULT_MODULE_NAME = 'poo'
@@ -58,20 +59,20 @@ def test_property_get(under_test_read_only: PropertyWrapper, default_property_ba
 
 def test_property_no_read(under_test_nothing: PropertyWrapper, default_property_base: PropertyBase):
     assert (not default_property_base._lock.locked())
-    with LogCapture() as log_capture:
+    with LogCapture(attributes=strip_prefix) as log_capture:
         under_test_nothing.get()
         log_capture.check(
-            ('root', 'ERROR', f"Unauthorized read access in property-wrapper for {under_test_nothing.prop.name}!"),
+            f"Unauthorized read access in property-wrapper for {under_test_nothing.prop.name}!",
         )
 
 
 def test_property_read_only(under_test_read_only: PropertyWrapper, default_property_base):
     # Make sure that writing to read-only wrapper is ineffective
     assert (not default_property_base._lock.locked())
-    with LogCapture() as log_capture:
+    with LogCapture(attributes=strip_prefix) as log_capture:
         under_test_read_only.set(NEW_PROPERTY_VALUE)
         log_capture.check(
-            ('root', 'ERROR', f"Unauthorized write access in property-wrapper {under_test_read_only.prop.name}!"),
+            f"Unauthorized write access in property-wrapper {under_test_read_only.prop.name}!",
         )
     assert (under_test_read_only.get() == DEFAULT_PROPERTY_VALUE)
 
