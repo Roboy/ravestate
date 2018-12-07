@@ -4,7 +4,10 @@ from argparse import ArgumentParser
 from argparse import RawDescriptionHelpFormatter
 from argparse import Action
 from typing import List, Tuple, Any
-import logging
+
+from reggol import get_logger, help_string
+logger = get_logger(__name__)
+
 
 def handle_args(*args) -> Tuple[List[str], List[Tuple[str, str, Any]], List[str]]:
     """
@@ -25,7 +28,9 @@ def handle_args(*args) -> Tuple[List[str], List[Tuple[str, str, Any]], List[str]
     argdef = ArgumentParser(
         description="Run a reactive state machine! It's weird, you'll like it.",
         formatter_class=RawDescriptionHelpFormatter,
-        epilog="""
+        epilog=f"""
+{help_string()}
+
 usage:
   > rasta ravestate_facerec ravestate_hello_world
     Import two python modules and run a context.
@@ -54,7 +59,7 @@ usage:
             if isinstance(values, str):
                 values = [values]
             if len(values) < 3:
-                logging.error(f"Not enough values for -d argument: expecting 3, got {len(values)}!")
+                logger.error(f"Not enough values for -d argument: expecting 3, got {len(values)}!")
                 return
             if len(values) > 3:
                 values = (values[0], values[1], tuple(values[2:]))

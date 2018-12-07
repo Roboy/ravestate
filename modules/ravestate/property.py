@@ -1,7 +1,9 @@
 # Ravestate property classes
 
 from threading import Lock
-import logging
+
+from reggol import get_logger
+logger = get_logger(__name__)
 
 
 class PropertyBase:
@@ -46,7 +48,7 @@ class PropertyBase:
         Read the current property value.
         """
         if not self.allow_read:
-            logging.error(f"Unauthorized read access in property {self.name}!")
+            logger.error(f"Unauthorized read access in property {self.name}!")
             return None
         return self.value
 
@@ -57,7 +59,7 @@ class PropertyBase:
         :return: True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
-            logging.error(f"Unauthorized write access in property {self.name}!")
+            logger.error(f"Unauthorized write access in property {self.name}!")
             return False
         if self.always_signal_changed or self.value != value:
             self.value = value

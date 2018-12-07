@@ -1,9 +1,11 @@
 # Ravestate State-related definitions
 
-import logging
 from typing import Callable, Optional, Any
 
 from ravestate.constraint import Conjunct, Disjunct, s, Constraint
+
+from reggol import get_logger
+logger = get_logger(__name__)
 
 
 class StateActivationResult:
@@ -37,7 +39,7 @@ class State:
 
         # catch the insane case
         if not len(read) and not triggers and not is_receptor:
-            logging.warning(
+            logger.warning(
                 f"The state `{self.name}` is not reading any properties, nor waiting for any triggers. " +
                 "It will never be activated!")
 

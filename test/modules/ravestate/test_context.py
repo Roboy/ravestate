@@ -4,6 +4,7 @@ from testfixtures import LogCapture
 
 from ravestate.icontext import IContext
 from ravestate.context import Context
+from reggol import strip_prefix
 
 
 @pytest.fixture
@@ -45,11 +46,9 @@ def test_run(mocker, under_test):
 def test_run_error(under_test):
     under_test.shutdown_flag = True
     under_test.run()
-    with LogCapture() as log_capture:
+    with LogCapture(attributes=strip_prefix) as log_capture:
         under_test.run()
-        log_capture.check(
-            ('root', 'ERROR', 'Attempt to start context twice!'),
-        )
+        log_capture.check('Attempt to start context twice!')
 
 
 def test_shutting_down(under_test):
