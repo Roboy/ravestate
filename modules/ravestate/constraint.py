@@ -3,6 +3,7 @@ from typing import List, Set
 from reggol import get_logger
 logger = get_logger(__name__)
 
+
 def s(signalname: str):
     """
     Alias to call Signal-constructor
@@ -21,7 +22,7 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         return set()
 
-    def set_signal_true(self, signal):
+    def acquire(self, signal):
         logger.error("Don't call this method on the super class Constraint")
         pass
 
@@ -68,7 +69,7 @@ class Signal(Constraint):
     def get_all_signals(self) -> Set:
         return {self}
 
-    def set_signal_true(self, signal):
+    def acquire(self, signal):
         if self == signal:
             self.fulfilled = True
 
@@ -118,9 +119,9 @@ class Conjunct(Constraint):
     def get_all_signals(self) -> Set[Signal]:
         return self._signals
 
-    def set_signal_true(self, signal: Signal):
+    def acquire(self, signal: Signal):
         for si in self._signals:
-            si.set_signal_true(signal)
+            si.acquire(signal)
 
     def evaluate(self) -> bool:
         return all(map(lambda si: si.evaluate(), self._signals))
@@ -172,9 +173,9 @@ class Disjunct(Constraint):
     def get_all_signals(self) -> Set[Signal]:
         return {signal for conjunct in self._conjunctions for signal in conjunct._signals}
 
-    def set_signal_true(self, signal: Signal):
+    def acquire(self, signal: Signal):
         for conjunct in self._conjunctions:
-            conjunct.set_signal_true(signal)
+            conjunct.acquire(signal)
 
     def evaluate(self) -> bool:
         return any(map(lambda si: si.evaluate(), self._conjunctions))

@@ -26,7 +26,7 @@ def context_mock(mocker):
 
 @pytest.fixture
 def default_property_base():
-    prop = PropertyBase(name=DEFAULT_PROPERTY_NAME, default=DEFAULT_PROPERTY_VALUE)
+    prop = PropertyBase(name=DEFAULT_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE)
     prop.module_name = DEFAULT_MODULE_NAME
     return prop
 

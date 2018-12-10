@@ -1,4 +1,5 @@
-# Interface for the context (needed to preempt cyclic dependencies)
+# Interface for the context towards activation and
+#  context/property wrappers (needed to preempt cyclic dependencies).
 
 
 from ravestate import property

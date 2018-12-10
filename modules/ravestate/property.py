@@ -20,8 +20,19 @@ class PropertyBase:
             allow_push=True,
             allow_pop=True,
             allow_delete=True,
-            default=None,
+            default_value=None,
             always_signal_changed=False):
+        """
+        
+        :param name: 
+        :param allow_read: 
+        :param allow_write: 
+        :param allow_push: 
+        :param allow_pop: 
+        :param allow_delete: 
+        :param default_value: 
+        :param always_signal_changed: 
+        """
 
         self.name = name
         self.allow_read = allow_read
@@ -29,7 +40,7 @@ class PropertyBase:
         self.allow_push = allow_push
         self.allow_pop = allow_pop
         self.allow_delete = allow_delete
-        self.value = default
+        self.value = default_value
         self._lock = Lock()
         self.module_name = ""
         self.always_signal_changed = always_signal_changed

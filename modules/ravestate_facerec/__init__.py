@@ -30,5 +30,5 @@ def facerec_shutdown():
 
 registry.register(
     name="facerec",
-    props=PropertyBase(name="face", default=""),
+    props=PropertyBase(name="face", default_value=""),
     states=(facerec_run, facerec_shutdown))

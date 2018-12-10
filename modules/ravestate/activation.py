@@ -5,11 +5,18 @@ from ravestate import state
 from ravestate import wrappers
 from ravestate import icontext
 from threading import Thread
+from typing import Set
 
 from ravestate.constraint import Signal, Constraint, s
+from ravestate.iactivation import IStateActivation, ISignalInstance
+from ravestate.siginst import SignalInstance
 
 
-class StateActivation:
+class StateActivation(IStateActivation):
+    """
+    Encapsulates the potential activation of a state. Tracks the fulfillment of
+     certain state-defined constraints that are required before activation.
+    """
 
     def __init__(self, st: state.State, ctx: icontext.IContext):
         self.state_to_activate = st
@@ -22,18 +29,26 @@ class StateActivation:
         # TODO: Calculate specificity properly
         return 1.
 
-    def notify_signal(self, signal: Signal):
-        self.unfulfilled.set_signal_true(signal)
-        return 1 if self.unfulfilled.evaluate() else 0
+    def write_props(self) -> Set[str]:
+        pass
 
-    def run(self, args=(), kwargs={}):
+    def wiped(self, signal: ISignalInstance) -> None:
+        pass
+
+    def acquire(self, signal: SignalInstance) -> None:
+        self.unfulfilled.acquire(signal)
+
+    def update(self) -> bool:  # Returns False if out of hope for activation
+        pass
+
+    def run(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
         return Thread(target=self._run_private)
 
     def _run_private(self):
         context_wrapper = wrappers.ContextWrapper(self.ctx, self.state_to_activate)
-        result = self.state_to_activate(context_wrapper, self.args, self.kwargs)
+        result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
         if isinstance(result, state.Emit) and self.state_to_activate.signal:
             self.ctx.emit(s(self.state_to_activate.signal_name()))
         if isinstance(result, state.Delete):

@@ -61,7 +61,7 @@ class State:
         self.action = action
         self.module_name = ""
 
-    def __call__(self, context, args, kwargs) -> StateActivationResult:
+    def __call__(self, context, *args, **kwargs) -> StateActivationResult:
         return self.action(context, *args, **kwargs)
 
     def signal_name(self):

@@ -5,6 +5,7 @@ logger = get_logger(__name__)
 
 from threading import Thread, Lock, Semaphore
 from typing import Optional, Any, Tuple, List, Set, Dict
+from collections import defaultdict
 
 from ravestate import icontext
 from ravestate import activation
@@ -21,8 +22,10 @@ class Context(icontext.IContext):
 
     default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
     default_property_signal_names: Tuple[str] = (":changed", ":pushed", ":popped", ":deleted")
+
     core_module_name = "core"
     import_modules_config = "import"
+    tick_rate_config = "tickrate"
 
     def __init__(self, *arguments):
         """
@@ -33,7 +36,8 @@ class Context(icontext.IContext):
         modules, overrides, config_files = argparse.handle_args(*arguments)
         self.config = Configuration(config_files)
         self.core_config = {
-            self.import_modules_config: []
+            self.import_modules_config: [],
+            self.tick_rate_config: 20
         }
         self.config.add_conf(module.Module(name=self.core_module_name, config=self.core_config))
 
@@ -46,7 +50,7 @@ class Context(icontext.IContext):
         self.activation_candidates = dict()
 
         self.states = set()
-        self.states_per_signal: Dict[Signal, Set] = {s(signal_name): set() for signal_name in self.default_signal_names}
+        self.states_per_signal_age: Dict[Signal, Dict[int, Set]] = {s(signal_name): set() for signal_name in self.default_signal_names}
         self.states_lock = Lock()
 
         # Set required config overrides
@@ -122,7 +126,7 @@ class Context(icontext.IContext):
         # register the state's signal
         with self.states_lock:
             if st.signal:
-                self.states_per_signal[st.signal] = set()
+                self.states_per_signal_age[st.signal] = defaultdict(set)
             # check to recognize states using old signal implementation
             if isinstance(st.triggers, str):
                 logger.error(f"Attempt to add state which depends on a signal `{st.triggers}`  "
@@ -130,8 +134,8 @@ class Context(icontext.IContext):
 
             # make sure that all of the state's depended-upon signals exist
             for signal in st.triggers.get_all_signals():
-                if signal in self.states_per_signal:
-                    self.states_per_signal[signal].add(st)
+                if signal in self.states_per_signal_age:
+                    self.states_per_signal_age[signal][0].add(st)
                 else:
                     logger.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
             self.states.add(st)
@@ -147,9 +151,9 @@ class Context(icontext.IContext):
             return
         with self.states_lock:
             if st.signal:
-                self.states_per_signal.pop(st.signal)
+                self.states_per_signal_age.pop(st.signal)
             for signal in st.triggers.get_all_signals():
-                    self.states_per_signal[signal].remove(st)
+                    self.states_per_signal_age[signal].remove(st)
             self.states.remove(st)
 
     def add_prop(self, *, prop: property.PropertyBase) -> None:
@@ -166,7 +170,7 @@ class Context(icontext.IContext):
         # register all of the property's signals
         with self.states_lock:
             for signalname in self.default_property_signal_names:
-                self.states_per_signal[s(prop.fullname() + signalname)] = set()
+                self.states_per_signal_age[s(prop.fullname() + signalname)] = defaultdict(set)
 
     def get_prop(self, key: str) -> Optional[property.PropertyBase]:
         """
@@ -210,53 +214,8 @@ class Context(icontext.IContext):
 
     def _run_private(self):
         while not self.shutdown_flag:
-            # TODO: Recognize and signal Idleness
-            self.signal_queue_counter.acquire()
-            with self.signal_queue_lock:
-                signal = self.signal_queue.pop(0)
-
-            # collect states which depend on the new signal,
-            # and create state activation objects for them if necessary
-            logger.debug(f"Received {signal.name} ...")
-            with self.states_lock:
-                for state in self.states_per_signal[signal]:
-                    if state.name not in self.activation_candidates:
-                        self.activation_candidates[state.name] = activation.StateActivation(state, self)
-
-            logger.debug("State activation candidates: \n"+"\n".join(
-                "- "+state_name for state_name in self.activation_candidates))
-
-            current_activation_candidates = self.activation_candidates
-            self.activation_candidates = dict()
-            consider_for_immediate_activation = []
-
-            # go through candidates and remove those which want to be removed,
-            # remember those which want to be remembered, forget those which want to be forgotten
-            for state_name, act in current_activation_candidates.items():
-                notify_return = act.notify_signal(signal)
-                logger.debug(f"-> {act.state_to_activate.name} returned {notify_return} on notify_signal {signal.name}")
-                if notify_return == 0:
-                    self.activation_candidates[state_name] = act
-                elif notify_return > 0:
-                    consider_for_immediate_activation.append(act)
-                # ignore act_state -1: Means that state activation is considering itself canceled
-
-            # sort the state activations by their specificity
-            consider_for_immediate_activation.sort(key=lambda act: act.specificity(), reverse=True)
-
-            # let the state with the highest specificity claim write props first, then lower ones.
-            # a state will only be activated if all of it's write-props are available.
-            # TODO: Recognize same-specificity states and actively decide between them.
-            claimed_write_props = set()
-            for act in consider_for_immediate_activation:
-                all_write_props_free = True
-                for write_prop in act.state_to_activate.write_props:
-                    if write_prop in claimed_write_props:
-                        all_write_props_free = False
-                        break
-                if all_write_props_free:
-                    logger.debug(f"-> Activating {act.state_to_activate.name}")
-                    thread = act.run()
-                    thread.start()
-                else:
-                    logger.debug(f"-> Dropping activation of {act.state_to_activate.name}.")
+            # Acquire new state activations for every signal instance
+            # Update all state activations
+            # Forget unreferenced signal instances
+            # Increment age on active signal instances
+            pass
