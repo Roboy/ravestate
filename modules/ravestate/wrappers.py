@@ -38,7 +38,8 @@ class PropertyWrapper:
 
     def get(self, child: List[str] = None):
         """
-        Read the current property value.
+        Read the current property value or the value of children of the property if child-param is given
+        :param child: top-down list of child ancestry of the child to get the value from
         """
         if not self.allow_read:
             logger.error(f"Unauthorized read access in property-wrapper for {self.prop.name}!")
@@ -49,8 +50,9 @@ class PropertyWrapper:
 
     def set(self, value, child: List[str] = None):
         """
-        Write a new value to the property.
+        Write a new value to the property or to a child of the property uf child-param is given
         :param value: The new value.
+        :param child: top-down list of child ancestry of the child that should be changed
         :return: True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
@@ -63,9 +65,21 @@ class PropertyWrapper:
         return False
 
     def push(self, child: List[str], always_signal_changed: bool = False, default=None):
+        """
+        Add a child to the property or to children of the property
+        :param child: top-down list of child ancestry for the new child
+        :param always_signal_changed: new child property will set this for always_signal_changed
+        :param default: default value for new child property
+        :return: True if the push was successful, False otherwise
+        """
         return self.prop.push(child, always_signal_changed, default)
 
     def pop(self, child: List[str]):
+        """
+        Remove a child from the property or from children of the property
+        :param child: top-down list of child ancestry of the child to be removed
+        :return: True if the pop was successful, False otherwise
+        """
         return self.prop.pop(child)
 
 
@@ -120,8 +134,11 @@ class ContextWrapper:
 
     def push(self, childpath: str, always_signal_changed: bool = False, default=None):
         """
-
+        Add a child to a property or to children of the property
         :param childpath: Path of the child-property in the form of parent-path:child-name
+        :param always_signal_changed: new child property will set this for always_signal_changed
+        :param default: default value for new child property
+        :return: True if the push was successful, False otherwise
         """
         try:
             parent, children = childpath.split(':', 1)
@@ -132,12 +149,17 @@ class ContextWrapper:
             return False
         if parent in self.properties:
             childrenList: List[str] = children.split(':')
-            self.properties[parent].push(childrenList, always_signal_changed, default)
+            return self.properties[parent].push(childrenList, always_signal_changed, default)
         else:
             logger.error(f'Attempted to add child-property {children} to non-existent parent-property {parent}')
             return False
 
     def pop(self, childpath: str):
+        """
+        Remove a child from the property or from children of the property
+        :param childpath: Path of the child-property in the form of parent-path:child-name
+        :return: True if the pop was successful, False otherwise
+        """
         try:
             parent, children = childpath.split(':', 1)
         except ValueError:

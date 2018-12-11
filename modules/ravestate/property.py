@@ -41,6 +41,10 @@ class PropertyBase:
         return f'{self.parent_path}:{self.name}'
 
     def set_parent_path(self, path):
+        """
+        Set the ancestors (including modulename) for a property
+        :param path: ancestry in the form of modulename:parent_prop_name (or simply modulename)
+        """
         if not self.parent_path:
             self.parent_path = path
         else:
@@ -54,7 +58,8 @@ class PropertyBase:
 
     def read(self, child: List[str] = None):
         """
-        Read the current property value.
+        Read the current property value or the value of children if child-param is given
+        :param child: top-down list of child ancestry
         """
         if not self.allow_read:
             logger.error(f"Unauthorized read access in property {self.fullname()}!")
@@ -70,8 +75,9 @@ class PropertyBase:
 
     def write(self, value, child: List[str] = None):
         """
-        Write a new value to the property.
+        Write a new value to the property or to a child property if child-param is given
         :param value: The new value.
+        :param child: top-down list of child ancestry
         :return: True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
@@ -91,6 +97,13 @@ class PropertyBase:
                 return False
 
     def push(self, child_list: List[str], always_signal_changed: bool = False, default=None):
+        """
+        Add a child to the property or to children of the property
+        :param child_list: top-down list of child ancestry for the new child
+        :param always_signal_changed: new child property will set this for always_signal_changed
+        :param default: default value for new child property
+        :return: True if the push was successful, False otherwise
+        """
         if not self.allow_push:
             logger.error(f"Unauthorized push in property {self.fullname()}!")
             return False
@@ -124,6 +137,11 @@ class PropertyBase:
             return True
 
     def pop(self, child_list: List[str]):
+        """
+        Remove a child from the property or from children of the property
+        :param child_list: top-down list of child ancestry of the child to be removed
+        :return: True if the pop was successful, False otherwise
+        """
         if not self.allow_pop:
             logger.error(f"Unauthorized pop in property {self.fullname()}!")
             return False
