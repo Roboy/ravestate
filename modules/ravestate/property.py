@@ -23,7 +23,7 @@ class PropertyBase:
             allow_pop=True,
             allow_delete=True,
             default=None,
-            always_signal_changed=False):
+            always_signal_changed=False, ):
 
         self.name = name
         self.allow_read = allow_read
@@ -34,11 +34,17 @@ class PropertyBase:
         self.value = default
         self.children: Dict[str, PropertyBase] = dict()
         self._lock = Lock()
-        self.module_name = ""
+        self.parent_path: str = ""
         self.always_signal_changed = always_signal_changed
 
-    def fullname(self):  # TODO names of children
-        return f"{self.module_name}:{self.name}"
+    def fullname(self):
+        return f'{self.parent_path}:{self.name}'
+
+    def set_parent_path(self, path):
+        if not self.parent_path:
+            self.parent_path = path
+        else:
+            logger.error(f'Tried to override parent_path of {self.fullname()}')
 
     def lock(self):
         self._lock.acquire()
@@ -69,16 +75,13 @@ class PropertyBase:
         :return: True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
-            logger.error(f"Unauthorized write access in property {self.name}!")
+            logger.error(f"Unauthorized write access in property {self.fullname()}!")
             return False
         if child:
-            # TODO always_signal_changed for children?
             if child[0] in self.children:
                 return self.children[child[0]].write(value, child=child[1:])
             else:
-                # TODO in grandchild error message it looks like a normal child,
-                #  because the grandchild doesn't know about the parents
-                logger.error(f'Tried to write to non-existent child-property {self.fullname()}:{child}')
+                logger.error(f'Tried to write to non-existent child-property {self.fullname()}:{child[0]}')
                 return None
         else:
             if self.always_signal_changed or self.value != value:
@@ -87,32 +90,52 @@ class PropertyBase:
             else:
                 return False
 
-    def push(self, child_list: List[str]):
-        # TODO permission?
+    def push(self, child_list: List[str], always_signal_changed: bool = False, default=None):
+        if not self.allow_push:
+            logger.error(f"Unauthorized push in property {self.fullname()}!")
+            return False
         if not child_list:
-            logger.error(f'Tried to push empty children List to {self.fullname()}')
+            logger.error(f'Tried to push empty children List to {self.fullname()}!')
             return False
-        if len(child_list) > 1:
-            if child_list[0] not in self.children:
-                self.children[child_list[0]] = PropertyBase(name=child_list[0])
-            return self.children[child_list[0]].push(child_list[1:])
+        direct_child_name = child_list[0]
+        if len(child_list) == 1 and direct_child_name in self.children:
+            logger.error(f"Tried to add already existing child-property {self.fullname()}:{direct_child_name}")
+            return False
+        if direct_child_name not in self.children:
+            child_prop = PropertyBase(name=direct_child_name,
+                                      allow_read=self.allow_read,
+                                      allow_write=self.allow_write,
+                                      allow_push=self.allow_push,
+                                      allow_pop=self.allow_pop,
+                                      allow_delete=self.allow_delete,
+                                      default=default,
+                                      always_signal_changed=always_signal_changed)
+            child_prop.set_parent_path(f'{self.fullname()}')
+            child_prop.lock()
+            if self.allow_read:
+                pass  # TODO frozen value for children
+            if not self.allow_write:
+                child_prop.unlock()
 
-        if child_list[0] not in self.children:
-            self.children[child_list[0]] = PropertyBase(name=child_list[0])
-            return True
+            self.children[direct_child_name] = child_prop
+        if len(child_list) > 1:
+            return self.children[direct_child_name].push(child_list[1:])
         else:
-            logger.error(f"Tried to add already existing child-property {self.fullname()}:{child_list}")
-            return False
+            return True
 
     def pop(self, child_list: List[str]):
-        # TODO permission?
+        if not self.allow_pop:
+            logger.error(f"Unauthorized pop in property {self.fullname()}!")
+            return False
         if not child_list:
             logger.error(f'Tried to pop empty children List from {self.fullname()}')
             return False
         if len(child_list) > 1:
             return self.children[child_list[0]].pop(child_list[1:])
         elif child_list[0] in self.children:
-            self.children.pop(child_list[0])
+            popped_child = self.children.pop(child_list[0])
+            if self.allow_write:
+                popped_child.unlock()
             return True
         else:
             logger.error(f"Tried to remove non-existent child-property {self.fullname()}:{child_list[0]}")

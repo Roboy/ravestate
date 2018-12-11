@@ -36,14 +36,14 @@ class PropertyWrapper:
         if self.allow_write:
             self.prop.unlock()
 
-    def get(self, child: List[str] = None):  # TODO maybe in get() and set() also accept parent:child
+    def get(self, child: List[str] = None):
         """
         Read the current property value.
         """
         if not self.allow_read:
             logger.error(f"Unauthorized read access in property-wrapper for {self.prop.name}!")
             return None
-        elif self.allow_write:
+        elif self.allow_write or child:  # TODO frozen_value for children?
             return self.prop.read(child=child)
         return self.frozen_value
 
@@ -62,12 +62,10 @@ class PropertyWrapper:
             return True
         return False
 
-    def push(self, child: List[str]):
-        # TODO permission?
-        return self.prop.push(child)
+    def push(self, child: List[str], always_signal_changed: bool = False, default=None):
+        return self.prop.push(child, always_signal_changed, default)
 
     def pop(self, child: List[str]):
-        # TODO permission?
         return self.prop.pop(child)
 
 
@@ -120,12 +118,11 @@ class ContextWrapper:
             mod = self.st.module_name
         return self.ctx.conf(mod=mod, key=key)
 
-    def push(self, childpath: str):
+    def push(self, childpath: str, always_signal_changed: bool = False, default=None):
         """
 
         :param childpath: Path of the child-property in the form of parent-path:child-name
         """
-        # TODO permission?
         try:
             parent, children = childpath.split(':', 1)
             if not children:
@@ -135,13 +132,12 @@ class ContextWrapper:
             return False
         if parent in self.properties:
             childrenList: List[str] = children.split(':')
-            self.properties[parent].push(childrenList)
+            self.properties[parent].push(childrenList, always_signal_changed, default)
         else:
             logger.error(f'Attempted to add child-property {children} to non-existent parent-property {parent}')
             return False
 
     def pop(self, childpath: str):
-        # TODO permission?
         try:
             parent, children = childpath.split(':', 1)
         except ValueError:
