@@ -42,45 +42,54 @@ class PropertyWrapper:
         :param child: top-down list of child ancestry of the child to get the value from
         """
         if not self.allow_read:
-            logger.error(f"Unauthorized read access in property-wrapper for {self.prop.name}!")
+            logger.error(f"Unauthorized read access in property-wrapper for {self.prop.fullname()}!")
             return None
-        elif self.allow_write or child:  # TODO frozen_value for children?
-            return self.prop.read(child=child)
+        elif self.allow_write:
+            return self.prop.read()
         return self.frozen_value
 
-    def set(self, value, child: List[str] = None):
+    def set(self, value):
         """
-        Write a new value to the property or to a child of the property uf child-param is given
+        Write a new value to the property.
         :param value: The new value.
-        :param child: top-down list of child ancestry of the child that should be changed
         :return: True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
-            logger.error(f"Unauthorized write access in property-wrapper {self.prop.name}!")
+            logger.error(f"Unauthorized write access in property-wrapper {self.prop.fullname()}!")
             return False
-        if self.prop.write(value, child=child):
-            childname = ':' + ':'.join(child) if child else ''
-            self.ctx.emit(s(f"{self.prop.fullname()}{childname}:changed"))
+        if self.prop.write(value):
+            self.ctx.emit(s(f"{self.prop.fullname()}:changed"))
             return True
         return False
 
-    def push(self, child: List[str], always_signal_changed: bool = False, default=None):
+    def push(self, child: PropertyBase):
         """
         Add a child to the property or to children of the property
-        :param child: top-down list of child ancestry for the new child
-        :param always_signal_changed: new child property will set this for always_signal_changed
-        :param default: default value for new child property
+        :param child: Parent-less, child-less property object to add.
+         Name of the child must be unique among existing children of this property.
         :return: True if the push was successful, False otherwise
         """
-        return self.prop.push(child, always_signal_changed, default)
+        if not self.allow_write:
+            logger.error(f"Unauthorized push access in property-wrapper {self.prop.fullname()}!")
+            return False
+        if self.prop.push(child):
+            self.ctx.emit(s(f"{self.prop.fullname()}:pushed"))
+            return True
+        return False
 
-    def pop(self, child: List[str]):
+    def pop(self, childname):
         """
         Remove a child from the property or from children of the property
-        :param child: top-down list of child ancestry of the child to be removed
+        :param childname: Name of the direct child to be removed
         :return: True if the pop was successful, False otherwise
         """
-        return self.prop.pop(child)
+        if not self.allow_write:
+            logger.error(f"Unauthorized pop access in property-wrapper {self.prop.fullname()}!")
+            return False
+        if self.prop.pop(childname):
+            self.ctx.emit(s(f"{self.prop.fullname()}:popped"))
+            return True
+        return False
 
 
 class ContextWrapper:
@@ -92,29 +101,29 @@ class ContextWrapper:
     def __init__(self, ctx: icontext.IContext, st: state.State):
         self.st = st
         self.ctx = ctx
-        self.properties = {
-            propname : PropertyWrapper(
-                prop=ctx.get_prop(propname), ctx=ctx,
-                allow_read=propname in st.read_props,
-                allow_write=propname in st.write_props)
-            for propname in st.write_props+st.read_props
-        }
+        self.properties = dict()
+        # Recursively complete properties dict with children:
+        for propname in st.write_props+st.read_props:
+            # May have been covered by a parent before
+            if propname not in self.properties:
+                prop_and_children = ctx.get_prop(propname).gather_children()
+                for prop in prop_and_children:
+                    # Child may have been covered by a parent before
+                    if prop.fullname() not in self.properties:
+                        self.properties[prop.fullname()] = PropertyWrapper(
+                            prop=prop, ctx=ctx,
+                            allow_read=propname in st.read_props,
+                            allow_write=propname in st.write_props)
 
     def __setitem__(self, key, value):
-        keyList = key.split(':')
-        if len(keyList) == 1 and keyList[0] in self.properties:
-            return self.properties[keyList[0]].set(value)
-        elif keyList[0] in self.properties:
-            return self.properties[keyList[0]].set(value, child=keyList[1:])
+        if key in self.properties:
+            return self.properties[key].set(value)
         else:
             logger.error(f"State {self.st.name} attempted to write property {key} without permission!")
 
     def __getitem__(self, key) -> Any:
-        keyList = key.split(':')
-        if len(keyList) == 1 and keyList[0] in self.properties:
-            return self.properties[keyList[0]].get()
-        elif keyList[0] in self.properties:
-            return self.properties[keyList[0]].get(child=keyList[1:])
+        if key in self.properties:
+            return self.properties[key].get()
         else:
             logger.error(f"State {self.st.name}` attempted to access property {key} without permission!")
 
@@ -132,41 +141,50 @@ class ContextWrapper:
             mod = self.st.module_name
         return self.ctx.conf(mod=mod, key=key)
 
-    def push(self, childpath: str, always_signal_changed: bool = False, default=None):
+    def push(self, parentpath: str, child: PropertyBase):
         """
-        Add a child to a property or to children of the property
-        :param childpath: Path of the child-property in the form of parent-path:child-name
-        :param always_signal_changed: new child property will set this for always_signal_changed
-        :param default: default value for new child property
+        Add a child to a property.
+         Note: Child must not yet have a parent or children of itself.
+          Write-access to parent is needed.
+        :param parentpath: Path of the parent that should receive the new child.
+        :param child: Parent-less, child-less property object to add.
         :return: True if the push was successful, False otherwise
         """
-        try:
-            parent, children = childpath.split(':', 1)
-            if not children:
-                raise ValueError
-        except ValueError:
-            logger.error(f'Could not add child-property because the format of {childpath} is incorrect')
+        if child.parent_path:
+            logger.error(f"Attempted to push child property {child.name} to parent {parentpath}, but it already has parent {child.parentpath}!")
             return False
-        if parent in self.properties:
-            childrenList: List[str] = children.split(':')
-            return self.properties[parent].push(childrenList, always_signal_changed, default)
+        if parentpath in self.properties:
+            if self.properties[parentpath].push(child):
+                self.properties[child.fullname()] = PropertyWrapper(
+                    prop=child, ctx=self.ctx,
+                    allow_read=self.properties[parentpath].allow_read,
+                    allow_write=self.properties[parentpath].allow_write)
+                    return True
         else:
-            logger.error(f'Attempted to add child-property {children} to non-existent parent-property {parent}')
+            logger.error(f'Attempted to add child-property {child.name} to non-accessible parent {parentpath}!')
             return False
 
-    def pop(self, childpath: str):
+    def pop(self, path: str):
         """
-        Remove a child from the property or from children of the property
-        :param childpath: Path of the child-property in the form of parent-path:child-name
+        Delete a property (remove it from context and it's parent).
+         Note: Write-access to parent is needed!
+        :param path: Path to the property. Must be nested (not root-level)!
         :return: True if the pop was successful, False otherwise
         """
-        try:
-            parent, children = childpath.split(':', 1)
-        except ValueError:
-            logger.error(f'Could not remove child-property because the format of {childpath} is incorrect')
-            return
-        if parent in self.properties:
-            childrenList: List[str] = children.split(':')
-            self.properties[parent].pop(childrenList)
+        path_parts = path.split(":")
+        if len(path_parts) < 3:
+            logger.error("Path to pop is not a nested property: f{path}")
+            return False
+        parentpath = ":".join(path_parts[:-1])
+        if parentpath in self.properties:
+            if self.properties[parentpath].pop(path_parts[1]):
+                # Remove property from own dict
+                del self.properties[path]
+                # Also remove the deleted propertie's children
+                for childpath in list(self.properties.keys()):
+                    if childpath.startswith(path+":"):
+                        del self.properties[childpath]
+                return True
         else:
-            logger.error(f'Attempted to remove child-property {children} from non-existent parent-property {parent}')
+            logger.error(f'Attempted to remove child-property {path} from non-existent parent-property {parentpath}')
+            return False
