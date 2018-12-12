@@ -3,6 +3,7 @@
 from typing import List, Set, Dict, Optional
 from ravestate.iactivation import IStateActivation, ISignalInstance
 from threading import Lock
+from collections import defaultdict
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -14,6 +15,7 @@ class CausalGroup:
      instances (a "supersignal"). These must synchronize wrt/ their (un)written
      properties and state activation candidates, such that they don't cause output races.
     """
+
     # Lock for the whole causal group
     _lock: Lock
 
@@ -27,7 +29,7 @@ class CausalGroup:
     #   and might still resign, which would make that state's write prop's
     #   available again.
     #
-    #  -> it which case it is useful to still see the other
+    #  -> In this case it is useful to still see the other
     #   state activation candidates for those props in _suitors_per_property.
     #
     # Also, _refcount_per_signal_per_activation_per_property needs to be as
@@ -40,23 +42,57 @@ class CausalGroup:
     #  differently timed constraints. We essentially keep a {(propname, activation, signal, refcount)}
     #  index structure, that will be necessary for the following use-cases:
     #
-    #  * Determining whether an activation is the most specific for a certain property (O(i * log p))
-    #    -> Gather state activations per instance per property, sort by specificity
-    #  * Determining whether a signal is stale (no more activation references) (O(n)) -> Omitted per SignalInstance.refs
+    #  * Determining whether an activation is the most specific for a certain property set
+    #    -> Gather state activations per instance (i) per property (p), sort by specificity
+    #    -> O(i * log p)
+    #  * Determining whether a signal is stale (no more activation references)
+    #    -> For every property name (p), check whether the signal (i) is registered
+    #    -> O(p * log i)
     #
     #  Container operations:
     #
-    #  * Inserting a signal instance / state activation: O(log n)
-    #  * Removing a state activation: O(log n)
-    #  * Wiping a signal instance: O(p)
+    #  * Inserting a signal instance (i) / state activation (a)
+    #    -> O(log p + log i + log a)
+    #  * Removing a state activation (a) for a signal instance (i) (for each of the state's referenced properties (p))
+    #    -> O(log p + log i + log a)
+    #  * Wiping a signal instance (i)
+    #    -> O(p * log i)
     #
-    _refcount_per_signal_per_activation_per_property: Dict[str, Dict[ISignalInstance, Dict[IStateActivation, int]]]
+    _refcount_per_signal_per_activation_per_property: Dict[
+        str,  # Property name
+        Dict[
+            ISignalInstance,
+            Dict[
+                IStateActivation,
+                int
+            ]
+        ]
+    ]
 
     def __init__(self, properties: Set[str]):
         self._lock = Lock()
         self._unwritten_props = properties.copy()
+        self._refcount_per_signal_per_activation_per_property = 
 
     def merge(self, other: 'CausalGroup'):
+        pass
+
+    def acquired(self, inst: 'ISignalInstance', acquired_by: IStateActivation) -> None:
+        pass
+
+    def rejected(self, inst: 'ISignalInstance', rejected_by: IStateActivation) -> None:
+        pass
+
+    def is_best_suitor(self, suitor: IStateActivation) -> None:
+        pass
+
+    def consumed(self, props: Set[str]) -> None:
+        pass
+
+    def wiped(self, inst: 'ISignalInstance') -> None:
+        pass
+
+    def stale(self, inst: 'ISignalInstance') -> bool:
         pass
 
 
@@ -125,12 +161,10 @@ class SignalInstance(ISignalInstance):
         """
         Called by StateActivation to notify the signal instance, that
          it is being referenced by an activation constraint.
-        :param acquired_by: State activation instance, which is interested in this property.
+        :param acquired_by: State activation instance,
+         which is interested in this property.
         """
-        for prop in acquired_by.write_props():
-            if prop not in self._unwritten_props:
-                logger.error(f"Attempt to acquire signal instance {self._name} twice for property {prop}!")
-            self._suitors_per_property[prop].add(acquired_by)
+        pass
 
     def rejected(self, rejected_by: IStateActivation) -> None:
         """
@@ -141,10 +175,7 @@ class SignalInstance(ISignalInstance):
         :param rejected_by: State activation instance, which is no longer
          interested in this property.
         """
-        for prop in rejected_by.write_props():
-            self._suitors_per_property[prop].remove(rejected_by)
-            if not self._suitors_per_property[prop]:
-                del self._suitors_per_property[prop]
+        pass
 
     def consent_consumption(self, consumer: IStateActivation) -> bool:
         """
@@ -153,6 +184,8 @@ class SignalInstance(ISignalInstance):
         This will be called periodically on the instance by state activations
          that are ready to go. Therefore, a False return value from this
          function is never a final judgement (more like a "maybe later").
+        As soon as consumption is consented though, the given state activation
+         will be removed from this signals referenced activations!
         :param consumer: The state activation which would like to consume
          this instance for it's write props.
         :return: True if this instance agrees to proceeding with the given consumer
@@ -160,31 +193,14 @@ class SignalInstance(ISignalInstance):
         """
         pass
 
-    def propagate_consumed(
-        self,
-        value: bool,
-        props: Set[str],
-        propagated: Optional[Set['ISignalInstance']]=None
-    ) -> None:
+    def consumed(self, props: Set[str]) -> None:
         """
-        Called either by a child, a parent or a propagate
-        :param value:
+        Called by activation to notify the signal, that it has been
+         consumed by the given set of
         :param props:
-        :param propagated:
+        :return:
         """
-        # Make sure not to cause infinite recursion through the causal group
-        if propagated is None:
-            propagated = set()
-        elif self in propagated:
-            return
-
-        self._unwritten_props -= props
-        for prop in props:
-            if prop in self._suitors_per_property:
-                # Make sure that suitors no longer reference this signal instance
-                for suitor in self._suitors_per_property[prop]:
-                    suitor.wiped(self)
-                del self._suitors_per_property[prop]
+        pass
 
     def wiped(self, child: 'ISignalInstance') -> None:
         pass

@@ -22,10 +22,12 @@ class Module:
             props = (states,)
         if not config:
             config = {}
+
         self.name = name
         self.props = props
         self.states = states
         self.conf = config
+
         for prop in props:
             prop.module_name = name
         for st in states:
