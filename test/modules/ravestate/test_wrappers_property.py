@@ -3,8 +3,9 @@ from ravestate.constraint import s
 from testfixtures import LogCapture
 
 from ravestate.icontext import IContext
+from ravestate.state import State
 from ravestate.property import PropertyBase
-from ravestate.wrappers import PropertyWrapper
+from ravestate.wrappers import PropertyWrapper, ContextWrapper
 from reggol import strip_prefix
 
 
@@ -25,6 +26,11 @@ def context_mock(mocker):
     mocker.patch.object(context_mock, 'add_state')
     mocker.patch.object(context_mock, 'shutdown')
     mocker.patch.object(context_mock, 'shutting_down')
+    return context_mock
+
+@pytest.fixture
+def state_mock(mocker):
+    state_mock = mocker.Mock(name=State.__class__)
     return context_mock
 
 
@@ -49,6 +55,9 @@ def under_test_read_only(default_property_base, context_mock):
 def under_test_read_write(default_property_base, context_mock):
     return PropertyWrapper(prop=default_property_base, ctx=context_mock, allow_read=True, allow_write=True)
 
+@pytest.fixture
+def under_test_context_wrapper(context_mock, state_mock):
+    return ContextWrapper(context_mock, state_mock)
 
 def test_property(under_test_read_only: PropertyWrapper, default_property_base: PropertyBase):
     assert (default_property_base.fullname() == f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}")
@@ -66,7 +75,7 @@ def test_property_no_read(under_test_nothing: PropertyWrapper, default_property_
     with LogCapture(attributes=strip_prefix) as log_capture:
         under_test_nothing.get()
         log_capture.check(
-            f"Unauthorized read access in property-wrapper for {under_test_nothing.prop.name}!",
+            f"Unauthorized read access in property-wrapper for {under_test_nothing.prop.fullname()}!",
         )
 
 
@@ -76,7 +85,7 @@ def test_property_read_only(under_test_read_only: PropertyWrapper, default_prope
     with LogCapture(attributes=strip_prefix) as log_capture:
         under_test_read_only.set(NEW_PROPERTY_VALUE)
         log_capture.check(
-            f"Unauthorized write access in property-wrapper {under_test_read_only.prop.name}!",
+            f"Unauthorized write access in property-wrapper {under_test_read_only.prop.fullname()}!",
         )
     assert (under_test_read_only.get() == DEFAULT_PROPERTY_VALUE)
 
@@ -90,17 +99,20 @@ def test_property_write(under_test_read_write: PropertyWrapper, default_property
 
 
 def test_property_child(under_test_read_write: PropertyWrapper, default_property_base, context_mock):
-    assert under_test_read_write.push([CHILD_PROPERTY_NAME], default=DEFAULT_PROPERTY_VALUE)
-    assert under_test_read_write.get(child=[CHILD_PROPERTY_NAME]) == DEFAULT_PROPERTY_VALUE
-    assert under_test_read_write.set(CHILD_PROPERTY_VALUE, child=[CHILD_PROPERTY_NAME])
-    assert under_test_read_write.get(child=[CHILD_PROPERTY_NAME]) == CHILD_PROPERTY_VALUE
-    context_mock.emit.assert_called_once_with(
-        s(f"{under_test_read_write.prop.fullname()}:{CHILD_PROPERTY_NAME}:changed"))
+    assert under_test_read_write.push(PropertyBase(name=CHILD_PROPERTY_NAME, default=DEFAULT_PROPERTY_VALUE))
+    assert list(under_test_read_write.enum())[0] == f"{under_test_read_write.prop.fullname()}:{CHILD_PROPERTY_NAME}"
+    assert under_test_read_write.prop.children[CHILD_PROPERTY_NAME].read() == DEFAULT_PROPERTY_VALUE
 
 
-def test_property_nested_child(under_test_read_write: PropertyWrapper, default_property_base, context_mock):
+def test_property_nested_child(
+        under_test_context_wrapper: ContextWrapper,
+        under_test_read_write: PropertyWrapper,
+        default_property_base: PropertyBase,
+        context_mock: IContext
+    ):
+
     # test adding child and grandchild in one step
-    assert under_test_read_write.push([CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
+    assert context_mock.push([CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
     assert_child(context_mock, under_test_read_write)
     assert_grandchild(context_mock, under_test_read_write)
     # test popping of child

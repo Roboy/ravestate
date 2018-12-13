@@ -1,9 +1,9 @@
 # Ravestate wrapper classes which limit a state's context access
 
-from ravestate import property
+from ravestate.property import PropertyBase
 from ravestate import state
 from ravestate import icontext
-from typing import Any, List
+from typing import Any, List, Generator
 
 from ravestate.constraint import s
 
@@ -19,7 +19,7 @@ class PropertyWrapper:
     when it is supposed to be written to, and freezing the property's value if it is supposed to
     be read from.
     """
-    def __init__(self, *, prop: property.PropertyBase, ctx: icontext.IContext, allow_read, allow_write):
+    def __init__(self, *, prop: PropertyBase, ctx: icontext.IContext, allow_read: bool, allow_write: bool):
         self.prop = prop
         self.ctx = ctx
         self.allow_read = allow_read and prop.allow_read
@@ -36,7 +36,7 @@ class PropertyWrapper:
         if self.allow_write:
             self.prop.unlock()
 
-    def get(self, child: List[str] = None):
+    def get(self) -> Any:
         """
         Read the current property value or the value of children of the property if child-param is given
         :param child: top-down list of child ancestry of the child to get the value from
@@ -48,7 +48,7 @@ class PropertyWrapper:
             return self.prop.read()
         return self.frozen_value
 
-    def set(self, value):
+    def set(self, value: Any):
         """
         Write a new value to the property.
         :param value: The new value.
@@ -77,7 +77,7 @@ class PropertyWrapper:
             return True
         return False
 
-    def pop(self, childname):
+    def pop(self, childname: str):
         """
         Remove a child from the property or from children of the property
         :param childname: Name of the direct child to be removed
@@ -90,6 +90,16 @@ class PropertyWrapper:
             self.ctx.emit(s(f"{self.prop.fullname()}:popped"))
             return True
         return False
+
+    def enum(self) -> Generator[str, None, None]:
+        """
+        Get the full pathes of each of this propertie's children.
+        """
+        if not self.allow_read:
+            logger.error(f"Unauthorized read access in property-wrapper for {self.prop.fullname()}!")
+            return iter([])
+        return (child.fullname() for _, child in self.prop.children.items())
+
 
 
 class ContextWrapper:
@@ -151,7 +161,7 @@ class ContextWrapper:
         :return: True if the push was successful, False otherwise
         """
         if child.parent_path:
-            logger.error(f"Attempted to push child property {child.name} to parent {parentpath}, but it already has parent {child.parentpath}!")
+            logger.error(f"State {self.st.name} attempted to push child property {child.name} to parent {parentpath}, but it already has parent {child.parentpath}!")
             return False
         if parentpath in self.properties:
             if self.properties[parentpath].push(child):
@@ -159,9 +169,9 @@ class ContextWrapper:
                     prop=child, ctx=self.ctx,
                     allow_read=self.properties[parentpath].allow_read,
                     allow_write=self.properties[parentpath].allow_write)
-                    return True
+                return True
         else:
-            logger.error(f'Attempted to add child-property {child.name} to non-accessible parent {parentpath}!')
+            logger.error(f'State {self.st.name} attempted to add child-property {child.name} to non-accessible parent {parentpath}!')
             return False
 
     def pop(self, path: str):
@@ -173,7 +183,7 @@ class ContextWrapper:
         """
         path_parts = path.split(":")
         if len(path_parts) < 3:
-            logger.error("Path to pop is not a nested property: f{path}")
+            logger.error("State {self.st.name}: Path to pop is not a nested property: f{path}")
             return False
         parentpath = ":".join(path_parts[:-1])
         if parentpath in self.properties:
@@ -186,5 +196,15 @@ class ContextWrapper:
                         del self.properties[childpath]
                 return True
         else:
-            logger.error(f'Attempted to remove child-property {path} from non-existent parent-property {parentpath}')
+            logger.error(f'State {self.st.name} attempted to remove child-property {path} from non-existent parent-property {parentpath}')
             return False
+
+    def enum(self, path) -> Generator[str, None, None]:
+        """
+        Enumerate a propertie's children by their full pathes.
+        """
+        if path in self.properties:
+            return self.properties[key].enum()
+        else:
+            logger.error(f"State {self.st.name} attempted to enumerate property {key} without permission!")
+
