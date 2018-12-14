@@ -8,7 +8,6 @@ from ravestate.property import PropertyBase
 from ravestate.wrappers import PropertyWrapper, ContextWrapper
 from reggol import strip_prefix
 
-
 DEFAULT_MODULE_NAME = 'module'
 DEFAULT_PROPERTY_NAME = 'property'
 DEFAULT_PROPERTY_VALUE = 'Kruder'
@@ -17,6 +16,8 @@ CHILD_PROPERTY_NAME = 'child'
 CHILD_PROPERTY_VALUE = 'I am a child'
 GRANDCHILD_PROPERTY_NAME = 'grandchild'
 GRANDCHILD_PROPERTY_VALUE = 'I am a grandchild'
+CHILD_PROPERTY_FULLNAME = f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}"
+GRANDCHILD_PROPERTY_FULLNAME = f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}:{GRANDCHILD_PROPERTY_NAME}"
 
 
 @pytest.fixture
@@ -28,10 +29,14 @@ def context_mock(mocker):
     mocker.patch.object(context_mock, 'shutting_down')
     return context_mock
 
+
 @pytest.fixture
 def state_mock(mocker):
     state_mock = mocker.Mock(name=State.__class__)
-    return context_mock
+    state_mock.module_name = DEFAULT_MODULE_NAME
+    state_mock.read_props = ()
+    state_mock.write_props = ()
+    return state_mock
 
 
 @pytest.fixture
@@ -55,9 +60,11 @@ def under_test_read_only(default_property_base, context_mock):
 def under_test_read_write(default_property_base, context_mock):
     return PropertyWrapper(prop=default_property_base, ctx=context_mock, allow_read=True, allow_write=True)
 
+
 @pytest.fixture
 def under_test_context_wrapper(context_mock, state_mock):
     return ContextWrapper(context_mock, state_mock)
+
 
 def test_property(under_test_read_only: PropertyWrapper, default_property_base: PropertyBase):
     assert (default_property_base.fullname() == f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}")
@@ -100,57 +107,8 @@ def test_property_write(under_test_read_write: PropertyWrapper, default_property
 
 def test_property_child(under_test_read_write: PropertyWrapper, default_property_base, context_mock):
     assert under_test_read_write.push(PropertyBase(name=CHILD_PROPERTY_NAME, default=DEFAULT_PROPERTY_VALUE))
-    assert list(under_test_read_write.enum())[0] == f"{under_test_read_write.prop.fullname()}:{CHILD_PROPERTY_NAME}"
+    assert list(under_test_read_write.enum())[0] == CHILD_PROPERTY_FULLNAME
     assert under_test_read_write.prop.children[CHILD_PROPERTY_NAME].read() == DEFAULT_PROPERTY_VALUE
-
-
-def test_property_nested_child(
-        under_test_context_wrapper: ContextWrapper,
-        under_test_read_write: PropertyWrapper,
-        default_property_base: PropertyBase,
-        context_mock: IContext
-    ):
-
-    # test adding child and grandchild in one step
-    assert context_mock.push([CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
-    assert_child(context_mock, under_test_read_write)
-    assert_grandchild(context_mock, under_test_read_write)
-    # test popping of child
-    assert under_test_read_write.pop(child=[CHILD_PROPERTY_NAME])
-    with LogCapture(attributes=strip_prefix) as log_capture:
-        under_test_read_write.get([CHILD_PROPERTY_NAME])
-        log_capture.check(
-            f'Tried to read non-existent child-property {under_test_read_write.prop.fullname()}:{CHILD_PROPERTY_NAME}',
-        )
-    # test adding child and grandchild in two steps
-    assert under_test_read_write.push([CHILD_PROPERTY_NAME])
-    assert_child(context_mock, under_test_read_write)
-    assert under_test_read_write.push([CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
-    assert_grandchild(context_mock, under_test_read_write)
-    # test popping of grandchild
-    assert under_test_read_write.pop(child=[CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
-    assert_child(context_mock, under_test_read_write)
-    with LogCapture(attributes=strip_prefix) as log_capture:
-        under_test_read_write.get([CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
-        log_capture.check(
-            f'Tried to read non-existent child-property {DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}:{GRANDCHILD_PROPERTY_NAME}',
-        )
-
-
-def assert_child(context_mock, under_test_read_write):
-    under_test_read_write.set(CHILD_PROPERTY_VALUE + "old", child=[CHILD_PROPERTY_NAME])
-    assert under_test_read_write.set(CHILD_PROPERTY_VALUE, child=[CHILD_PROPERTY_NAME])
-    assert under_test_read_write.get(child=[CHILD_PROPERTY_NAME]) == CHILD_PROPERTY_VALUE
-    context_mock.emit.assert_called_with(
-        s(f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}:changed"))
-
-
-def assert_grandchild(context_mock, under_test_read_write):
-    under_test_read_write.set(GRANDCHILD_PROPERTY_VALUE + "old", child=[CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
-    assert under_test_read_write.set(GRANDCHILD_PROPERTY_VALUE, child=[CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME])
-    assert under_test_read_write.get(child=[CHILD_PROPERTY_NAME, GRANDCHILD_PROPERTY_NAME]) == GRANDCHILD_PROPERTY_VALUE
-    context_mock.emit.assert_called_with(
-        s(f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}:{GRANDCHILD_PROPERTY_NAME}:changed"))
 
 
 def test_property_illegal_push(context_mock):
@@ -158,7 +116,7 @@ def test_property_illegal_push(context_mock):
     prop_no_push.set_parent_path(DEFAULT_MODULE_NAME)
     wrapper = PropertyWrapper(prop=prop_no_push, ctx=context_mock, allow_read=True, allow_write=True)
     with LogCapture(attributes=strip_prefix) as log_capture:
-        assert not wrapper.push([CHILD_PROPERTY_NAME])
+        assert not wrapper.push(child=PropertyBase(name=CHILD_PROPERTY_NAME))
         log_capture.check(
             f'Unauthorized push in property {DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}!',
         )
@@ -168,9 +126,9 @@ def test_property_illegal_pop(context_mock):
     prop_no_pop = PropertyBase(name=DEFAULT_PROPERTY_NAME, default=DEFAULT_PROPERTY_VALUE, allow_pop=False)
     prop_no_pop.set_parent_path(DEFAULT_MODULE_NAME)
     wrapper = PropertyWrapper(prop=prop_no_pop, ctx=context_mock, allow_read=True, allow_write=True)
-    assert wrapper.push([CHILD_PROPERTY_NAME])
+    assert wrapper.push(child=PropertyBase(name=CHILD_PROPERTY_NAME))
     with LogCapture(attributes=strip_prefix) as log_capture:
-        assert not wrapper.pop([CHILD_PROPERTY_NAME])
+        assert not wrapper.pop(CHILD_PROPERTY_NAME)
         log_capture.check(
             f'Unauthorized pop in property {DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}!',
         )

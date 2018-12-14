@@ -42,7 +42,7 @@ class Context(icontext.IContext):
         self.signal_queue_counter = Semaphore(0)
         self.run_task = None
         self.shutdown_flag = False
-        self.properties = {}
+        self.properties: Dict[str, property.PropertyBase] = {}
         self.activation_candidates = dict()
 
         self.states = set()
@@ -158,7 +158,7 @@ class Context(icontext.IContext):
          the same name has already been added previously.
         :param prop: The property object that should be added.
         """
-        if prop.fullname() in self.properties.values():
+        if prop.fullname() in self.properties:
             logger.error(f"Attempt to add property {prop.name} twice!")
             return
         # register property
@@ -167,6 +167,22 @@ class Context(icontext.IContext):
         with self.states_lock:
             for signalname in self.default_property_signal_names:
                 self.states_per_signal[s(prop.fullname() + signalname)] = set()
+
+    def rm_prop(self, *, prop: property.PropertyBase) -> None:
+        """
+        Remove a property from this context.
+        Generates error message, if the property was not added with add_prop() to the context previously
+        :param prop: The property to remove.object
+        """
+        if prop.fullname() not in self.properties:
+            logger.error(f"Attempt to remove unknown property {prop.fullname()}!")
+            return
+        # remove property from context
+        self.properties.pop(prop.fullname())
+        # remove all of the property's signals
+        with self.states_lock:
+            for signalname in self.default_property_signal_names:
+                self.states_per_signal.pop(s(prop.fullname() + signalname))
 
     def get_prop(self, key: str) -> Optional[property.PropertyBase]:
         """

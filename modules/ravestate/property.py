@@ -50,13 +50,14 @@ class PropertyBase:
         else:
             logger.error(f'Tried to override parent_path of {self.fullname()}')
 
-    def gather_children() -> List['PropertyBase']:
+    def gather_children(self) -> List['PropertyBase']:
         """
         Collect this property, and all of it's children.
         """
         result = [self]
-        for child in self.children:
+        for child in self.children.values():
             result += child.gather_children()
+        return result
 
     def lock(self):
         self._lock.acquire()
@@ -114,11 +115,9 @@ class PropertyBase:
             logger.error(f"Unauthorized pop in property {self.fullname()}!")
             return False
         elif child_name in self.children:
-            popped_child = self.children.pop(child_name)
-            if self.allow_write:
-                popped_child.unlock()
+            self.children.pop(child_name)
             return True
         else:
-            logger.error(f"Tried to remove non-existent child-property {self.fullname()}:{child_list[0]}")
+            logger.error(f"Tried to remove non-existent child-property {self.fullname()}:{child_name}")
             return False
 

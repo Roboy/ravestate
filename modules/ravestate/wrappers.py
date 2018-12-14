@@ -3,7 +3,7 @@
 from ravestate.property import PropertyBase
 from ravestate import state
 from ravestate import icontext
-from typing import Any, List, Generator
+from typing import Any, Generator
 
 from ravestate.constraint import s
 
@@ -101,7 +101,6 @@ class PropertyWrapper:
         return (child.fullname() for _, child in self.prop.children.items())
 
 
-
 class ContextWrapper:
     """
     Encapsulates a context towards a state, only offering properties with permissions
@@ -113,7 +112,7 @@ class ContextWrapper:
         self.ctx = ctx
         self.properties = dict()
         # Recursively complete properties dict with children:
-        for propname in st.write_props+st.read_props:
+        for propname in st.write_props + st.read_props:
             # May have been covered by a parent before
             if propname not in self.properties:
                 prop_and_children = ctx.get_prop(propname).gather_children()
@@ -135,7 +134,7 @@ class ContextWrapper:
         if key in self.properties:
             return self.properties[key].get()
         else:
-            logger.error(f"State {self.st.name}` attempted to access property {key} without permission!")
+            logger.error(f"State {self.st.name} attempted to access property {key} without permission!")
 
     def add_state(self, st: state.State):
         self.ctx.add_state(st=st)
@@ -161,7 +160,7 @@ class ContextWrapper:
         :return: True if the push was successful, False otherwise
         """
         if child.parent_path:
-            logger.error(f"State {self.st.name} attempted to push child property {child.name} to parent {parentpath}, but it already has parent {child.parentpath}!")
+            logger.error(f"State {self.st.name} attempted to push child property {child.name} to parent {parentpath}, but it already has parent {child.parent_path}!")
             return False
         if parentpath in self.properties:
             if self.properties[parentpath].push(child):
@@ -169,6 +168,7 @@ class ContextWrapper:
                     prop=child, ctx=self.ctx,
                     allow_read=self.properties[parentpath].allow_read,
                     allow_write=self.properties[parentpath].allow_write)
+                self.ctx.add_prop(prop=child)
                 return True
         else:
             logger.error(f'State {self.st.name} attempted to add child-property {child.name} to non-accessible parent {parentpath}!')
@@ -183,18 +183,23 @@ class ContextWrapper:
         """
         path_parts = path.split(":")
         if len(path_parts) < 3:
-            logger.error("State {self.st.name}: Path to pop is not a nested property: f{path}")
+            logger.error(f"State {self.st.name}: Path to pop is not a nested property: {path}")
             return False
         parentpath = ":".join(path_parts[:-1])
         if parentpath in self.properties:
-            if self.properties[parentpath].pop(path_parts[1]):
+            if self.properties[parentpath].pop(path_parts[-1]):
+                self.ctx.rm_prop(prop=self.properties[path].prop)
                 # Remove property from own dict
                 del self.properties[path]
                 # Also remove the deleted propertie's children
                 for childpath in list(self.properties.keys()):
                     if childpath.startswith(path+":"):
+                        self.ctx.rm_prop(prop=self.properties[childpath].prop)
                         del self.properties[childpath]
                 return True
+            else:
+                logger.error(f'State {self.st.name} attempted to remove non-existent child-property {path}')
+                return False
         else:
             logger.error(f'State {self.st.name} attempted to remove child-property {path} from non-existent parent-property {parentpath}')
             return False
@@ -204,7 +209,7 @@ class ContextWrapper:
         Enumerate a propertie's children by their full pathes.
         """
         if path in self.properties:
-            return self.properties[key].enum()
+            return self.properties[path].enum()
         else:
-            logger.error(f"State {self.st.name} attempted to enumerate property {key} without permission!")
+            logger.error(f"State {self.st.name} attempted to enumerate property {path} without permission!")
 
