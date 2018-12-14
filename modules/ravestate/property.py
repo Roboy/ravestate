@@ -1,8 +1,10 @@
 # Ravestate property classes
 
 from threading import Lock
+from typing import Dict, List, Optional, Any
 
 from reggol import get_logger
+
 logger = get_logger(__name__)
 
 
@@ -21,7 +23,7 @@ class PropertyBase:
             allow_pop=True,
             allow_delete=True,
             default=None,
-            always_signal_changed=False):
+            always_signal_changed=False, ):
 
         self.name = name
         self.allow_read = allow_read
@@ -30,12 +32,32 @@ class PropertyBase:
         self.allow_pop = allow_pop
         self.allow_delete = allow_delete
         self.value = default
+        self.children: Dict[str, PropertyBase] = dict()
         self._lock = Lock()
-        self.module_name = ""
+        self.parent_path: str = ""
         self.always_signal_changed = always_signal_changed
 
     def fullname(self):
-        return f"{self.module_name}:{self.name}"
+        return f'{self.parent_path}:{self.name}'
+
+    def set_parent_path(self, path):
+        """
+        Set the ancestors (including modulename) for a property
+        :param path: ancestry in the form of modulename:parent_prop_name (or simply modulename)
+        """
+        if not self.parent_path:
+            self.parent_path = path
+        else:
+            logger.error(f'Tried to override parent_path of {self.fullname()}')
+
+    def gather_children(self) -> List['PropertyBase']:
+        """
+        Collect this property, and all of it's children.
+        """
+        result = [self]
+        for child in self.children.values():
+            result += child.gather_children()
+        return result
 
     def lock(self):
         self._lock.acquire()
@@ -45,25 +67,57 @@ class PropertyBase:
 
     def read(self):
         """
-        Read the current property value.
+        Read the current property value
         """
         if not self.allow_read:
-            logger.error(f"Unauthorized read access in property {self.name}!")
+            logger.error(f"Unauthorized read access in property {self.fullname()}!")
             return None
         return self.value
 
     def write(self, value):
         """
-        Write a new value to the property.
+        Write a new value to the property
         :param value: The new value.
         :return: True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
-            logger.error(f"Unauthorized write access in property {self.name}!")
+            logger.error(f"Unauthorized write access in property {self.fullname()}!")
             return False
         if self.always_signal_changed or self.value != value:
             self.value = value
             return True
         else:
+            return False
+
+    def push(self, child: 'PropertyBase'):
+        """
+        Add a child to the property
+        :param child: The child object
+        :return: True if the child was added successfully, false otherwise.
+        """
+        if not self.allow_push:
+            logger.error(f"Unauthorized push in property {self.fullname()}!")
+            return False
+        if child.name in self.children:
+            logger.error(f"Tried to add already existing child-property {self.fullname()}:{child.name}")
+            return False
+        child.set_parent_path(self.fullname())
+        self.children[child.name] = child
+        return True
+
+    def pop(self, child_name: str):
+        """
+        Remove a child from the property by it's name.
+        :param child_name: Name of the child to be removed.
+        :return: True if the pop was successful, False otherwise
+        """
+        if not self.allow_pop:
+            logger.error(f"Unauthorized pop in property {self.fullname()}!")
+            return False
+        elif child_name in self.children:
+            self.children.pop(child_name)
+            return True
+        else:
+            logger.error(f"Tried to remove non-existent child-property {self.fullname()}:{child_name}")
             return False
 

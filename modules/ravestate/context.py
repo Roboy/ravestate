@@ -42,10 +42,10 @@ class Context(icontext.IContext):
         self.signal_queue_counter = Semaphore(0)
         self.run_task = None
         self.shutdown_flag = False
-        self.properties = {}
+        self.properties: Dict[str, property.PropertyBase] = {}
         self.activation_candidates = dict()
 
-        self.states = set()
+        self.states: Set[state.State] = set()
         self.states_per_signal: Dict[Signal, Set] = {s(signal_name): set() for signal_name in self.default_signal_names}
         self.states_lock = Lock()
 
@@ -118,6 +118,7 @@ class Context(icontext.IContext):
         for prop in st.read_props+st.write_props:
             if prop not in self.properties:
                 logger.error(f"Attempt to add state which depends on unknown property `{prop}`!")
+                return
 
         # register the state's signal
         with self.states_lock:
@@ -127,6 +128,7 @@ class Context(icontext.IContext):
             if isinstance(st.triggers, str):
                 logger.error(f"Attempt to add state which depends on a signal `{st.triggers}`  "
                               f"defined as a String and not Signal.")
+                return
 
             # make sure that all of the state's depended-upon signals exist
             for signal in st.triggers.get_all_signals():
@@ -134,6 +136,7 @@ class Context(icontext.IContext):
                     self.states_per_signal[signal].add(st)
                 else:
                     logger.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
+                    return
             self.states.add(st)
 
     def rm_state(self, *, st: state.State) -> None:
@@ -158,7 +161,7 @@ class Context(icontext.IContext):
          the same name has already been added previously.
         :param prop: The property object that should be added.
         """
-        if prop.fullname() in self.properties.values():
+        if prop.fullname() in self.properties:
             logger.error(f"Attempt to add property {prop.name} twice!")
             return
         # register property
@@ -167,6 +170,29 @@ class Context(icontext.IContext):
         with self.states_lock:
             for signalname in self.default_property_signal_names:
                 self.states_per_signal[s(prop.fullname() + signalname)] = set()
+
+    def rm_prop(self, *, prop: property.PropertyBase) -> None:
+        """
+        Remove a property from this context.
+        Generates error message, if the property was not added with add_prop() to the context previously
+        :param prop: The property to remove.object
+        """
+        if prop.fullname() not in self.properties:
+            logger.error(f"Attempt to remove unknown property {prop.fullname()}!")
+            return
+        # remove property from context
+        self.properties.pop(prop.fullname())
+        states_to_remove: Set[state.State] = set()
+        with self.states_lock:
+            # remove all of the property's signals
+            for signalname in self.default_property_signal_names:
+                self.states_per_signal.pop(s(prop.fullname() + signalname))
+            # remove all states that depend upon property
+            for st in self.states:
+                if prop.fullname() in st.read_props + st.write_props:
+                    states_to_remove.add(st)
+        for st in states_to_remove:
+            self.rm_state(st=st)
 
     def get_prop(self, key: str) -> Optional[property.PropertyBase]:
         """
