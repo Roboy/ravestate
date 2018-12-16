@@ -14,5 +14,8 @@ class IStateActivation:
     def write_props(self) -> Set[str]:
         pass
 
-    def wiped(self, sigi: ISignalInstance) -> None:
+    def specificity(self) -> float:
+        pass
+
+    def wiped(self, sig: ISignalInstance) -> None:
         pass

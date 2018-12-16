@@ -19,6 +19,7 @@ class StateActivation(IStateActivation):
     """
 
     def __init__(self, st: state.State, ctx: icontext.IContext):
+        self.name = st.signal_name()
         self.state_to_activate = st
         self.unfulfilled: Constraint = copy.deepcopy(st.triggers)
         self.ctx = ctx
