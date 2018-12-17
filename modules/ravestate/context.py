@@ -129,6 +129,7 @@ class Context(IContext):
         for prop in st.read_props+st.write_props:
             if prop not in self._properties:
                 logger.error(f"Attempt to add state which depends on unknown property `{prop}`!")
+                return
 
         # register the state's signal
         with self._lock:
@@ -138,6 +139,7 @@ class Context(IContext):
             if isinstance(st.triggers, str):
                 logger.error(f"Attempt to add state which depends on a signal `{st.triggers}`  "
                               f"defined as a String and not Signal.")
+                return
 
             # make sure that all of the state's depended-upon signals exist
             for signal in st.triggers.get_all_signals():
@@ -145,6 +147,7 @@ class Context(IContext):
                     self._activations_per_signal_age[signal][0].add(st)
                 else:
                     logger.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
+                    return
             self._states.add(st)
 
     def rm_state(self, *, st: State) -> None:
@@ -169,7 +172,7 @@ class Context(IContext):
          the same name has already been added previously.
         :param prop: The property object that should be added.
         """
-        if prop.fullname() in self._properties.values():
+        if prop.fullname() in self._properties:
             logger.error(f"Attempt to add property {prop.name} twice!")
             return
         # register property
@@ -178,6 +181,29 @@ class Context(IContext):
         with self._lock:
             for signalname in self.default_property_signal_names:
                 self._activations_per_signal_age[s(prop.fullname() + signalname)] = defaultdict(set)
+
+    def rm_prop(self, *, prop: PropertyBase) -> None:
+        """
+        Remove a property from this context.
+        Generates error message, if the property was not added with add_prop() to the context previously
+        :param prop: The property to remove.object
+        """
+        if prop.fullname() not in self._properties:
+            logger.error(f"Attempt to remove unknown property {prop.fullname()}!")
+            return
+        # remove property from context
+        self._properties.pop(prop.fullname())
+        states_to_remove: Set[State] = set()
+        with self._lock:
+            # remove all of the property's signals
+            for signalname in self.default_property_signal_names:
+                self.states_per_signal.pop(s(prop.fullname() + signalname))
+            # remove all states that depend upon property
+            for st in self.states:
+                if prop.fullname() in st.read_props + st.write_props:
+                    states_to_remove.add(st)
+        for st in states_to_remove:
+            self.rm_state(st=st)
 
     def get_prop(self, key: str) -> Optional[PropertyBase]:
         """
@@ -208,11 +234,11 @@ class Context(IContext):
          module name is specified (and valid).
         """
         if key:
-            return self.config.get(mod, key)
-        return self.config.get_conf(mod)
+            return self._config.get(mod, key)
+        return self._config.get_conf(mod)
 
     def _module_registration_callback(self, mod: Module):
-        self.config.add_conf(mod)
+        self._config.add_conf(mod)
         for prop in mod.props:
             self.add_prop(prop=prop)
         for st in mod.states:

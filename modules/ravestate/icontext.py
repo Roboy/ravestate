@@ -21,6 +21,9 @@ class IContext:
     def add_prop(self, *, prop: property.PropertyBase):
         pass
 
+    def rm_prop(self, *, prop: property.PropertyBase):
+        pass
+
     def shutting_down(self):
         pass
 

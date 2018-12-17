@@ -4,7 +4,11 @@ from testfixtures import LogCapture
 
 from ravestate.icontext import IContext
 from ravestate.context import Context
+from ravestate.property import PropertyBase
+from ravestate.state import State
 from reggol import strip_prefix
+
+PROPERTY_NAME = 'propprop'
 
 
 @pytest.fixture
@@ -13,13 +17,21 @@ def context_mock(mocker):
 
 
 @pytest.fixture
-def default_signal():
-    return 'test_signal'
+def default_module():
+    return 'test_module'
 
 
 @pytest.fixture
-def default_module():
-    return 'test_module'
+def state_mock(mocker):
+    state = mocker.Mock(name=State.__class__)
+    state.module_name = default_module
+    state.name = "mockstate"
+    return state
+
+
+@pytest.fixture
+def default_signal():
+    return 'test_signal'
 
 
 @pytest.fixture
@@ -86,6 +98,21 @@ def test_add_module_present(mocker, under_test, default_module):
         with mocker.patch.object(under_test, '_module_registration_callback'):
             under_test.add_module(default_module)
             under_test._module_registration_callback.assert_called_once()
+
+
+def test_remove_dependent_state(under_test: Context, default_module, state_mock: State):
+    prop = PropertyBase(name=PROPERTY_NAME)
+    prop.set_parent_path(default_module)
+    under_test.add_prop(prop=prop)
+    state_mock.read_props = (f'{default_module}:{PROPERTY_NAME}',)
+    state_mock.write_props = ()
+    state_mock.triggers = s(signalname=':startup')
+    under_test.add_state(st=state_mock)
+    assert state_mock in under_test.states
+    assert prop.fullname() in under_test.properties
+    under_test.rm_prop(prop=prop)
+    assert state_mock not in under_test.states
+    assert prop.fullname() not in under_test.properties
 
 
 def test_add_state():
