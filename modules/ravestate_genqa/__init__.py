@@ -35,6 +35,6 @@ registry.register(
     name="genqa",
     states=(hello_world_genqa, drqa_module),
     config={
-        DRQA_SERVER_ADDRESS: ""
+        DRQA_SERVER_ADDRESS: "http://localhost:5000"
     }
 )
