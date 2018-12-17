@@ -3,22 +3,23 @@
 from reggol import get_logger
 logger = get_logger(__name__)
 
-from threading import Thread, Lock, Semaphore
+from threading import Thread, Lock, Event
 from typing import Optional, Any, Tuple, List, Set, Dict
 from collections import defaultdict
 
-from ravestate import icontext
-from ravestate import activation
-from ravestate import module
-from ravestate import state
-from ravestate import property
+from ravestate.icontext import IContext
+from ravestate.module import Module
+from ravestate.state import State
+from ravestate.property import PropertyBase
+from ravestate.activation import StateActivation
 from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
 from ravestate.constraint import s, Signal
+from ravestate.siginst import SignalInstance
 
 
-class Context(icontext.IContext):
+class Context(IContext):
 
     default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
     default_property_signal_names: Tuple[str] = (":changed", ":pushed", ":popped", ":deleted")
@@ -27,6 +28,18 @@ class Context(icontext.IContext):
     import_modules_config = "import"
     tick_rate_config = "tickrate"
 
+    _lock: Lock
+
+    _properties: Dict[str, PropertyBase]
+    _states: Set[State]
+    _signals: Set[SignalInstance]
+    _activations_per_signal_age: Dict[Signal, Dict[int, Set[State]]]
+
+    _config: Configuration
+    _core_config: Dict[str, Any]
+    _run_task: Thread
+    _shutdown_flag: Event
+
     def __init__(self, *arguments):
         """
         Construct a context from command line arguments.
@@ -34,66 +47,60 @@ class Context(icontext.IContext):
          by the ravestate command line parser (see argparse.py).
         """
         modules, overrides, config_files = argparse.handle_args(*arguments)
-        self.config = Configuration(config_files)
-        self.core_config = {
+        self._config = Configuration(config_files)
+        self._core_config = {
             self.import_modules_config: [],
             self.tick_rate_config: 20
         }
-        self.config.add_conf(module.Module(name=self.core_module_name, config=self.core_config))
-
-        self.signal_queue: List[Signal] = []
-        self.signal_queue_lock = Lock()
-        self.signal_queue_counter = Semaphore(0)
-        self.run_task = None
-        self.shutdown_flag = False
-        self.properties = {}
-        self.activation_candidates = dict()
-
-        self.states = set()
-        self.states_per_signal_age: Dict[Signal, Dict[int, Set]] = {s(signal_name): set() for signal_name in self.default_signal_names}
-        self.states_lock = Lock()
+        self._config.add_conf(Module(name=self.core_module_name, config=self._core_config))
+        self._lock = Lock()
+        self._shutdown_flag = Event()
+        self._properties = dict()
+        self._states = set()
+        self._signals = set()
+        self._activations_per_signal_age = Dict[Tuple[Signal, int], Set[State]]
 
         # Set required config overrides
         for module_name, key, value in overrides:
-            self.config.set(module_name, key, value)
+            self._config.set(module_name, key, value)
+
         # Load required modules
         for module_name in self.core_config[self.import_modules_config]+modules:
             self.add_module(module_name)
 
-    def emit(self, signal: Signal) -> None:
+    def emit(self, signal: Signal, parents: Set[SignalInstance]=None, wipe: bool=False) -> None:
         """
         Emit a signal to the signal processing loop. Note:
          The signal will only be processed if run() has been called!
         :param signal: The signal to be emitted.
         """
-        with self.signal_queue_lock:
-            self.signal_queue.append(signal)
-            self.signal_queue_counter.release()
+        with self._lock:
+            self._signals.add(signal)
 
     def run(self) -> None:
         """
         Creates a signal processing thread, starts it, and emits the :startup signal.
         """
-        if self.run_task:
+        if self._run_task:
             logger.error("Attempt to start context twice!")
             return
-        self.run_task = Thread(target=self._run_private)
-        self.run_task.start()
+        self._run_task = Thread(target=self._run_private)
+        self._run_task.start()
         self.emit(s(":startup"))
 
     def shutting_down(self) -> bool:
         """
         Retrieve the shutdown flag value, which indicates whether shutdown() has been called.
         """
-        return self.shutdown_flag
+        return self._shutdown_flag.is_set()
 
     def shutdown(self) -> None:
         """
         Sets the shutdown flag and waits for the signal processing thread to join.
         """
-        self.shutdown_flag = True
+        self._shutdown_flag.set()
         self.emit(s(":shutdown"))
-        self.run_task.join()
+        self._run_task.join()
 
     def add_module(self, module_name: str) -> None:
         """
@@ -108,25 +115,25 @@ class Context(icontext.IContext):
             return
         registry.import_module(module_name=module_name, callback=self._module_registration_callback)
 
-    def add_state(self, *, st: state.State) -> None:
+    def add_state(self, *, st: State) -> None:
         """
         Add a state to this context. It will be indexed wrt/ the properties/signals
          it depends on. Error messages will be generated for unknown signals/properties.
         :param st: The state which should be added to this context.
         """
-        if st in self.states:
+        if st in self._states:
             logger.error(f"Attempt to add state `{st.name}` twice!")
             return
 
         # make sure that all of the state's depended-upon properties exist
         for prop in st.read_props+st.write_props:
-            if prop not in self.properties:
+            if prop not in self._properties:
                 logger.error(f"Attempt to add state which depends on unknown property `{prop}`!")
 
         # register the state's signal
-        with self.states_lock:
+        with self._lock:
             if st.signal:
-                self.states_per_signal_age[st.signal] = defaultdict(set)
+                self._activations_per_signal_age[st.signal] = defaultdict(set)
             # check to recognize states using old signal implementation
             if isinstance(st.triggers, str):
                 logger.error(f"Attempt to add state which depends on a signal `{st.triggers}`  "
@@ -134,45 +141,45 @@ class Context(icontext.IContext):
 
             # make sure that all of the state's depended-upon signals exist
             for signal in st.triggers.get_all_signals():
-                if signal in self.states_per_signal_age:
-                    self.states_per_signal_age[signal][0].add(st)
+                if signal in self._activations_per_signal_age:
+                    self._activations_per_signal_age[signal][0].add(st)
                 else:
                     logger.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
-            self.states.add(st)
+            self._states.add(st)
 
-    def rm_state(self, *, st: state.State) -> None:
+    def rm_state(self, *, st: State) -> None:
         """
         Remove a state from this context.
         :param st: The state to remove. An error message will be generated,
          if the state was not previously added to this context with add_state().
         """
-        if st not in self.states:
+        if st not in self._states:
             logger.error(f"Attempt to remove unknown state `{st.name}`!")
             return
-        with self.states_lock:
+        with self._lock:
             if st.signal:
-                self.states_per_signal_age.pop(st.signal)
+                self._activations_per_signal_age.pop(st.signal)
             for signal in st.triggers.get_all_signals():
-                    self.states_per_signal_age[signal].remove(st)
-            self.states.remove(st)
+                    self._activations_per_signal_age[signal].remove(st)
+            self._states.remove(st)
 
-    def add_prop(self, *, prop: property.PropertyBase) -> None:
+    def add_prop(self, *, prop: PropertyBase) -> None:
         """
         Add a property to this context. An error message will be generated, if a property with
          the same name has already been added previously.
         :param prop: The property object that should be added.
         """
-        if prop.fullname() in self.properties.values():
+        if prop.fullname() in self._properties.values():
             logger.error(f"Attempt to add property {prop.name} twice!")
             return
         # register property
-        self.properties[prop.fullname()] = prop
+        self._properties[prop.fullname()] = prop
         # register all of the property's signals
-        with self.states_lock:
+        with self._lock:
             for signalname in self.default_property_signal_names:
-                self.states_per_signal_age[s(prop.fullname() + signalname)] = defaultdict(set)
+                self._activations_per_signal_age[s(prop.fullname() + signalname)] = defaultdict(set)
 
-    def get_prop(self, key: str) -> Optional[property.PropertyBase]:
+    def get_prop(self, key: str) -> Optional[PropertyBase]:
         """
         Retrieve a property object by that was previously added through add_prop()
          by it's full name. The full name is always the combination of the property's
@@ -185,10 +192,10 @@ class Context(icontext.IContext):
         :return: The property object, or None, if no property with the given name
          was added to the context.
         """
-        if key not in self.properties:
+        if key not in self._properties:
             logger.error(f"Attempt to retrieve unknown property by key `{key}`!")
             return None
-        return self.properties[key]
+        return self._properties[key]
 
     def conf(self, *, mod: str, key: Optional[str]=None) -> Any:
         """
@@ -204,7 +211,7 @@ class Context(icontext.IContext):
             return self.config.get(mod, key)
         return self.config.get_conf(mod)
 
-    def _module_registration_callback(self, mod: module.Module):
+    def _module_registration_callback(self, mod: Module):
         self.config.add_conf(mod)
         for prop in mod.props:
             self.add_prop(prop=prop)
@@ -213,7 +220,7 @@ class Context(icontext.IContext):
         logger.info(f"Module {mod.name} added to session.")
 
     def _run_private(self):
-        while not self.shutdown_flag:
+        while not self._shutdown_flag:
             # Acquire new state activations for every signal instance
             # Update all state activations
             # Forget unreferenced signal instances
