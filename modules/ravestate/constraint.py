@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import List, Set, Generator
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -18,9 +18,9 @@ class Constraint:
     Superclass for Signal, Conjunct and Disjunct
     """
 
-    def get_all_signals(self) -> Set:
+    def signals(self) -> Generator['Signal', None, None]:
         logger.error("Don't call this method on the super class Constraint")
-        return set()
+        pass
 
     def acquire(self, signal):
         logger.error("Don't call this method on the super class Constraint")
@@ -35,11 +35,15 @@ class Signal(Constraint):
     """
     Class that represents a Signal
     """
-    name: str = ""
-    fulfilled: bool = False
+    name: str
+    fulfilled: bool
+    min_age: int
+    max_age: int
 
     def __init__(self, name: str):
         self.name = name
+        self.min_age = 0
+        self.max_age = 10000
 
     def __or__(self, other):
         if isinstance(other, Signal):
@@ -66,8 +70,8 @@ class Signal(Constraint):
     def __hash__(self):
         return hash(self.name)
 
-    def get_all_signals(self) -> Set:
-        return {self}
+    def signals(self) -> Generator['Signal', None, None]:
+        yield self
 
     def acquire(self, signal):
         if self == signal:
@@ -116,8 +120,8 @@ class Conjunct(Constraint):
                 conjunct_list.append(Conjunct(*conjunct, *self))
             return Disjunct(*conjunct_list)
 
-    def get_all_signals(self) -> Set[Signal]:
-        return self._signals
+    def signals(self) -> Generator['Signal', None, None]:
+        return (sig for sig in self._signals)
 
     def acquire(self, signal: Signal):
         for si in self._signals:
@@ -170,8 +174,8 @@ class Disjunct(Constraint):
             logger.error("Can't conjunct two disjunctions.")
             raise ValueError("Can't conjunct two disjunctions.")
 
-    def get_all_signals(self) -> Set[Signal]:
-        return {signal for conjunct in self._conjunctions for signal in conjunct._signals}
+    def signals(self) -> Generator['Signal', None, None]:
+        return (signal for conjunct in self._conjunctions for signal in conjunct._signals)
 
     def acquire(self, signal: Signal):
         for conjunct in self._conjunctions:

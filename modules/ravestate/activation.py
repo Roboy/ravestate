@@ -21,7 +21,7 @@ class StateActivation(IStateActivation):
     def __init__(self, st: state.State, ctx: icontext.IContext):
         self.name = st.signal_name()
         self.state_to_activate = st
-        self.unfulfilled: Constraint = copy.deepcopy(st.triggers)
+        self.constraint: Constraint = copy.deepcopy(st.constraint)
         self.ctx = ctx
         self.args = []
         self.kwargs = {}
@@ -37,7 +37,7 @@ class StateActivation(IStateActivation):
         pass
 
     def acquire(self, signal: SignalInstance) -> None:
-        self.unfulfilled.acquire(signal)
+        self.constraint.acquire(signal)
 
     def update(self) -> bool:  # Returns False if out of hope for activation
         pass
@@ -54,3 +54,4 @@ class StateActivation(IStateActivation):
             self.ctx.emit(s(self.state_to_activate.signal_name()))
         if isinstance(result, state.Delete):
             self.ctx.rm_state(st=self.state_to_activate)
+        # TODO: Gather affected causal groups, call consumed(...) on each!

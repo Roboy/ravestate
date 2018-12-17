@@ -33,12 +33,12 @@ class State:
 
     action: Callable[[Any], Optional[StateActivationResult]]
 
-    def __init__(self, *, signal, write, read, triggers, action, is_receptor=False):
+    def __init__(self, *, signal, write, read, cond, action, is_receptor=False):
         assert(callable(action))
         self.name = action.__name__
 
         # catch the insane case
-        if not len(read) and not triggers and not is_receptor:
+        if not len(read) and not cond and not is_receptor:
             logger.warning(
                 f"The state `{self.name}` is not reading any properties, nor waiting for any triggers. " +
                 "It will never be activated!")
@@ -51,13 +51,13 @@ class State:
 
         # listen to default changed-signals if no signals are given.
         # convert triggers to disjunctive normal form.
-        if not triggers and len(read) > 0:
-            triggers = Disjunct(*list(Conjunct(s(f"{rprop_name}:changed")) for rprop_name in read))
+        if not cond and len(read) > 0:
+            cond = Disjunct(*list(Conjunct(s(f"{rprop_name}:changed")) for rprop_name in read))
 
         self.signal = signal
         self.write_props = write
         self.read_props = read
-        self.triggers = triggers
+        self.constraint = cond
         self.action = action
         self.module_name = ""
 
@@ -68,13 +68,13 @@ class State:
         return f"{self.module_name}:{self.signal.signalname}"
 
 
-def state(*, signal: str="", write: tuple=(), read: tuple=(), triggers: Constraint=None):
+def state(*, signal: str="", write: tuple=(), read: tuple=(), cond: Constraint=None):
     """
     Decorator to declare a new state, which may emit a certain signal,
-    write to a certain set of properties (calling set, push, pop, delete),
+    write to a certain set of properties (calling write, push, pop),
     and read from certain properties (calling read).
     """
     def state_decorator(action):
-        nonlocal signal, write, read, triggers
-        return State(signal=signal, write=write, read=read, triggers=triggers, action=action)
+        nonlocal signal, write, read, cond
+        return State(signal=signal, write=write, read=read, cond=cond, action=action)
     return state_decorator

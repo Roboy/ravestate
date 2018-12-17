@@ -11,7 +11,7 @@ from std_msgs.msg import String
 rclpy.init()
 node = rclpy.create_node("vision_node")
 
-@state(triggers=s(":startup"))
+@state(cond=s(":startup"))
 def facerec_run(ctx):
 
     @receptor(ctx_wrap=ctx, write="facerec:face")
@@ -22,7 +22,7 @@ def facerec_run(ctx):
     rclpy.spin(node)
 
 
-@state(triggers=s(":shutdown"))
+@state(cond=s(":shutdown"))
 def facerec_shutdown():
     node.destroy_node()
     rclpy.shutdown()

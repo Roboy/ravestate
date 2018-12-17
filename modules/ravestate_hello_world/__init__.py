@@ -8,7 +8,7 @@ import ravestate_phrases_basic_en
 from ravestate.constraint import s
 
 
-@state(triggers=s(":startup"), write="verbaliser:intent")
+@state(cond=s(":startup"), write="verbaliser:intent")
 def hello_world(ctx):
     ctx["verbaliser:intent"] = "greeting"
 

@@ -22,7 +22,7 @@ def receptor(*, ctx_wrap: ContextWrapper, write: Union[str, Tuple[str]]):
             write=write,
             read=(),
             signal=None,
-            triggers=(),
+            cond=(),
             action=action,
             is_receptor=True)
 

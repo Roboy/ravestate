@@ -41,7 +41,7 @@ def under_test(default_signal, default_read, default_write, default_triggers):
         signal=default_signal,
         read=default_read,
         write=default_write,
-        triggers=default_triggers,
+        cond=default_triggers,
         action=default_action
     )
 
@@ -50,7 +50,7 @@ def test_decorator(under_test, default_signal, default_read, default_write, defa
     @state(signal=default_signal,
            read=default_read,
            write=default_write,
-           triggers=default_triggers)
+           cond=default_triggers)
     def test_state(_):
         return "Hello world!"
 
@@ -67,7 +67,7 @@ def test_decorator_illegal_trigger(under_test, default_signal, default_read, def
         @state(signal=default_signal,
                read=default_read,
                write=default_write,
-               triggers=(s("rawio:in:changed") | s("facerec:face:changed")) & (s("sys:has-internet") | s("foo:poo")))
+               cond=(s("rawio:in:changed") | s("facerec:face:changed")) & (s("sys:has-internet") | s("foo:poo")))
         def test_state(_):
             return "Hello world!"
 

@@ -36,10 +36,10 @@ class SignalInstance(ISignalInstance):
     # Parent instances, which are notified when this instance is wiped
     _parents: Set['SignalInstance']
 
-    def __init__(self, *, signame: str, parents: Set['SignalInstance'], properties: Set[str]):
+    def __init__(self, *, signal_name: str, parents: Set['SignalInstance'], properties: Set[str]):
         """
         Construct a signal instance from a signal name and a list of causing parent signals.
-        :param signame: Name of the signal which is represented by this signal instance
+        :param signal_name: Name of the signal which is represented by this signal instance
         :param parents: The parent signals which were involved in causing this signal,
          and with which unwritten properties will be synchronized: This signal instance's
          causal group will be inferred from the parents, and the parent's causal
@@ -47,7 +47,7 @@ class SignalInstance(ISignalInstance):
         :param properties: The set of property names from context,
          which are available for consumption.
         """
-        self._name = signame
+        self._name = signal_name
         self._offspring = set()
         self._parents = parents
         self._causal_group = next(iter(parents)).causal_group() if parents else CausalGroup(properties)

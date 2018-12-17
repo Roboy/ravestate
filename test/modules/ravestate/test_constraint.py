@@ -5,7 +5,7 @@ from ravestate.constraint import s
 def test_signal():
     sig = s("mysig")
     assert not sig.evaluate()
-    assert sig.get_all_signals() == {s("mysig")}
+    assert sig.signals() == {s("mysig")}
     sig.acquire(s("notmysig"))
     assert not sig.evaluate()
     sig.acquire(s("mysig"))
@@ -22,7 +22,7 @@ def test_signal():
 def test_conjunct():
     conjunct = s("sig1") & s("sig2") & s("sig3")
     assert not conjunct.evaluate()
-    assert conjunct.get_all_signals() == {s("sig1"), s("sig2"), s("sig3")}
+    assert conjunct.signals() == {s("sig1"), s("sig2"), s("sig3")}
     conjunct.acquire(s("sig1"))
     assert not conjunct.evaluate()
     conjunct.acquire(s("sig2"))
@@ -36,7 +36,7 @@ def test_conjunct():
 def test_disjunct():
     disjunct = (s("sig1") & s("sig2")) | s("sig3")
     assert not disjunct.evaluate()
-    assert disjunct.get_all_signals() == {s("sig1"), s("sig2"), s("sig3")}
+    assert disjunct.signals() == {s("sig1"), s("sig2"), s("sig3")}
     disjunct.acquire(s("sig1"))
     assert not disjunct.evaluate()
     disjunct.acquire(s("sig3"))
