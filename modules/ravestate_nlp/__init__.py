@@ -8,6 +8,7 @@ from ravestate_nlp.question_words import QuestionWord
 from ravestate_nlp.rdf_triple import Triple
 
 import spacy
+from spacy.tokens import Token
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -15,6 +16,7 @@ logger = get_logger(__name__)
 SUBJECT_SET = {'nsubj'}
 OBJECT_SET = {'dobj', 'attr', 'advmod'}
 PREDICATE_SET = {'ROOT', 'conj'}
+ADJECTIVE_SET = {'acomp'}
 
 
 def init_model():
@@ -28,22 +30,39 @@ def init_model():
 
 
 def extract_triples(doc):
+    """
+    triple: subject, predicate, object
+    finding the triple of a sentence: determine all the dependencies
+    starts with predicate and searches through the dependency tree -> triple_search()
+    """
     triples = []
     for token in doc:
         if token.dep_ in PREDICATE_SET:
-            triple = Triple(predicate=token)
-            for word in token.children:
-                if word.text.lower() in QuestionWord.question_words:
-                    word = QuestionWord(word)
-                if word.dep_ in SUBJECT_SET:
-                    triple.set_subject(word)
-                if word.dep_ in OBJECT_SET:
-                    triple.set_object(word)
+            triple = triple_search(Triple(predicate=token), token)
             triples.append(triple)
     return triples
 
 
-@state(read="rawio:in", write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:roboy"))
+def triple_search(triple: Triple, token: Token): 
+    """
+    Recursive search through the dependency tree
+    looks for triple values in each of the children and calls itself with the children nodes
+    """
+    for word in token.children:
+        if word.text.lower() in QuestionWord.question_words:
+            word = QuestionWord(word)
+        if word.dep_ in SUBJECT_SET:
+            triple.set_subject(word)
+        if word.dep_ in OBJECT_SET:
+            triple.set_object(word)
+        if word.dep_ in ADJECTIVE_SET:
+            triple.set_adjective(word)
+        if isinstance(word, Token):
+            triple = triple_search(triple, word)
+    return triple
+
+
+@state(read="rawio:in", write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:roboy","nlp:triples"))
 def nlp_preprocess(ctx):
     nlp_doc = nlp(ctx["rawio:in"])
     
@@ -67,7 +86,7 @@ def nlp_preprocess(ctx):
     ctx["nlp:ner"] = nlp_ner
     logger.info(f"[NLP:ner]: {nlp_ner}")
 
-    nlp_triples = nlp_doc._.triples
+    nlp_triples = nlp_doc._.triple
     ctx["nlp:triples"] = nlp_triples
     logger.info(f"[NLP:triples]: {nlp_triples}")
 

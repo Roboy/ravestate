@@ -19,7 +19,7 @@ def hello_world_genqa(ctx):
         logging.error('Server address is not set. Shutting down GenQA.')
         return Delete()
 
-@state(read="rawio:in", write=("rawio:out"))
+@state(read="rawio:in", write="rawio:out")
 def drqa_module(ctx):
     params = {'question': ctx["rawio:in"]}
     answer_phrase = verbaliser.get_random_phrase("question-answering-starting-phrases")

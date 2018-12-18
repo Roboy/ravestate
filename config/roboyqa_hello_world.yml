@@ -1,0 +1,6 @@
+module: core
+config:
+  import:
+    - ravestate_conio
+    - ravestate_roboyqa
+    - ravestate_nlp
