@@ -48,9 +48,11 @@ def triple_search(triple: Triple, token: Token):
     Recursive search through the dependency tree
     looks for triple values in each of the children and calls itself with the children nodes
     """
+    question_word = None
     for word in token.children:
         if word.text.lower() in QuestionWord.question_words:
             word = QuestionWord(word)
+            question_word = word
         if word.dep_ in SUBJECT_SET:
             triple.set_subject(word)
         if word.dep_ in OBJECT_SET:
@@ -59,6 +61,8 @@ def triple_search(triple: Triple, token: Token):
             triple.set_adjective(word)
         if isinstance(word, Token):
             triple = triple_search(triple, word)
+    if not triple.get_subject() and question_word: 
+        triple.set_subject(question_word)
     return triple
 
 
