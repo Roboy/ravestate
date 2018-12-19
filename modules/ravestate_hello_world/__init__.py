@@ -36,6 +36,6 @@ def face_recognized(ctx):
         ctx["rawio:out"] = "I see you, {}!".format(ctx["facerec:face"])
 
 
-registry.register(name="hi", states=(hello_world, generic_answer, face_recognized),
-                  props=(#Ros2PubProperty(name="pubber", topic="testpub", msg_type=String),
-                         Ros2SubProperty(name="subber", topic="testsub", msg_type=String)))
+registry.register(name="hi", states=(hello_world, generic_answer, face_recognized, subber),
+                  props=(Ros2PubProperty(name="pubber", topic="testtop", msg_type=String),
+                         Ros2SubProperty(name="subber", topic="testtop", msg_type=String)))
