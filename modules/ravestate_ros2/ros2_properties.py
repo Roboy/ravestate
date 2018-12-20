@@ -1,39 +1,64 @@
 import time
-from typing import Dict, Set
+from typing import Set
 
-from ravestate.state import state
+from ravestate.state import state, Delete
 from ravestate.constraint import s
 from ravestate.property import PropertyBase
-from threading import Lock, Thread
 
 from ravestate.receptor import receptor
 from ravestate.wrappers import ContextWrapper
+
 from reggol import get_logger
 logger = get_logger(__name__)
 
-ROS2_AVAILABLE = True  # TODO check for this in the constructors and make properties without ros2
+ROS2_AVAILABLE = True
 try:
     import rclpy
 except ImportError:
     logger.error("Could not import rclpy. Please make sure to have ROS2 installed.")
     ROS2_AVAILABLE = False
 
+NODE_NAME_CONFIG_KEY = "ros2-node-name"
+SPIN_FREQUENCY_CONFIG_KEY = "ros2-spin-frequency"
 
-subprop_to_receptor = dict()
-receptor_ctx = None
-
-rclpy.init()
-node = rclpy.create_node("ros2_ravestate")  # TODO nodename in config
-node_lock = Lock()
+global_prop_set = set()
 
 
 @state(triggers=s(":startup"))
 def register_ros_subscribers(ctx: ContextWrapper):
-    global node, node_lock, subprop_to_receptor
+    """
+    State that creates a ROS2-Node, registers all Ros2SubProperties and Ros2PubProperties in ROS2 and keeps them synced
+    """
+    # check for ROS2 availability
+    if not ROS2_AVAILABLE:
+        logger.error("ROS2 is not available, therefore all ROS2-Properties "
+                     "will be just a normal Properties without connection to ROS2!")
+        return Delete()
+
+    # get config stuff
+    node_name = ctx.conf(key=NODE_NAME_CONFIG_KEY)
+    if not node_name:
+        logger.error(f"{NODE_NAME_CONFIG_KEY} is not set. Shutting down ravestate_ros2")
+        return Delete()
+    spin_frequency = ctx.conf(key=SPIN_FREQUENCY_CONFIG_KEY)
+    if spin_frequency is None:
+        logger.error(f"{SPIN_FREQUENCY_CONFIG_KEY} is not set. Shutting down ravestate_ros2")
+        return Delete()
+    if spin_frequency == 0:
+        spin_sleep_time = 0
+    else:
+        spin_sleep_time = 1 / spin_frequency
+
+    # init ROS
+    rclpy.init()
+    node = rclpy.create_node(node_name)
+
+    global global_prop_set
     current_props: Set = set()
+
     while not ctx.shutting_down():
         # remove deleted props
-        removed_props = current_props - subprop_to_receptor.keys()
+        removed_props = current_props - global_prop_set
         for prop in removed_props:
             if isinstance(prop, Ros2SubProperty):
                 node.destroy_subscription(prop.subscription)
@@ -42,67 +67,106 @@ def register_ros_subscribers(ctx: ContextWrapper):
             current_props.remove(prop)
 
         # add new props
-        new_props = subprop_to_receptor.keys() - current_props
+        new_props = global_prop_set - current_props
         for prop in new_props:
-            # register in context
-            @receptor(ctx_wrap=ctx, write=prop.fullname())
-            def ros_subscription_callback(ctx, msg, prop_name: str):
-                ctx[prop_name] = msg
-
-            subprop_to_receptor[prop] = ros_subscription_callback
             # register subscribers in ROS
             if isinstance(prop, Ros2SubProperty):
-                prop.subscription = node.create_subscription(prop.msg_type, prop.topic, prop.subscriber_callback)
+                # register in context
+                @receptor(ctx_wrap=ctx, write=prop.fullname())
+                def ros_to_ctx_callback(ctx, msg, prop_name: str):
+                    ctx[prop_name] = msg
+
+                prop.ros_to_ctx_callback = ros_to_ctx_callback
+                prop.subscription = node.create_subscription(prop.msg_type, prop.topic, prop.ros_subscription_callback)
+            # register publishers in ROS
+            if isinstance(prop, Ros2PubProperty):
+                prop.publisher = node.create_publisher(prop.msg_type, prop.topic)
+
             # save in current props
             current_props.add(prop)
 
         # spin once
-        with node_lock:
-            rclpy.spin_once(node, timeout_sec=0)
-        time.sleep(0.1)  # TODO sleep or not?
+        rclpy.spin_once(node, timeout_sec=0)
+        time.sleep(spin_sleep_time)
 
+    node.destroy_node()
+    rclpy.shutdown()
 
-# TODO destroy node?
 
 class Ros2SubProperty(PropertyBase):
-    # TODO use kwargs for super params?
-    def __init__(self, name: str, topic: str, msg_type):  # TODO annotate rosmsg-type
-        super().__init__(name=name)
+    def __init__(self, name: str, topic: str, msg_type, default=None, always_signal_changed: bool = True):
+        """
+        Initialize Property
+        :param name: Name of the property
+        :param topic: ROS2-Topic that should be subscribed
+        :param msg_type: ROS2-Message type of messages in the topic
+        :param default: Default value of the property
+        :param always_signal_changed: if signal:changed should be emitted if value is written again without changing
+        """
+        super().__init__(
+            name=name,
+            allow_read=True,
+            allow_write=True,
+            allow_push=False,
+            allow_pop=False,
+            default=default,
+            always_signal_changed=always_signal_changed)
         self.topic = topic
         self.msg_type = msg_type
-        global subprop_to_receptor
-        subprop_to_receptor[self] = None
+        self.subscription = None
+        self.ros_to_ctx_callback = None
+        global global_prop_set
+        global_prop_set.add(self)
 
     def __del__(self):
-        global subprop_to_receptor
-        subprop_to_receptor.pop(self)
+        global global_prop_set
+        global_prop_set.pop(self)
 
-    def subscriber_callback(self, msg):
+    def ros_subscription_callback(self, msg):
         """
-        Writes the message data to the property
+        Writes the message from ROS to the property
+        :param msg: ROS2-Message that should be written into the property
         """
-        global subprop_to_receptor
-        # only after :startup
-        if subprop_to_receptor[self]:
-            logger.debug(f"Reveived message {msg.data} from topic {self.topic}")
-            subprop_to_receptor[self](msg=msg.data, prop_name=self.fullname())
+        if self.ros_to_ctx_callback:
+            logger.debug(f"{self.fullname()} received message {str(msg)} from topic {self.topic}")
+            self.ros_to_ctx_callback(msg=msg, prop_name=self.fullname())
 
 
 class Ros2PubProperty(PropertyBase):
-    def __init__(self, name: str, topic: str, msg_type):  # TODO annotate rosmsg-type
-        super().__init__(name=name)
+    def __init__(self, name: str, topic: str, msg_type):
+        """
+        Initialize Property
+        :param name: Name of the property
+        :param topic: ROS2-Topic that messages should be pubished to
+        :param msg_type: ROS2-Message type of messages in the topic
+        """
+        super().__init__(
+            name=name,
+            allow_read=True,
+            allow_write=True,
+            allow_push=False,
+            allow_pop=False,
+            default=None,
+            always_signal_changed=False)
         self.topic = topic
         self.msg_type = msg_type
-        global node, node_lock
-        with node_lock:
-            self.publisher = node.create_publisher(self.msg_type, self.topic)
+        self.publisher = None
+        global global_prop_set
+        global_prop_set.add(self)
+
+    def __del__(self):
+        global global_prop_set
+        global_prop_set.pop(self)
 
     def write(self, value):
         """
         Publish value on ROS
-        :param value: ROS-Message that should be published
+        :param value: ROS2-Message that should be published
         """
         if super().write(value):
-            logger.debug(f"Publishing message {value.data} on topic {self.topic}")
             if self.publisher:
+                logger.debug(f"{self.fullname()} is publishing message {value.data} on topic {self.topic}")
                 self.publisher.publish(value)
+            else:
+                logger.error(f"Message {value.data} on topic {self.topic} "
+                             f"cannot be published because publisher was not registered in ROS")
