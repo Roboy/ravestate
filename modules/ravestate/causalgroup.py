@@ -237,7 +237,7 @@ class CausalGroup:
     def stale(self, sig: 'ISignalInstance') -> bool:
         """
         Determine, whether a signal instance is stale (has no
-        remaining interested activations)
+        remaining interested activations and no children).
         :return: True, if no activations reference the given
          signal for any unwritten property. False otherwise.
         """

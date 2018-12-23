@@ -4,7 +4,7 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 from threading import Thread, Lock, Event
-from typing import Optional, Any, Tuple, Set, Dict
+from typing import Optional, Any, Tuple, Set, Dict, Generator
 from collections import defaultdict
 
 from ravestate.icontext import IContext
@@ -32,8 +32,17 @@ class Context(IContext):
 
     _properties: Dict[str, PropertyBase]
     _states: Set[State]
-    _signals: Set[SignalInstance]
-    _suitors_per_signal_age: Dict[Signal, Dict[int, Set[StateActivation]]]
+    _signal_instances: Set[SignalInstance]
+    _act_per_state_per_signal_age: Dict[
+        Signal,
+        Dict[
+            int,
+            Dict[
+                State,
+                Set[StateActivation]
+            ]
+        ]
+    ]
 
     _config: Configuration
     _core_config: Dict[str, Any]
@@ -57,8 +66,8 @@ class Context(IContext):
         self._shutdown_flag = Event()
         self._properties = dict()
         self._states = set()
-        self._signals = set()
-        self._suitors_per_signal_age = dict()
+        self._signal_instances = set()
+        self._act_per_state_per_signal_age = dict()
 
         # Register default signals
         for signame in self.default_signal_names:
@@ -80,7 +89,7 @@ class Context(IContext):
         :param parents: The signal's parents, if it is supposed to be integrated into a causal group.
         """
         with self._lock:
-            self._signals.add(
+            self._signal_instances.add(
                 SignalInstance(signal_name=signal.name, parents=parents, properties=set(self._properties.keys())))
 
     def run(self) -> None:
@@ -146,10 +155,12 @@ class Context(IContext):
                 logger.error(f"Attempt to add state which depends on a signal `{st.constraint}`  "
                               f"defined as a String and not Signal.")
                 return
-            # make sure that all of the state's depended-upon signals exist
+            # make sure that all of the state's depended-upon signals exist,
+            #  add a default state activation for every constraint.
+            activation = StateActivation(st, self)
             for signal in st.constraint.signals():
-                if signal in self._suitors_per_signal_age:
-                    self._suitors_per_signal_age[signal][signal.min_age].add(StateActivation(st, self))
+                if signal in self._act_per_state_per_signal_age:
+                    self._act_per_state_per_signal_age[signal][signal.min_age][st] |= {activation}
                 else:
                     logger.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
                     return
@@ -172,10 +183,9 @@ class Context(IContext):
             # Remove state activations for the state
             activations_to_wipe: Set[StateActivation] = set()
             for signal in st.constraint.signals():
-                for act in self._suitors_per_signal_age[signal][signal.min_age].copy():
-                    if act.state_to_activate == st:
-                        self._suitors_per_signal_age[signal][signal.min_age].remove(act)
-                        activations_to_wipe.add(act)
+                for act in self._act_per_state_per_signal_age[signal][signal.min_age][st]:
+                    activations_to_wipe.add(act)
+                del self._act_per_state_per_signal_age[signal][signal.min_age][st]
             for act in activations_to_wipe:
                 act.wipe()
             # Actually forget about the state
@@ -257,16 +267,16 @@ class Context(IContext):
         return self._config.get_conf(mod)
 
     def _add_sig(self, sig: Signal):
-        if sig in self._suitors_per_signal_age:
+        if sig in self._act_per_state_per_signal_age:
             logger.error(f"Attempt to add signal f{sig.name} twice!")
             return
-        self._suitors_per_signal_age[sig] = defaultdict(set)
+        self._act_per_state_per_signal_age[sig] = defaultdict(lambda: defaultdict(set))
 
     def _rm_sig(self, sig: Signal) -> Set[State]:
         states_to_remove: Set[State] = set()
-        for _, activations in self._suitors_per_signal_age[sig].items():
-            states_to_remove |= {act.state_to_activate for act in activations}
-        self._suitors_per_signal_age.pop(sig)
+        for _, acts_per_state in self._act_per_state_per_signal_age[sig].items():
+            states_to_remove |= set(acts_per_state.keys())
+        self._act_per_state_per_signal_age.pop(sig)
         return states_to_remove
 
     def _module_registration_callback(self, mod: Module):
@@ -277,8 +287,13 @@ class Context(IContext):
             self.add_state(st=st)
         logger.info(f"Module {mod.name} added to session.")
 
-    def _remove_and_replace(self, sig: Signal, act: StateActivation):
-        pass
+    def _state_activations(self) -> Generator[StateActivation, None, None]:
+        return (
+            act
+            for _, acts_per_state_per_age in self._act_per_state_per_signal_age
+            for _, acts_per_state in acts_per_state_per_age
+            for _, acts in acts_per_state
+            for act in acts)
 
     def _run_private(self):
 
@@ -289,28 +304,34 @@ class Context(IContext):
         tick_interval = 1. / self._core_config[self.tick_rate_config]
         while not self._shutdown_flag.wait(tick_interval):
 
-            acts: Set[StateActivation] = set()
+            with self._lock:
 
-            # Acquire new state activations for every signal instance
-            for sig in self._signals:
-                suitors = self._suitors_per_signal_age[s(sig.name())][sig.age()].copy()
-                for act in suitors:
-                    if act.acquire(sig):
-                        self._remove_and_replace(s(sig.name()), act)
-                    acts.add(act)
+                # Acquire new state activations for every signal instance
+                for sig in self._signal_instances:
+                    for state, acts in self._act_per_state_per_signal_age[s(sig.name())][sig.age()]:
+                        old_acts = acts.copy()
+                        for act in old_acts:
+                            if act.acquire(sig):
+                                # Remove the StateActivation instance from _act_per_state_per_signal_age
+                                #  for the SignalInstance with a certain minimum age. In place of the removed
+                                #  activation, if no activation with the same target state is left,
+                                #  a new StateActivation will be created.
+                                acts.remove(act)
+                                if len(acts) == 0:
+                                    acts.add(StateActivation(state, self))
 
-            # Update all state activations, forget state activations
-            #  that wish to be forgotten.
-            for act in acts:
-                act.update()
+                # Update all state activations
+                for act in self._state_activations():
+                    act.update()
 
-            # Forget unreferenced signal instances
-            old_signal_set = self._signals.copy()
-            for sig in old_signal_set:
-                with sig.causal_group() as cg:
-                    if cg.stale(sig):
-                        self._signals.remove(sig)
+                # Forget unreferenced signal instances
+                old_signal_set = self._signal_instances.copy()
+                for sig in old_signal_set:
+                    with sig.causal_group() as cg:
+                        if cg.stale(sig):
+                            # This should lead to the deletion of the signal instance
+                            self._signal_instances.remove(sig)
 
-            # Increment age on active signal instances
-            for sig in self._signals:
-                sig.tick()
+                # Increment age on active signal instances
+                for sig in self._signal_instances:
+                    sig.tick()

@@ -1,9 +1,7 @@
 # Ravestate class which encapsulates a single signal instance
 
-from typing import List, Set, Dict, Optional
-from ravestate.iactivation import IStateActivation, ISignalInstance
-from threading import Lock
-from collections import defaultdict
+from typing import Set
+from ravestate.iactivation import ISignalInstance
 from ravestate.causalgroup import CausalGroup
 
 from reggol import get_logger
