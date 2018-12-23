@@ -25,7 +25,7 @@ global_prop_set = set()
 
 
 @state(triggers=s(":startup"))
-def register_ros_subscribers(ctx: ContextWrapper):
+def sync_ros_properties(ctx: ContextWrapper):
     """
     State that creates a ROS2-Node, registers all Ros2SubProperties and Ros2PubProperties in ROS2 and keeps them synced
     """
@@ -56,6 +56,7 @@ def register_ros_subscribers(ctx: ContextWrapper):
     global global_prop_set
     current_props: Set = set()
 
+    # ROS-Context Sync Loop
     while not ctx.shutting_down():
         # remove deleted props
         removed_props = current_props - global_prop_set
@@ -120,7 +121,7 @@ class Ros2SubProperty(PropertyBase):
 
     def __del__(self):
         global global_prop_set
-        global_prop_set.pop(self)
+        global_prop_set.remove(self)
 
     def ros_subscription_callback(self, msg):
         """
@@ -156,7 +157,7 @@ class Ros2PubProperty(PropertyBase):
 
     def __del__(self):
         global global_prop_set
-        global_prop_set.pop(self)
+        global_prop_set.remove(self)
 
     def write(self, value):
         """
@@ -165,8 +166,8 @@ class Ros2PubProperty(PropertyBase):
         """
         if super().write(value):
             if self.publisher:
-                logger.debug(f"{self.fullname()} is publishing message {value.data} on topic {self.topic}")
+                logger.debug(f"{self.fullname()} is publishing message {str(value)} on topic {self.topic}")
                 self.publisher.publish(value)
             else:
-                logger.error(f"Message {value.data} on topic {self.topic} "
+                logger.error(f"Message {str(value)} on topic {self.topic} "
                              f"cannot be published because publisher was not registered in ROS")

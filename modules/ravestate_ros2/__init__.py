@@ -1,9 +1,9 @@
 from ravestate import registry
-from ravestate_ros2.ros2_properties import register_ros_subscribers
+from ravestate_ros2.ros2_properties import sync_ros_properties
 
 registry.register(
     name="ros2",
-    states=(register_ros_subscribers,),
+    states=(sync_ros_properties,),
     config={
         # name of the ROS2-Node that is created by ravestate_ros2
         ros2_properties.NODE_NAME_CONFIG_KEY: "ravestate_ros2",
