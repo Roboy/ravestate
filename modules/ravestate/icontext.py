@@ -3,9 +3,9 @@
 
 
 from ravestate import property
-from ravestate import module
 from ravestate import state
-
+from typing import Set
+from ravestate.constraint import Signal
 
 class IContext:
 
@@ -34,4 +34,7 @@ class IContext:
         pass
 
     def get_prop(self, key):
+        pass
+
+    def predict(self, signals: Set[Signal]) -> int:
         pass

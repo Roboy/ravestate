@@ -2,7 +2,7 @@
 
 from ravestate.state import State
 from ravestate.wrappers import ContextWrapper
-from ravestate.activation import StateActivation
+from ravestate.activation import Activation
 from typing import Union, Set, Tuple
 
 
@@ -28,7 +28,7 @@ def receptor(*, ctx_wrap: ContextWrapper, write: Union[str, Tuple[str]]):
 
         def receptor_function(*args, **kwargs):
             nonlocal receptor_state, ctx
-            activation = StateActivation(st=receptor_state, ctx=ctx)
+            activation = Activation(st=receptor_state, ctx=ctx)
             act_thread = activation.run(args, kwargs)
             act_thread.start()
 

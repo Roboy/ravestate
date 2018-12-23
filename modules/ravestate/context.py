@@ -11,7 +11,7 @@ from ravestate.icontext import IContext
 from ravestate.module import Module
 from ravestate.state import State
 from ravestate.property import PropertyBase
-from ravestate.activation import StateActivation
+from ravestate.activation import Activation
 from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
@@ -39,7 +39,7 @@ class Context(IContext):
             int,
             Dict[
                 State,
-                Set[StateActivation]
+                Set[Activation]
             ]
         ]
     ]
@@ -157,7 +157,7 @@ class Context(IContext):
                 return
             # make sure that all of the state's depended-upon signals exist,
             #  add a default state activation for every constraint.
-            activation = StateActivation(st, self)
+            activation = Activation(st, self)
             for signal in st.constraint.signals():
                 if signal in self._act_per_state_per_signal_age:
                     self._act_per_state_per_signal_age[signal][signal.min_age][st] |= {activation}
@@ -181,7 +181,7 @@ class Context(IContext):
             if st.signal:
                 states_to_remove |= self._rm_sig(st.signal)
             # Remove state activations for the state
-            activations_to_wipe: Set[StateActivation] = set()
+            activations_to_wipe: Set[Activation] = set()
             for signal in st.constraint.signals():
                 for act in self._act_per_state_per_signal_age[signal][signal.min_age][st]:
                     activations_to_wipe.add(act)
@@ -266,6 +266,18 @@ class Context(IContext):
             return self._config.get(mod, key)
         return self._config.get_conf(mod)
 
+    def predict(self, signals: Set[Signal]) -> int:
+        """
+        Called by activation when it is pressured to resign. The activation wants
+         to know the earliest ETA of one of it's remaining required constraints.
+        :param signals: The signals, whose ETA will be calculated, and among the
+         results the minimum ETA will be returned.
+        :return: Number of ticks it should take for at least one of the required
+         signals to arrive. Fixed value (1) for now.
+        """
+        # TODO: Proper implementation with causal matrix
+        return 1
+
     def _add_sig(self, sig: Signal):
         if sig in self._act_per_state_per_signal_age:
             logger.error(f"Attempt to add signal f{sig.name} twice!")
@@ -287,7 +299,7 @@ class Context(IContext):
             self.add_state(st=st)
         logger.info(f"Module {mod.name} added to session.")
 
-    def _state_activations(self) -> Generator[StateActivation, None, None]:
+    def _state_activations(self) -> Generator[Activation, None, None]:
         return (
             act
             for _, acts_per_state_per_age in self._act_per_state_per_signal_age
@@ -312,13 +324,13 @@ class Context(IContext):
                         old_acts = acts.copy()
                         for act in old_acts:
                             if act.acquire(sig):
-                                # Remove the StateActivation instance from _act_per_state_per_signal_age
+                                # Remove the Activation instance from _act_per_state_per_signal_age
                                 #  for the SignalInstance with a certain minimum age. In place of the removed
                                 #  activation, if no activation with the same target state is left,
-                                #  a new StateActivation will be created.
+                                #  a new Activation will be created.
                                 acts.remove(act)
                                 if len(acts) == 0:
-                                    acts.add(StateActivation(state, self))
+                                    acts.add(Activation(state, self))
 
                 # Update all state activations
                 for act in self._state_activations():

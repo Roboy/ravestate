@@ -1,7 +1,7 @@
 import pytest
 from threading import Thread
 
-from ravestate.activation import StateActivation
+from ravestate.activation import Activation
 from ravestate.constraint import s
 from ravestate.state import State
 from ravestate.icontext import IContext
@@ -21,7 +21,7 @@ def context_mock(mocker):
 
 @pytest.fixture
 def under_test(state_mock: State, context_mock: IContext):
-    return StateActivation(state_mock, context_mock)
+    return Activation(state_mock, context_mock)
 
 
 def test_specifity(under_test):
@@ -48,10 +48,10 @@ def test_notify_signal_mismatched_2(under_test):
 
 
 def test_multiple_activation(state_mock, context_mock):
-    sa1 = StateActivation(state_mock, context_mock)
+    sa1 = Activation(state_mock, context_mock)
     assert sa1.acquire(s('test1')) == 0
     assert sa1.acquire(s('test3')) == 1
-    sa2 = StateActivation(state_mock, context_mock)
+    sa2 = Activation(state_mock, context_mock)
     assert sa2.acquire(s('test1')) == 0
     assert sa2.acquire(s('test3')) == 1
 

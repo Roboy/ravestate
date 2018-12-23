@@ -1,7 +1,7 @@
 # Ravestate class which encapsulates a graph of signal parent/offspring instances
 
 from typing import Set, Dict, Optional
-from ravestate.iactivation import IStateActivation, ISignalInstance
+from ravestate.iactivation import IActivation, ISignalInstance
 from threading import Lock
 from collections import defaultdict
 
@@ -68,7 +68,7 @@ class CausalGroup:
         Dict[
             ISignalInstance,
             Dict[
-                IStateActivation,
+                IActivation,
                 int
             ]
         ]
@@ -129,9 +129,9 @@ class CausalGroup:
         other._unwritten_props = self._unwritten_props
         other._ref_index = self._ref_index
 
-    def acquired(self, sig: 'ISignalInstance', acquired_by: IStateActivation) -> bool:
+    def acquired(self, sig: 'ISignalInstance', acquired_by: IActivation) -> bool:
         """
-        Called by StateActivation to notify the signal instance, that
+        Called by Activation to notify the signal instance, that
          it is being referenced by an activation constraint.
         :param acquired_by: State activation instance,
          which is interested in this property.
@@ -146,7 +146,7 @@ class CausalGroup:
             self._ref_index[prop][sig][acquired_by] += 1
         return True
 
-    def rejected(self, sig: 'ISignalInstance', rejected_by: IStateActivation) -> None:
+    def rejected(self, sig: 'ISignalInstance', rejected_by: IActivation) -> None:
         """
         Called by a state activation, to notify the group that a member signal-
          instance is no longer being referenced for the given state's write props.
@@ -173,7 +173,7 @@ class CausalGroup:
                 if len(self._ref_index[prop][sig]) == 0:
                     del self._ref_index[prop][sig]
 
-    def pressure_activation(self, ready_suitor: IStateActivation) -> bool:
+    def pressure_activation(self, ready_suitor: IActivation) -> bool:
         """
         Called by constraint, to inquire whether this causal group would happily
          be consumed for the given state activation's properties.

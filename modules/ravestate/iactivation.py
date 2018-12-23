@@ -6,10 +6,14 @@ from typing import Set
 
 class ISignalInstance:
 
-    pass
+    def name(self) -> str:
+        """
+        Returns the name if this signal instance's signal.
+        """
+        pass
 
 
-class IStateActivation:
+class IActivation:
 
     name: str
 

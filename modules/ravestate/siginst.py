@@ -88,18 +88,17 @@ class SignalInstance(ISignalInstance):
             return
         self._offspring.remove(child)
 
-
     def wipe(self) -> None:
         # Wipe children. Copy set, because self._offspring will be manipulated during iteration.
         offspring = self._offspring.copy()
-        for child in self._offspring:
+        for child in offspring:
             child.wipe()
         # Notify parents of their child's demise
         for parent in self._parents:
             parent.wiped(self)
         # Wipe from causal group
         with self.causal_group() as causal:
-            causal.wipe(self)
+            causal.wiped(self)
 
     def tick(self) -> None:
         """

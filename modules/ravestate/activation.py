@@ -8,11 +8,11 @@ from threading import Thread
 from typing import Set
 
 from ravestate.constraint import Signal, Constraint, s
-from ravestate.iactivation import IStateActivation, ISignalInstance
+from ravestate.iactivation import IActivation, ISignalInstance
 from ravestate.siginst import SignalInstance
 
 
-class StateActivation(IStateActivation):
+class Activation(IActivation):
     """
     Encapsulates the potential activation of a state. Tracks the fulfillment of
      certain state-defined constraints that are required before activation.
