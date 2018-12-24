@@ -157,18 +157,17 @@ class Context(IContext):
                 return
             # make sure that all of the state's depended-upon signals exist,
             #  add a default state activation for every constraint.
-            activation = Activation(st, self)
-            for signal in st.constraint.signals():
-                if signal in self._act_per_state_per_signal_age:
-                    self._act_per_state_per_signal_age[signal][signal.min_age][st] |= {activation}
-                else:
-                    logger.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
-                    return
+            # TODO: Constraint completion: If a state is constrained on a child signal C
+            #  that is dependent on parent signal A or B, the state's constraint
+            #  must be expanded as follows: C -> (A & C) | (B & C)
+            #  This will allow indirect activations to be anticipated early.
+            self._new_state_activation(st)
             self._states.add(st)
 
     def rm_state(self, *, st: State) -> None:
         """
-        Remove a state from this context.
+        Remove a state from this context. Note, that any state which is constrained
+         on the signal that is emitted by the deleted state will also be deleted.
         :param st: The state to remove. An error message will be generated,
          if the state was not previously added to this context with add_state().
         """
@@ -187,7 +186,7 @@ class Context(IContext):
                     activations_to_wipe.add(act)
                 del self._act_per_state_per_signal_age[signal][signal.min_age][st]
             for act in activations_to_wipe:
-                act.wipe()
+                act.eliminate()
             # Actually forget about the state
             self._states.remove(st)
         # Some states may need to be removed, which depended
@@ -234,15 +233,15 @@ class Context(IContext):
         for st in states_to_remove:
             self.rm_state(st=st)
 
-    def get_prop(self, key: str) -> Optional[PropertyBase]:
+    def __getitem__(self, key: str) -> Optional[PropertyBase]:
         """
-        Retrieve a property object by that was previously added through add_prop()
+        Retrieve a property object by name, that was previously added through add_prop()
          by it's full name. The full name is always the combination of the property's
          name and it's parent's name, joined with a colon: For example, if the name
          of a property is `foo` and it belongs to the module `bar` it's full name
          will be `bar:foo`.
         An error message will be generated if no property with the given name was
-         added to the context, and None will be returned/
+         added to the context, and None will be returned.
         :param key: The full name of the property.
         :return: The property object, or None, if no property with the given name
          was added to the context.
@@ -278,6 +277,41 @@ class Context(IContext):
         # TODO: Proper implementation with causal matrix
         return 1
 
+    def signal_specificity(self, sig: Signal) -> float:
+        """
+        Called by state activation to determine it's constraint's specificity.
+        :param sig: The signal whose specificity should be returned.
+        :return: The given signal's specificity.
+        """
+        # Count activations which are interested in the signal
+        if sig not in self._act_per_state_per_signal_age:
+            return .0
+        num_suitors = sum(
+            1
+            for acts_per_state in self._act_per_state_per_signal_age[sig].values()
+            for acts in acts_per_state.values()
+            if len(acts) > 0)
+        if num_suitors > 0:
+            return 1./num_suitors
+        else:
+            return .0
+
+    def reacquire(self, act: Activation, sig: Signal):
+        """
+        Called by activation, to indicate, that it needs a new SignalInstance
+         for the specified signal, and should for this purpose be referenced by context.
+        :param act: The activation that needs a new signal instance of the specified nature.
+        :param sig: Signal type for which a new instance is needed.
+        """
+        if sig not in self._act_per_state_per_signal_age:
+            logger.error(f"Attempt to reacquire for unknown signal {sig.name}!")
+            return
+        interested_acts = self._act_per_state_per_signal_age[sig][sig.min_age][act.state_to_activate]
+        if act in interested_acts:
+            logger.error(f"Attempt to reacquire for already indexed signal {sig.name}!")
+            return
+        interested_acts.add(act)
+
     def _add_sig(self, sig: Signal):
         if sig in self._act_per_state_per_signal_age:
             logger.error(f"Attempt to add signal f{sig.name} twice!")
@@ -298,6 +332,15 @@ class Context(IContext):
         for st in mod.states:
             self.add_state(st=st)
         logger.info(f"Module {mod.name} added to session.")
+
+    def _new_state_activation(self, st: State) -> None:
+        activation = Activation(st, self)
+        for signal in st.constraint.signals():
+            if signal in self._act_per_state_per_signal_age:
+                self._act_per_state_per_signal_age[signal][signal.min_age][st] |= {activation}
+            else:
+                logger.error(
+                    f"Adding state activation for f{st.signal_name()} which depends on unknown signal `{signal}`!")
 
     def _state_activations(self) -> Generator[Activation, None, None]:
         return (
@@ -330,7 +373,10 @@ class Context(IContext):
                                 #  a new Activation will be created.
                                 acts.remove(act)
                                 if len(acts) == 0:
-                                    acts.add(Activation(state, self))
+                                    self._new_state_activation(state)
+                            else:
+                                logger.error(
+                                    "An activation rejected a signal instance it was registered to be interested in.")
 
                 # Update all state activations
                 for act in self._state_activations():

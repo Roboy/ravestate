@@ -22,6 +22,10 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         pass
 
+    def conjunctions(self) -> Generator['Conjunct', None, None]:
+        logger.error("Don't call this method on the super class Constraint")
+        pass
+
     def acquire(self, signal):
         logger.error("Don't call this method on the super class Constraint")
         pass
@@ -73,6 +77,9 @@ class Signal(Constraint):
     def signals(self) -> Generator['Signal', None, None]:
         yield self
 
+    def conjunctions(self) -> Generator['Conjunct', None, None]:
+        yield Conjunct(self)
+
     def acquire(self, signal):
         if self == signal:
             self.fulfilled = True
@@ -122,6 +129,9 @@ class Conjunct(Constraint):
 
     def signals(self) -> Generator['Signal', None, None]:
         return (sig for sig in self._signals)
+
+    def conjunctions(self) -> Generator['Conjunct', None, None]:
+        yield self
 
     def acquire(self, signal: Signal):
         for si in self._signals:
@@ -176,6 +186,9 @@ class Disjunct(Constraint):
 
     def signals(self) -> Generator['Signal', None, None]:
         return (signal for conjunct in self._conjunctions for signal in conjunct._signals)
+
+    def conjunctions(self) -> Generator['Conjunct', None, None]:
+        return (conj for conj in self._conjunctions)
 
     def acquire(self, signal: Signal):
         for conjunct in self._conjunctions:

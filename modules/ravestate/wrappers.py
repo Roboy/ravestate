@@ -115,7 +115,7 @@ class ContextWrapper:
         for propname in st.write_props + st.read_props:
             # May have been covered by a parent before
             if propname not in self.properties:
-                prop_and_children = ctx.get_prop(propname).gather_children()
+                prop_and_children = ctx[propname].gather_children()
                 for prop in prop_and_children:
                     # Child may have been covered by a parent before
                     if prop.fullname() not in self.properties:

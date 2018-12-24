@@ -28,9 +28,7 @@ def receptor(*, ctx_wrap: ContextWrapper, write: Union[str, Tuple[str]]):
 
         def receptor_function(*args, **kwargs):
             nonlocal receptor_state, ctx
-            activation = Activation(st=receptor_state, ctx=ctx)
-            act_thread = activation.run(args, kwargs)
-            act_thread.start()
+            Activation(st=receptor_state, ctx=ctx).run(args, kwargs)
 
         return receptor_function
 
