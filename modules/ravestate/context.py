@@ -1,8 +1,5 @@
 # Ravestate context class
 
-from reggol import get_logger
-logger = get_logger(__name__)
-
 from threading import Thread, Lock, Event
 from typing import Optional, Any, Tuple, Set, Dict, Generator
 from collections import defaultdict
@@ -11,12 +8,16 @@ from ravestate.icontext import IContext
 from ravestate.module import Module
 from ravestate.state import State
 from ravestate.property import PropertyBase
+from ravestate.iactivation import IActivation
 from ravestate.activation import Activation
 from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
 from ravestate.constraint import s, Signal
 from ravestate.siginst import SignalInstance
+
+from reggol import get_logger
+logger = get_logger(__name__)
 
 
 class Context(IContext):
@@ -186,7 +187,7 @@ class Context(IContext):
                     activations_to_wipe.add(act)
                 del self._act_per_state_per_signal_age[signal][signal.min_age][st]
             for act in activations_to_wipe:
-                act.eliminate()
+                act.dereference(sig=None, reacquire=False)
             # Actually forget about the state
             self._states.remove(st)
         # Some states may need to be removed, which depended
@@ -265,7 +266,7 @@ class Context(IContext):
             return self._config.get(mod, key)
         return self._config.get_conf(mod)
 
-    def predict(self, signals: Set[Signal]) -> int:
+    def lowest_upper_bound_eta(self, signals: Set[Signal]) -> int:
         """
         Called by activation when it is pressured to resign. The activation wants
          to know the earliest ETA of one of it's remaining required constraints.
@@ -274,7 +275,7 @@ class Context(IContext):
         :return: Number of ticks it should take for at least one of the required
          signals to arrive. Fixed value (1) for now.
         """
-        # TODO: Proper implementation with causal matrix
+        # TODO: Proper implementation w/ state runtime_upper_bound and property changed-wait
         return 1
 
     def signal_specificity(self, sig: Signal) -> float:
@@ -296,21 +297,37 @@ class Context(IContext):
         else:
             return .0
 
-    def reacquire(self, act: Activation, sig: Signal):
+    def reacquire(self, act: IActivation, sig: Signal):
         """
         Called by activation, to indicate, that it needs a new SignalInstance
          for the specified signal, and should for this purpose be referenced by context.
         :param act: The activation that needs a new signal instance of the specified nature.
         :param sig: Signal type for which a new instance is needed.
         """
+        assert isinstance(act, Activation)  # No way around it to avoid import loop
         if sig not in self._act_per_state_per_signal_age:
             logger.error(f"Attempt to reacquire for unknown signal {sig.name}!")
             return
         interested_acts = self._act_per_state_per_signal_age[sig][sig.min_age][act.state_to_activate]
-        if act in interested_acts:
-            logger.error(f"Attempt to reacquire for already indexed signal {sig.name}!")
-            return
         interested_acts.add(act)
+
+    def withdraw(self, act: IActivation, sig: Signal):
+        """
+        Called by activation to make sure that it isn't referenced
+         anymore as looking for the specified signal.
+        This might be, because the activation chose to eliminate itself
+         due to activation pressure, or because one of the activations
+         conjunctions was fulfilled, so it is no longer looking for
+         signals to fulfill the remaining conjunctions.
+        :param act: The activation that has lost interest in the specified signal.
+        :param sig: Signal type for which interest is lost.
+        """
+        assert isinstance(act, Activation)  # No way around it to avoid import loop
+        if sig not in self._act_per_state_per_signal_age:
+            logger.error(f"Attempt to withdraw for unknown signal {sig.name}!")
+            return
+        interested_acts = self._act_per_state_per_signal_age[sig][sig.min_age][act.state_to_activate]
+        interested_acts.remove(act)
 
     def _add_sig(self, sig: Signal):
         if sig in self._act_per_state_per_signal_age:
@@ -382,7 +399,7 @@ class Context(IContext):
                 for act in self._state_activations():
                     act.update()
 
-                # Forget unreferenced signal instances
+                # Forget fully unreferenced signal instances
                 old_signal_set = self._signal_instances.copy()
                 for sig in old_signal_set:
                     with sig.causal_group() as cg:

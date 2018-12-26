@@ -106,7 +106,7 @@ def test_remove_dependent_state(under_test: Context, default_module, state_mock:
     under_test.add_prop(prop=prop)
     state_mock.read_props = (f'{default_module}:{PROPERTY_NAME}',)
     state_mock.write_props = ()
-    state_mock.triggers = s(signalname=':startup')
+    state_mock.triggers = s(signal_name=':startup')
     under_test.add_state(st=state_mock)
     assert state_mock in under_test.states
     assert prop.fullname() in under_test.properties

@@ -1,15 +1,19 @@
 # Ravestate class which encapsualtes the activation of a single state
 import copy
 
-from ravestate import state
-from ravestate import wrappers
-from ravestate import icontext
 from threading import Thread
-from typing import Set
+from typing import Set, Optional, List, Dict
 
-from ravestate.constraint import Signal, Constraint, s
+from ravestate.icontext import IContext
+from ravestate.constraint import Constraint, s
 from ravestate.iactivation import IActivation, ISignalInstance
 from ravestate.siginst import SignalInstance
+from ravestate.causalgroup import CausalGroup
+from ravestate.state import State, Emit, Delete
+from ravestate.wrappers import ContextWrapper
+
+from reggol import get_logger
+logger = get_logger(__name__)
 
 
 class Activation(IActivation):
@@ -18,10 +22,19 @@ class Activation(IActivation):
      certain state-defined constraints that are required before activation.
     """
 
-    def __init__(self, st: state.State, ctx: icontext.IContext):
-        self.name = st.signal_name()
+    name: str
+    state_to_activate: State
+    constraint: Constraint
+    ctx: IContext
+    args: List
+    kwargs: Dict
+    signal_instances: Set[SignalInstance]
+    consenting_causal_groups: Set[CausalGroup]
+
+    def __init__(self, st: State, ctx: IContext):
+        self.name = st.name
         self.state_to_activate = st
-        self.constraint: Constraint = copy.deepcopy(st.constraint)
+        self.constraint = copy.deepcopy(st.constraint)
         self.ctx = ctx
         self.args = []
         self.kwargs = {}
@@ -43,33 +56,24 @@ class Activation(IActivation):
             sum(self.ctx.signal_specificity(sig) for sig in conj.signals())
             for conj in self.constraint.conjunctions())
 
-    def wiped(self, sig: ISignalInstance) -> None:
+    def dereference(self, *, sig: Optional[ISignalInstance]=None, reacquire: bool=False) -> None:
         """
-        Notify the activation, that a certain signal instance is not available
+        Notify the activation, that a single or all signal instance(s) are not available
          anymore, and should therefore not be referenced anymore by the activation.
-        :param sig: The signal that should be forgotten by the activation
-        """
-        pass
-
-    def eliminate(self, reacquire: bool=False) -> None:
-        """
-        Eliminate the activation, by making it reject all of it's referenced
-         signal instances. This is called either by context when a state is deleted,
-         or by this activation (with reacquire=True), if it gives in to
-         activation pressure.
+        This is called by ...
+         ... context when a state is deleted.
+         ... causal group, when a referenced signal was consumed for a required property.
+         ... causal group, when a referenced signal was wiped.
+         ... this activation (with reacquire=True), if it gives in to activation pressure.
+        :param sig: The signal that should be forgotten by the activation, or
+         none, if all referenced signal instances should be forgotten.
         :param reacquire: Flag which tells the function, whether for every rejected
          signal instance, the activation should hook into context for reacquisition
          of a replacement signal instance.
         """
-        pass
-
-    def signal_instances(self) -> Set[ISignalInstance]:
-        """
-        Called by causal group, to remove this activation's signal instances
-         from it's internal activation candidate index once they are promised
-         to this activation.
-        """
-        pass
+        for sig_to_reacquire in self.constraint.dereference(sig):
+            if reacquire:
+                self.ctx.reacquire(self, sig_to_reacquire)
 
     def acquire(self, signal: SignalInstance) -> bool:
         """
@@ -78,14 +82,59 @@ class Activation(IActivation):
          signal constraints.
         :return: Should return True.
         """
-        return self.constraint.acquire(signal)
+        return self.constraint.acquire(signal, self)
 
     def update(self) -> None:
         """
         Called once per tick on this activation, to give it a chance to activate
          itself, or auto-eliminate, or reject signal instances which have become too old.
         """
-        pass
+        # Update constraint
+        signals_to_reacquire = self.constraint.update()
+        # Reacquire for rejected signal instances
+        for sig in signals_to_reacquire:
+            self.ctx.reacquire(self, sig)
+        # Iterate over fulfilled conjunctions and look to activate with one of them
+        for conjunction in self.constraint.conjunctions():
+            if not conjunction.evaluate():
+                continue
+            # Ask each signal instance's causal group for activation consent
+            signal_instances = set(sig.signal_instance for sig in conjunction.signals())
+            consenting_causal_groups = set()
+            all_consented = True
+            for sig in signal_instances:
+                cg: CausalGroup = sig.causal_group()
+                if cg not in consenting_causal_groups:
+                    with cg:
+                        if cg.pressure_activation(self):
+                            consenting_causal_groups.add(cg)
+                        else:
+                            all_consented = False
+                            break  # break signal instance iteration
+            if not all_consented:
+                continue
+            # Notify all consenting causal groups that activation is going forward
+            for cg in consenting_causal_groups:
+                with cg:
+                    cg.activated(self)
+            # Remove self from all causal groups
+            for sig in signal_instances:
+                with sig.causal_group() as cg:
+                    cg.rejected(sig, self)
+            # Make sure that constraint doesn't hold any unneeded references to signal inst.
+            for _ in self.constraint.dereference(None):
+                pass
+            # Withdraw from context for all (unfulfilled) signals (there might
+            #  be some unfulfilled conjunctions next to the fulfilled one).
+            for sig in self.constraint.signals():
+                self.ctx.withdraw(self, sig)
+            # Remember sig-instances/causal-groups for use in activation
+            self.signal_instances = signal_instances
+            self.consenting_causal_groups = consenting_causal_groups
+            # Run activation
+            self.run()
+            # Do not further iterate over candidate conjunctions
+            break
 
     def run(self, *args, **kwargs):
         self.args = args
@@ -93,10 +142,17 @@ class Activation(IActivation):
         Thread(target=self._run_private).run()
 
     def _run_private(self):
-        context_wrapper = wrappers.ContextWrapper(self.ctx, self.state_to_activate)
+        context_wrapper = ContextWrapper(self.ctx, self.state_to_activate)
         result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
-        if isinstance(result, state.Emit) and self.state_to_activate.signal:
-            self.ctx.emit(s(self.state_to_activate.signal_name()))
-        if isinstance(result, state.Delete):
+        if isinstance(result, Emit):
+            if self.state_to_activate.signal:
+                self.ctx.emit(
+                    s(self.state_to_activate.signal_name()),
+                    parents=self.signal_instances)
+            else:
+                logger.error(f"Attempt to emit from state {self.name}, which does not specify a signal name!")
+        if isinstance(result, Delete):
             self.ctx.rm_state(st=self.state_to_activate)
-        # TODO: Gather affected causal groups, call consumed(...) on each!
+        for cg in self.consenting_causal_groups:
+            with cg:
+                cg.consumed(self.state_to_activate.write_props)

@@ -1,7 +1,7 @@
 # Interface of state activation towards signal instance
 # Signal instance interface towards state activation
 
-from typing import Set
+from typing import Set, Optional
 
 
 class ISignalInstance:
@@ -12,6 +12,25 @@ class ISignalInstance:
     def name(self) -> str:
         """
         Returns the name if this signal instance's signal.
+        """
+        pass
+
+    def wipe(self, already_wiped_in_causal_group: bool=False) -> None:
+        """
+        Called either in Context run loop when the signal instance is found to be stale
+         (with wiped_in_causal_group=True), or in Context.wipe(signal_inst),
+         or by parent (recursively).
+        After this function is called, the signal instance should be cleaned up by GC.
+        :param already_wiped_in_causal_group: Boolean which indicates, whether wiped(signal_inst)
+         must still be called on the group to make sure sure that no dangling references
+         to the signal instance are maintained by any state activations.
+        """
+        pass
+
+    def has_offspring(self):
+        """
+        Called by CausalGroup.stale(signal_instance).
+        :return: True if the instance has active offspring, false otherwise.
         """
         pass
 
@@ -38,27 +57,32 @@ class IActivation:
         """
         pass
 
-    def wiped(self, sig: ISignalInstance) -> None:
+    def dereference(self, *, sig: Optional[ISignalInstance]=None, reacquire: bool=False) -> None:
         """
-        Notify the activation, that a certain signal instance is not available
+        Notify the activation, that a single or all signal instance(s) are not available
          anymore, and should therefore not be referenced anymore by the activation.
-        :param sig: The signal that should be forgotten by the activation
+        This is called by ...
+         ... context when a state is deleted.
+         ... causal group, when a referenced signal was consumed for a required property.
+         ... causal group, when a referenced signal was wiped.
+         ... this activation (with reacquire=True), if it gives in to activation pressure.
+        :param sig: The signal that should be forgotten by the activation, or
+         none, if all referenced signal instances should be forgotten.
+        :param reacquire: Flag which tells the function, whether for every rejected
+         signal instance, the activation should hook into context for reacquisition
+         of a replacement signal instance.
         """
         pass
 
-    def eliminate(self, reacquire: bool=False) -> None:
+    def pressure(self, give_me_up: ISignalInstance):
         """
-        Eliminate the activation, by making it reject all of it's referenced
-         signal instances. This is called either by context when a state is deleted,
-         or by this activation (with reacquire=True), if it gives in to
-         activation pressure.
+        Called by signal instance, to pressure the activation to
+         make a decision on whether it is going to retain a reference
+         to the given signal instance, given that there is a lower-
+         specificity activation which is ready to run.
         """
-        pass
-
-    def signal_instances(self) -> Set[ISignalInstance]:
-        """
-        Called by causal group, to remove this activation's signal instances
-         from it's internal activation candidate index once they are promised
-         to this activation.
-        """
-        pass
+        # TODO: Implement Activation.pressure(). Impl will use Context.predict(signals)
+        #  to get a time estimate on when progress on the activations constraints
+        #  is to be expected. If progress is not made within the predicted
+        #  time period, the activation is going to auto-eliminate for the pressured
+        #  signal instances.

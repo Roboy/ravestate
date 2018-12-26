@@ -29,7 +29,7 @@ class SignalInstance(ISignalInstance):
     # Offspring signals which were (partially) caused by this instance,
     #  with which consumed props are synced, and which are wiped if this
     #  instance is wiped.
-    _offspring: Set['SignalInstance']
+    _offspring: Set['ISignalInstance']
 
     # Parent instances, which are notified when this instance is wiped
     _parents: Set['SignalInstance']
@@ -88,17 +88,35 @@ class SignalInstance(ISignalInstance):
             return
         self._offspring.remove(child)
 
-    def wipe(self) -> None:
+    def wipe(self, already_wiped_in_causal_group: bool=False) -> None:
+        """
+        Called either in Context run loop when the signal instance is found to be stale
+         (with wiped_in_causal_group=True), or in Context.wipe(signal_inst),
+         or by parent (recursively).
+        After this function is called, the signal instance should be cleaned up by GC.
+        :param already_wiped_in_causal_group: Boolean which indicates, whether wiped(signal_inst)
+         must still be called on the group to make sure sure that no dangling references
+         to the signal instance are maintained by any state activations.
+        """
         # Wipe children. Copy set, because self._offspring will be manipulated during iteration.
         offspring = self._offspring.copy()
         for child in offspring:
-            child.wipe()
+            child.wipe(already_wiped_in_causal_group)
         # Notify parents of their child's demise
         for parent in self._parents:
             parent.wiped(self)
+        self._parents.clear()
         # Wipe from causal group
-        with self.causal_group() as causal:
-            causal.wiped(self)
+        if not already_wiped_in_causal_group:
+            with self.causal_group() as causal:
+                causal.wiped(self)
+
+    def has_offspring(self):
+        """
+        Called by CausalGroup.stale(signal_instance).
+        :return: True if the instance has active offspring, false otherwise.
+        """
+        return len(self._offspring) > 0
 
     def tick(self) -> None:
         """

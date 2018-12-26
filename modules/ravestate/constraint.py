@@ -1,16 +1,18 @@
-from typing import List, Set, Generator
+from typing import List, Set, Generator, Optional
+from ravestate.siginst import SignalInstance
+from ravestate.iactivation import IActivation
 
 from reggol import get_logger
 logger = get_logger(__name__)
 
 
-def s(signalname: str):
+def s(signal_name: str):
     """
     Alias to call Signal-constructor
 
-    :param signalname: Name of the Signal
+    :param signal_name: Name of the Signal
     """
-    return Signal(signalname)
+    return Signal(signal_name)
 
 
 class Constraint:
@@ -20,13 +22,13 @@ class Constraint:
 
     def signals(self) -> Generator['Signal', None, None]:
         logger.error("Don't call this method on the super class Constraint")
-        pass
+        yield None
 
     def conjunctions(self) -> Generator['Conjunct', None, None]:
         logger.error("Don't call this method on the super class Constraint")
-        pass
+        yield None
 
-    def acquire(self, signal):
+    def acquire(self, signal: SignalInstance, act: IActivation):
         logger.error("Don't call this method on the super class Constraint")
         pass
 
@@ -34,13 +36,21 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         return False
 
+    def dereference(self, sig: Optional[SignalInstance]=None) -> Generator['Signal', None, None]:
+        logger.error("Don't call this method on the super class Constraint")
+        yield None
+
+    def update(self) -> List['Signal']:
+        logger.error("Don't call this method on the super class Constraint")
+        return []
+
 
 class Signal(Constraint):
     """
     Class that represents a Signal
     """
     name: str
-    fulfilled: bool
+    signal_instance: SignalInstance
     min_age: int
     max_age: int
 
@@ -48,6 +58,7 @@ class Signal(Constraint):
         self.name = name
         self.min_age = 0
         self.max_age = 10000
+        self.signal_instance = None
 
     def __or__(self, other):
         if isinstance(other, Signal):
@@ -80,12 +91,16 @@ class Signal(Constraint):
     def conjunctions(self) -> Generator['Conjunct', None, None]:
         yield Conjunct(self)
 
-    def acquire(self, signal):
-        if self == signal:
-            self.fulfilled = True
+    def acquire(self, signal: SignalInstance, act: IActivation):
+        if self.name == signal.name() and self.min_age <= signal.age() <= self.max_age:
+            self.signal_instance = signal
+            with signal.causal_group() as cg:
+                cg.acquired(signal, act)
+            return True
+        return False
 
     def evaluate(self) -> bool:
-        return self.fulfilled
+        return self.signal_instance is not None
 
     def __str__(self):
         return self.name
@@ -133,9 +148,11 @@ class Conjunct(Constraint):
     def conjunctions(self) -> Generator['Conjunct', None, None]:
         yield self
 
-    def acquire(self, signal: Signal):
+    def acquire(self, signal: SignalInstance, act: IActivation):
+        result = False
         for si in self._signals:
-            si.acquire(signal)
+            result |= si.acquire(signal, act)
+        return result
 
     def evaluate(self) -> bool:
         return all(map(lambda si: si.evaluate(), self._signals))
@@ -190,9 +207,11 @@ class Disjunct(Constraint):
     def conjunctions(self) -> Generator['Conjunct', None, None]:
         return (conj for conj in self._conjunctions)
 
-    def acquire(self, signal: Signal):
+    def acquire(self, signal: SignalInstance, act: IActivation):
+        result = False
         for conjunct in self._conjunctions:
-            conjunct.acquire(signal)
+            result |= conjunct.acquire(signal, act)
+        return result
 
     def evaluate(self) -> bool:
         return any(map(lambda si: si.evaluate(), self._conjunctions))

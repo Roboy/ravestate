@@ -9,6 +9,7 @@ from ravestate.constraint import Signal
 from ravestate.siginst import SignalInstance
 from ravestate.iactivation import IActivation
 
+
 class IContext:
 
     def __getitem__(self, key):
@@ -93,7 +94,7 @@ class IContext:
         """
         pass
 
-    def predict(self, signals: Set[Signal]) -> int:
+    def lowest_upper_bound_eta(self, signals: Set[Signal]) -> int:
         """
         Called by activation when it is pressured to resign. The activation wants
          to know the earliest ETA of one of it's remaining required constraints.
@@ -112,11 +113,24 @@ class IContext:
         """
         pass
 
-    def reacquire(self, act: 'Activation', sig: Signal):
+    def reacquire(self, act: IActivation, sig: Signal):
         """
-        Called by activation, to indicate, that it needs a new SignalInstance
+        Called by activation to go shopping for a new SignalInstance
          for the specified signal, and should for this purpose be referenced by context.
         :param act: The activation that needs a new signal instance of the specified nature.
         :param sig: Signal type for which a new instance is needed.
+        """
+        pass
+
+    def withdraw(self, act: IActivation, sig: Signal):
+        """
+        Called by activation to make sure that it isn't referenced
+         anymore as looking for the specified signal.
+        This might be, because the activation chose to eliminate itself
+         due to activation pressure, or because one of the activations
+         conjunctions was fulfilled, so it is no longer looking for
+         signals to fulfill the remaining conjunctions.
+        :param act: The activation that has lost interest in the specified signal.
+        :param sig: Signal type for which interest is lost.
         """
         pass

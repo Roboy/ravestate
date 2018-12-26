@@ -65,7 +65,7 @@ class State:
         return self.action(context, *args, **kwargs)
 
     def signal_name(self):
-        return f"{self.module_name}:{self.signal.signalname}"
+        return f"{self.module_name}:{self.signal}"
 
 
 def state(*, signal: str="", write: tuple=(), read: tuple=(), cond: Constraint=None):

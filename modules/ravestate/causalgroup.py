@@ -81,7 +81,7 @@ class CausalGroup:
         self._lock = Lock()
         self._unwritten_props = properties.copy()
         self._ref_index = {
-            # TODO: Create refc prop entries on demand
+            # TODO: Create refcount prop entries on demand
             prop: defaultdict(lambda: defaultdict(int))
             for prop in properties
         }
@@ -131,8 +131,10 @@ class CausalGroup:
 
     def acquired(self, sig: 'ISignalInstance', acquired_by: IActivation) -> bool:
         """
-        Called by Activation to notify the signal instance, that
-         it is being referenced by an activation constraint.
+        Called by Activation to notify the causal group, that
+         it is being referenced by an activation constraint for a certain member signal.
+        :param sig: State activation instance, which is now being
+         referenced by the specified causal group.
         :param acquired_by: State activation instance,
          which is interested in this property.
         :return: Returns True if all of the acquiring's write-props are
@@ -160,10 +162,10 @@ class CausalGroup:
             if prop in self._ref_index and \
                sig in self._ref_index[prop] and \
                rejected_by in self._ref_index[prop][sig]:
-                remaining_refc = self._ref_index[prop][sig][rejected_by]
-                if remaining_refc > 0:
+                remaining_refcount = self._ref_index[prop][sig][rejected_by]
+                if remaining_refcount > 0:
                     self._ref_index[prop][sig][rejected_by] -= 1
-                    if remaining_refc > 1:
+                    if remaining_refcount > 1:
                         # do not fall through to ref deletion
                         continue
                 else:
@@ -180,32 +182,37 @@ class CausalGroup:
         This will be called periodically on the group by state activations
          that are ready to go. Therefore, a False return value from this
          function is never a final judgement (more like a "maybe later").
-        As soon as consumption is consented though, the given state activation
-         will be removed from this signals referenced activations!
         :param ready_suitor: The state activation which would like to consume
          this instance for it's write props.
         :return: True if this instance agrees to proceeding with the given consumer
          for the consumer's write props, False otherwise.
         """
+        assert ready_suitor.specificity() > 0  # Dummy replacement for code below
         # TODO: Gather candidate state activations that compete with ready_suitor
-        #  For now, just abort once the first higher-specificity candidate is found.
-        specificity = ready_suitor.specificity()
-        for prop in ready_suitor.write_props():
-            if prop in self._unwritten_props:
-                for sig in self._ref_index[prop]:
-                    for candidate in self._ref_index[prop][sig]:
-                        # TODO: Pressure higher specificity candidates to make a decision
-                        if candidate.specificity() > specificity:
-                            return False
-            else:
-                # Easy exit condition: prop not free for writing
-                return False
-        # Remove the consented activation from the ref index
-        for sig in ready_suitor.signal_instances():
-            self.rejected(sig, ready_suitor)
-        # Mark the consented w-props as unavailable
-        self._unwritten_props -= ready_suitor.write_props()
+        # For now, just abort once the first higher-specificity candidate is found.
+        # specificity = ready_suitor.specificity()
+        # for prop in ready_suitor.write_props():
+        #     if prop in self._unwritten_props:
+        #         for sig in self._ref_index[prop]:
+        #             for candidate in self._ref_index[prop][sig]:
+        #                 # TODO: Pressure higher specificity candidates to make a decision
+        #                 if candidate.specificity() > specificity:
+        #                     return False
+        #     else:
+        #         # Easy exit condition: prop not free for writing
+        #         return False
         return True
+
+    def activated(self, act: IActivation):
+        """
+        Called by activation which previously received a go-ahead
+         from pressure_activation(), when it is truly proceeding with
+         running (after it got the go-ahead from all it's depended=on
+         causal groups).
+        :param act: The activation that is now running.
+        """
+        # Mark the consented w-props as unavailable
+        self._unwritten_props -= act.write_props()
 
     def consumed(self, consumed_props: Set[str]) -> None:
         """
@@ -218,20 +225,20 @@ class CausalGroup:
             # signals they are referencing are no longer available
             for sig in self._ref_index[prop]:
                 for act in self._ref_index[prop][sig]:
-                    act.wiped(sig)
+                    act.dereference(sig=sig, reacquire=True)
             # Remove the consumed prop from the index
             del self._ref_index[prop]
 
     def wiped(self, sig: 'ISignalInstance') -> None:
         """
         Called by a signal instance, to notify the causal group that
-         it was wiped and should no longer be remembered.
+         the instance was wiped and should no longer be remembered.
         :param sig: The instance that should be henceforth forgotten.
         """
         for prop in self._ref_index:
             if sig in self._ref_index[prop]:
                 for act in self._ref_index[prop][sig]:
-                    act.wiped(sig)
+                    act.dereference(sig=sig, reacquire=True)
                 del self._ref_index[prop][sig]
 
     def stale(self, sig: 'ISignalInstance') -> bool:
@@ -248,6 +255,4 @@ class CausalGroup:
                 else:
                     # Do some cleanup
                     del self._ref_index[prop][sig]
-        return True
-
-
+        return sig.has_offspring()
