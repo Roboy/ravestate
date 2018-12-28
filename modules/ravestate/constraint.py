@@ -6,13 +6,14 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-def s(signal_name: str):
+def s(signal_name: str, *, min_age=0, max_age=10):
     """
     Alias to call Signal-constructor
-
     :param signal_name: Name of the Signal
+    :param min_age: Minimum age for the signal, in seconds.
+    :param max_age: Maximum age for the signal, in seconds.
     """
-    return Signal(signal_name)
+    return Signal(signal_name, min_age=min_age, max_age=max_age)
 
 
 class Constraint:
@@ -54,10 +55,11 @@ class Signal(Constraint):
     min_age: int
     max_age: int
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, *, min_age=0, max_age=10):
         self.name = name
-        self.min_age = 0
-        self.max_age = 10000
+        # TODO: Convert seconds for min_age/max_age to ticks
+        self.min_age = min_age
+        self.max_age = max_age
         self.signal_instance = None
 
     def __or__(self, other):

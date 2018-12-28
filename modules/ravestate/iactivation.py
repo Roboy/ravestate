@@ -57,7 +57,7 @@ class IActivation:
         """
         pass
 
-    def dereference(self, *, sig: Optional[ISignalInstance]=None, reacquire: bool=False) -> None:
+    def dereference(self, *, sig: Optional[ISignalInstance]=None, reacquire: bool=False, reject: bool=False) -> None:
         """
         Notify the activation, that a single or all signal instance(s) are not available
          anymore, and should therefore not be referenced anymore by the activation.
@@ -71,6 +71,8 @@ class IActivation:
         :param reacquire: Flag which tells the function, whether for every rejected
          signal instance, the activation should hook into context for reacquisition
          of a replacement signal instance.
+        :param reject: Flag which controls, whether de-referenced signal instances
+         should be explicitely rejected through their causal groups.
         """
         pass
 
@@ -81,7 +83,7 @@ class IActivation:
          to the given signal instance, given that there is a lower-
          specificity activation which is ready to run.
         """
-        # TODO: Implement Activation.pressure(). Impl will use Context.predict(signals)
+        # TODO: Implement Activation.pressure(). Impl will use Context.lowest_upper_bound_eta(signals)
         #  to get a time estimate on when progress on the activations constraints
         #  is to be expected. If progress is not made within the predicted
         #  time period, the activation is going to auto-eliminate for the pressured
