@@ -1,4 +1,4 @@
-from typing import List, Set, Generator, Optional
+from typing import List, Set, Generator, Optional, Tuple
 from ravestate.siginst import SignalInstance
 from ravestate.iactivation import IActivation
 
@@ -36,11 +36,11 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         return False
 
-    def dereference(self, sig: Optional[SignalInstance]=None) -> Generator['Signal', None, None]:
+    def dereference(self, sig: Optional[SignalInstance]=None) -> Generator[Tuple['Signal', 'SignalInstance'], None, None]:
         logger.error("Don't call this method on the super class Constraint")
-        yield None
+        yield None, None
 
-    def update(self) -> List['Signal']:
+    def update(self, act: IActivation) -> List['Signal']:
         logger.error("Don't call this method on the super class Constraint")
         return []
 
@@ -102,6 +102,20 @@ class Signal(Constraint):
     def evaluate(self) -> bool:
         return self.signal_instance is not None
 
+    def dereference(self, sig: Optional[SignalInstance]=None) -> Generator[Tuple['Signal', 'SignalInstance'], None, None]:
+        if (not sig and self.signal_instance) or (self.signal_instance is sig):
+            former_signal_instance = self.signal_instance
+            self.signal_instance = None
+            yield self, former_signal_instance
+
+    def update(self, act: IActivation) -> List['Signal']:
+        if self.signal_instance and self.signal_instance.age() > self.max_age:
+            with self.signal_instance.causal_group() as cg:
+                cg.rejected(self.signal_instance, act)
+                self.signal_instance = None
+                return [self]
+        return []
+
     def __str__(self):
         return self.name
 
@@ -156,6 +170,12 @@ class Conjunct(Constraint):
 
     def evaluate(self) -> bool:
         return all(map(lambda si: si.evaluate(), self._signals))
+
+    def dereference(self, sig: Optional[SignalInstance]=None) -> Generator[Tuple['Signal', 'SignalInstance'], None, None]:
+        return (result for child in self._signals for result in child.dereference(sig))
+
+    def update(self, act: IActivation) -> List['Signal']:
+        return sum((child.update(act) for child in self._signals), [])
 
     def __str__(self):
         return "(" + " & ".join(map(lambda si: si.__str__(), self._signals)) + ")"
@@ -215,6 +235,12 @@ class Disjunct(Constraint):
 
     def evaluate(self) -> bool:
         return any(map(lambda si: si.evaluate(), self._conjunctions))
+
+    def dereference(self, sig: Optional[SignalInstance]=None) -> Generator[Tuple['Signal', 'SignalInstance'], None, None]:
+        return (result for child in self._conjunctions for result in child.dereference(sig))
+
+    def update(self, act: IActivation) -> List['Signal']:
+        return sum((child.update(act) for child in self._conjunctions), [])
 
     def __str__(self):
         return " | ".join(map(lambda conjunct: conjunct.__str__(), self._conjunctions))

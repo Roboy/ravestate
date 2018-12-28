@@ -56,7 +56,7 @@ class Activation(IActivation):
             sum(self.ctx.signal_specificity(sig) for sig in conj.signals())
             for conj in self.constraint.conjunctions())
 
-    def dereference(self, *, sig: Optional[ISignalInstance]=None, reacquire: bool=False) -> None:
+    def dereference(self, *, sig: Optional[ISignalInstance]=None, reacquire: bool=False, reject: bool=False) -> None:
         """
         Notify the activation, that a single or all signal instance(s) are not available
          anymore, and should therefore not be referenced anymore by the activation.
@@ -70,10 +70,15 @@ class Activation(IActivation):
         :param reacquire: Flag which tells the function, whether for every rejected
          signal instance, the activation should hook into context for reacquisition
          of a replacement signal instance.
+        :param reject: Flag which controls, whether de-referenced signal instances
+         should be explicitely rejected through their causal groups.
         """
-        for sig_to_reacquire in self.constraint.dereference(sig):
+        for sig_to_reacquire, dereferenced_instance in self.constraint.dereference(sig):
             if reacquire:
                 self.ctx.reacquire(self, sig_to_reacquire)
+            if reject:
+                with dereferenced_instance.causal_group() as cg:
+                    cg.rejected(dereferenced_instance, self)
 
     def acquire(self, signal: SignalInstance) -> bool:
         """
@@ -122,7 +127,7 @@ class Activation(IActivation):
                 with sig.causal_group() as cg:
                     cg.rejected(sig, self)
             # Make sure that constraint doesn't hold any unneeded references to signal inst.
-            for _ in self.constraint.dereference(None):
+            for _ in self.constraint.dereference():
                 pass
             # Withdraw from context for all (unfulfilled) signals (there might
             #  be some unfulfilled conjunctions next to the fulfilled one).

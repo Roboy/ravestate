@@ -187,7 +187,7 @@ class Context(IContext):
                     activations_to_wipe.add(act)
                 del self._act_per_state_per_signal_age[signal][signal.min_age][st]
             for act in activations_to_wipe:
-                act.dereference(sig=None, reacquire=False)
+                act.dereference(sig=None, reacquire=False, reject=True)
             # Actually forget about the state
             self._states.remove(st)
         # Some states may need to be removed, which depended

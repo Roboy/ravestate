@@ -21,13 +21,13 @@ class CausalGroup:
 
     # Lock for the whole causal group
     _lock: Lock
-    # Remember the locked lock, since the lock member might be retargeted in merge()
+    # Remember the locked lock, since the lock member might be re-targeted in merge()
     _locked_lock: Optional[Lock]
 
     # Set of property names for which no writing state has been
     #  activated yet within this causal group.
     #
-    # This is different from _refc_index:
+    # This is different from _ref_index:
     #
     #  -> _unwritten_props might lack properties that are only
     #   *temporarily* unavailable, because a writing state is still running,
@@ -35,9 +35,9 @@ class CausalGroup:
     #   available again.
     #
     #  -> In this case it is useful to still see the other
-    #   state activation candidates for those props in _suitors_per_property.
+    #   state activation candidates for those props in _ref_index.
     #
-    # Also, _refc_index needs to be as
+    # Also, _ref_index needs to be as
     #  sparse as possible to optimise performance.
     #
     _unwritten_props: Set[str]
@@ -255,4 +255,4 @@ class CausalGroup:
                 else:
                     # Do some cleanup
                     del self._ref_index[prop][sig]
-        return sig.has_offspring()
+        return not sig.has_offspring()
