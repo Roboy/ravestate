@@ -95,14 +95,17 @@ class Activation(IActivation):
          itself, or auto-eliminate, or reject signal instances which have become too old.
         """
         # Update constraint
-        signals_to_reacquire = self.constraint.update()
+        signals_to_reacquire = self.constraint.update(self)
+
         # Reacquire for rejected signal instances
         for sig in signals_to_reacquire:
             self.ctx.reacquire(self, sig)
+
         # Iterate over fulfilled conjunctions and look to activate with one of them
         for conjunction in self.constraint.conjunctions():
             if not conjunction.evaluate():
                 continue
+
             # Ask each signal instance's causal group for activation consent
             signal_instances = set(sig.signal_instance for sig in conjunction.signals())
             consenting_causal_groups = set()
@@ -118,26 +121,33 @@ class Activation(IActivation):
                             break  # break signal instance iteration
             if not all_consented:
                 continue
+
             # Notify all consenting causal groups that activation is going forward
             for cg in consenting_causal_groups:
                 with cg:
                     cg.activated(self)
+
             # Remove self from all causal groups
             for sig in signal_instances:
                 with sig.causal_group() as cg:
                     cg.rejected(sig, self)
+
             # Make sure that constraint doesn't hold any unneeded references to signal inst.
             for _ in self.constraint.dereference():
                 pass
+
             # Withdraw from context for all (unfulfilled) signals (there might
             #  be some unfulfilled conjunctions next to the fulfilled one).
             for sig in self.constraint.signals():
                 self.ctx.withdraw(self, sig)
+
             # Remember sig-instances/causal-groups for use in activation
             self.signal_instances = signal_instances
             self.consenting_causal_groups = consenting_causal_groups
+
             # Run activation
             self.run()
+
             # Do not further iterate over candidate conjunctions
             break
 

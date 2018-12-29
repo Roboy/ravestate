@@ -89,8 +89,9 @@ class CausalGroup:
     def __enter__(self) -> 'CausalGroup':
         # Remember current lock, since it might change,
         # if the lock object is switched in merge()
+        assert not self._locked_lock
         lock = self._lock
-        self._lock.__enter__()
+        lock.__enter__()
         if lock != self._lock:
             lock.__exit__(None, None, None)
             return self.__enter__()
@@ -103,7 +104,7 @@ class CausalGroup:
             result = self._locked_lock.__exit__(exc_type, exc_value, traceback)
             self._locked_lock = None
             return result
-        logger.error(f"Exit called before enter causal group!")
+        logger.error(f"Exit called before enter on causal group!")
         return True
 
     def __eq__(self, other) -> bool:
