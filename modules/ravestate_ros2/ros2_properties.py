@@ -67,6 +67,8 @@ def sync_ros_properties(ctx: ContextWrapper):
                 node.destroy_subscription(item)
             elif isinstance(item, rclpy.publisher.Publisher):
                 node.destroy_publisher(item)
+            elif isinstance(item, rclpy.client.Client):
+                node.destroy_client(item)
             current_props.pop(prop_hash)
 
         # add new props
@@ -86,6 +88,10 @@ def sync_ros_properties(ctx: ContextWrapper):
             if isinstance(prop, Ros2PubProperty):
                 prop.publisher = node.create_publisher(prop.msg_type, prop.topic)
                 current_props[prop.__hash__()] = prop.publisher
+            # register clients in ROS
+            if isinstance(prop, Ros2CallProperty):
+                prop.client = node.create_client(prop.service_type, prop.service_name)
+                current_props[prop.__hash__()] = prop.client
 
             # replace prop with hash in global_props
             global_prop_set.add(prop.__hash__())
@@ -176,3 +182,63 @@ class Ros2PubProperty(PropertyBase):
             elif ROS2_AVAILABLE:
                 logger.error(f"Message {str(value)} on topic {self.topic} "
                              f"cannot be published because publisher was not registered in ROS")
+
+
+class Ros2CallProperty(PropertyBase):
+    def __init__(self, name: str, service_name: str, service_type):
+        """
+        Initialize Property
+        :param name: Name of the property
+        :param service_name: ROS2-Service that should be called
+        :param service_type: Type of the service used
+        """
+        super().__init__(
+            name=name,
+            allow_read=True,
+            allow_write=True,
+            allow_push=False,
+            allow_pop=False,
+            default=None,
+            always_signal_changed=False)
+        self.service_name = service_name
+        self.service_type = service_type
+        self.client = None
+        global global_prop_set
+        global_prop_set.add(self)
+
+    def __del__(self):
+        global global_prop_set
+        global_prop_set.remove(self.__hash__())
+
+    def write(self, value):
+        """
+        Call Service and receive result directly in the property.
+        Blocks during service-call.
+        If service is not available, writes None into the property value and returns.
+        :param value: Either Request-Object for the service or dict containing the attributes of the Request
+        """
+        if super().write(value):
+            if self.client:
+                counter = 0
+                while not self.client.wait_for_service(timeout_sec=1.0) and counter < 10:
+                    counter += 1
+                if counter >= 10:
+                    logger.error(f'service {self.service_name} not available')
+                    super().write(None)
+                    return
+
+                if isinstance(value, self.service_type.Request):
+                    # value is already Request
+                    req = value
+                else:
+                    # value is dict {"param1": value1, "param2": value2}
+                    req = self.service_type.Request(**value)
+
+                logger.debug(f"{self.fullname()} is sending request {str(req)} to service {self.service_name}")
+                result = self.client.call(req)
+                super().write(result)
+
+            elif ROS2_AVAILABLE:
+                logger.error(f"Request {str(value)} to service {self.service_name} "
+                             f"cannot be sent because client was not registered in ROS")
+
