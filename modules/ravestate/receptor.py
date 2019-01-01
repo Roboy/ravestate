@@ -22,13 +22,13 @@ def receptor(*, ctx_wrap: ContextWrapper, write: Union[str, Tuple[str]]):
             write=write,
             read=(),
             signal=None,
-            cond=(),
+            cond=None,
             action=action,
             is_receptor=True)
 
         def receptor_function(*args, **kwargs):
             nonlocal receptor_state, ctx
-            Activation(st=receptor_state, ctx=ctx).run(args, kwargs)
+            Activation(st=receptor_state, ctx=ctx).run(*args, **kwargs)
 
         return receptor_function
 

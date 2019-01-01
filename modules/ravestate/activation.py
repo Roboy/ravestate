@@ -38,12 +38,14 @@ class Activation(IActivation):
         self.ctx = ctx
         self.args = []
         self.kwargs = {}
+        self.spikes = set()
+        self.consenting_causal_groups = set()
 
     def write_props(self) -> Set[str]:
         """
         Return's the set of the activation's write-access property names.
         """
-        return self.state_to_activate.write_props
+        return set(self.state_to_activate.write_props)
 
     def specificity(self) -> float:
         """
@@ -154,11 +156,16 @@ class Activation(IActivation):
     def run(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
-        Thread(target=self._run_private).run()
+        Thread(target=self._run_private).start()
 
     def _run_private(self):
+        # TODO: Pass spikes to ContextWrapper, so that they are parents for :changed signals
         context_wrapper = ContextWrapper(self.ctx, self.state_to_activate)
+
+        # Run state function
         result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
+
+        # Process state function result
         if isinstance(result, Emit):
             if self.state_to_activate.signal:
                 self.ctx.emit(
@@ -166,8 +173,11 @@ class Activation(IActivation):
                     parents=self.spikes)
             else:
                 logger.error(f"Attempt to emit from state {self.name}, which does not specify a signal name!")
-        if isinstance(result, Delete):
+        elif isinstance(result, Delete):
             self.ctx.rm_state(st=self.state_to_activate)
-        for cg in self.consenting_causal_groups:
-            with cg:
-                cg.consumed(self.state_to_activate.write_props)
+
+        # Let participating causal groups know about consumed properties
+        if self.state_to_activate.write_props:
+            for cg in self.consenting_causal_groups:
+                with cg:
+                    cg.consumed(set(self.state_to_activate.write_props))

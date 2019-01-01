@@ -82,6 +82,7 @@ class CausalGroup:
         Create a new causal group, with a set of unwritten props.
         """
         self._lock = Lock()
+        self._locked_lock = None
         self._unwritten_props = properties.copy()
         self._signal_names = set()
         self._ref_index = {
@@ -93,23 +94,21 @@ class CausalGroup:
     def __enter__(self) -> 'CausalGroup':
         # Remember current lock, since it might change,
         # if the lock object is switched in merge()
-        assert not self._locked_lock
         lock = self._lock
         lock.__enter__()
         if lock != self._lock:
             lock.__exit__(None, None, None)
             return self.__enter__()
-        # Remember the locked lock, since the lock member might be retargeted in merge()
+        # Remember the locked lock, since the lock member might be re-targeted in merge()
+        assert not self._locked_lock
         self._locked_lock = self._lock
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> bool:
-        if self._locked_lock:
-            result = self._locked_lock.__exit__(exc_type, exc_value, traceback)
-            self._locked_lock = None
-            return result
-        logger.error(f"Exit called before enter on causal group!")
-        return True
+        assert self._locked_lock
+        result = self._locked_lock.__exit__(exc_type, exc_value, traceback)
+        self._locked_lock = None
+        return result
 
     def __eq__(self, other) -> bool:
         return isinstance(other, CausalGroup) and other._lock == self._lock

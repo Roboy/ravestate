@@ -45,7 +45,10 @@ class Spike(ISpike):
         :param properties: The set of property names from context,
          which are available for consumption.
         """
+        if parents is None:
+            parents = set()
         self._name = signal_name
+        self._age = 0
         self._offspring = set()
         self._parents = parents
         self._causal_group = next(iter(parents)).causal_group() if parents else CausalGroup(properties)

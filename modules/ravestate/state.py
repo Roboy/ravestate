@@ -1,6 +1,6 @@
 # Ravestate State-related definitions
 
-from typing import Callable, Optional, Any
+from typing import Callable, Optional, Any, Tuple, Union
 
 from ravestate.constraint import Conjunct, Disjunct, s, Constraint
 
@@ -31,9 +31,20 @@ class Emit(StateActivationResult):
 
 class State:
 
-    action: Callable[[Any], Optional[StateActivationResult]]
+    signal: str
+    write_props: Tuple
+    read_props: Tuple
+    constraint: Constraint
+    module_name: str
 
-    def __init__(self, *, signal, write, read, cond, action, is_receptor=False):
+    def __init__(self, *,
+                 signal: Optional[str],
+                 write: Union[str, Tuple[str]],
+                 read: Union[str, Tuple[str]],
+                 cond: Constraint,
+                 action,
+                 is_receptor: Optional[bool]=False):
+
         assert(callable(action))
         self.name = action.__name__
 
@@ -62,13 +73,14 @@ class State:
         self.module_name = ""
 
     def __call__(self, context, *args, **kwargs) -> StateActivationResult:
-        return self.action(context, *args, **kwargs)
+        args = (context,) + args
+        return self.action(*args, **kwargs)
 
     def signal_name(self):
         return f"{self.module_name}:{self.signal}"
 
 
-def state(*, signal: str="", write: tuple=(), read: tuple=(), cond: Constraint=None):
+def state(*, signal: Optional[str]="", write: tuple=(), read: tuple=(), cond: Constraint=None):
     """
     Decorator to declare a new state, which may emit a certain signal,
     write to a certain set of properties (calling write, push, pop),
