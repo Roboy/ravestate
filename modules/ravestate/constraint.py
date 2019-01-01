@@ -1,5 +1,5 @@
 from typing import List, Set, Generator, Optional, Tuple
-from ravestate.siginst import SignalInstance
+from ravestate.spike import Spike
 from ravestate.iactivation import IActivation
 
 from reggol import get_logger
@@ -29,7 +29,7 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         yield None
 
-    def acquire(self, signal: SignalInstance, act: IActivation):
+    def acquire(self, spike: Spike, act: IActivation):
         logger.error("Don't call this method on the super class Constraint")
         pass
 
@@ -37,7 +37,7 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         return False
 
-    def dereference(self, sig: Optional[SignalInstance]=None) -> Generator[Tuple['Signal', 'SignalInstance'], None, None]:
+    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
         logger.error("Don't call this method on the super class Constraint")
         yield None, None
 
@@ -51,7 +51,7 @@ class Signal(Constraint):
     Class that represents a Signal
     """
     name: str
-    signal_instance: SignalInstance
+    spike: Spike
     min_age: int
     max_age: int
 
@@ -60,7 +60,7 @@ class Signal(Constraint):
         # TODO: Convert seconds for min_age/max_age to ticks
         self.min_age = min_age
         self.max_age = max_age
-        self.signal_instance = None
+        self.spike = None
 
     def __or__(self, other):
         if isinstance(other, Signal):
@@ -93,28 +93,28 @@ class Signal(Constraint):
     def conjunctions(self) -> Generator['Conjunct', None, None]:
         yield Conjunct(self)
 
-    def acquire(self, signal: SignalInstance, act: IActivation):
-        if self.name == signal.name() and self.min_age <= signal.age() <= self.max_age:
-            self.signal_instance = signal
-            with signal.causal_group() as cg:
-                cg.acquired(signal, act)
+    def acquire(self, spike: Spike, act: IActivation):
+        if self.name == spike.name() and spike.age() <= self.max_age:
+            self.spike = spike
+            with spike.causal_group() as cg:
+                cg.acquired(spike, act)
             return True
         return False
 
     def evaluate(self) -> bool:
-        return self.signal_instance is not None
+        return self.spike and self.min_age <= self.spike.age()
 
-    def dereference(self, sig: Optional[SignalInstance]=None) -> Generator[Tuple['Signal', 'SignalInstance'], None, None]:
-        if (not sig and self.signal_instance) or (self.signal_instance is sig):
-            former_signal_instance = self.signal_instance
-            self.signal_instance = None
+    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
+        if (not spike and self.spike) or (self.spike is spike):
+            former_signal_instance = self.spike
+            self.spike = None
             yield self, former_signal_instance
 
     def update(self, act: IActivation) -> List['Signal']:
-        if self.signal_instance and self.signal_instance.age() > self.max_age:
-            with self.signal_instance.causal_group() as cg:
-                cg.rejected(self.signal_instance, act)
-                self.signal_instance = None
+        if self.spike and self.spike.age() > self.max_age:
+            with self.spike.causal_group() as cg:
+                cg.rejected(self.spike, act)
+                self.spike = None
                 return [self]
         return []
 
@@ -164,17 +164,17 @@ class Conjunct(Constraint):
     def conjunctions(self) -> Generator['Conjunct', None, None]:
         yield self
 
-    def acquire(self, signal: SignalInstance, act: IActivation):
+    def acquire(self, spike: Spike, act: IActivation):
         result = False
         for si in self._signals:
-            result |= si.acquire(signal, act)
+            result |= si.acquire(spike, act)
         return result
 
     def evaluate(self) -> bool:
         return all(map(lambda si: si.evaluate(), self._signals))
 
-    def dereference(self, sig: Optional[SignalInstance]=None) -> Generator[Tuple['Signal', 'SignalInstance'], None, None]:
-        return (result for child in self._signals for result in child.dereference(sig))
+    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
+        return (result for child in self._signals for result in child.dereference(spike))
 
     def update(self, act: IActivation) -> List['Signal']:
         return sum((child.update(act) for child in self._signals), [])
@@ -229,17 +229,17 @@ class Disjunct(Constraint):
     def conjunctions(self) -> Generator['Conjunct', None, None]:
         return (conj for conj in self._conjunctions)
 
-    def acquire(self, signal: SignalInstance, act: IActivation):
+    def acquire(self, spike: Spike, act: IActivation):
         result = False
         for conjunct in self._conjunctions:
-            result |= conjunct.acquire(signal, act)
+            result |= conjunct.acquire(spike, act)
         return result
 
     def evaluate(self) -> bool:
         return any(map(lambda si: si.evaluate(), self._conjunctions))
 
-    def dereference(self, sig: Optional[SignalInstance]=None) -> Generator[Tuple['Signal', 'SignalInstance'], None, None]:
-        return (result for child in self._conjunctions for result in child.dereference(sig))
+    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
+        return (result for child in self._conjunctions for result in child.dereference(spike))
 
     def update(self, act: IActivation) -> List['Signal']:
         return sum((child.update(act) for child in self._conjunctions), [])

@@ -1,45 +1,45 @@
-# Ravestate class which encapsulates a single signal instance
+# Ravestate class which encapsulates a single spike
 
 from typing import Set
-from ravestate.iactivation import ISignalInstance
-from ravestate.causalgroup import CausalGroup
+from ravestate.iactivation import ISpike
+from ravestate.causal import CausalGroup
 
 from reggol import get_logger
 logger = get_logger(__name__)
 
 
-class SignalInstance(ISignalInstance):
+class Spike(ISpike):
     """
-    This class encapsulates a single signal instance, to track
+    This class encapsulates a single spike, to track
      ... it's consumption for different output properties
-     ... it's offspring instances (causal group -> instances caused by this signal)
+     ... it's offspring instances (causal group -> spikes caused by this spike)
     """
 
-    # Age of the instance in ticks
+    # Age of the spike in ticks
     _age: int
 
-    # Name of the instance's signal
+    # Name of the spike's signal
     _name: str
 
-    # This signal instance's causal group. The causal group
-    #  is shared by an instance's family (children/parents),
+    # This spike's causal group. The causal group
+    #  is shared by an spike's family (children/parents),
     #  and dictates which properties are still free to be written.
     _causal_group: CausalGroup
 
-    # Offspring signals which were (partially) caused by this instance,
+    # Offspring signals which were (partially) caused by this spike,
     #  with which consumed props are synced, and which are wiped if this
-    #  instance is wiped.
-    _offspring: Set['ISignalInstance']
+    #  spike is wiped.
+    _offspring: Set['ISpike']
 
-    # Parent instances, which are notified when this instance is wiped
-    _parents: Set['SignalInstance']
+    # Parent instances, which are notified when this spike is wiped
+    _parents: Set['Spike']
 
-    def __init__(self, *, signal_name: str, parents: Set['SignalInstance'], properties: Set[str]):
+    def __init__(self, *, signal_name: str, parents: Set['Spike'], properties: Set[str]):
         """
-        Construct a signal instance from a signal name and a list of causing parent signals.
-        :param signal_name: Name of the signal which is represented by this signal instance
+        Construct a spike from a signal name and a list of causing parent signals.
+        :param signal_name: Name of the signal which is represented by this spike
         :param parents: The parent signals which were involved in causing this signal,
-         and with which unwritten properties will be synchronized: This signal instance's
+         and with which unwritten properties will be synchronized: This spike's
          causal group will be inferred from the parents, and the parent's causal
          groups will be merged if they are different.
         :param properties: The set of property names from context,
@@ -53,33 +53,36 @@ class SignalInstance(ISignalInstance):
         for parent in parents:
             parent.adopt(self)
 
+    def __repr__(self):
+        return f"Spike({self._name}, age={self._age})"
+
     def name(self) -> str:
         """
-        Returns the name if this signal instance's signal.
+        Returns the name of this spike's signal.
         """
         return self._name
 
     def causal_group(self) -> CausalGroup:
         """
-        Get this signal instance's causal group.
+        Get this spike's causal group.
         :return: This instances causal group. Should never be None.
         """
         return self._causal_group
 
-    def adopt(self, child: 'SignalInstance') -> None:
+    def adopt(self, child: 'Spike') -> None:
         """
-        Called in signal instance constructor, for instances which claim to be
-         caused by this signal instance.
-        :param child: The child to add to this signal instance's causal group.
+        Called in spike constructor, for instances which claim to be
+         caused by this spike.
+        :param child: The child to add to this spike's causal group.
         """
         self._offspring.add(child)
         if self.causal_group() != child.causal_group():
             with self.causal_group() as causal_parent, child.causal_group() as causal_child:
                 causal_parent.merge(causal_child)
 
-    def wiped(self, child: 'ISignalInstance') -> None:
+    def wiped(self, child: 'ISpike') -> None:
         """
-        Called by an offspring signal, to notify the extension instance
+        Called by an offspring signal, to notify the spike
          that it was wiped, and should therefore be removed from the children set.
         :param child: The child to be forgotten.
         """
@@ -90,13 +93,13 @@ class SignalInstance(ISignalInstance):
 
     def wipe(self, already_wiped_in_causal_group: bool=False) -> None:
         """
-        Called either in Context run loop when the signal instance is found to be stale
+        Called either in Context run loop when the spike is found to be stale
          (with wiped_in_causal_group=True), or in Context.wipe(signal_inst),
          or by parent (recursively).
-        After this function is called, the signal instance should be cleaned up by GC.
+        After this function is called, the spike should be cleaned up by GC.
         :param already_wiped_in_causal_group: Boolean which indicates, whether wiped(signal_inst)
          must still be called on the group to make sure sure that no dangling references
-         to the signal instance are maintained by any state activations.
+         to the spike are maintained by any state activations.
         """
         # Wipe children. Copy set, because self._offspring will be manipulated during iteration.
         offspring = self._offspring.copy()
@@ -113,19 +116,19 @@ class SignalInstance(ISignalInstance):
 
     def has_offspring(self):
         """
-        Called by CausalGroup.stale(signal_instance).
-        :return: True if the instance has active offspring, false otherwise.
+        Called by CausalGroup.stale(spike).
+        :return: True if the spike has active offspring, false otherwise.
         """
         return len(self._offspring) > 0
 
     def tick(self) -> None:
         """
-        Increment this signal instance's age by 1.
+        Increment this spike's age by 1.
         """
         self._age += 1
 
     def age(self) -> int:
         """
-        Obtain this signal instance's age (in ticks).
+        Obtain this spike's age (in ticks).
         """
         return self._age

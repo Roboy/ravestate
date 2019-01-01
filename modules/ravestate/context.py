@@ -14,7 +14,7 @@ from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
 from ravestate.constraint import s, Signal
-from ravestate.siginst import SignalInstance
+from ravestate.spike import Spike
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -33,7 +33,7 @@ class Context(IContext):
 
     _properties: Dict[str, PropertyBase]
     _states: Set[State]
-    _signal_instances: Set[SignalInstance]
+    _spikes: Set[Spike]
     _act_per_state_per_signal_age: Dict[
         Signal,
         Dict[
@@ -67,7 +67,7 @@ class Context(IContext):
         self._shutdown_flag = Event()
         self._properties = dict()
         self._states = set()
-        self._signal_instances = set()
+        self._spikes = set()
         self._act_per_state_per_signal_age = dict()
 
         # Register default signals
@@ -82,16 +82,17 @@ class Context(IContext):
         for module_name in self._core_config[self.import_modules_config]+modules:
             self.add_module(module_name)
 
-    def emit(self, signal: Signal, parents: Set[SignalInstance]=None) -> None:
+    def emit(self, signal: Signal, parents: Set[Spike]=None) -> None:
         """
-        Emit a signal to the signal processing loop. Note:
-         The signal will only be processed if run() has been called!
+        Emit a signal to the signal processing loop, by creating
+         a new Spike for the specified Signal.
+        Note: The signal will only be processed if run() has been called!
         :param signal: The signal to be emitted.
         :param parents: The signal's parents, if it is supposed to be integrated into a causal group.
         """
         with self._lock:
-            self._signal_instances.add(
-                SignalInstance(signal_name=signal.name, parents=parents, properties=set(self._properties.keys())))
+            self._spikes.add(
+                Spike(signal_name=signal.name, parents=parents, properties=set(self._properties.keys())))
 
     def run(self) -> None:
         """
@@ -299,10 +300,11 @@ class Context(IContext):
 
     def reacquire(self, act: IActivation, sig: Signal):
         """
-        Called by activation, to indicate, that it needs a new SignalInstance
+        Called by activation, to indicate, that it needs a new Spike
          for the specified signal, and should for this purpose be referenced by context.
-        :param act: The activation that needs a new signal instance of the specified nature.
-        :param sig: Signal type for which a new instance is needed.
+        Note: Not thread-safe, sync must be guaranteed by caller.
+        :param act: The activation that needs a new spike of the specified nature.
+        :param sig: Signal type for which a new spike is needed.
         """
         assert isinstance(act, Activation)  # No way around it to avoid import loop
         if sig not in self._act_per_state_per_signal_age:
@@ -319,6 +321,7 @@ class Context(IContext):
          due to activation pressure, or because one of the activations
          conjunctions was fulfilled, so it is no longer looking for
          signals to fulfill the remaining conjunctions.
+        Note: Not thread-safe, sync must be guaranteed by caller.
         :param act: The activation that has lost interest in the specified signal.
         :param sig: Signal type for which interest is lost.
         """
@@ -354,7 +357,12 @@ class Context(IContext):
         activation = Activation(st, self)
         for signal in st.constraint.signals():
             if signal in self._act_per_state_per_signal_age:
-                self._act_per_state_per_signal_age[signal][signal.min_age][st] |= {activation}
+                # TODO: Determine, whether indexing by min age is actually necessary
+                #  -> may not, because immediate acquisition is necessary -> otherwise, the
+                #   signal's causal group will not know about a possibly higher-
+                #   specificity state that runs a bit later.
+                # self._act_per_state_per_signal_age[signal][signal.min_age][st] |= {activation}
+                self._act_per_state_per_signal_age[signal][0][st] |= {activation}
             else:
                 logger.error(
                     f"Adding state activation for f{st.signal_name()} which depends on unknown signal `{signal}`!")
@@ -378,14 +386,14 @@ class Context(IContext):
 
             with self._lock:
 
-                # Acquire new state activations for every signal instance
-                for sig in self._signal_instances:
+                # Acquire new state activations for every spike
+                for sig in self._spikes:
                     for state, acts in self._act_per_state_per_signal_age[s(sig.name())][sig.age()]:
                         old_acts = acts.copy()
                         for act in old_acts:
                             if act.acquire(sig):
                                 # Remove the Activation instance from _act_per_state_per_signal_age
-                                #  for the SignalInstance with a certain minimum age. In place of the removed
+                                #  for the Spike with a certain minimum age. In place of the removed
                                 #  activation, if no activation with the same target state is left,
                                 #  a new Activation will be created.
                                 acts.remove(act)
@@ -393,20 +401,21 @@ class Context(IContext):
                                     self._new_state_activation(state)
                             else:
                                 logger.error(
-                                    "An activation rejected a signal instance it was registered to be interested in.")
+                                    "An activation rejected a spike it was registered to be interested in.")
 
                 # Update all state activations
                 for act in self._state_activations():
                     act.update()
 
-                # Forget fully unreferenced signal instances
-                old_signal_set = self._signal_instances.copy()
+                # Forget fully unreferenced spikes
+                old_signal_set = self._spikes.copy()
                 for sig in old_signal_set:
                     with sig.causal_group() as cg:
                         if cg.stale(sig):
-                            # This should lead to the deletion of the signal instance
-                            self._signal_instances.remove(sig)
+                            # This should lead to the deletion of the spike
+                            self._spikes.remove(sig)
+                            logger.debug(f"{self}.stale({sig.name()}) -> {result}")
 
-                # Increment age on active signal instances
-                for sig in self._signal_instances:
+                # Increment age on active spikes
+                for sig in self._spikes:
                     sig.tick()

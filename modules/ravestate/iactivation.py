@@ -1,36 +1,36 @@
-# Interface of state activation towards signal instance
-# Signal instance interface towards state activation
+# Interface of state activation towards spike
+# Spike interface towards state activation
 
 from typing import Set, Optional
 
 
-class ISignalInstance:
+class ISpike:
     """
-    Base interface class for signal instances.
+    Base interface class for spikes.
     """
 
     def name(self) -> str:
         """
-        Returns the name if this signal instance's signal.
+        Returns the name of this spike's signal.
         """
         pass
 
     def wipe(self, already_wiped_in_causal_group: bool=False) -> None:
         """
-        Called either in Context run loop when the signal instance is found to be stale
+        Called either in Context run loop when the spike is found to be stale
          (with wiped_in_causal_group=True), or in Context.wipe(signal_inst),
          or by parent (recursively).
-        After this function is called, the signal instance should be cleaned up by GC.
+        After this function is called, the spike should be cleaned up by GC.
         :param already_wiped_in_causal_group: Boolean which indicates, whether wiped(signal_inst)
          must still be called on the group to make sure sure that no dangling references
-         to the signal instance are maintained by any state activations.
+         to the spike are maintained by any state activations.
         """
         pass
 
     def has_offspring(self):
         """
-        Called by CausalGroup.stale(signal_instance).
-        :return: True if the instance has active offspring, false otherwise.
+        Called by CausalGroup.stale(spike).
+        :return: True if the spike has active offspring, false otherwise.
         """
         pass
 
@@ -57,9 +57,9 @@ class IActivation:
         """
         pass
 
-    def dereference(self, *, sig: Optional[ISignalInstance]=None, reacquire: bool=False, reject: bool=False) -> None:
+    def dereference(self, *, sig: Optional[ISpike]=None, reacquire: bool=False, reject: bool=False) -> None:
         """
-        Notify the activation, that a single or all signal instance(s) are not available
+        Notify the activation, that a single or all spike(s) are not available
          anymore, and should therefore not be referenced anymore by the activation.
         This is called by ...
          ... context when a state is deleted.
@@ -67,24 +67,24 @@ class IActivation:
          ... causal group, when a referenced signal was wiped.
          ... this activation (with reacquire=True), if it gives in to activation pressure.
         :param sig: The signal that should be forgotten by the activation, or
-         none, if all referenced signal instances should be forgotten.
+         none, if all referenced spikes should be forgotten.
         :param reacquire: Flag which tells the function, whether for every rejected
-         signal instance, the activation should hook into context for reacquisition
-         of a replacement signal instance.
-        :param reject: Flag which controls, whether de-referenced signal instances
+         spike, the activation should hook into context for reacquisition
+         of a replacement spike.
+        :param reject: Flag which controls, whether de-referenced spikes
          should be explicitely rejected through their causal groups.
         """
         pass
 
-    def pressure(self, give_me_up: ISignalInstance):
+    def pressure(self, give_me_up: ISpike):
         """
-        Called by signal instance, to pressure the activation to
+        Called by spike, to pressure the activation to
          make a decision on whether it is going to retain a reference
-         to the given signal instance, given that there is a lower-
+         to the given spike, given that there is a lower-
          specificity activation which is ready to run.
         """
         # TODO: Implement Activation.pressure(). Impl will use Context.lowest_upper_bound_eta(signals)
         #  to get a time estimate on when progress on the activations constraints
         #  is to be expected. If progress is not made within the predicted
         #  time period, the activation is going to auto-eliminate for the pressured
-        #  signal instances.
+        #  spikes.

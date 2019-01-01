@@ -93,11 +93,11 @@ class PropertyWrapper:
 
     def enum(self) -> Generator[str, None, None]:
         """
-        Get the full pathes of each of this propertie's children.
+        Get the full paths of each of this property's children.
         """
         if not self.allow_read:
             logger.error(f"Unauthorized read access in property-wrapper for {self.prop.fullname()}!")
-            return iter([])
+            return (_ for _ in ())
         return (child.fullname() for _, child in self.prop.children.items())
 
 

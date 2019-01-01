@@ -28,7 +28,7 @@ def register(*, name: str="", props=(), states=(), config=None):
     May be called to register a named set of states, properties and config entries,
     which form a coherent bundle.
     :param name: The name of the module. Will be prefixed to property and signal names like
-     <modulename>:<proeprty/signal-name>.
+     <module name>:<property/signal-name>.
     :param props: The properties that should be registered.
     :param states: The states that should be registered.
     :param config: A dictionary of config entries and their default values, which should be read

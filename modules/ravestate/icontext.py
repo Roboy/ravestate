@@ -6,7 +6,7 @@ from ravestate import property
 from ravestate import state
 from typing import Set
 from ravestate.constraint import Signal
-from ravestate.siginst import SignalInstance
+from ravestate.spike import Spike
 from ravestate.iactivation import IActivation
 
 
@@ -44,7 +44,7 @@ class IContext:
         """
         pass
 
-    def emit(self, signal: Signal, parents: Set['SignalInstance']=None) -> None:
+    def emit(self, signal: Signal, parents: Set['Spike']=None) -> None:
         """
         Emit a signal to the signal processing loop. Note:
          The signal will only be processed if run() has been called!
@@ -115,10 +115,10 @@ class IContext:
 
     def reacquire(self, act: IActivation, sig: Signal):
         """
-        Called by activation to go shopping for a new SignalInstance
+        Called by activation to go shopping for a new Spike
          for the specified signal, and should for this purpose be referenced by context.
-        :param act: The activation that needs a new signal instance of the specified nature.
-        :param sig: Signal type for which a new instance is needed.
+        :param act: The activation that needs a new spike of the specified nature.
+        :param sig: Signal type for which a new spike is needed.
         """
         pass
 

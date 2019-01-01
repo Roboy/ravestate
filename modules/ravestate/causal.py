@@ -1,7 +1,7 @@
 # Ravestate class which encapsulates a graph of signal parent/offspring instances
 
 from typing import Set, Dict, Optional
-from ravestate.iactivation import IActivation, ISignalInstance
+from ravestate.iactivation import IActivation, ISpike
 from threading import Lock
 from collections import defaultdict
 
@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 class CausalGroup:
     """
     Class which represents a causal group graph of signal parent/offspring
-     signal instances (a "supersignal"). These must synchronize wrt/ their (un)written
+     spikes (a "supersignal"). These must synchronize wrt/ their (un)written
      properties and state activation candidates, such that they don't cause output races.
 
     Note: Always use a `with ...` construct to interact with a causal group.
@@ -42,13 +42,13 @@ class CausalGroup:
     #
     _unwritten_props: Set[str]
 
-    # Refcount per state activations per signal instance per property name.
+    # Refcount per state activations per spike per property name.
     #  Refcount, because one activation may hold multiple references to one signal for multiple
     #  differently timed constraints. We essentially keep a {(propname, activation, signal, refcount)}
     #  index structure, that will be necessary for the following use-cases:
     #
     #  * Determining whether an activation is the most specific for a certain property set
-    #    -> Gather state activations per instance (i) per property (p), sort by specificity
+    #    -> Gather state activations per spike (i) per property (p), sort by specificity
     #    -> O(i * log p)
     #  * Determining whether a signal is stale (no more activation references)
     #    -> For every property name (p), check whether the signal (i) is registered
@@ -56,17 +56,17 @@ class CausalGroup:
     #
     #  Container operations:
     #
-    #  * Inserting a signal instance (i) / state activation (a)
+    #  * Inserting a spike (i) / state activation (a)
     #    -> O(log p + log i + log a)
-    #  * Removing a state activation (a) for a signal instance (i) (for each of the state's referenced properties (p))
+    #  * Removing a state activation (a) for a spike (i) (for each of the state's referenced properties (p))
     #    -> O(log p + log i + log a)
-    #  * Wiping a signal instance (i)
+    #  * Wiping a spike (i)
     #    -> O(p * log i)
     #
     _ref_index: Dict[
         str,  # Property name
         Dict[
-            ISignalInstance,
+            ISpike,
             Dict[
                 IActivation,
                 int
@@ -74,12 +74,16 @@ class CausalGroup:
         ]
     ]
 
+    # Names of member spikes for __repr__
+    _signal_names: Set[str]
+
     def __init__(self, properties: Set[str]):
         """
         Create a new causal group, with a set of unwritten props.
         """
         self._lock = Lock()
         self._unwritten_props = properties.copy()
+        self._signal_names = set()
         self._ref_index = {
             # TODO: Create refcount prop entries on demand
             prop: defaultdict(lambda: defaultdict(int))
@@ -113,6 +117,9 @@ class CausalGroup:
     def __hash__(self):
         return self._lock.__hash__()
 
+    def __repr__(self):
+        return f"CausalGroup({','.join(self._signal_names)})"
+
     def merge(self, other: 'CausalGroup'):
         """
         Merge this causal group with another. Unwritten props will become
@@ -125,12 +132,13 @@ class CausalGroup:
         allowed_propnames = self._ref_index.keys() & other._ref_index.keys()
         self.consumed(set(self._ref_index.keys()) - allowed_propnames)
         other.consumed(set(other._ref_index.keys()) - allowed_propnames)
+        self._signal_names |= other._signal_names
         # Retarget other's members
         other._lock = self._lock
         other._unwritten_props = self._unwritten_props
         other._ref_index = self._ref_index
 
-    def acquired(self, sig: 'ISignalInstance', acquired_by: IActivation) -> bool:
+    def acquired(self, sig: 'ISpike', acquired_by: IActivation) -> bool:
         """
         Called by Activation to notify the causal group, that
          it is being referenced by an activation constraint for a certain member signal.
@@ -147,14 +155,15 @@ class CausalGroup:
                 return False
         for prop in acquired_by.write_props():
             self._ref_index[prop][sig][acquired_by] += 1
+        self._signal_names.add(sig.name())
         return True
 
-    def rejected(self, sig: 'ISignalInstance', rejected_by: IActivation) -> None:
+    def rejected(self, sig: 'ISpike', rejected_by: IActivation) -> None:
         """
         Called by a state activation, to notify the group that a member signal-
          instance is no longer being referenced for the given state's write props.
         This may be either because the state activation resigned,
-         or because this signal instance got too old.
+         or because this spike got too old.
         :param sig: The member signal whose ref-set should be reduced.
         :param rejected_by: State activation instance, which is no longer
          interested in this property.
@@ -188,20 +197,21 @@ class CausalGroup:
         :return: True if this instance agrees to proceeding with the given consumer
          for the consumer's write props, False otherwise.
         """
-        assert ready_suitor.specificity() > 0  # Dummy replacement for code below
         # TODO: Gather candidate state activations that compete with ready_suitor
-        # For now, just abort once the first higher-specificity candidate is found.
-        # specificity = ready_suitor.specificity()
-        # for prop in ready_suitor.write_props():
-        #     if prop in self._unwritten_props:
-        #         for sig in self._ref_index[prop]:
-        #             for candidate in self._ref_index[prop][sig]:
-        #                 # TODO: Pressure higher specificity candidates to make a decision
-        #                 if candidate.specificity() > specificity:
-        #                     return False
-        #     else:
-        #         # Easy exit condition: prop not free for writing
-        #         return False
+        #  For now, just abort once the first higher-specificity candidate is found.
+        specificity = ready_suitor.specificity()
+        for prop in ready_suitor.write_props():
+            if prop in self._unwritten_props:
+                for sig in self._ref_index[prop]:
+                    for candidate in self._ref_index[prop][sig]:
+                        # TODO: Pressure higher specificity candidates to make a decision
+                        if candidate.specificity() > specificity:
+                            return False
+            else:
+                # Easy exit condition: prop not free for writing
+                logger.debug(f"{self}.pressure_activation({ready_suitor.name}) -> 0: {prop} not writable.")
+                return False
+        logger.debug(f"{self}.pressure_activation({ready_suitor.name}) -> 1")
         return True
 
     def activated(self, act: IActivation):
@@ -229,10 +239,11 @@ class CausalGroup:
                     act.dereference(sig=sig, reacquire=True)
             # Remove the consumed prop from the index
             del self._ref_index[prop]
+        logger.debug(f"{self}.consumed({consumed_props})")
 
-    def wiped(self, sig: 'ISignalInstance') -> None:
+    def wiped(self, sig: 'ISpike') -> None:
         """
-        Called by a signal instance, to notify the causal group that
+        Called by a spike, to notify the causal group that
          the instance was wiped and should no longer be remembered.
         :param sig: The instance that should be henceforth forgotten.
         """
@@ -242,9 +253,9 @@ class CausalGroup:
                     act.dereference(sig=sig, reacquire=True)
                 del self._ref_index[prop][sig]
 
-    def stale(self, sig: 'ISignalInstance') -> bool:
+    def stale(self, sig: 'ISpike') -> bool:
         """
-        Determine, whether a signal instance is stale (has no
+        Determine, whether a spike is stale (has no
         remaining interested activations and no children).
         :return: True, if no activations reference the given
          signal for any unwritten property. False otherwise.
@@ -256,4 +267,5 @@ class CausalGroup:
                 else:
                     # Do some cleanup
                     del self._ref_index[prop][sig]
-        return not sig.has_offspring()
+        result = not sig.has_offspring()
+        return result

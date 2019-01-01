@@ -6,9 +6,9 @@ from typing import Set, Optional, List, Dict
 
 from ravestate.icontext import IContext
 from ravestate.constraint import Constraint, s
-from ravestate.iactivation import IActivation, ISignalInstance
-from ravestate.siginst import SignalInstance
-from ravestate.causalgroup import CausalGroup
+from ravestate.iactivation import IActivation, ISpike
+from ravestate.spike import Spike
+from ravestate.causal import CausalGroup
 from ravestate.state import State, Emit, Delete
 from ravestate.wrappers import ContextWrapper
 
@@ -18,8 +18,8 @@ logger = get_logger(__name__)
 
 class Activation(IActivation):
     """
-    Encapsulates the potential activation of a state. Tracks the fulfillment of
-     certain state-defined constraints that are required before activation.
+    Encapsulates the potential activation of a state. Tracks the collection
+     of Spikes to fulfill of the state-defined activation constraints.
     """
 
     name: str
@@ -28,7 +28,7 @@ class Activation(IActivation):
     ctx: IContext
     args: List
     kwargs: Dict
-    signal_instances: Set[SignalInstance]
+    spikes: Set[Spike]
     consenting_causal_groups: Set[CausalGroup]
 
     def __init__(self, st: State, ctx: IContext):
@@ -56,9 +56,9 @@ class Activation(IActivation):
             sum(self.ctx.signal_specificity(sig) for sig in conj.signals())
             for conj in self.constraint.conjunctions())
 
-    def dereference(self, *, sig: Optional[ISignalInstance]=None, reacquire: bool=False, reject: bool=False) -> None:
+    def dereference(self, *, sig: Optional[ISpike]=None, reacquire: bool=False, reject: bool=False) -> None:
         """
-        Notify the activation, that a single or all signal instance(s) are not available
+        Notify the activation, that a single or all spike(s) are not available
          anymore, and should therefore not be referenced anymore by the activation.
         This is called by ...
          ... context when a state is deleted.
@@ -66,11 +66,11 @@ class Activation(IActivation):
          ... causal group, when a referenced signal was wiped.
          ... this activation (with reacquire=True), if it gives in to activation pressure.
         :param sig: The signal that should be forgotten by the activation, or
-         none, if all referenced signal instances should be forgotten.
+         none, if all referenced spikes should be forgotten.
         :param reacquire: Flag which tells the function, whether for every rejected
-         signal instance, the activation should hook into context for reacquisition
-         of a replacement signal instance.
-        :param reject: Flag which controls, whether de-referenced signal instances
+         spike, the activation should hook into context for reacquisition
+         of a replacement spike.
+        :param reject: Flag which controls, whether de-referenced spikes
          should be explicitely rejected through their causal groups.
         """
         for sig_to_reacquire, dereferenced_instance in self.constraint.dereference(sig):
@@ -80,24 +80,24 @@ class Activation(IActivation):
                 with dereferenced_instance.causal_group() as cg:
                     cg.rejected(dereferenced_instance, self)
 
-    def acquire(self, signal: SignalInstance) -> bool:
+    def acquire(self, spike: Spike) -> bool:
         """
         Let the activation acquire a signal it is registered to be interested in.
-        :param signal: The signal which should fulfill at least one of this activation's
+        :param spike: The signal which should fulfill at least one of this activation's
          signal constraints.
         :return: Should return True.
         """
-        return self.constraint.acquire(signal, self)
+        return self.constraint.acquire(spike, self)
 
     def update(self) -> None:
         """
         Called once per tick on this activation, to give it a chance to activate
-         itself, or auto-eliminate, or reject signal instances which have become too old.
+         itself, or auto-eliminate, or reject spikes which have become too old.
         """
         # Update constraint
         signals_to_reacquire = self.constraint.update(self)
 
-        # Reacquire for rejected signal instances
+        # Reacquire for rejected spikes
         for sig in signals_to_reacquire:
             self.ctx.reacquire(self, sig)
 
@@ -106,8 +106,8 @@ class Activation(IActivation):
             if not conjunction.evaluate():
                 continue
 
-            # Ask each signal instance's causal group for activation consent
-            signal_instances = set(sig.signal_instance for sig in conjunction.signals())
+            # Ask each spike's causal group for activation consent
+            signal_instances = set(sig.spike for sig in conjunction.signals())
             consenting_causal_groups = set()
             all_consented = True
             for sig in signal_instances:
@@ -118,7 +118,7 @@ class Activation(IActivation):
                             consenting_causal_groups.add(cg)
                         else:
                             all_consented = False
-                            break  # break signal instance iteration
+                            break  # break spike iteration
             if not all_consented:
                 continue
 
@@ -142,7 +142,7 @@ class Activation(IActivation):
                 self.ctx.withdraw(self, sig)
 
             # Remember sig-instances/causal-groups for use in activation
-            self.signal_instances = signal_instances
+            self.spikes = signal_instances
             self.consenting_causal_groups = consenting_causal_groups
 
             # Run activation
@@ -163,7 +163,7 @@ class Activation(IActivation):
             if self.state_to_activate.signal:
                 self.ctx.emit(
                     s(self.state_to_activate.signal_name()),
-                    parents=self.signal_instances)
+                    parents=self.spikes)
             else:
                 logger.error(f"Attempt to emit from state {self.name}, which does not specify a signal name!")
         if isinstance(result, Delete):
