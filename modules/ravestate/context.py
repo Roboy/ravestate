@@ -93,7 +93,7 @@ class Context(IContext):
         """
         with self._lock:
             self._spikes.add(
-                Spike(signal_name=signal.name, parents=parents, properties=set(self._properties.keys())))
+                Spike(sig=signal.name, parents=parents, properties=set(self._properties.keys())))
 
     def run(self) -> None:
         """
@@ -151,8 +151,8 @@ class Context(IContext):
 
         # register the state's signal
         with self._lock:
-            if st.signal:
-                self._add_sig(st.signal)
+            if st.signal_name():
+                self._add_sig(s(st.signal_name()))
             # check to recognize states using old signal implementation
             if isinstance(st.constraint, str):
                 logger.error(f"Attempt to add state which depends on a signal `{st.constraint}`  "
@@ -286,8 +286,7 @@ class Context(IContext):
         num_suitors = sum(
             1
             for acts_per_state in self._act_per_state_per_signal_age[sig].values()
-            for acts in acts_per_state.values()
-            if len(acts) > 0)
+            for acts in acts_per_state.values())
         if num_suitors > 0:
             return 1./num_suitors
         else:
@@ -365,11 +364,12 @@ class Context(IContext):
     def _del_state_activations(self, st: State) -> None:
         activations_to_wipe: Set[Activation] = set()
         for signal in st.constraint.signals():
-            for act in self._act_per_state_per_signal_age[signal][0][st]:  # signal.min_age
-                activations_to_wipe.add(act)
-            del self._act_per_state_per_signal_age[signal][0][st]  # signal.min_age
+            if signal in self._act_per_state_per_signal_age:
+                for act in self._act_per_state_per_signal_age[signal][0][st]:  # signal.min_age
+                    activations_to_wipe.add(act)
+                del self._act_per_state_per_signal_age[signal][0][st]  # signal.min_age
         for act in activations_to_wipe:
-            act.dereference(sig=None, reacquire=False, reject=True)
+            act.dereference(spike=None, reacquire=False, reject=True)
 
     def _state_activations(self) -> Set[Activation]:
         return set(

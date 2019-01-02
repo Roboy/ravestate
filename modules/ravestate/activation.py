@@ -58,7 +58,7 @@ class Activation(IActivation):
             sum(self.ctx.signal_specificity(sig) for sig in conj.signals())
             for conj in self.constraint.conjunctions())
 
-    def dereference(self, *, sig: Optional[ISpike]=None, reacquire: bool=False, reject: bool=False) -> None:
+    def dereference(self, *, spike: Optional[ISpike]=None, reacquire: bool=False, reject: bool=False) -> None:
         """
         Notify the activation, that a single or all spike(s) are not available
          anymore, and should therefore not be referenced anymore by the activation.
@@ -67,7 +67,7 @@ class Activation(IActivation):
          ... causal group, when a referenced signal was consumed for a required property.
          ... causal group, when a referenced signal was wiped.
          ... this activation (with reacquire=True), if it gives in to activation pressure.
-        :param sig: The signal that should be forgotten by the activation, or
+        :param spike: The spike that should be forgotten by the activation, or
          none, if all referenced spikes should be forgotten.
         :param reacquire: Flag which tells the function, whether for every rejected
          spike, the activation should hook into context for reacquisition
@@ -75,7 +75,7 @@ class Activation(IActivation):
         :param reject: Flag which controls, whether de-referenced spikes
          should be explicitely rejected through their causal groups.
         """
-        for sig_to_reacquire, dereferenced_instance in self.constraint.dereference(sig):
+        for sig_to_reacquire, dereferenced_instance in self.constraint.dereference(spike):
             if reacquire:
                 self.ctx.reacquire(self, sig_to_reacquire)
             if reject:
@@ -109,10 +109,10 @@ class Activation(IActivation):
                 continue
 
             # Ask each spike's causal group for activation consent
-            signal_instances = set(sig.spike for sig in conjunction.signals())
+            spikes = set(sig.spike for sig in conjunction.signals())
             consenting_causal_groups = set()
             all_consented = True
-            for sig in signal_instances:
+            for sig in spikes:
                 cg: CausalGroup = sig.causal_group()
                 if cg not in consenting_causal_groups:
                     with cg:
@@ -130,7 +130,7 @@ class Activation(IActivation):
                     cg.activated(self)
 
             # Remove self from all causal groups
-            for sig in signal_instances:
+            for sig in spikes:
                 with sig.causal_group() as cg:
                     cg.rejected(sig, self)
 
@@ -143,8 +143,8 @@ class Activation(IActivation):
             for sig in self.constraint.signals():
                 self.ctx.withdraw(self, sig)
 
-            # Remember sig-instances/causal-groups for use in activation
-            self.spikes = signal_instances
+            # Remember spikes/causal-groups for use in activation
+            self.spikes = spikes
             self.consenting_causal_groups = consenting_causal_groups
 
             # Run activation

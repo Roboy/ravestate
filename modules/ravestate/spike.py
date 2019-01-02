@@ -34,10 +34,10 @@ class Spike(ISpike):
     # Parent instances, which are notified when this spike is wiped
     _parents: Set['Spike']
 
-    def __init__(self, *, signal_name: str, parents: Set['Spike'], properties: Set[str]):
+    def __init__(self, *, sig: str, parents: Set['Spike']=None, properties: Set[str]=None):
         """
         Construct a spike from a signal name and a list of causing parent signals.
-        :param signal_name: Name of the signal which is represented by this spike
+        :param sig: Name of the signal which is represented by this spike
         :param parents: The parent signals which were involved in causing this signal,
          and with which unwritten properties will be synchronized: This spike's
          causal group will be inferred from the parents, and the parent's causal
@@ -47,7 +47,9 @@ class Spike(ISpike):
         """
         if parents is None:
             parents = set()
-        self._name = signal_name
+        if properties is None:
+            properties = set()
+        self._name = sig
         self._age = 0
         self._offspring = set()
         self._parents = parents

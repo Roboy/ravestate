@@ -11,8 +11,8 @@ logger = get_logger(__name__)
 
 class CausalGroup:
     """
-    Class which represents a causal group graph of signal parent/offspring
-     spikes (a "supersignal"). These must synchronize wrt/ their (un)written
+    Class which represents a causal group graph of spike parent/offspring
+     spikes (a "superspike"). These must synchronize wrt/ their (un)written
      properties and state activation candidates, such that they don't cause output races.
 
     Note: Always use a `with ...` construct to interact with a causal group.
@@ -43,15 +43,15 @@ class CausalGroup:
     _unwritten_props: Set[str]
 
     # Refcount per state activations per spike per property name.
-    #  Refcount, because one activation may hold multiple references to one signal for multiple
-    #  differently timed constraints. We essentially keep a {(propname, activation, signal, refcount)}
+    #  Refcount, because one activation may hold multiple references to one spike for multiple
+    #  differently timed constraints. We essentially keep a {(propname, activation, spike, refcount)}
     #  index structure, that will be necessary for the following use-cases:
     #
     #  * Determining whether an activation is the most specific for a certain property set
     #    -> Gather state activations per spike (i) per property (p), sort by specificity
     #    -> O(i * log p)
-    #  * Determining whether a signal is stale (no more activation references)
-    #    -> For every property name (p), check whether the signal (i) is registered
+    #  * Determining whether a spike is stale (no more activation references)
+    #    -> For every property name (p), check whether the spike (i) is registered
     #    -> O(p * log i)
     #
     #  Container operations:
@@ -137,11 +137,11 @@ class CausalGroup:
         other._unwritten_props = self._unwritten_props
         other._ref_index = self._ref_index
 
-    def acquired(self, sig: 'ISpike', acquired_by: IActivation) -> bool:
+    def acquired(self, spike: 'ISpike', acquired_by: IActivation) -> bool:
         """
         Called by Activation to notify the causal group, that
-         it is being referenced by an activation constraint for a certain member signal.
-        :param sig: State activation instance, which is now being
+         it is being referenced by an activation constraint for a certain member spike.
+        :param spike: State activation instance, which is now being
          referenced by the specified causal group.
         :param acquired_by: State activation instance,
          which is interested in this property.
@@ -153,36 +153,36 @@ class CausalGroup:
             if prop not in self._ref_index:
                 return False
         for prop in acquired_by.write_props():
-            self._ref_index[prop][sig][acquired_by] += 1
-        self._signal_names.add(sig.name())
+            self._ref_index[prop][spike][acquired_by] += 1
+        self._signal_names.add(spike.name())
         return True
 
-    def rejected(self, sig: 'ISpike', rejected_by: IActivation) -> None:
+    def rejected(self, spike: 'ISpike', rejected_by: IActivation) -> None:
         """
-        Called by a state activation, to notify the group that a member signal-
-         instance is no longer being referenced for the given state's write props.
+        Called by a state activation, to notify the group that a member spike
+         is no longer being referenced for the given state's write props.
         This may be either because the state activation resigned,
          or because this spike got too old.
-        :param sig: The member signal whose ref-set should be reduced.
+        :param spike: The member spike whose ref-set should be reduced.
         :param rejected_by: State activation instance, which is no longer
          interested in this property.
         """
         for prop in rejected_by.write_props():
             if prop in self._ref_index and \
-               sig in self._ref_index[prop] and \
-               rejected_by in self._ref_index[prop][sig]:
-                remaining_refcount = self._ref_index[prop][sig][rejected_by]
+               spike in self._ref_index[prop] and \
+               rejected_by in self._ref_index[prop][spike]:
+                remaining_refcount = self._ref_index[prop][spike][rejected_by]
                 if remaining_refcount > 0:
-                    self._ref_index[prop][sig][rejected_by] -= 1
+                    self._ref_index[prop][spike][rejected_by] -= 1
                     if remaining_refcount > 1:
                         # do not fall through to ref deletion
                         continue
                 else:
                     logger.error(f"Attempt to deref group for unref'd activation {rejected_by.name}")
 
-                del self._ref_index[prop][sig][rejected_by]
-                if len(self._ref_index[prop][sig]) == 0:
-                    del self._ref_index[prop][sig]
+                del self._ref_index[prop][spike][rejected_by]
+                if len(self._ref_index[prop][spike]) == 0:
+                    del self._ref_index[prop][spike]
 
     def pressure_activation(self, ready_suitor: IActivation) -> bool:
         """
@@ -201,9 +201,9 @@ class CausalGroup:
         specificity = ready_suitor.specificity()
         for prop in ready_suitor.write_props():
             if prop in self._unwritten_props:
-                for sig in self._ref_index[prop]:
-                    for candidate in self._ref_index[prop][sig]:
-                        # TODO: Pressure higher specificity candidates to make a decision
+                for spike in self._ref_index[prop]:
+                    for candidate in self._ref_index[prop][spike]:
+                        # TODO: Call pressure() on higher specificity candidates to make a decision
                         if candidate.specificity() > specificity:
                             return False
             else:
@@ -226,45 +226,45 @@ class CausalGroup:
 
     def consumed(self, consumed_props: Set[str]) -> None:
         """
-        Called by activation to notify the signal, that it has been
+        Called by activation to notify the group, that it has been
          consumed for the given set of properties.
         :param consumed_props: The properties which have been consumed.
         """
         for prop in consumed_props:
             # Notify all concerned activations, that the
-            # signals they are referencing are no longer available
+            # spikes they are referencing are no longer available
             for sig in self._ref_index[prop]:
                 for act in self._ref_index[prop][sig]:
-                    act.dereference(sig=sig, reacquire=True)
+                    act.dereference(spike=sig, reacquire=True)
             # Remove the consumed prop from the index
             del self._ref_index[prop]
         logger.debug(f"{self}.consumed({consumed_props})")
 
-    def wiped(self, sig: 'ISpike') -> None:
+    def wiped(self, spike: 'ISpike') -> None:
         """
         Called by a spike, to notify the causal group that
          the instance was wiped and should no longer be remembered.
-        :param sig: The instance that should be henceforth forgotten.
+        :param spike: The instance that should be henceforth forgotten.
         """
         for prop in self._ref_index:
-            if sig in self._ref_index[prop]:
-                for act in self._ref_index[prop][sig]:
-                    act.dereference(sig=sig, reacquire=True)
-                del self._ref_index[prop][sig]
+            if spike in self._ref_index[prop]:
+                for act in self._ref_index[prop][spike]:
+                    act.dereference(spike=spike, reacquire=True)
+                del self._ref_index[prop][spike]
 
-    def stale(self, sig: 'ISpike') -> bool:
+    def stale(self, spike: 'ISpike') -> bool:
         """
         Determine, whether a spike is stale (has no
         remaining interested activations and no children).
         :return: True, if no activations reference the given
-         signal for any unwritten property. False otherwise.
+         spike for any unwritten property. False otherwise.
         """
         for prop in self._ref_index:
-            if sig in self._ref_index[prop]:
-                if len(self._ref_index[prop][sig]) > 0:
+            if spike in self._ref_index[prop]:
+                if len(self._ref_index[prop][spike]) > 0:
                     return False
                 else:
                     # Do some cleanup
-                    del self._ref_index[prop][sig]
-        result = not sig.has_offspring()
+                    del self._ref_index[prop][spike]
+        result = not spike.has_offspring()
         return result

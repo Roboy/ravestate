@@ -57,8 +57,8 @@ def test_decorator(under_test, default_signal, default_read, default_write, defa
     assert (test_state.signal == under_test.signal)
     assert (test_state.read_props == under_test.read_props)
     assert (test_state.write_props == under_test.write_props)
-    assert (test_state.triggers == under_test.triggers)
-    assert (test_state(default_context_wrapper, [], {}) == "Hello world!")
+    assert (test_state.constraint == under_test.constraint)
+    assert (test_state(default_context_wrapper) == "Hello world!")
     assert (isinstance(test_state.action, type(under_test.action)))
 
 
@@ -80,6 +80,6 @@ def test_decorator_default(under_test):
     assert (test_state.signal == "")
     assert (test_state.read_props == ())
     assert (test_state.write_props == ())
-    assert (test_state.triggers is None)
-    assert (test_state(default_context_wrapper, [], {}) == "Hello world!")
+    assert (test_state.constraint is None)
+    assert (test_state(default_context_wrapper) == "Hello world!")
     assert (isinstance(test_state.action, type(under_test.action)))

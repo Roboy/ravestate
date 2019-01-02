@@ -1,62 +1,31 @@
-import pytest
-from threading import Thread
-
-from ravestate.activation import Activation
-from ravestate.constraint import s
-from ravestate.state import State
-from ravestate.icontext import IContext
+from ravestate.testfixtures import *
+from ravestate.spike import Spike
 
 
-@pytest.fixture
-def state_mock(mocker):
-    state = mocker.Mock(name=State.__class__)
-    state.triggers = (s('test1') & s('test2')) | s('test3')
-    return state
+def test_specificity(activation_fixture):
+    assert activation_fixture.specificity() == 1
 
 
-@pytest.fixture
-def context_mock(mocker):
-    return mocker.Mock(name=IContext.__class__)
+def test_acquire_spike(activation_fixture):
+    assert activation_fixture.acquire(Spike(sig=DEFAULT_PROPERTY_CHANGED, properties={DEFAULT_PROPERTY_FULLNAME}))
 
 
-@pytest.fixture
-def under_test(state_mock: State, context_mock: IContext):
-    return Activation(state_mock, context_mock)
+def test_acquire_spike_mismatches(activation_fixture):
+    assert not activation_fixture.acquire(Spike(sig='x', properties={DEFAULT_PROPERTY_FULLNAME}))
 
 
-def test_specifity(under_test):
-    assert under_test.specificity() == 1
+def test_multiple_activation(state_fixture, context_with_property_fixture):
+    sa1 = Activation(state_fixture, context_with_property_fixture)
+    assert sa1.acquire(
+        Spike(sig=DEFAULT_PROPERTY_CHANGED, properties={DEFAULT_PROPERTY_FULLNAME}))
+    assert not sa1.acquire(Spike(sig='x', properties={DEFAULT_PROPERTY_FULLNAME}))
+    sa2 = Activation(state_fixture, context_with_property_fixture)
+    assert sa2.acquire(
+        Spike(sig=DEFAULT_PROPERTY_CHANGED, properties={DEFAULT_PROPERTY_FULLNAME}))
+    assert not sa2.acquire(Spike(sig='x', properties={DEFAULT_PROPERTY_FULLNAME}))
 
 
-def test_notify_signal(under_test):
-    assert under_test.acquire(s('test1')) == 0
-    assert under_test.acquire(s('test2')) == 1
-
-
-def test_notify_signal_2(under_test):
-    assert under_test.acquire(s('test1')) == 0
-    assert under_test.acquire(s('test3')) == 1
-
-
-def test_notify_signal_mismatched(under_test):
-    assert under_test.acquire('') == 0
-
-
-def test_notify_signal_mismatched_2(under_test):
-    assert under_test.acquire(s('test1')) == 0
-    assert under_test.acquire(s('notest')) == 0
-
-
-def test_multiple_activation(state_mock, context_mock):
-    sa1 = Activation(state_mock, context_mock)
-    assert sa1.acquire(s('test1')) == 0
-    assert sa1.acquire(s('test3')) == 1
-    sa2 = Activation(state_mock, context_mock)
-    assert sa2.acquire(s('test1')) == 0
-    assert sa2.acquire(s('test3')) == 1
-
-
-# TODO: Add tests for private run
-def test_run(under_test):
-    result = under_test.run()
-    assert isinstance(result, Thread)
+# TODO: Add tests for update
+# def test_run(activation_fixture):
+#     result = activation_fixture.run()
+#     assert isinstance(result, Thread)

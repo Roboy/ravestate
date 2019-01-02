@@ -57,7 +57,7 @@ class IActivation:
         """
         pass
 
-    def dereference(self, *, sig: Optional[ISpike]=None, reacquire: bool=False, reject: bool=False) -> None:
+    def dereference(self, *, spike: Optional[ISpike]=None, reacquire: bool=False, reject: bool=False) -> None:
         """
         Notify the activation, that a single or all spike(s) are not available
          anymore, and should therefore not be referenced anymore by the activation.
@@ -66,7 +66,7 @@ class IActivation:
          ... causal group, when a referenced signal was consumed for a required property.
          ... causal group, when a referenced signal was wiped.
          ... this activation (with reacquire=True), if it gives in to activation pressure.
-        :param sig: The signal that should be forgotten by the activation, or
+        :param spike: The spike that should be forgotten by the activation, or
          none, if all referenced spikes should be forgotten.
         :param reacquire: Flag which tells the function, whether for every rejected
          spike, the activation should hook into context for reacquisition
@@ -78,7 +78,7 @@ class IActivation:
 
     def pressure(self, give_me_up: ISpike):
         """
-        Called by spike, to pressure the activation to
+        Called by CausalGroup, to pressure the activation to
          make a decision on whether it is going to retain a reference
          to the given spike, given that there is a lower-
          specificity activation which is ready to run.
