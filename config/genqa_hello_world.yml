@@ -1,0 +1,17 @@
+# genqa.yml should contain at least the following yaml document:
+#
+# module: genqa
+# config:
+#   genqa_server_address: "http://localhorrrrst"
+
+
+!include config/genqa.yml
+
+---
+
+module: core
+config:
+  import:
+    - ravestate_conio
+    - ravestate_genqa
+    - ravestate_nlp
