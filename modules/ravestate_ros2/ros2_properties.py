@@ -94,8 +94,8 @@ def sync_ros_properties(ctx: ContextWrapper):
                 current_props[prop.__hash__()] = prop.client
 
             # replace prop with hash in global_props
-            global_prop_set.add(prop.__hash__())
             global_prop_set.remove(prop)
+            global_prop_set.add(prop.__hash__())
 
         # spin once
         rclpy.spin_once(node, timeout_sec=0)
@@ -185,12 +185,13 @@ class Ros2PubProperty(PropertyBase):
 
 
 class Ros2CallProperty(PropertyBase):
-    def __init__(self, name: str, service_name: str, service_type):
+    def __init__(self, name: str, service_name: str, service_type, call_timeout: float = 10.0):
         """
         Initialize Property
         :param name: Name of the property
         :param service_name: ROS2-Service that should be called
         :param service_type: Type of the service used
+        :param call_timeout: Timeout when waiting for availability of a service in seconds
         """
         super().__init__(
             name=name,
@@ -202,6 +203,7 @@ class Ros2CallProperty(PropertyBase):
             always_signal_changed=False)
         self.service_name = service_name
         self.service_type = service_type
+        self.call_timeout = call_timeout
         self.client = None
         global global_prop_set
         global_prop_set.add(self)
@@ -219,10 +221,7 @@ class Ros2CallProperty(PropertyBase):
         """
         if super().write(value):
             if self.client:
-                counter = 0
-                while not self.client.wait_for_service(timeout_sec=1.0) and counter < 10:
-                    counter += 1
-                if counter >= 10:
+                if not self.client.wait_for_service(timeout_sec=self.call_timeout):
                     logger.error(f'service {self.service_name} not available')
                     super().write(None)
                     return
