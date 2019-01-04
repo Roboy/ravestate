@@ -12,5 +12,3 @@ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.0.0
 pytest
 click
 flask
-codecov
-pytest-cov

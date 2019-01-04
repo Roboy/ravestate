@@ -2,4 +2,5 @@ pytest-mock
 pytest
 testfixtures
 pytest-cov
+codecov
 twine
