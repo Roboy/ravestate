@@ -58,7 +58,7 @@ def triple_search(triple: Triple, token: Token):
         if word.dep_ in OBJECT_SET:
             triple.set_object(word)
         if word.dep_ in ADJECTIVE_SET:
-            triple.set_adjective(word)
+            triple.set_predicate_subplement(word)
         if isinstance(word, Token):
             triple = triple_search(triple, word)
     if not triple.get_subject() and question_word: 

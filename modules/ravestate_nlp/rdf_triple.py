@@ -19,7 +19,7 @@ class Triple:
     def set_predicate(self, predicate: Token):
         self._predicate = predicate
     
-    def set_adjective(self, adjective: Token):
+    def set_predicate_subplement(self, adjective: Token):
         self._adjective = adjective
 
     def set_object(self, object: Token):
