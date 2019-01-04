@@ -99,10 +99,10 @@ class Spike(ISpike):
     def wipe(self, already_wiped_in_causal_group: bool=False) -> None:
         """
         Called either in Context run loop when the spike is found to be stale
-         (with wiped_in_causal_group=True), or in Context.wipe(signal_inst),
+         (with wiped_in_causal_group=True), or in Context.wipe(spike),
          or by parent (recursively).
         After this function is called, the spike should be cleaned up by GC.
-        :param already_wiped_in_causal_group: Boolean which indicates, whether wiped(signal_inst)
+        :param already_wiped_in_causal_group: Boolean which indicates, whether wiped(spike)
          must still be called on the group to make sure sure that no dangling references
          to the spike are maintained by any state activations.
         """

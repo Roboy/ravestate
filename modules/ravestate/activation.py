@@ -134,7 +134,7 @@ class Activation(IActivation):
                 with sig.causal_group() as cg:
                     cg.rejected(sig, self)
 
-            # Make sure that constraint doesn't hold any unneeded references to signal inst.
+            # Make sure that constraint doesn't hold any unneeded references to spike
             for _ in self.constraint.dereference():
                 pass
 

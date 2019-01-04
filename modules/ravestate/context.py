@@ -421,6 +421,7 @@ class Context(IContext):
                         if cg.stale(spike):
                             # This should lead to the deletion of the spike
                             self._spikes.remove(spike)
+                            spike.wipe(already_wiped_in_causal_group=True)
                             logger.debug(f"{cg}.stale({spike.name()}) -> 1")
 
                 # Increment age on active spikes

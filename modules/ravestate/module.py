@@ -19,7 +19,7 @@ class Module:
         if not isinstance(props, tuple):
             props = (props,)
         if not isinstance(states, tuple):
-            props = (states,)
+            states = (states,)
         if not config:
             config = {}
 
