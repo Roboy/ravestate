@@ -6,6 +6,9 @@ from ravestate_nlp.question_words import QuestionWord
 
 from spacy.tokens import Token
 
+from reggol import get_logger
+logger = get_logger(__name__)
+
 @state(triggers=s(":startup"), write="rawio:out")
 def hello_world_roboyqa(ctx):
     ctx["rawio:out"] = "Ask me something about myself!"

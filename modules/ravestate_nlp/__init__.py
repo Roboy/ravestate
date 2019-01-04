@@ -52,12 +52,13 @@ def triple_search(triple: Triple, token: Token):
     for word in token.children:
         if word.text.lower() in QuestionWord.question_words:
             question_word = QuestionWord(word)
+            word = QuestionWord(word)
             if not triple.get_object():
                 triple.set_object(question_word)
+        elif word.dep_ in OBJECT_SET:
+            triple.set_object(word)
         if word.dep_ in SUBJECT_SET:
             triple.set_subject(word)
-        if word.dep_ in OBJECT_SET:
-            triple.set_object(word)
         if word.dep_ in ADJECTIVE_SET:
             triple.set_predicate_subplement(word)
         if isinstance(word, Token):
