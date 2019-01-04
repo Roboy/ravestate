@@ -43,7 +43,7 @@ def extract_triples(doc):
     return triples
 
 
-@state(read="rawio:in", write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:roboy"))
+@state(read="rawio:in", write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:triples", "nlp:roboy"))
 def nlp_preprocess(ctx):
     nlp_doc = nlp(ctx["rawio:in"])
     
@@ -67,7 +67,7 @@ def nlp_preprocess(ctx):
     ctx["nlp:ner"] = nlp_ner
     logger.info(f"[NLP:ner]: {nlp_ner}")
 
-    nlp_triples = nlp_doc._.triples
+    nlp_triples = nlp_doc._.triple
     ctx["nlp:triples"] = nlp_triples
     logger.info(f"[NLP:triples]: {nlp_triples}")
 
