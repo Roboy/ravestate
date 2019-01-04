@@ -16,7 +16,7 @@ install:
   - pip install -r requirements.txt -q
 # command to run tests
 script:
-  - pytest tests/ravestate/unittests.py --cov=./
+  - ./run_tests.sh
 
 after_success:
   - codecov
