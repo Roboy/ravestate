@@ -51,8 +51,9 @@ def triple_search(triple: Triple, token: Token):
     question_word = None
     for word in token.children:
         if word.text.lower() in QuestionWord.question_words:
-            word = QuestionWord(word)
-            question_word = word
+            question_word = QuestionWord(word)
+            if not triple.get_object():
+                triple.set_object(question_word)
         if word.dep_ in SUBJECT_SET:
             triple.set_subject(word)
         if word.dep_ in OBJECT_SET:
