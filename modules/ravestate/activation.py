@@ -159,7 +159,7 @@ class Activation(IActivation):
         Thread(target=self._run_private).start()
 
     def _run_private(self):
-        # TODO: Pass spikes to ContextWrapper, so that they are parents for :changed signals
+        # TODO: Pass spikes to ContextWrapper, so that they are parents for :changed spikes
         context_wrapper = ContextWrapper(self.ctx, self.state_to_activate)
 
         # Run state function
@@ -167,9 +167,9 @@ class Activation(IActivation):
 
         # Process state function result
         if isinstance(result, Emit):
-            if self.state_to_activate.signal:
+            if self.state_to_activate.signal():
                 self.ctx.emit(
-                    s(self.state_to_activate.signal_name()),
+                    self.state_to_activate.signal(),
                     parents=self.spikes)
             else:
                 logger.error(f"Attempt to emit from state {self.name}, which does not specify a signal name!")

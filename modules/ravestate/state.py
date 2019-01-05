@@ -2,7 +2,7 @@
 
 from typing import Callable, Optional, Any, Tuple, Union
 
-from ravestate.constraint import Conjunct, Disjunct, s, Constraint
+from ravestate.constraint import Conjunct, Disjunct, Signal, s, Constraint
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -31,14 +31,15 @@ class Emit(StateActivationResult):
 
 class State:
 
-    signal: str
+    _signal: Signal
+    signal_name: str
     write_props: Tuple
     read_props: Tuple
     constraint: Constraint
     module_name: str
 
     def __init__(self, *,
-                 signal: Optional[str],
+                 signal_name: Optional[str],
                  write: Union[str, Tuple[str]],
                  read: Union[str, Tuple[str]],
                  cond: Constraint,
@@ -65,28 +66,31 @@ class State:
         if not cond and len(read) > 0:
             cond = Disjunct(*list(Conjunct(s(f"{rprop_name}:changed")) for rprop_name in read))
 
-        self.signal = signal
+        self.signal_name = signal_name
         self.write_props = write
         self.read_props = read
         self.constraint = cond
         self.action = action
         self.module_name = ""
+        self._signal = None
 
-    def __call__(self, context, *args, **kwargs) -> StateActivationResult:
+    def __call__(self, context, *args, **kwargs) -> Optional[StateActivationResult]:
         args = (context,) + args
         return self.action(*args, **kwargs)
 
-    def signal_name(self):
-        return f"{self.module_name}:{self.signal}"
+    def signal(self) -> Optional[Signal]:
+        if not self._signal and self.signal_name:
+            self._signal = s(f"{self.module_name}:{self.signal_name}")
+        return self._signal
 
 
-def state(*, signal: Optional[str]="", write: tuple=(), read: tuple=(), cond: Constraint=None):
+def state(*, signal_name: Optional[str]="", write: tuple=(), read: tuple=(), cond: Constraint=None):
     """
     Decorator to declare a new state, which may emit a certain signal,
     write to a certain set of properties (calling write, push, pop),
     and read from certain properties (calling read).
     """
     def state_decorator(action):
-        nonlocal signal, write, read, cond
-        return State(signal=signal, write=write, read=read, cond=cond, action=action)
+        nonlocal signal_name, write, read, cond
+        return State(signal_name=signal_name, write=write, read=read, cond=cond, action=action)
     return state_decorator
