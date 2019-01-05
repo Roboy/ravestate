@@ -4,3 +4,4 @@ testfixtures
 pytest-cov
 codecov
 twine
+pydoc-markdown
