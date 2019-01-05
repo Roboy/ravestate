@@ -1,13 +1,7 @@
-<!-- 
-To be updated...
-[![Build Status](https://travis-ci.org/ro-boy/ravestate.svg?branch=master)](https://travis-ci.org/ro-boy/ravestate)
-[![codecov](https://codecov.io/gh/ro-boy/ravestate/branch/master/graph/badge.svg)](https://codecov.io/gh/ro-boy/ravestate)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/93ebb2077393423496669b5657ab16ac)](https://www.codacy.com/app/ro-boy/ravestate?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ro-boy/ravestate&amp;utm_campaign=Badge_Grade)
--->
 ```
                                  _ __    _ __     
     _ ___ ____  __  ______  ______/ /_____/ /___     
- _ _ /  \/ __ \/ / / /__  \/ ___\, / __ \, /__  \  
+ _ _ /  \/ __ \/ / / / __ \/ ___\, / __ \, /__  \  
 _ _ / /\/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /     
   _ \/ _\__/\/ _\__/ ,___/\____/\/\__/\/\/ ,___/
  _____          _ _\____/             _ _\____/                    
@@ -101,7 +95,7 @@ may run the ravestate test suite as follows:
 ./run_tests.sh
 ``
 
-## Building docs
+## Building/maintaining the docs
 
 If you have installed the dependencies from ``requirements-dev.txt``,
 generate the docs by running this command at project root:
@@ -110,7 +104,4 @@ generate the docs by running this command at project root:
 pydocmd build
 ``
 
-The structure and content of the docs is defined in the file 
-``
-pydocmd.yml
-``.
+The structure and content of the docs are defined in the file ``pydocmd.yml``.
