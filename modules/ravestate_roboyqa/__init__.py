@@ -5,6 +5,9 @@ from ravestate_nlp.rdf_triple import Triple
 from ravestate_nlp.question_words import QuestionWord
 import ravestate_ontology
 
+from scientio.session import Session
+from scientio.ontology.node import Node
+
 from spacy.tokens import Token
 
 from reggol import get_logger
@@ -12,6 +15,8 @@ logger = get_logger(__name__)
 
 from ravestate_verbaliser import verbaliser
 from os.path import realpath, dirname, join
+
+import random
 
 verbaliser.add_folder(join(dirname(realpath(__file__)), "answering_phrases"))
 
@@ -22,6 +27,12 @@ def hello_world_roboyqa(ctx):
 @state(triggers=s("nlp:triples:changed"), read="nlp:triples", write="rawio:out")
 def roboyqa(ctx):
     sess = ravestate_ontology.get_session()
+    roboy = sess.retrieve(node_id=356)[0]
+    name = roboy.get_name()
+    logger.info(name)
+    sibling_id = random.sample(roboy.get_relationships(key="SIBLING_OF"),1)[0]
+    logger.info(sibling_id)
+    logger.info(sess.retrieve(node_id=int(sibling_id))[0].get_name())
     question_subject = ctx["nlp:triples"][0].get_subject()
     question_predicate = ctx["nlp:triples"][0].get_predicate()
     question_predicate_subplement = ctx["nlp:triples"][0].get_predicate_subplement()
