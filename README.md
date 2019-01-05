@@ -1,7 +1,7 @@
 ```
                                  _ __    _ __     
     _ ___ ____  __  ______  ______/ /_____/ /___     
- _ _ /  \/ __ \/ / / /__  \/ ___\, / __ \, /__  \  
+ _ _ /  \/ __ \/ / / / __ \/ ___\, / __ \, /__  \  
 _ _ / /\/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /     
   _ \/ _\__/\/ _\__/ ,___/\____/\/\__/\/\/ ,___/
  _____          _ _\____/             _ _\____/                    
@@ -94,3 +94,14 @@ may run the ravestate test suite as follows:
 ``
 ./run_tests.sh
 ``
+
+## Building/maintaining the docs
+
+If you have installed the dependencies from ``requirements-dev.txt``,
+generate the docs by running this command at project root:
+
+``
+pydocmd build
+``
+
+The structure and content of the docs are defined in the file ``pydocmd.yml``.

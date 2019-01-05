@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Modules - My Documentation</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Modules";
+    var mkdocs_page_input_path = "modules.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> My Documentation</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">Modules</a>
+    <ul class="subnav">
+            
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../nlp/">NLP</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">My Documentation</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Modules</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="ravestate.argparse">ravestate.argparse</h1>
+
+<h2 id="ravestate.argparse.handle_args">handle_args</h2>
+
+<pre><code class="python">handle_args(*args) -&gt; Tuple[List[str], List[Tuple[str, str, Any]], List[str]]
+</code></pre>
+
+<p>Runs an argument parser for the given args. Returns modules-to-load,
+config value-overrides and config file-pathes.
+ Note: If the arguments are ill-formatted, or the -h argument is passed,
+help will be printed to the console and the program will abort.
+:param args: Argument list which will be fed into argparse.parse_args.
+:return: A Tuple with three items:
+1.) A list of module names which should be imported.
+2.) A list of tuples, where each tuple is a module name, a config key name, and a value.
+3.) A list of yaml file paths.</p>
+<h1 id="ravestate.constraint">ravestate.constraint</h1>
+
+<h2 id="ravestate.constraint.s">s</h2>
+
+<pre><code class="python">s(signalname: str)
+</code></pre>
+
+<p>Alias to call Signal-constructor</p>
+<p>:param signalname: Name of the Signal</p>
+<h2 id="ravestate.constraint.Constraint">Constraint</h2>
+
+<pre><code class="python">Constraint(self, /, *args, **kwargs)
+</code></pre>
+
+<p>Superclass for Signal, Conjunct and Disjunct</p>
+<h2 id="ravestate.constraint.Signal">Signal</h2>
+
+<pre><code class="python">Signal(self, name: str)
+</code></pre>
+
+<p>Class that represents a Signal</p>
+<h3 id="ravestate.constraint.Signal.fulfilled">fulfilled</h3>
+
+<p>bool(x) -&gt; bool</p>
+<p>Returns True when the argument x is true, False otherwise.
+The builtins True and False are the only two instances of the class bool.
+The class bool is a subclass of the class int, and cannot be subclassed.
+<h3 id="ravestate.constraint.Signal.name">name</h3></p>
+<p>str(object='') -&gt; str
+str(bytes_or_buffer[, encoding[, errors]]) -&gt; str</p>
+<p>Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.<strong>str</strong>() (if defined)
+or repr(object).
+encoding defaults to sys.getdefaultencoding().
+errors defaults to 'strict'.
+<h2 id="ravestate.constraint.Conjunct">Conjunct</h2></p>
+<pre><code class="python">Conjunct(self, *args)
+</code></pre>
+
+<p>Class that represents a Conjunction of Signals</p>
+<h2 id="ravestate.constraint.Disjunct">Disjunct</h2>
+
+<pre><code class="python">Disjunct(self, *args)
+</code></pre>
+
+<p>Class that represents a Disjunction of Conjunctions</p>
+<h1 id="ravestate.module">ravestate.module</h1>
+
+<h2 id="ravestate.module.Module">Module</h2>
+
+<pre><code class="python">Module(self, *, name: str, props: List[ravestate.property.PropertyBase] = (), states: List[ravestate.state.State] = (), config: Dict[str, Any] = None)
+</code></pre>
+
+<p>Atomic class, which encapsulates a named set of states, properties and config entries,
+which form a coherent bundle.</p>
+<h1 id="ravestate.config">ravestate.config</h1>
+
+<h2 id="ravestate.config.Configuration">Configuration</h2>
+
+<pre><code class="python">Configuration(self, paths: List[str])
+</code></pre>
+
+<p>The Configuration class maintains a dictionary of key-value stores, which
+represent configuration entries for specific named modules. The key-value
+stores may be successively updated with consecutive yaml files, where each
+yaml document has the following content:</p>
+<hr />
+<p>module: module-name
+  config:
+    key-a: value-a
+    key-b: value-b
+    # etc</p>
+<hr />
+<h3 id="ravestate.config.Configuration.add_conf">add_conf</h3>
+
+<pre><code class="python">Configuration.add_conf(self, mod: ravestate.module.Module)
+</code></pre>
+
+<p>Register a set of allowed config entries for a specific module.
+Correctly typed values for allowed keys, that were previously
+parsed during construction from the yaml files, will be applied
+immediately.
+:param mod: A module object with a name and a conf dict.</p>
+<h3 id="ravestate.config.Configuration.get_conf">get_conf</h3>
+
+<pre><code class="python">Configuration.get_conf(self, module_name: str)
+</code></pre>
+
+<p>Retrieve updated config values for a module that was previously
+registered with add_conf.
+:param module_name: The module name for which configuration should be retrieved.
+:return: A dictionary which contains exactly the keys that were contained in
+the module configuration dictionary during add_conf, or an empty dictionary
+if the module name is unknown.</p>
+<h3 id="ravestate.config.Configuration.get">get</h3>
+
+<pre><code class="python">Configuration.get(self, module_name: str, key: str) -&gt; Any
+</code></pre>
+
+<p>Gte the current value of a config entry.
+:param module_name: The module that provides the config entry.
+:param key: A config key for the module that was previously added through add_conf.
+:return: The current value, or None, if the entry does not exist.</p>
+<h3 id="ravestate.config.Configuration.set">set</h3>
+
+<pre><code class="python">Configuration.set(self, module_name: str, key: str, value: Any)
+</code></pre>
+
+<p>Set the current value of a config entry.
+:param module_name: The module of the config entry.
+:param key: A config key for the module that was previously added through add_conf.
+:param value: The new value for the config entry. An error will be raised,
+ if the type of the new value does not match the type of the old value.</p>
+<h3 id="ravestate.config.Configuration.write">write</h3>
+
+<pre><code class="python">Configuration.write(self, path: str)
+</code></pre>
+
+<p>Write all current config entries to a yaml file.
+:param path: The file path to write. Will be overwritten!</p>
+<h3 id="ravestate.config.Configuration.read">read</h3>
+
+<pre><code class="python">Configuration.read(self, path: str)
+</code></pre>
+
+<p>Loads all documents from a yaml file and tries to interpret them
+as configuration objects as described above.
+:param path: The yaml file path from which to load config documents.</p>
+<h1 id="ravestate.property">ravestate.property</h1>
+
+<h2 id="ravestate.property.PropertyBase">PropertyBase</h2>
+
+<pre><code class="python">PropertyBase(self, *, name='', allow_read=True, allow_write=True, allow_push=True, allow_pop=True, allow_delete=True, default=None, always_signal_changed=False)
+</code></pre>
+
+<p>Base class for context properties. Controls read/write/push/pop/delete permissions,
+property name basic impls. for the property value, parent/child mechanism.</p>
+<h3 id="ravestate.property.PropertyBase.read">read</h3>
+
+<pre><code class="python">PropertyBase.read(self)
+</code></pre>
+
+<p>Read the current property value.</p>
+<h3 id="ravestate.property.PropertyBase.write">write</h3>
+
+<pre><code class="python">PropertyBase.write(self, value)
+</code></pre>
+
+<p>Write a new value to the property.
+:param value: The new value.
+:return: True if the value has changed and :changed should be signaled, false otherwise.</p>
+<h1 id="ravestate.receptor">ravestate.receptor</h1>
+
+<h2 id="ravestate.receptor.receptor">receptor</h2>
+
+<pre><code class="python">receptor(*, ctx_wrap: ravestate.wrappers.ContextWrapper, write)
+</code></pre>
+
+<p>A receptor is a special state which can be invoked from outside,
+ to push values into the context.
+:param ctx_wrap: A context wrapper as is always given
+ into the state functions as their first argument.
+:param write: The property, or tuple of properties, which are going to be written.</p>
+<h1 id="ravestate.registry">ravestate.registry</h1>
+
+<h2 id="ravestate.registry.import_module">import_module</h2>
+
+<pre><code class="python">import_module(*, module_name: str, callback)
+</code></pre>
+
+<p>Called by context to import a particular ravestate python module.
+:param module_name: The name of the python module to be imported (must be in pythonpath).
+:param callback: A callback which should be called when a module calls register() while it is being imported.</p>
+<h2 id="ravestate.registry.register">register</h2>
+
+<pre><code class="python">register(*, name: str = '', props=(), states=(), config=None)
+</code></pre>
+
+<p>May be called to register a named set of states, properties and config entries,
+which form a coherent bundle.
+:param name: The name of the module. Will be prefixed to property and signal names like
+ <modulename>:<proeprty/signal-name>.
+:param props: The properties that should be registered.
+:param states: The states that should be registered.
+:param config: A dictionary of config entries and their default values, which should be read
+ from the default/user config files.
+:return:</p>
+<h2 id="ravestate.registry.has_module">has_module</h2>
+
+<pre><code class="python">has_module(module_name: str)
+</code></pre>
+
+<p>Check whether a module with a particular name has been registered.
+:param module_name: The name which should be checked for beign registered.
+:return: True if a module with the given name has been registered, false otherwise.</p>
+<h2 id="ravestate.registry.get_module">get_module</h2>
+
+<pre><code class="python">get_module(module_name: str)
+</code></pre>
+
+<p>Get a registered module with a particular name
+:param module_name: The name of the moduke which should be retrieved.
+:return: The module with the given name if it was registered, false if otherwise.</p>
+<h1 id="ravestate.state">ravestate.state</h1>
+
+<h2 id="ravestate.state.StateActivationResult">StateActivationResult</h2>
+
+<pre><code class="python">StateActivationResult(self, /, *args, **kwargs)
+</code></pre>
+
+<p>Base class for return values of state activation functions.</p>
+<h2 id="ravestate.state.Delete">Delete</h2>
+
+<pre><code class="python">Delete(self, /, *args, **kwargs)
+</code></pre>
+
+<p>Return an instance of this class, if the invoked state should be deleted.</p>
+<h2 id="ravestate.state.Emit">Emit</h2>
+
+<pre><code class="python">Emit(self, /, *args, **kwargs)
+</code></pre>
+
+<p>Return an instance of this class, if the invoked state's signal should be emitted.</p>
+<h2 id="ravestate.state.state">state</h2>
+
+<pre><code class="python">state(*, signal: str = '', write: tuple = (), read: tuple = (), triggers: ravestate.constraint.Constraint = None)
+</code></pre>
+
+<p>Decorator to declare a new state, which may emit a certain signal,
+write to a certain set of properties (calling set, push, pop, delete),
+and read from certain properties (calling read).</p>
+<h1 id="ravestate.wrappers">ravestate.wrappers</h1>
+
+<h2 id="ravestate.wrappers.PropertyWrapper">PropertyWrapper</h2>
+
+<pre><code class="python">PropertyWrapper(self, *, prop: ravestate.property.PropertyBase, ctx: ravestate.icontext.IContext, allow_read, allow_write)
+</code></pre>
+
+<p>Encapsulates a property, and annotates it with additional r/w perms and a context.
+The context is used to trigger the proper :changed, :pushed, :popped, :deleted
+signals when the property is accessed. The wrapper also takes care of locking the property
+when it is supposed to be written to, and freezing the property's value if it is supposed to
+be read from.</p>
+<h3 id="ravestate.wrappers.PropertyWrapper.get">get</h3>
+
+<pre><code class="python">PropertyWrapper.get(self)
+</code></pre>
+
+<p>Read the current property value.</p>
+<h3 id="ravestate.wrappers.PropertyWrapper.set">set</h3>
+
+<pre><code class="python">PropertyWrapper.set(self, value)
+</code></pre>
+
+<p>Write a new value to the property.
+:param value: The new value.
+:return: True if the value has changed and :changed should be signaled, false otherwise.</p>
+<h2 id="ravestate.wrappers.ContextWrapper">ContextWrapper</h2>
+
+<pre><code class="python">ContextWrapper(self, ctx: ravestate.icontext.IContext, st: ravestate.state.State)
+</code></pre>
+
+<p>Encapsulates a context towards a state, only offering properties with permissions
+as declared by the state beforehand.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../nlp/" class="btn btn-neutral float-right" title="NLP">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href=".." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../nlp/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>

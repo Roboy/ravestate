@@ -1,0 +1,35 @@
+site_name: "My Documentation"
+
+# This tells pydocmd which pages to generate from which Python modules,
+# functions and classes. At the first level is the page name, below that
+# is a tree of Python member names (modules, classes, etc.) that should be
+# documented. Higher indentation leads to smaller header size.
+generate:
+- modules.md:
+  - ravestate.argparse++
+  - ravestate.constraint++
+  - ravestate.module++
+  - ravestate.config++
+  - ravestate.property++
+  - ravestate.receptor++
+  - ravestate.registry++
+  - ravestate.state++    # (++ to include members, and their members)
+  - ravestate.wrappers++
+- nlp.md:
+  - ravestate_nlp++
+
+# MkDocs pages configuration. The `<<` operator is sugar added by pydocmd
+# that allows you to use an external Markdown file (eg. your project's README)
+# in the documentation. The path must be relative to current working directory.
+pages:
+- Home: index.md << README.md
+- Modules: modules.md
+- NLP: nlp.md
+
+site_dir: docs
+
+# Additional search path for your Python module. If you use Pydocmd from a
+# subdirectory of your project (eg. docs/), you may want to add the parent
+# directory here.
+additional_search_paths:
+- modules
