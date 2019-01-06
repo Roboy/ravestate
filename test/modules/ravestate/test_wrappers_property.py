@@ -1,12 +1,9 @@
-import pytest
+from ravestate.testfixtures import *
 from ravestate.constraint import s
-from testfixtures import LogCapture
-
 from ravestate.icontext import IContext
 from ravestate.state import State
 from ravestate.property import PropertyBase
 from ravestate.wrappers import PropertyWrapper, ContextWrapper
-from reggol import strip_prefix
 
 DEFAULT_MODULE_NAME = 'module'
 DEFAULT_PROPERTY_NAME = 'property'

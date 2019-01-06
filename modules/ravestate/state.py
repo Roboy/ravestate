@@ -49,10 +49,15 @@ class State:
         assert(callable(action))
         self.name = action.__name__
 
+        # check to recognize states using old signal implementation
+        if isinstance(cond, str):
+            logger.error(f"Attempt to create state {self.name} which has a string as condition, not a constraint!")
+            cond = None
+
         # catch the insane case
         if not len(read) and not cond and not is_receptor:
             logger.warning(
-                f"The state `{self.name}` is not reading any properties, nor waiting for any triggers. " +
+                f"The state `{self.name}` is not reading any properties, nor waiting for any signals. " +
                 "It will never be activated!")
 
         # convert read/write properties to tuples
@@ -79,6 +84,7 @@ class State:
         return self.action(*args, **kwargs)
 
     def signal(self) -> Optional[Signal]:
+        assert self.module_name
         if not self._signal and self.signal_name:
             self._signal = s(f"{self.module_name}:{self.signal_name}")
         return self._signal

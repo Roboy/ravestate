@@ -38,7 +38,7 @@ class Spike(ISpike):
         """
         Construct a spike from a signal name and a list of causing parent signals.
         :param sig: Name of the signal which is represented by this spike
-        :param parents: The parent signals which were involved in causing this signal,
+        :param parents: The parent spikes which were involved in causing this spike,
          and with which unwritten properties will be synchronized: This spike's
          causal group will be inferred from the parents, and the parent's causal
          groups will be merged if they are different.

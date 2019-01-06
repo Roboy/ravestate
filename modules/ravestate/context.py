@@ -1,7 +1,7 @@
 # Ravestate context class
 
 from threading import Thread, Lock, Event
-from typing import Optional, Any, Tuple, Set, Dict, Generator
+from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
 from collections import defaultdict
 
 from ravestate.icontext import IContext
@@ -13,7 +13,7 @@ from ravestate.activation import Activation
 from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
-from ravestate.constraint import s, Signal
+from ravestate.constraint import s, Signal, Conjunct, Disjunct
 from ravestate.spike import Spike
 
 from reggol import get_logger
@@ -48,7 +48,7 @@ class Context(IContext):
     # This data structure is used to complete state constraints:
     #  If a state depends on a signal X that is an effect of signals
     #  Y or Z, the constraint will become (Y & X) | (Z & X).
-    _signal_causes: Dict[Signal, Set[Signal]]
+    _signal_causes: Dict[Signal, List[Conjunct]]
 
     _config: Configuration
     _core_config: Dict[str, Any]
@@ -162,25 +162,25 @@ class Context(IContext):
 
             # add state's constraints as causes for the written prop's :changed signals,
             #  as well as the state's own signal.
-            for sig in st.constraint.signals():
+            states_to_recomplete: Set[State] = {st}
+            for conj in st.constraint.conjunctions():
                 for propname in st.write_props:
-                    self._signal_causes[s(f"{propname}:changed")].add(sig)
+                    changed_signal = s(f"{propname}:changed")
+                    self._signal_causes[changed_signal].append(conj)
+                    # Since a new cause for the property's :changed-signal is added,
+                    #  it must be added to all states depending on that signal.
+                    states_to_recomplete.update(self._states_for_signal(changed_signal))
                 if st.signal():
-                    self._signal_causes[st.signal()].add(sig)
-
-            # check to recognize states using old signal implementation
-            if isinstance(st.constraint, str):
-                logger.error(f"Attempt to add state which depends on a signal `{st.constraint}`  "
-                             f"defined as a String and not Signal.")
-                return
+                    self._signal_causes[st.signal()].append(conj)
 
             # make sure that all of the state's depended-upon signals exist,
             #  add a default state activation for every constraint.
-            # TODO: Constraint completion: If a state is constrained on a child signal C
-            #  that is dependent on parent signal A or B, the state's constraint
-            #  must be expanded as follows: C -> (A & C) | (B & C)
-            #  This will allow indirect activations to be anticipated early.
-            self._new_state_activation(st)
+            for state in states_to_recomplete:
+                self._del_state_activations(state)
+                self._complete_constraint(state)
+                self._new_state_activation(state)
+
+            # add state to states, so that it cannot be added again
             self._states.add(st)
 
     def rm_state(self, *, st: State) -> None:
@@ -195,7 +195,7 @@ class Context(IContext):
             return
         with self._lock:
             # Remove the state's signal
-            if st.signal:
+            if st.signal():
                 self._rm_sig(st.signal())
             # Remove state activations for the state
             self._del_state_activations(st)
@@ -279,10 +279,10 @@ class Context(IContext):
          to know the earliest ETA of one of it's remaining required constraints.
         :param signals: The signals, whose ETA will be calculated, and among the
          results the minimum ETA will be returned.
-        :return: Number of ticks it should take for at least one of the required
+        :return: Lowest upper bound number of ticks it should take for at least one of the required
          signals to arrive. Fixed value (1) for now.
         """
-        # TODO: Proper implementation w/ state runtime_upper_bound and property changed-wait
+        # TODO: Proper implementation w/ state runtime_upper_bound
         return 1
 
     def signal_specificity(self, sig: Signal) -> float:
@@ -295,9 +295,8 @@ class Context(IContext):
         if sig not in self._act_per_state_per_signal_age:
             return .0
         num_suitors = sum(
-            1
-            for acts_per_state in self._act_per_state_per_signal_age[sig].values()
-            for acts in acts_per_state.values())
+            len(acts_per_state)
+            for acts_per_state in self._act_per_state_per_signal_age[sig].values())
         if num_suitors > 0:
             return 1./num_suitors
         else:
@@ -341,19 +340,22 @@ class Context(IContext):
         if sig in self._act_per_state_per_signal_age:
             logger.error(f"Attempt to add signal f{sig.name} twice!")
             return
-        self._signal_causes[sig] = set()
+        self._signal_causes[sig] = []
         self._act_per_state_per_signal_age[sig] = defaultdict(lambda: defaultdict(set))
 
     def _rm_sig(self, sig: Signal) -> None:
         affected_states: Set[State] = set()
         for _, acts_per_state in self._act_per_state_per_signal_age[sig].items():
             affected_states |= set(acts_per_state.keys())
-        logger.warning(
-            f"Since signal {sig.name} was removed, the following states will have dangling constraints: " +
-            ",".join(st.name for st in affected_states))
+        if affected_states:
+            logger.warning(
+                f"Since signal {sig.name} was removed, the following states will have dangling constraints: " +
+                ",".join(st.name for st in affected_states))
         # Remove signal as a cause for other signals
         for _, causes in self._signal_causes.items():
-            causes.discard(sig)
+            old_causes = causes.copy()
+            causes.clear()
+            causes += [cause for cause in old_causes if sig not in cause]
         del self._signal_causes[sig]
         self._act_per_state_per_signal_age.pop(sig)
 
@@ -389,13 +391,60 @@ class Context(IContext):
         for act in activations_to_wipe:
             act.dereference(spike=None, reacquire=False, reject=True)
 
-    def _state_activations(self) -> Set[Activation]:
+    def _state_activations(self, *, st: Optional[State]=None) -> Set[Activation]:
         return set(
             act
             for acts_per_state_per_age in self._act_per_state_per_signal_age.values()
             for acts_per_state in acts_per_state_per_age.values()
             for acts in acts_per_state.values()
-            for act in acts)
+            for act in acts
+            if not st or act.state_to_activate == st)
+
+    def _states_for_signal(self, sig: Signal) -> Iterable[State]:
+        if sig not in self._act_per_state_per_signal_age:
+            return set()
+        return self._act_per_state_per_signal_age[sig][0].keys()  # sig.min_age
+
+    def _complete_constraint(self, st: State):
+        new_conjuncts: Set[Conjunct] = set()
+        for conj in st.constraint.conjunctions():
+            known_signals = set()
+            new_conjuncts.update(
+                Conjunct(*conj_signals)
+                for conj_signals in self._complete_conjunction(conj, known_signals))
+            assert len(known_signals) == 0
+        st.constraint = Disjunct(*new_conjuncts)
+
+    def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
+        result = [set(conj.signals())]
+        for conj_sig in conj.signals():
+            completion = self._complete_signal(conj_sig, known_signals)
+            if completion is not None and len(completion) > 0:
+                # the signal is non-cyclic, and has at least one cause (secondary signal).
+                #  permute existing disjunct conjunctions with new conjunction(s)
+                result = [result_conj | completion_conj for result_conj in result for completion_conj in completion]
+        return result
+
+    def _complete_signal(self, sig: Signal, known_signals: Set[Signal]) -> Optional[List[Set[Signal]]]:
+        # detect and handle cyclic causal chain
+        if sig in known_signals:
+            return None
+        assert sig in self._signal_causes
+
+        # a signal without cause (a primary signal) needs no further completion
+        if not self._signal_causes[sig]:
+            return []
+
+        # a signal with at least one secondary cause needs at least one non-cyclic
+        #  cause to be considered a completion itself
+        result = []
+        known_signals.add(sig)
+        for conj in self._signal_causes[sig]:
+            completion = self._complete_conjunction(conj, known_signals)
+            if completion:
+                result += [conj | {sig} for conj in completion]
+        known_signals.discard(sig)
+        return result if len(result) else None
 
     def _run_private(self):
 

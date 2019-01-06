@@ -158,6 +158,9 @@ class Conjunct(Constraint):
                 conjunct_list.append(Conjunct(*conjunct, *self))
             return Disjunct(*conjunct_list)
 
+    def __contains__(self, item):
+        return item in self._signals
+
     def signals(self) -> Generator['Signal', None, None]:
         return (sig for sig in self._signals)
 

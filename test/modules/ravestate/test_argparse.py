@@ -1,9 +1,5 @@
-import pytest
-from testfixtures import LogCapture
-from os.path import join, dirname, realpath
-
+from ravestate.testfixtures import *
 from ravestate.argparse import handle_args
-from reggol import strip_prefix
 
 
 def test_argparse_empty():

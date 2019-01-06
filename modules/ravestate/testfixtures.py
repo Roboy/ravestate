@@ -1,4 +1,6 @@
 import pytest
+from reggol import strip_prefix
+from testfixtures import LogCapture
 
 from ravestate.constraint import s
 from ravestate.context import Context
@@ -25,12 +27,48 @@ def state_fixture(mocker):
 
 
 @pytest.fixture
+def state_signal_a_fixture(mocker):
+    @state(read=(DEFAULT_PROPERTY_FULLNAME,), signal_name="a")
+    def state_mock_a_fn(ctx):
+        pass
+    state_mock_a_fn.module_name = DEFAULT_MODULE_NAME
+    return state_mock_a_fn
+
+
+@pytest.fixture
+def state_signal_b_fixture(mocker):
+    @state(signal_name="b", cond=s("module:a"))
+    def state_mock_b_fn(ctx):
+        pass
+    state_mock_b_fn.module_name = DEFAULT_MODULE_NAME
+    return state_mock_b_fn
+
+
+@pytest.fixture
+def state_signal_c_fixture(mocker):
+    @state(signal_name="c", cond=s("module:a"))
+    def state_mock_c_fn(ctx):
+        pass
+    state_mock_c_fn.module_name = DEFAULT_MODULE_NAME
+    return state_mock_c_fn
+
+
+@pytest.fixture
+def state_signal_d_fixture(mocker):
+    @state(signal_name="d", cond=s("module:b")|s("module:c"))
+    def state_mock_c_fn(ctx):
+        pass
+    state_mock_c_fn.module_name = DEFAULT_MODULE_NAME
+    return state_mock_c_fn
+
+
+@pytest.fixture
 def context_fixture(mocker):
     return Context()
 
 
 @pytest.fixture
-def context_with_property_fixture(mocker, context_fixture):
+def context_with_property_fixture(mocker, context_fixture) -> Context:
     prop = PropertyBase(name=DEFAULT_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE)
     prop.set_parent_path(DEFAULT_MODULE_NAME)
     context_fixture.add_prop(prop=prop)

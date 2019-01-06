@@ -1,6 +1,4 @@
 from ravestate.testfixtures import *
-from reggol import strip_prefix
-from testfixtures import LogCapture
 
 
 def test_emit(context_fixture):
@@ -70,5 +68,56 @@ def test_remove_dependent_state(context_fixture: Context, state_fixture: State):
     assert prop.fullname() not in context_fixture._properties
 
 
-def test_add_state():
-    pass
+def test_add_state(
+        context_with_property_fixture: Context,
+        state_fixture: State,
+        state_signal_a_fixture: State,
+        state_signal_b_fixture: State,
+        state_signal_c_fixture: State,
+        state_signal_d_fixture: State):
+
+    context_with_property_fixture.add_state(st=state_signal_a_fixture)
+    with LogCapture(attributes=strip_prefix) as log_capture:
+        context_with_property_fixture.add_state(st=state_signal_a_fixture)
+        log_capture.check(f"Attempt to add state `{state_signal_a_fixture.name}` twice!")
+
+    # Add a cyclic cause for module:property:changed, make sure shit doesn't explode
+    context_with_property_fixture.add_state(st=state_fixture)
+
+    # Make sure, that module:property:changed was added as a cause for module:a
+    assert s(DEFAULT_PROPERTY_CHANGED) in \
+        context_with_property_fixture._signal_causes[state_signal_a_fixture.signal()][0]
+
+    context_with_property_fixture.add_state(st=state_signal_b_fixture)
+    context_with_property_fixture.add_state(st=state_signal_c_fixture)
+    context_with_property_fixture.add_state(st=state_signal_d_fixture)
+    assert len(context_with_property_fixture._states) == 5
+
+    # Make sure, that d's constraint was completed correctly
+    d_conjunctions = list(state_signal_d_fixture.constraint.conjunctions())
+    assert len(d_conjunctions) == 2
+    assert s(DEFAULT_PROPERTY_CHANGED) in d_conjunctions[0]
+    assert state_signal_a_fixture.signal() in d_conjunctions[0]
+    assert s(DEFAULT_PROPERTY_CHANGED) in d_conjunctions[1]
+    assert state_signal_a_fixture.signal() in d_conjunctions[1]
+    assert \
+        state_signal_b_fixture.signal() in d_conjunctions[0] and state_signal_c_fixture.signal() in d_conjunctions[1] or \
+        state_signal_b_fixture.signal() in d_conjunctions[1] and state_signal_c_fixture.signal() in d_conjunctions[0]
+
+    # Basic specificity sanity checks
+    assert len(list(context_with_property_fixture._states_for_signal(s(DEFAULT_PROPERTY_CHANGED)))) == 5
+    a_acts = list(context_with_property_fixture._state_activations(st=state_signal_a_fixture))
+    b_acts = list(context_with_property_fixture._state_activations(st=state_signal_b_fixture))
+    c_acts = list(context_with_property_fixture._state_activations(st=state_signal_c_fixture))
+    d_acts = list(context_with_property_fixture._state_activations(st=state_signal_d_fixture))
+    assert len(a_acts) == 1
+    assert len(b_acts) == 1
+    assert len(c_acts) == 1
+    assert len(d_acts) == 1
+    propchange_sig_spec = context_with_property_fixture.signal_specificity(s(DEFAULT_PROPERTY_CHANGED))
+    assert a_acts[0].specificity() == propchange_sig_spec
+    a_sig_spec = context_with_property_fixture.signal_specificity(state_signal_a_fixture.signal())
+    assert a_sig_spec == 1/3
+    assert b_acts[0].specificity() == a_sig_spec + propchange_sig_spec
+    assert 1.53 < d_acts[0].specificity() < 1.54
+

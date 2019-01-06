@@ -78,7 +78,7 @@ class Activation(IActivation):
         for sig_to_reacquire, dereferenced_instance in self.constraint.dereference(spike):
             if reacquire:
                 self.ctx.reacquire(self, sig_to_reacquire)
-            if reject:
+            if reject and dereferenced_instance:
                 with dereferenced_instance.causal_group() as cg:
                     cg.rejected(dereferenced_instance, self)
 
