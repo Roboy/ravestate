@@ -99,7 +99,10 @@ def test_property_write(under_test_read_write: PropertyWrapper, default_property
     assert (default_property_base._lock.locked())
     under_test_read_write.set(NEW_PROPERTY_VALUE)
     assert (under_test_read_write.get() == NEW_PROPERTY_VALUE)
-    context_mock.emit.assert_called_once_with(s(f"{under_test_read_write.prop.fullname()}:changed"), parents=None)
+    context_mock.emit.assert_called_once_with(
+        s(f"{under_test_read_write.prop.fullname()}:changed"),
+        parents=None,
+        wipe=True)
 
 
 def test_property_child(under_test_read_write: PropertyWrapper, default_property_base, context_mock):

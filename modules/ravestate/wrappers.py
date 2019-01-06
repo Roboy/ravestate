@@ -65,7 +65,7 @@ class PropertyWrapper:
             logger.error(f"Unauthorized write access in property-wrapper {self.prop.fullname()}!")
             return False
         if self.prop.write(value):
-            self.ctx.emit(s(f"{self.prop.fullname()}:changed"), parents=self.spike_parents)
+            self.ctx.emit(s(f"{self.prop.fullname()}:changed"), parents=self.spike_parents, wipe=True)
             return True
         return False
 
@@ -80,7 +80,7 @@ class PropertyWrapper:
             logger.error(f"Unauthorized push access in property-wrapper {self.prop.fullname()}!")
             return False
         if self.prop.push(child):
-            self.ctx.emit(s(f"{self.prop.fullname()}:pushed"), parents=self.spike_parents)
+            self.ctx.emit(s(f"{self.prop.fullname()}:pushed"), parents=self.spike_parents, wipe=True)
             return True
         return False
 
@@ -94,7 +94,7 @@ class PropertyWrapper:
             logger.error(f"Unauthorized pop access in property-wrapper {self.prop.fullname()}!")
             return False
         if self.prop.pop(childname):
-            self.ctx.emit(s(f"{self.prop.fullname()}:popped"), parents=self.spike_parents)
+            self.ctx.emit(s(f"{self.prop.fullname()}:popped"), parents=self.spike_parents, wipe=True)
             return True
         return False
 

@@ -22,11 +22,22 @@ class Delete(StateActivationResult):
     pass
 
 
+class Wipe(StateActivationResult):
+    """
+    Return an instance of this class, if context.wipe(signal) should be called,
+     to ensure that there are no more active spikes for the state's signal.
+    """
+    pass
+
+
 class Emit(StateActivationResult):
     """
     Return an instance of this class, if the invoked state's signal should be emitted.
+    :param wipe: Set to true, if context.wipe(signal) should be called before emit,
+     to ensure that there is only one free spike for the given signal.
     """
-    pass
+    def __init__(self, wipe: bool=False):
+        self.wipe = wipe
 
 
 class Resign(StateActivationResult):

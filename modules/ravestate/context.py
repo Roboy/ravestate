@@ -33,7 +33,7 @@ class Context(IContext):
 
     _properties: Dict[str, PropertyBase]
     _states: Set[State]
-    _spikes: Set[Spike]
+    _spikes: Dict[Spike, bool]  # Bool says not-wiped (acquisition allowed) true/false
     _act_per_state_per_signal_age: Dict[
         Signal,
         Dict[
@@ -72,7 +72,7 @@ class Context(IContext):
         self._shutdown_flag = Event()
         self._properties = dict()
         self._states = set()
-        self._spikes = set()
+        self._spikes = defaultdict(lambda: True)
         self._act_per_state_per_signal_age = dict()
         self._signal_causes = dict()
         self._run_task = None
@@ -89,17 +89,39 @@ class Context(IContext):
         for module_name in self._core_config[self.import_modules_config]+modules:
             self.add_module(module_name)
 
-    def emit(self, signal: Signal, parents: Set[Spike]=None) -> None:
+    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False) -> None:
         """
-        Emit a signal to the signal processing loop, by creating
-         a new Spike for the specified Signal.
-        Note: The signal will only be processed if run() has been called!
+        Emit a signal to the signal processing loop. Note:
+         The signal will only be processed if run() has been called!
         :param signal: The signal to be emitted.
         :param parents: The signal's parents, if it is supposed to be integrated into a causal group.
+        :param wipe: Boolean to control, whether wipe(signal) should be called
+         before the new spike is created.
+        """
+        if wipe:
+            self.wipe(signal)
+        with self._lock:
+            self._spikes[Spike(sig=signal.name, parents=parents, properties=set(self._properties.keys()))] = True
+
+    def wipe(self, signal: Signal):
+        """
+        Delete all spikes for the given signal. Partially fulfilled states
+         that have acquired an affected spike will be forced to reject it.
+        Wiping a parent spike will also wipe all child spikes.
+        :param signal: The signal for which all existing spikes (and their children)
+         should be invalidated and forgotten.
         """
         with self._lock:
-            self._spikes.add(
-                Spike(sig=signal.name, parents=parents, properties=set(self._properties.keys())))
+            for spike in self._spikes:
+                if spike.name() == signal.name:
+                    spike.wipe()
+                    self._spikes[spike] = False
+                    for child_spike in spike.offspring():
+                        self._spikes[child_spike] = False
+        # Final cleanup will be performed while update is running,
+        #  and cg.stale(spike) returns true.
+        # TODO: Make sure, that it is not a problem if the spike is currently referenced
+        #  in a running state that would give it new offspring (and a second life).
 
     def run(self) -> None:
         """
@@ -460,7 +482,9 @@ class Context(IContext):
                 all_activations = self._state_activations()
 
                 # Acquire new state activations for every spike
-                for spike in self._spikes:
+                for spike, acquisition_allowed in self._spikes:
+                    if not acquisition_allowed:
+                        continue
                     for state, acts in self._act_per_state_per_signal_age[s(spike.name())][spike.age()].items():
                         old_acts = acts.copy()
                         for act in old_acts:
@@ -487,7 +511,7 @@ class Context(IContext):
                     with spike.causal_group() as cg:
                         if cg.stale(spike):
                             # This should lead to the deletion of the spike
-                            self._spikes.remove(spike)
+                            self._spikes.pop(spike)
                             spike.wipe(already_wiped_in_causal_group=True)
                             logger.debug(f"{cg}.stale({spike.name()}) -> 1")
 

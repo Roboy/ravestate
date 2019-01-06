@@ -1,7 +1,7 @@
 # Interface of state activation towards spike
 # Spike interface towards state activation
 
-from typing import Set, Optional
+from typing import Set, Optional, Generator
 
 
 class ISpike:
@@ -33,6 +33,12 @@ class ISpike:
         :return: True if the spike has active offspring, false otherwise.
         """
         pass
+
+    def offspring(self) -> Generator['Spike', None, None]:
+        """
+        Recursively yields this spike's offspring and it's children's offspring.
+        :return: All of this spike's offspring spikes.
+        """
 
 
 class IActivation:

@@ -9,7 +9,7 @@ from ravestate.constraint import Constraint, s
 from ravestate.iactivation import IActivation, ISpike
 from ravestate.spike import Spike
 from ravestate.causal import CausalGroup
-from ravestate.state import State, Emit, Delete, Resign
+from ravestate.state import State, Emit, Delete, Resign, Wipe
 from ravestate.wrappers import ContextWrapper
 
 from reggol import get_logger
@@ -159,7 +159,6 @@ class Activation(IActivation):
         Thread(target=self._run_private).start()
 
     def _run_private(self):
-        # TODO: Pass spikes to ContextWrapper, so that they are parents for :changed spikes
         context_wrapper = ContextWrapper(ctx=self.ctx, st=self.state_to_activate, spike_parents=self.spikes)
 
         # Run state function
@@ -168,11 +167,19 @@ class Activation(IActivation):
         # Process state function result
         if isinstance(result, Emit):
             if self.state_to_activate.signal():
+                if result.wipe:
+                    self.ctx.wipe(self.state_to_activate.signal())
                 self.ctx.emit(
                     self.state_to_activate.signal(),
                     parents=self.spikes)
             else:
-                logger.error(f"Attempt to emit from state {self.name}, which does not specify a signal name!")
+                logger.error(f"Attempt to emit spike from state {self.name}, which does not specify a signal name!")
+
+        elif isinstance(result, Wipe):
+            if self.state_to_activate.signal():
+                self.ctx.wipe(self.state_to_activate.signal())
+            else:
+                logger.error(f"Attempt to wipe spikes from state {self.name}, which does not specify a signal name!")
 
         elif isinstance(result, Delete):
             self.ctx.rm_state(st=self.state_to_activate)

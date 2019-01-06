@@ -44,12 +44,24 @@ class IContext:
         """
         pass
 
-    def emit(self, signal: Signal, parents: Set['Spike']=None) -> None:
+    def emit(self, signal: Signal, parents: Set['Spike']=None, wipe: bool=False) -> None:
         """
         Emit a signal to the signal processing loop. Note:
          The signal will only be processed if run() has been called!
         :param signal: The signal to be emitted.
         :param parents: The signal's parents, if it is supposed to be integrated into a causal group.
+        :param wipe: Boolean to control, whether wipe(signal) should be called
+         before the new spike is created.
+        """
+        pass
+
+    def wipe(self, signal: Signal):
+        """
+        Delete all spikes for the given signal. Partially fulfilled states
+         that have acquired an affected spike will be forced to reject it.
+        Wiping a parent spike will also wipe all child spikes.
+        :param signal: The signal for which all existing spikes (and their children)
+         should be invalidated and forgotten.
         """
         pass
 

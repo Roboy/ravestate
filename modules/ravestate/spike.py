@@ -1,6 +1,6 @@
 # Ravestate class which encapsulates a single spike
 
-from typing import Set
+from typing import Set, Generator
 from ravestate.iactivation import ISpike
 from ravestate.causal import CausalGroup
 
@@ -137,3 +137,13 @@ class Spike(ISpike):
         Obtain this spike's age (in ticks).
         """
         return self._age
+
+    def offspring(self) -> Generator['Spike', None, None]:
+        """
+        Recursively yields this spike's offspring and it's children's offspring.
+        :return: All of this spike's offspring spikes.
+        """
+        for child in self._offspring:
+            yield child
+            for ch in child.offspring():
+                yield ch
