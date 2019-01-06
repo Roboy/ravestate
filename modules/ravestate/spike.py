@@ -145,5 +145,4 @@ class Spike(ISpike):
         """
         for child in self._offspring:
             yield child
-            for ch in child.offspring():
-                yield ch
+            yield from child.offspring()

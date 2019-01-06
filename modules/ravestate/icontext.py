@@ -146,3 +146,12 @@ class IContext:
         :param sig: Signal type for which interest is lost.
         """
         pass
+
+    def secs_to_ticks(self, seconds: float) -> int:
+        """
+        Convert seconds to an equivalent integer number of ticks,
+         given this context's tick rate.
+        :param seconds: Seconds to convert to ticks.
+        :return: An integer tick count.
+        """
+        pass

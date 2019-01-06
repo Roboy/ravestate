@@ -94,3 +94,13 @@ class IActivation:
         #  is to be expected. If progress is not made within the predicted
         #  time period, the activation is going to auto-eliminate for the pressured
         #  spikes.
+        pass
+
+    def secs_to_ticks(self, seconds: float) -> int:
+        """
+        Convert seconds to an equivalent integer number of ticks,
+         given this activation's tick rate.
+        :param seconds: Seconds to convert to ticks.
+        :return: An integer tick count.
+        """
+        pass

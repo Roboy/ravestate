@@ -91,16 +91,22 @@ class Activation(IActivation):
         """
         return self.constraint.acquire(spike, self)
 
+    def secs_to_ticks(self, seconds: float) -> int:
+        """
+        Convert seconds to an equivalent integer number of ticks,
+         given this activation's tick rate.
+        :param seconds: Seconds to convert to ticks.
+        :return: An integer tick count.
+        """
+        return self.ctx.secs_to_ticks(seconds)
+
     def update(self) -> None:
         """
         Called once per tick on this activation, to give it a chance to activate
          itself, or auto-eliminate, or reject spikes which have become too old.
         """
-        # Update constraint
-        signals_to_reacquire = self.constraint.update(self)
-
-        # Reacquire for rejected spikes
-        for spike in signals_to_reacquire:
+        # Update constraint, reacquire for rejected spikes
+        for spike in self.constraint.update(self):
             self.ctx.reacquire(self, spike)
 
         # Iterate over fulfilled conjunctions and look to activate with one of them

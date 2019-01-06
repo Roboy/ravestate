@@ -3,6 +3,7 @@
 from threading import Thread, Lock, Event
 from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
 from collections import defaultdict
+from math import ceil
 
 from ravestate.icontext import IContext
 from ravestate.module import Module
@@ -84,6 +85,9 @@ class Context(IContext):
         # Set required config overrides
         for module_name, key, value in overrides:
             self._config.set(module_name, key, value)
+        if self._core_config[self.tick_rate_config] < 1:
+            logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
+            self._core_config[self.tick_rate_config] = 1
 
         # Load required modules
         for module_name in self._core_config[self.import_modules_config]+modules:
@@ -358,6 +362,15 @@ class Context(IContext):
         interested_acts = self._act_per_state_per_signal_age[sig][0][act.state_to_activate]  # sig.min_age
         interested_acts.discard(act)
 
+    def secs_to_ticks(self, seconds: float) -> int:
+        """
+        Convert seconds to an equivalent integer number of ticks,
+         given this context's tick rate.
+        :param seconds: Seconds to convert to ticks.
+        :return: An integer tick count.
+        """
+        return ceil(seconds * float(self._core_config[self.tick_rate_config]))
+
     def _add_sig(self, sig: Signal):
         if sig in self._act_per_state_per_signal_age:
             logger.error(f"Attempt to add signal f{sig.name} twice!")
@@ -469,10 +482,6 @@ class Context(IContext):
         return result if len(result) else None
 
     def _run_private(self):
-
-        if self._core_config[self.tick_rate_config] < 1:
-            logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
-            self._core_config[self.tick_rate_config] = 1
 
         tick_interval = 1. / self._core_config[self.tick_rate_config]
         while not self._shutdown_flag.wait(tick_interval):
