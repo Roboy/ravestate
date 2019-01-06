@@ -8,9 +8,10 @@ class Triple:
     _predicate_subplement = None
     _object = None
 
-    def __init__(self, subject: Token = None, predicate: Token = None, _predicate_subplement: Token=None, object: Token = None):
+    def __init__(self, subject: Token = None, predicate: Token = None, predicate_subplement: Token=None, object: Token = None):
         self.set_subject(subject)
         self.set_predicate(predicate)
+        self.set_predicate_subplement(predicate_subplement)
         self.set_object(object)
 
     def set_subject(self, subject: Token):
@@ -73,7 +74,7 @@ class Triple:
             sub = self._subject.text
         if self._predicate:
             pred = self._predicate.lemma_
-        if self._predicate_subplement:
+        if self._predicate_subplement and not self._predicate_subplement.text == " ":
             pred_sub = self._predicate_subplement.lemma_
             space = ' '
         if self._object:
@@ -90,7 +91,7 @@ class Triple:
             sub = self._subject.text
         if self._predicate:
             pred = self._predicate.lemma_
-        if self._predicate_subplement:
+        if self._predicate_subplement and not self._predicate_subplement.text == " ":
             pred_sub = self._predicate_subplement.lemma_
             space = ' '
         if self._object:

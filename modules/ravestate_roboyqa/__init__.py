@@ -18,6 +18,8 @@ from os.path import realpath, dirname, join
 
 import random
 
+import datetime
+
 verbaliser.add_folder(join(dirname(realpath(__file__)), "answering_phrases"))
 
 @state(triggers=s(":startup"), write="rawio:out")
@@ -28,44 +30,60 @@ def hello_world_roboyqa(ctx):
 def roboyqa(ctx):
     sess = ravestate_ontology.get_session()
     roboy = sess.retrieve(node_id=356)[0]
-    name = roboy.get_name()
-    logger.info(name)
-    sibling_id = random.sample(roboy.get_relationships(key="SIBLING_OF"),1)[0]
-    logger.info(sibling_id)
-    logger.info(sess.retrieve(node_id=int(sibling_id))[0].get_name())
     question_subject = ctx["nlp:triples"][0].get_subject()
     question_predicate = ctx["nlp:triples"][0].get_predicate()
     question_predicate_subplement = ctx["nlp:triples"][0].get_predicate_subplement()
     question_object = ctx["nlp:triples"][0].get_object()
 
-    #TODO ORDER
-    #FRIEND_OF
-    #full_name
-    #future
+    category = None
+    memory_info = None
     #MEMBER_OF
-    #LIVE_IN
-    if question_object.text == QuestionWord._object:
-        if question_subject.text == "age":
-            ctx["rawio:out"] =  verbaliser.get_random_successful_answer("age") % "one"
-        elif question_predicate.text == "do":
-            ctx["rawio:out"] =  verbaliser.get_random_successful_answer("skills") % "drink"
-            #abilities
-        elif question_predicate.text == "like":
-            ctx["rawio:out"] =  verbaliser.get_random_successful_answer("HAS_HOBBY") % "beer"
+    if question_object.text == QuestionWord._place:
+        if question_predicate.text == "be":
+            category = "FROM"
+        elif question_predicate.text == "live":
+            category = "LIVE_IN"
+    elif question_object.text == QuestionWord._object:
+        if question_predicate.text == "like" or question_predicate_subplement.text == "like" or question_subject.text == "hobbies":
+            category = "HAS_HOBBY"
+        #elif question_predicate.text == "learn" or question_predicate_subplement.text == "learn" or question_object.text == "skills":
+            #category = "skills"
+            #skill_node_id  = random.sample(roboy.get_relationships(key="KNOW"),1)[0]
+            #memory_info = sess.retrieve(node_id=int(skill_node_id))[0].get_name()
+        #elif question_subject.text == "age":
+            #category = "age"
+            #memory_info = roboy.get_properties(key="birthdate")
+            #TODO calc age
+        #elif question_predicate.text == "become" or question_predicate_subplement.text == "become":        
     elif question_subject.text == QuestionWord._person:
         if question_object.text == "father" or question_object.text == "dad":
-            ctx["rawio:out"] =  verbaliser.get_random_successful_answer("CHILD_OF") % "raf"
+            category = "CHILD_OF"
         elif question_object.text == "brother" or question_object.text == "sibling":
-            ctx["rawio:out"] = verbaliser.get_random_successful_answer("SIBLING_OF") % "roboy junior"
-    elif question_object.text == QuestionWord._place:
-        if question_subject.text == "you":
-            ctx["rawio:out"] = verbaliser.get_random_successful_answer("FROM") % "munich"
+            category = "SIBLING_OF"
+        elif question_object.text == "friend":
+            category = "FRIEND_OF"
+
+    if not isinstance(roboy.get_relationships(key=category), dict):
+        node_id  = random.sample(roboy.get_relationships(key=category),1)[0]
+        memory_info = sess.retrieve(node_id=int(node_id))[0].get_name()
+
+    if question_object.text == QuestionWord._person or question_subject.text == "name":
+        category = "full_name"
+        memory_info = roboy.get_properties(key=category)
     elif question_object.text == QuestionWord._form:
-        if question_predicate_subplement and question_predicate_subplement.text == "old":
-            ctx["rawio:out"] =  verbaliser.get_random_successful_answer("age") % "one"
-        else: 
-            ctx["rawio:out"] = "I'm schwifty."
-            #add answers to how are you in info list
+        if question_predicate.text == "old" or question_predicate_subplement.text == "old":
+            category = "age"
+            memory_info = roboy.get_properties(key="birthdate")
+            #TODO calc age
+            ctx["rawio:out"] =  verbaliser.get_random_successful_answer("age") % birthdate
+        else: #How are you
+            pass
+            #TODO get add a list of possible answers
+
+    if memory_info:
+        ctx["rawio:out"] =  verbaliser.get_random_successful_answer(category) % memory_info
+    else:
+        ctx["rawio:out"] =  "Sorry I do not know."
 
 registry.register(
     name="roboyqa",
