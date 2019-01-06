@@ -22,8 +22,8 @@ class PropertyBase:
             allow_push=True,
             allow_pop=True,
             allow_delete=True,
-            default=None,
-            always_signal_changed=False, ):
+            default_value=None,
+            always_signal_changed=False):
 
         self.name = name
         self.allow_read = allow_read
@@ -31,7 +31,7 @@ class PropertyBase:
         self.allow_push = allow_push
         self.allow_pop = allow_pop
         self.allow_delete = allow_delete
-        self.value = default
+        self.value = default_value
         self.children: Dict[str, PropertyBase] = dict()
         self._lock = Lock()
         self.parent_path: str = ""

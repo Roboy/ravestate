@@ -3,7 +3,8 @@
 from ravestate.property import PropertyBase
 from ravestate import state
 from ravestate import icontext
-from typing import Any, Generator
+from ravestate.spike import Spike
+from typing import Any, Generator, Set
 
 from ravestate.constraint import s
 
@@ -19,12 +20,18 @@ class PropertyWrapper:
     when it is supposed to be written to, and freezing the property's value if it is supposed to
     be read from.
     """
-    def __init__(self, *, prop: PropertyBase, ctx: icontext.IContext, allow_read: bool, allow_write: bool):
+    def __init__(self, *,
+                 spike_parents: Set[Spike] = None,
+                 prop: PropertyBase,
+                 ctx: icontext.IContext,
+                 allow_read: bool,
+                 allow_write: bool):
         self.prop = prop
         self.ctx = ctx
         self.allow_read = allow_read and prop.allow_read
         self.allow_write = allow_write and prop.allow_write
         self.frozen_value = None
+        self.spike_parents = spike_parents
 
         self.prop.lock()
         if self.allow_read:
@@ -58,7 +65,7 @@ class PropertyWrapper:
             logger.error(f"Unauthorized write access in property-wrapper {self.prop.fullname()}!")
             return False
         if self.prop.write(value):
-            self.ctx.emit(s(f"{self.prop.fullname()}:changed"))
+            self.ctx.emit(s(f"{self.prop.fullname()}:changed"), parents=self.spike_parents, wipe=True)
             return True
         return False
 
@@ -73,7 +80,7 @@ class PropertyWrapper:
             logger.error(f"Unauthorized push access in property-wrapper {self.prop.fullname()}!")
             return False
         if self.prop.push(child):
-            self.ctx.emit(s(f"{self.prop.fullname()}:pushed"))
+            self.ctx.emit(s(f"{self.prop.fullname()}:pushed"), parents=self.spike_parents, wipe=True)
             return True
         return False
 
@@ -87,17 +94,17 @@ class PropertyWrapper:
             logger.error(f"Unauthorized pop access in property-wrapper {self.prop.fullname()}!")
             return False
         if self.prop.pop(childname):
-            self.ctx.emit(s(f"{self.prop.fullname()}:popped"))
+            self.ctx.emit(s(f"{self.prop.fullname()}:popped"), parents=self.spike_parents, wipe=True)
             return True
         return False
 
     def enum(self) -> Generator[str, None, None]:
         """
-        Get the full pathes of each of this propertie's children.
+        Get the full paths of each of this property's children.
         """
         if not self.allow_read:
             logger.error(f"Unauthorized read access in property-wrapper for {self.prop.fullname()}!")
-            return iter([])
+            return (_ for _ in ())
         return (child.fullname() for _, child in self.prop.children.items())
 
 
@@ -107,20 +114,22 @@ class ContextWrapper:
     as declared by the state beforehand.
     """
 
-    def __init__(self, ctx: icontext.IContext, st: state.State):
+    def __init__(self, *, ctx: icontext.IContext, st: state.State, spike_parents: Set[Spike]=None):
         self.st = st
         self.ctx = ctx
         self.properties = dict()
+        self.spike_parents = spike_parents
         # Recursively complete properties dict with children:
         for propname in st.write_props + st.read_props:
             # May have been covered by a parent before
             if propname not in self.properties:
-                prop_and_children = ctx.get_prop(propname).gather_children()
+                prop_and_children = ctx[propname].gather_children()
                 for prop in prop_and_children:
                     # Child may have been covered by a parent before
                     if prop.fullname() not in self.properties:
                         self.properties[prop.fullname()] = PropertyWrapper(
                             prop=prop, ctx=ctx,
+                            spike_parents=self.spike_parents,
                             allow_read=propname in st.read_props,
                             allow_write=propname in st.write_props)
 
@@ -166,6 +175,7 @@ class ContextWrapper:
             if self.properties[parentpath].push(child):
                 self.properties[child.fullname()] = PropertyWrapper(
                     prop=child, ctx=self.ctx,
+                    spike_parents=self.spike_parents,
                     allow_read=self.properties[parentpath].allow_read,
                     allow_write=self.properties[parentpath].allow_write)
                 self.ctx.add_prop(prop=child)

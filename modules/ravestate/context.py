@@ -1,28 +1,60 @@
 # Ravestate context class
 
-from reggol import get_logger
-logger = get_logger(__name__)
+from threading import Thread, Lock, Event
+from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
+from collections import defaultdict
+from math import ceil
 
-from threading import Thread, Lock, Semaphore
-from typing import Optional, Any, Tuple, List, Set, Dict
-
-from ravestate import icontext
-from ravestate import activation
-from ravestate import module
-from ravestate import state
-from ravestate import property
+from ravestate.icontext import IContext
+from ravestate.module import Module
+from ravestate.state import State
+from ravestate.property import PropertyBase
+from ravestate.iactivation import IActivation
+from ravestate.activation import Activation
 from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
-from ravestate.constraint import s, Signal
+from ravestate.constraint import s, Signal, Conjunct, Disjunct
+from ravestate.spike import Spike
+
+from reggol import get_logger
+logger = get_logger(__name__)
 
 
-class Context(icontext.IContext):
+class Context(IContext):
 
     default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
     default_property_signal_names: Tuple[str] = (":changed", ":pushed", ":popped", ":deleted")
+
     core_module_name = "core"
     import_modules_config = "import"
+    tick_rate_config = "tickrate"
+
+    _lock: Lock
+
+    _properties: Dict[str, PropertyBase]
+    _states: Set[State]
+    _spikes: Dict[Spike, bool]  # Bool says not-wiped (acquisition allowed) true/false
+    _act_per_state_per_signal_age: Dict[
+        Signal,
+        Dict[
+            int,
+            Dict[
+                State,
+                Set[Activation]
+            ]
+        ]
+    ]
+
+    # This data structure is used to complete state constraints:
+    #  If a state depends on a signal X that is an effect of signals
+    #  Y or Z, the constraint will become (Y & X) | (Z & X).
+    _signal_causes: Dict[Signal, List[Conjunct]]
+
+    _config: Configuration
+    _core_config: Dict[str, Any]
+    _run_task: Thread
+    _shutdown_flag: Event
 
     def __init__(self, *arguments):
         """
@@ -31,65 +63,94 @@ class Context(icontext.IContext):
          by the ravestate command line parser (see argparse.py).
         """
         modules, overrides, config_files = argparse.handle_args(*arguments)
-        self.config = Configuration(config_files)
-        self.core_config = {
-            self.import_modules_config: []
+        self._config = Configuration(config_files)
+        self._core_config = {
+            self.import_modules_config: [],
+            self.tick_rate_config: 20
         }
-        self.config.add_conf(module.Module(name=self.core_module_name, config=self.core_config))
+        self._config.add_conf(Module(name=self.core_module_name, config=self._core_config))
+        self._lock = Lock()
+        self._shutdown_flag = Event()
+        self._properties = dict()
+        self._states = set()
+        self._spikes = defaultdict(lambda: True)
+        self._act_per_state_per_signal_age = dict()
+        self._signal_causes = dict()
+        self._run_task = None
 
-        self.signal_queue: List[Signal] = []
-        self.signal_queue_lock = Lock()
-        self.signal_queue_counter = Semaphore(0)
-        self.run_task = None
-        self.shutdown_flag = False
-        self.properties: Dict[str, property.PropertyBase] = {}
-        self.activation_candidates = dict()
-
-        self.states: Set[state.State] = set()
-        self.states_per_signal: Dict[Signal, Set] = {s(signal_name): set() for signal_name in self.default_signal_names}
-        self.states_lock = Lock()
+        # Register default signals
+        for signame in self.default_signal_names:
+            self._add_sig(s(signame))
 
         # Set required config overrides
         for module_name, key, value in overrides:
-            self.config.set(module_name, key, value)
+            self._config.set(module_name, key, value)
+        if self._core_config[self.tick_rate_config] < 1:
+            logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
+            self._core_config[self.tick_rate_config] = 1
+
         # Load required modules
-        for module_name in self.core_config[self.import_modules_config]+modules:
+        for module_name in self._core_config[self.import_modules_config]+modules:
             self.add_module(module_name)
 
-    def emit(self, signal: Signal) -> None:
+    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False) -> None:
         """
         Emit a signal to the signal processing loop. Note:
          The signal will only be processed if run() has been called!
         :param signal: The signal to be emitted.
+        :param parents: The signal's parents, if it is supposed to be integrated into a causal group.
+        :param wipe: Boolean to control, whether wipe(signal) should be called
+         before the new spike is created.
         """
-        with self.signal_queue_lock:
-            self.signal_queue.append(signal)
-            self.signal_queue_counter.release()
+        if wipe:
+            self.wipe(signal)
+        with self._lock:
+            self._spikes[Spike(sig=signal.name, parents=parents, properties=set(self._properties.keys()))] = True
+
+    def wipe(self, signal: Signal):
+        """
+        Delete all spikes for the given signal. Partially fulfilled states
+         that have acquired an affected spike will be forced to reject it.
+        Wiping a parent spike will also wipe all child spikes.
+        :param signal: The signal for which all existing spikes (and their children)
+         should be invalidated and forgotten.
+        """
+        with self._lock:
+            for spike in self._spikes:
+                if spike.name() == signal.name:
+                    spike.wipe()
+                    self._spikes[spike] = False
+                    for child_spike in spike.offspring():
+                        self._spikes[child_spike] = False
+        # Final cleanup will be performed while update is running,
+        #  and cg.stale(spike) returns true.
+        # TODO: Make sure, that it is not a problem if the spike is currently referenced
+        #  in a running state that would give it new offspring (and a second life).
 
     def run(self) -> None:
         """
         Creates a signal processing thread, starts it, and emits the :startup signal.
         """
-        if self.run_task:
+        if self._run_task:
             logger.error("Attempt to start context twice!")
             return
-        self.run_task = Thread(target=self._run_private)
-        self.run_task.start()
+        self._run_task = Thread(target=self._run_private)
+        self._run_task.start()
         self.emit(s(":startup"))
 
     def shutting_down(self) -> bool:
         """
         Retrieve the shutdown flag value, which indicates whether shutdown() has been called.
         """
-        return self.shutdown_flag
+        return self._shutdown_flag.is_set()
 
     def shutdown(self) -> None:
         """
         Sets the shutdown flag and waits for the signal processing thread to join.
         """
-        self.shutdown_flag = True
+        self._shutdown_flag.set()
         self.emit(s(":shutdown"))
-        self.run_task.join()
+        self._run_task.join()
 
     def add_module(self, module_name: str) -> None:
         """
@@ -104,113 +165,125 @@ class Context(icontext.IContext):
             return
         registry.import_module(module_name=module_name, callback=self._module_registration_callback)
 
-    def add_state(self, *, st: state.State) -> None:
+    def add_state(self, *, st: State) -> None:
         """
         Add a state to this context. It will be indexed wrt/ the properties/signals
          it depends on. Error messages will be generated for unknown signals/properties.
         :param st: The state which should be added to this context.
         """
-        if st in self.states:
+        if st in self._states:
             logger.error(f"Attempt to add state `{st.name}` twice!")
             return
 
         # make sure that all of the state's depended-upon properties exist
         for prop in st.read_props+st.write_props:
-            if prop not in self.properties:
+            if prop not in self._properties:
                 logger.error(f"Attempt to add state which depends on unknown property `{prop}`!")
                 return
 
         # register the state's signal
-        with self.states_lock:
-            if st.signal:
-                self.states_per_signal[st.signal] = set()
-            # check to recognize states using old signal implementation
-            if isinstance(st.triggers, str):
-                logger.error(f"Attempt to add state which depends on a signal `{st.triggers}`  "
-                              f"defined as a String and not Signal.")
-                return
+        with self._lock:
+            if st.signal():
+                self._add_sig(st.signal())
 
-            # make sure that all of the state's depended-upon signals exist
-            for signal in st.triggers.get_all_signals():
-                if signal in self.states_per_signal:
-                    self.states_per_signal[signal].add(st)
-                else:
-                    logger.error(f"Attempt to add state which depends on unknown signal `{signal}`!")
-                    return
-            self.states.add(st)
+            # add state's constraints as causes for the written prop's :changed signals,
+            #  as well as the state's own signal.
+            states_to_recomplete: Set[State] = {st}
+            for conj in st.constraint.conjunctions():
+                for propname in st.write_props:
+                    changed_signal = s(f"{propname}:changed")
+                    self._signal_causes[changed_signal].append(conj)
+                    # Since a new cause for the property's :changed-signal is added,
+                    #  it must be added to all states depending on that signal.
+                    states_to_recomplete.update(self._states_for_signal(changed_signal))
+                if st.signal():
+                    self._signal_causes[st.signal()].append(conj)
 
-    def rm_state(self, *, st: state.State) -> None:
+            # make sure that all of the state's depended-upon signals exist,
+            #  add a default state activation for every constraint.
+            for state in states_to_recomplete:
+                self._del_state_activations(state)
+                self._complete_constraint(state)
+                self._new_state_activation(state)
+
+            # add state to states, so that it cannot be added again
+            self._states.add(st)
+
+    def rm_state(self, *, st: State) -> None:
         """
-        Remove a state from this context.
+        Remove a state from this context. Note, that any state which is constrained
+         on the signal that is emitted by the deleted state will also be deleted.
         :param st: The state to remove. An error message will be generated,
          if the state was not previously added to this context with add_state().
         """
-        if st not in self.states:
+        if st not in self._states:
             logger.error(f"Attempt to remove unknown state `{st.name}`!")
             return
-        with self.states_lock:
-            if st.signal:
-                self.states_per_signal.pop(st.signal)
-            for signal in st.triggers.get_all_signals():
-                    self.states_per_signal[signal].remove(st)
-            self.states.remove(st)
+        with self._lock:
+            # Remove the state's signal
+            if st.signal():
+                self._rm_sig(st.signal())
+            # Remove state activations for the state
+            self._del_state_activations(st)
+            # Actually forget about the state
+            self._states.remove(st)
 
-    def add_prop(self, *, prop: property.PropertyBase) -> None:
+    def add_prop(self, *, prop: PropertyBase) -> None:
         """
         Add a property to this context. An error message will be generated, if a property with
          the same name has already been added previously.
         :param prop: The property object that should be added.
         """
-        if prop.fullname() in self.properties:
-            logger.error(f"Attempt to add property {prop.name} twice!")
+        if prop.fullname() in self._properties:
+            logger.error(f"Attempt to add property {prop.fullname()} twice!")
             return
         # register property
-        self.properties[prop.fullname()] = prop
+        self._properties[prop.fullname()] = prop
         # register all of the property's signals
-        with self.states_lock:
+        with self._lock:
             for signalname in self.default_property_signal_names:
-                self.states_per_signal[s(prop.fullname() + signalname)] = set()
+                self._add_sig(s(prop.fullname() + signalname))
 
-    def rm_prop(self, *, prop: property.PropertyBase) -> None:
+    def rm_prop(self, *, prop: PropertyBase) -> None:
         """
         Remove a property from this context.
         Generates error message, if the property was not added with add_prop() to the context previously
         :param prop: The property to remove.object
         """
-        if prop.fullname() not in self.properties:
+        if prop.fullname() not in self._properties:
             logger.error(f"Attempt to remove unknown property {prop.fullname()}!")
             return
         # remove property from context
-        self.properties.pop(prop.fullname())
-        states_to_remove: Set[state.State] = set()
-        with self.states_lock:
+        self._properties.pop(prop.fullname())
+        states_to_remove: Set[State] = set()
+        with self._lock:
             # remove all of the property's signals
-            for signalname in self.default_property_signal_names:
-                self.states_per_signal.pop(s(prop.fullname() + signalname))
+            for signame in self.default_property_signal_names:
+                self._rm_sig(s(prop.fullname() + signame))
             # remove all states that depend upon property
-            for st in self.states:
+            for st in self._states:
                 if prop.fullname() in st.read_props + st.write_props:
                     states_to_remove.add(st)
         for st in states_to_remove:
             self.rm_state(st=st)
 
-    def get_prop(self, key: str) -> Optional[property.PropertyBase]:
+    def __getitem__(self, key: str) -> Optional[PropertyBase]:
         """
-        Retrieve a property object by that was previously added through add_prop()
+        Retrieve a property object by name, that was previously added through add_prop()
          by it's full name. The full name is always the combination of the property's
          name and it's parent's name, joined with a colon: For example, if the name
          of a property is `foo` and it belongs to the module `bar` it's full name
          will be `bar:foo`.
         An error message will be generated if no property with the given name was
-         added to the context, and None will be returned/
+         added to the context, and None will be returned.
         :param key: The full name of the property.
         :return: The property object, or None, if no property with the given name
          was added to the context.
         """
-        if key not in self.properties:
+        if key not in self._properties:
             logger.error(f"Attempt to retrieve unknown property by key `{key}`!")
             return None
-        return self.properties[key]
+        return self._properties[key]
 
     def conf(self, *, mod: str, key: Optional[str]=None) -> Any:
         """
@@ -223,66 +296,234 @@ class Context(icontext.IContext):
          module name is specified (and valid).
         """
         if key:
-            return self.config.get(mod, key)
-        return self.config.get_conf(mod)
+            return self._config.get(mod, key)
+        return self._config.get_conf(mod)
 
-    def _module_registration_callback(self, mod: module.Module):
-        self.config.add_conf(mod)
+    def lowest_upper_bound_eta(self, signals: Set[Signal]) -> int:
+        """
+        Called by activation when it is pressured to resign. The activation wants
+         to know the earliest ETA of one of it's remaining required constraints.
+        :param signals: The signals, whose ETA will be calculated, and among the
+         results the minimum ETA will be returned.
+        :return: Lowest upper bound number of ticks it should take for at least one of the required
+         signals to arrive. Fixed value (1) for now.
+        """
+        # TODO: Proper implementation w/ state runtime_upper_bound
+        return 1
+
+    def signal_specificity(self, sig: Signal) -> float:
+        """
+        Called by state activation to determine it's constraint's specificity.
+        :param sig: The signal whose specificity should be returned.
+        :return: The given signal's specificity.
+        """
+        # Count activations which are interested in the signal
+        if sig not in self._act_per_state_per_signal_age:
+            return .0
+        num_suitors = sum(
+            len(acts_per_state)
+            for acts_per_state in self._act_per_state_per_signal_age[sig].values())
+        if num_suitors > 0:
+            return 1./num_suitors
+        else:
+            return .0
+
+    def reacquire(self, act: IActivation, sig: Signal):
+        """
+        Called by activation, to indicate, that it needs a new Spike
+         for the specified signal, and should for this purpose be referenced by context.
+        Note: Not thread-safe, sync must be guaranteed by caller.
+        :param act: The activation that needs a new spike of the specified nature.
+        :param sig: Signal type for which a new spike is needed.
+        """
+        assert isinstance(act, Activation)  # No way around it to avoid import loop
+        if sig not in self._act_per_state_per_signal_age:
+            logger.error(f"Attempt to reacquire for unknown signal {sig.name}!")
+            return
+        interested_acts = self._act_per_state_per_signal_age[sig][0][act.state_to_activate]  # sig.min_age
+        interested_acts.add(act)
+
+    def withdraw(self, act: IActivation, sig: Signal):
+        """
+        Called by activation to make sure that it isn't referenced
+         anymore as looking for the specified signal.
+        This might be, because the activation chose to eliminate itself
+         due to activation pressure, or because one of the activations
+         conjunctions was fulfilled, so it is no longer looking for
+         signals to fulfill the remaining conjunctions.
+        Note: Not thread-safe, sync must be guaranteed by caller.
+        :param act: The activation that has lost interest in the specified signal.
+        :param sig: Signal type for which interest is lost.
+        """
+        assert isinstance(act, Activation)  # No way around it to avoid import loop
+        if sig not in self._act_per_state_per_signal_age:
+            logger.error(f"Attempt to withdraw for unknown signal {sig.name}!")
+            return
+        interested_acts = self._act_per_state_per_signal_age[sig][0][act.state_to_activate]  # sig.min_age
+        interested_acts.discard(act)
+
+    def secs_to_ticks(self, seconds: float) -> int:
+        """
+        Convert seconds to an equivalent integer number of ticks,
+         given this context's tick rate.
+        :param seconds: Seconds to convert to ticks.
+        :return: An integer tick count.
+        """
+        return ceil(seconds * float(self._core_config[self.tick_rate_config]))
+
+    def _add_sig(self, sig: Signal):
+        if sig in self._act_per_state_per_signal_age:
+            logger.error(f"Attempt to add signal f{sig.name} twice!")
+            return
+        self._signal_causes[sig] = []
+        self._act_per_state_per_signal_age[sig] = defaultdict(lambda: defaultdict(set))
+
+    def _rm_sig(self, sig: Signal) -> None:
+        affected_states: Set[State] = set()
+        for _, acts_per_state in self._act_per_state_per_signal_age[sig].items():
+            affected_states |= set(acts_per_state.keys())
+        if affected_states:
+            logger.warning(
+                f"Since signal {sig.name} was removed, the following states will have dangling constraints: " +
+                ",".join(st.name for st in affected_states))
+        # Remove signal as a cause for other signals
+        for _, causes in self._signal_causes.items():
+            old_causes = causes.copy()
+            causes.clear()
+            causes += [cause for cause in old_causes if sig not in cause]
+        del self._signal_causes[sig]
+        self._act_per_state_per_signal_age.pop(sig)
+
+    def _module_registration_callback(self, mod: Module):
+        self._config.add_conf(mod)
         for prop in mod.props:
             self.add_prop(prop=prop)
         for st in mod.states:
             self.add_state(st=st)
         logger.info(f"Module {mod.name} added to session.")
 
+    def _new_state_activation(self, st: State) -> None:
+        activation = Activation(st, self)
+        for signal in st.constraint.signals():
+            if signal in self._act_per_state_per_signal_age:
+                # TODO: (Here and below) Determine, whether indexing by min age is actually necessary
+                #  -> may not, because immediate acquisition is necessary -> otherwise, the
+                #   signal's causal group will not know about a possibly higher-
+                #   specificity state that runs a bit later.
+                # self._act_per_state_per_signal_age[signal][signal.min_age][st] |= {activation}
+                self._act_per_state_per_signal_age[signal][0][st] |= {activation}
+            else:
+                logger.error(
+                    f"Adding state activation for f{st.name} which depends on unknown signal `{signal}`!")
+
+    def _del_state_activations(self, st: State) -> None:
+        activations_to_wipe: Set[Activation] = set()
+        for signal in st.constraint.signals():
+            if signal in self._act_per_state_per_signal_age:
+                for act in self._act_per_state_per_signal_age[signal][0][st]:  # signal.min_age
+                    activations_to_wipe.add(act)
+                del self._act_per_state_per_signal_age[signal][0][st]  # signal.min_age
+        for act in activations_to_wipe:
+            act.dereference(spike=None, reacquire=False, reject=True)
+
+    def _state_activations(self, *, st: Optional[State]=None) -> Set[Activation]:
+        return set(
+            act
+            for acts_per_state_per_age in self._act_per_state_per_signal_age.values()
+            for acts_per_state in acts_per_state_per_age.values()
+            for acts in acts_per_state.values()
+            for act in acts
+            if not st or act.state_to_activate == st)
+
+    def _states_for_signal(self, sig: Signal) -> Iterable[State]:
+        if sig not in self._act_per_state_per_signal_age:
+            return set()
+        return self._act_per_state_per_signal_age[sig][0].keys()  # sig.min_age
+
+    def _complete_constraint(self, st: State):
+        new_conjuncts: Set[Conjunct] = set()
+        for conj in st.constraint.conjunctions():
+            known_signals = set()
+            new_conjuncts.update(
+                Conjunct(*conj_signals)
+                for conj_signals in self._complete_conjunction(conj, known_signals))
+            assert len(known_signals) == 0
+        st.constraint = Disjunct(*new_conjuncts)
+
+    def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
+        result = [set(conj.signals())]
+        for conj_sig in conj.signals():
+            completion = self._complete_signal(conj_sig, known_signals)
+            if completion is not None and len(completion) > 0:
+                # the signal is non-cyclic, and has at least one cause (secondary signal).
+                #  permute existing disjunct conjunctions with new conjunction(s)
+                result = [result_conj | completion_conj for result_conj in result for completion_conj in completion]
+        return result
+
+    def _complete_signal(self, sig: Signal, known_signals: Set[Signal]) -> Optional[List[Set[Signal]]]:
+        # detect and handle cyclic causal chain
+        if sig in known_signals:
+            return None
+        assert sig in self._signal_causes
+
+        # a signal without cause (a primary signal) needs no further completion
+        if not self._signal_causes[sig]:
+            return []
+
+        # a signal with at least one secondary cause needs at least one non-cyclic
+        #  cause to be considered a completion itself
+        result = []
+        known_signals.add(sig)
+        for conj in self._signal_causes[sig]:
+            completion = self._complete_conjunction(conj, known_signals)
+            if completion:
+                result += [conj | {sig} for conj in completion]
+        known_signals.discard(sig)
+        return result if len(result) else None
+
     def _run_private(self):
-        while not self.shutdown_flag:
-            # TODO: Recognize and signal Idleness
-            self.signal_queue_counter.acquire()
-            with self.signal_queue_lock:
-                signal = self.signal_queue.pop(0)
 
-            # collect states which depend on the new signal,
-            # and create state activation objects for them if necessary
-            logger.debug(f"Received {signal.name} ...")
-            with self.states_lock:
-                for state in self.states_per_signal[signal]:
-                    if state.name not in self.activation_candidates:
-                        self.activation_candidates[state.name] = activation.StateActivation(state, self)
+        tick_interval = 1. / self._core_config[self.tick_rate_config]
+        while not self._shutdown_flag.wait(tick_interval):
 
-            logger.debug("State activation candidates: \n"+"\n".join(
-                "- "+state_name for state_name in self.activation_candidates))
+            with self._lock:
+                # Some acts may be removed during acquisition, but still need to be updated to run later.
+                all_activations = self._state_activations()
 
-            current_activation_candidates = self.activation_candidates
-            self.activation_candidates = dict()
-            consider_for_immediate_activation = []
+                # Acquire new state activations for every spike
+                for spike, acquisition_allowed in self._spikes:
+                    if not acquisition_allowed:
+                        continue
+                    for state, acts in self._act_per_state_per_signal_age[s(spike.name())][spike.age()].items():
+                        old_acts = acts.copy()
+                        for act in old_acts:
+                            if act.acquire(spike):
+                                # Remove the Activation instance from _act_per_state_per_signal_age
+                                #  for the Spike with a certain minimum age. In place of the removed
+                                #  activation, if no activation with the same target state is left,
+                                #  a new Activation will be created.
+                                acts.remove(act)
+                                if len(acts) == 0:
+                                    self._new_state_activation(state)
+                            else:
+                                logger.error(
+                                    "An activation rejected a spike it was registered to be interested in.")
 
-            # go through candidates and remove those which want to be removed,
-            # remember those which want to be remembered, forget those which want to be forgotten
-            for state_name, act in current_activation_candidates.items():
-                notify_return = act.notify_signal(signal)
-                logger.debug(f"-> {act.state_to_activate.name} returned {notify_return} on notify_signal {signal.name}")
-                if notify_return == 0:
-                    self.activation_candidates[state_name] = act
-                elif notify_return > 0:
-                    consider_for_immediate_activation.append(act)
-                # ignore act_state -1: Means that state activation is considering itself canceled
+                # Update all state activations.
+                all_activations |= self._state_activations()
+                for act in all_activations:
+                    act.update()
 
-            # sort the state activations by their specificity
-            consider_for_immediate_activation.sort(key=lambda act: act.specificity(), reverse=True)
+                # Forget fully unreferenced spikes
+                old_spike_set = self._spikes.copy()
+                for spike in old_spike_set:
+                    with spike.causal_group() as cg:
+                        if cg.stale(spike):
+                            # This should lead to the deletion of the spike
+                            self._spikes.pop(spike)
+                            spike.wipe(already_wiped_in_causal_group=True)
+                            logger.debug(f"{cg}.stale({spike.name()}) -> 1")
 
-            # let the state with the highest specificity claim write props first, then lower ones.
-            # a state will only be activated if all of it's write-props are available.
-            # TODO: Recognize same-specificity states and actively decide between them.
-            claimed_write_props = set()
-            for act in consider_for_immediate_activation:
-                all_write_props_free = True
-                for write_prop in act.state_to_activate.write_props:
-                    if write_prop in claimed_write_props:
-                        all_write_props_free = False
-                        break
-                if all_write_props_free:
-                    logger.debug(f"-> Activating {act.state_to_activate.name}")
-                    thread = act.run()
-                    thread.start()
-                else:
-                    logger.debug(f"-> Dropping activation of {act.state_to_activate.name}.")
+                # Increment age on active spikes
+                for spike in self._spikes:
+                    spike.tick()

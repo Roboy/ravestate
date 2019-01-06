@@ -13,7 +13,7 @@ def console_shutdown(ctx):
         ctx.shutdown()
 
 
-@state(triggers=s(":startup"))
+@state(cond=s(":startup"))
 def console_input(ctx):
 
     @receptor(ctx_wrap=ctx, write="rawio:in")

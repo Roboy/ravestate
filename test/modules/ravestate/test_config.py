@@ -1,10 +1,8 @@
-import pytest
-from testfixtures import LogCapture
+from ravestate.testfixtures import *
 from os.path import join, dirname, realpath
 
 from ravestate.config import Configuration
 from ravestate.module import Module
-from reggol import strip_prefix
 
 
 @pytest.fixture

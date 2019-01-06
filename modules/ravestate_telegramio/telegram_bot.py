@@ -15,7 +15,7 @@ TOKEN_CONFIG_KEY: str = "telegram-token"
 active_chats: Set[int] = set()
 
 
-@state(triggers=s(":startup"))
+@state(cond=s(":startup"))
 def telegram_run(ctx: ContextWrapper):
     """
     Starts up the telegram bot and adds a handler to write incoming messages to rawio:in
