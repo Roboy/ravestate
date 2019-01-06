@@ -100,8 +100,8 @@ class Activation(IActivation):
         signals_to_reacquire = self.constraint.update(self)
 
         # Reacquire for rejected spikes
-        for sig in signals_to_reacquire:
-            self.ctx.reacquire(self, sig)
+        for spike in signals_to_reacquire:
+            self.ctx.reacquire(self, spike)
 
         # Iterate over fulfilled conjunctions and look to activate with one of them
         for conjunction in self.constraint.conjunctions():
@@ -109,11 +109,11 @@ class Activation(IActivation):
                 continue
 
             # Ask each spike's causal group for activation consent
-            spikes = set(sig.spike for sig in conjunction.signals())
+            spikes = set((sig.spike, sig.detached) for sig in conjunction.signals())
             consenting_causal_groups = set()
             all_consented = True
-            for sig in spikes:
-                cg: CausalGroup = sig.causal_group()
+            for spike, _ in spikes:
+                cg: CausalGroup = spike.causal_group()
                 if cg not in consenting_causal_groups:
                     with cg:
                         if cg.pressure_activation(self):
@@ -130,9 +130,9 @@ class Activation(IActivation):
                     cg.activated(self)
 
             # Remove self from all causal groups
-            for sig in spikes:
-                with sig.causal_group() as cg:
-                    cg.rejected(sig, self)
+            for spike, _ in spikes:
+                with spike.causal_group() as cg:
+                    cg.rejected(spike, self)
 
             # Make sure that constraint doesn't hold any unneeded references to spike
             for _ in self.constraint.dereference():
@@ -144,7 +144,7 @@ class Activation(IActivation):
                 self.ctx.withdraw(self, sig)
 
             # Remember spikes/causal-groups for use in activation
-            self.spikes = spikes
+            self.spikes = {spike for spike, detached in spikes if not detached}
             self.consenting_causal_groups = consenting_causal_groups
 
             # Run activation
@@ -160,7 +160,7 @@ class Activation(IActivation):
 
     def _run_private(self):
         # TODO: Pass spikes to ContextWrapper, so that they are parents for :changed spikes
-        context_wrapper = ContextWrapper(self.ctx, self.state_to_activate)
+        context_wrapper = ContextWrapper(ctx=self.ctx, st=self.state_to_activate, spike_parents=self.spikes)
 
         # Run state function
         result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
@@ -173,13 +173,15 @@ class Activation(IActivation):
                     parents=self.spikes)
             else:
                 logger.error(f"Attempt to emit from state {self.name}, which does not specify a signal name!")
+
         elif isinstance(result, Delete):
             self.ctx.rm_state(st=self.state_to_activate)
+
         elif isinstance(result, Resign):
             for cg in self.consenting_causal_groups:
                 with cg:
                     cg.resigned(self)
-            self.ctx.rm_state(st=self.state_to_activate)
+            return
 
         # Let participating causal groups know about consumed properties
         if self.state_to_activate.write_props:
