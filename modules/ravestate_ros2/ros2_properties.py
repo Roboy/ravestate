@@ -24,7 +24,7 @@ SPIN_FREQUENCY_CONFIG_KEY = "ros2-spin-frequency"
 global_prop_set = set()
 
 
-@state(triggers=s(":startup"))
+@state(cond=s(":startup"))
 def sync_ros_properties(ctx: ContextWrapper):
     """
     State that creates a ROS2-Node, registers all Ros2SubProperties and Ros2PubProperties in ROS2 and keeps them synced
@@ -106,13 +106,13 @@ def sync_ros_properties(ctx: ContextWrapper):
 
 
 class Ros2SubProperty(PropertyBase):
-    def __init__(self, name: str, topic: str, msg_type, default=None, always_signal_changed: bool = True):
+    def __init__(self, name: str, topic: str, msg_type, default_value=None, always_signal_changed: bool = True):
         """
         Initialize Property
         :param name: Name of the property
         :param topic: ROS2-Topic that should be subscribed
         :param msg_type: ROS2-Message type of messages in the topic
-        :param default: Default value of the property
+        :param default_value: Default value of the property
         :param always_signal_changed: if signal:changed should be emitted if value is written again without changing
         """
         super().__init__(
@@ -121,7 +121,7 @@ class Ros2SubProperty(PropertyBase):
             allow_write=True,
             allow_push=False,
             allow_pop=False,
-            default=default,
+            default_value=default_value,
             always_signal_changed=always_signal_changed)
         self.topic = topic
         self.msg_type = msg_type
@@ -158,7 +158,7 @@ class Ros2PubProperty(PropertyBase):
             allow_write=True,
             allow_push=False,
             allow_pop=False,
-            default=None,
+            default_value=None,
             always_signal_changed=False)
         self.topic = topic
         self.msg_type = msg_type
@@ -199,7 +199,7 @@ class Ros2CallProperty(PropertyBase):
             allow_write=True,
             allow_push=False,
             allow_pop=False,
-            default=None,
+            default_value=None,
             always_signal_changed=False)
         self.service_name = service_name
         self.service_type = service_type
