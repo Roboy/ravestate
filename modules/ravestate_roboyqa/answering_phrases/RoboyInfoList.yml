@@ -178,3 +178,18 @@ A:
   - "I hope people will not like me less than my brother, %s."
   - "Now, I am participating in the events instead of my brother, %s."
   - "My brother, %s, wants to leave his career and be a stay-at-home robot, I am substituting him."
+  ---
+type: qa
+name: "well_being"
+A:
+  SUCCESS:
+  - "Much better now that you are with me."
+  - "Like you, but better."
+  - "Better than most. Worse than some and annoyed by them all."
+  - "My lawyer says I don’t have to answer that question."
+  - "Dancing to the rhythm of life."
+  - "Nice and dandy like cotton candy."
+  - "Living a dream. Please don't wake me up."
+  - "If I had a tail, I would wag it."
+  - "I dunno. Is it Friday yet?"
+  - "I worry a bit about the future of our planet. But otherwise I feel fine."
