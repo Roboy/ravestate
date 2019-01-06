@@ -49,20 +49,22 @@ def roboyqa(ctx):
 
     if question_object.text == QuestionWord._object:
         if question_predicate.lemma_ == "like" or question_predicate_subplement.lemma_ == "like" \
-            or question_subject.text == "hobbies":
+            or question_subject.text == "hobbies" or question_subject.text == "hobby":
             category = "HAS_HOBBY"   
         elif question_predicate.lemma_ == "learn" or question_predicate_subplement.lemma_ == "learn" \
-            or question_object.text == "skills":
-            #category = "skills"
-            pass
+            question_subject.text == "skills" or question_subject.text == "skill":
+            category = "skills"
+        elif question_predicate.lemma_ == "can" or question_predicate_subplement.lemma_ == "can" \
+            question_subject.text == "abilities" or question_subject.text == "ability":
+            category = "abilities"
         elif question_subject.text == "age":
             category = "age"
             memory_info = roboy_age(roboy.get_properties(key="birthdate"))
         elif question_subject.text == "name":
             category = "full_name"
             memory_info = roboy.get_properties(key=category)
-        #elif question_predicate.lemma_ == "become" or question_predicate_subplement.lemma_ == "become":  
-            #TODO add futur plans for roboy   
+        elif question_predicate.lemma_ == "become" or question_predicate_subplement.lemma_ == "become":  
+            category = "future"   
     elif question_object.text == QuestionWord._place:
         if question_predicate.lemma_ == "be":
             category = "FROM"
@@ -87,6 +89,8 @@ def roboyqa(ctx):
             memory_info = roboy_age(roboy.get_properties(key="birthdate"))
         elif question_predicate.lemma_ == "be":
             category = "well_being"
+    elif question_object.text == "skills" or question_object.text == "abilities":
+        category = question_object.text
 
     if category and category.isupper() and not isinstance(roboy.get_relationships(key=category), dict):
         node_id  = random.sample(roboy.get_relationships(key=category),1)[0]
@@ -96,6 +100,9 @@ def roboyqa(ctx):
             #TODO figure our why this happens; 
             # question: what are you a member of -> finds node 20! but causes error 
             logger.error("Could not get name of node")
+    elif category and category.islower() and not isinstance(roboy.get_properties(key=category), dict):
+        property_list = [x.strip() for x in roboy.get_properties(key=category).split(',')]
+        memory_info = random.sample(property_list,1)[0]
 
     if memory_info:
         ctx["rawio:out"] =  verbaliser.get_random_successful_answer(category) % memory_info
