@@ -1,0 +1,89 @@
+---
+!OType
+entity: Person
+properties: [name, sex, full_name, birthdate, timestamp]
+relationships: [EQUALS, FROM, HAS_HOBBY, LIVE_IN, STUDY_AT, OCCUPIED_AS, WORK_FOR, FRIEND_OF, MEMBER_OF, CHILD_OF, SIBLING_OF]
+
+---
+!OType
+entity: TelegramPerson
+properties: [name, sex, full_name, birthdate, telegram_id, timestamp]
+relationships: [EQUALS, FROM, HAS_HOBBY, LIVE_IN, STUDY_AT, OCCUPIED_AS, WORK_FOR, FRIEND_OF, MEMBER_OF, CHILD_OF, SIBLING_OF]
+
+---
+!OType
+entity: Robot
+properties: [name, sex, full_name, birthdate, telegram_id, timestamp]
+relationships: [EQUALS, FROM, LIVE_IN, WORK_FOR, FRIEND_OF, SIBLING_OF]
+
+---
+!OType
+entity: Roboy
+properties: [name, sex, full_name, birthdate, facebook_id, telegram_id, slack_id, whatsapp_id, line_id, timestamp]
+relationships: [EQUALS, FROM, HAS_HOBBY, LIVE_IN, FRIEND_OF, MEMBER_OF, CHILD_OF, SIBLING_OF, KNOW]
+
+---
+!OType
+entity: Organisation
+properties: [name, birthdate, timestamp]
+relationships: [EQUALS, FROM, SUBSIDIARY_OF, WORK_FOR, STUDY_AT]
+
+---
+!OType
+entity: Company
+properties: [name, birthdate, timestamp]
+relationships: [EQUALS, FROM, WORK_FOR]
+meta: [Organisation]
+
+---
+!OType
+entity: University
+properties: [name, birthdate, timestamp]
+relationships: [EQUALS, FROM, STUDY_AT]
+meta: [Organisation]
+
+---
+!OType
+entity: Location
+properties: [name, size, timestamp]
+relationships: [EQUALS, FROM, IN, LIVE_IN, BORN_IN]
+
+---
+!OType
+entity: City
+properties: [name, size, timestamp]
+relationships: [EQUALS, IN, LIVE_IN, BORN_IN]
+meta: [Location]
+
+---
+!OType
+entity: Country
+properties: [name, size, timestamp]
+relationships: [EQUALS, IN, LIVE_IN, BORN_IN]
+meta: [Location]
+
+---
+!OType
+entity: Occupation
+properties: [name, timestamp]
+relationships: [EQUALS]
+
+---
+!OType
+entity: Hobby
+properties: [name, timestamp]
+relationships: [EQUALS, IN]
+meta: [Occupation]
+
+---
+!OType
+entity: Job
+properties: [name, timestamp]
+relationships: [EQUALS, IN]
+meta: [Occupation]
+
+---
+!OType
+entity: Object
+properties: [name, timestamp]
+relationships: [EQUALS, IN, PART_OF, KNOW, HEAR, SEE, TOUCH, GRASP, PLAY, TURN_ON]
