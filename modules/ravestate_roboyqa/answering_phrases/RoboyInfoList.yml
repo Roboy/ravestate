@@ -178,7 +178,7 @@ A:
   - "I hope people will not like me less than my brother, %s."
   - "Now, I am participating in the events instead of my brother, %s."
   - "My brother, %s, wants to leave his career and be a stay-at-home robot, I am substituting him."
-  ---
+---
 type: qa
 name: "well_being"
 A:
