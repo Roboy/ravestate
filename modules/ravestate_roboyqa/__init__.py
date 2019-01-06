@@ -15,6 +15,9 @@ from os.path import realpath, dirname, join
 import random
 import datetime
 
+from reggol import get_logger
+logger = get_logger(__name__)
+
 verbaliser.add_folder(join(dirname(realpath(__file__)), "answering_phrases"))
 
 #roboy 2.0 ID in the neo4j memomry graph
