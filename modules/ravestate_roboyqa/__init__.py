@@ -52,10 +52,10 @@ def roboyqa(ctx):
             or question_subject.text == "hobbies" or question_subject.text == "hobby":
             category = "HAS_HOBBY"   
         elif question_predicate.lemma_ == "learn" or question_predicate_subplement.lemma_ == "learn" \
-            question_subject.text == "skills" or question_subject.text == "skill":
+            or question_subject.text == "skills" or question_subject.text == "skill":
             category = "skills"
         elif question_predicate.lemma_ == "can" or question_predicate_subplement.lemma_ == "can" \
-            question_subject.text == "abilities" or question_subject.text == "ability":
+            or question_subject.text == "abilities" or question_subject.text == "ability":
             category = "abilities"
         elif question_subject.text == "age":
             category = "age"

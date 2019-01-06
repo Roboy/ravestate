@@ -16,13 +16,13 @@ logger = get_logger(__name__)
 SUBJECT_SET = {'nsubj'}
 OBJECT_SET = {'dobj', 'attr', 'advmod'}
 PREDICATE_SET = {'ROOT', 'conj'}
-PREDICATE_SUB_SET = {'acomp', 'aux'}
-
+PREDICATE_SUB_SET = {'acomp', 'aux', 'xcomp'}
+VERB = 'VERB'
 
 def init_model():
     global nlp
     nlp = spacy.load('en_core_web_sm')
-    roboy_names = ('you', 'roboy', 'robot', 'roboboy')
+    roboy_names = ('you', 'roboy', 'robot', 'roboboy', 'your')
     roboy_getter = lambda doc: any(roboy in doc.text.lower() for roboy in roboy_names)
     from spacy.tokens import Doc
     Doc.set_extension('about_roboy', getter=roboy_getter)
@@ -53,13 +53,13 @@ def triple_search(triple: Triple, token: Token):
         if word.text.lower() in QuestionWord.question_words:
             question_word = QuestionWord(word)
             word = QuestionWord(word)
-            if not triple.get_object():
+            if not triple.get_object() or triple.get_object().text == " ":
                 triple.set_object(question_word)
         elif word.dep_ in OBJECT_SET:
             triple.set_object(word)
         if word.dep_ in SUBJECT_SET:
             triple.set_subject(word)
-        if word.dep_ in PREDICATE_SUB_SET:
+        if word.dep_ in PREDICATE_SUB_SET and word.pos_ == VERB :
             triple.set_predicate_subplement(word)
         if isinstance(word, Token):
             triple = triple_search(triple, word)
