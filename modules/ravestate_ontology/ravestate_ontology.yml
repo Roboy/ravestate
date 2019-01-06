@@ -14,7 +14,7 @@ relationships: [EQUALS, FROM, HAS_HOBBY, LIVE_IN, STUDY_AT, OCCUPIED_AS, WORK_FO
 !OType
 entity: Robot
 properties: [name, sex, full_name, birthdate, telegram_id, timestamp]
-relationships: [EQUALS, FROM, LIVE_IN, WORK_FOR, FRIEND_OF, SIBLING_OF]
+relationships: [EQUALS, FROM, LIVE_IN, WORK_FOR, FRIEND_OF, SIBLING_OF, CHILD_OF, MEMBER_OF]
 
 ---
 !OType

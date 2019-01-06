@@ -77,6 +77,7 @@ def triple_search(triple: Triple, token: Token):
         triple.set_predicate_subplement(empty_token)
     if not triple.get_object():
         triple.set_object(empty_token)  
+        
     return triple
 
 

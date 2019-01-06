@@ -20,6 +20,7 @@ logger = get_logger(__name__)
 
 verbaliser.add_folder(join(dirname(realpath(__file__)), "answering_phrases"))
 
+#roboy 2.0 ID in the neo4j memomry graph
 ROBOY_NODE_ID = 356
 
 @state(triggers=s(":startup"), write="rawio:out")
@@ -37,56 +38,58 @@ def roboyqa(ctx):
 
     category = None
     memory_info = None
-    #MEMBER_OF
-    # get roboy relationship info
-    if question_object.text == QuestionWord._place:
-        if question_predicate.text == "be":
+
+    if question_object.text == QuestionWord._object:
+        if question_predicate.lemma_ == "like" or question_predicate_subplement.lemma_ == "like" or question_subject.text == "hobbies":
+            category = "HAS_HOBBY"   
+        elif question_predicate.lemma_ == "learn" or question_predicate_subplement.lemma_ == "learn" or question_object.text == "skills":
+            #category = "skills"
+            pass
+        elif question_subject.text == "age":
+            category = "age"
+            memory_info = roboy_age(roboy.get_properties(key="birthdate"))
+        elif question_subject.text == "name":
+            category = "full_name"
+            memory_info = roboy.get_properties(key=category)
+        #elif question_predicate.lemma_ == "become" or question_predicate_subplement.lemma_ == "become":  
+            #TODO add futur plans for roboy   
+    elif question_object.text == QuestionWord._place:
+        if question_predicate.lemma_ == "be":
             category = "FROM"
-        elif question_predicate.text == "live":
+        elif question_predicate.lemma_ == "live":
             category = "LIVE_IN"
-    elif question_object.text == QuestionWord._object:
-        if question_predicate.text == "like" or question_predicate_subplement.text == "like" or question_subject.text == "hobbies":
-            category = "HAS_HOBBY"      
     elif question_subject.text == QuestionWord._person:
         if question_object.text == "father" or question_object.text == "dad":
             category = "CHILD_OF"
         elif question_object.text == "brother" or question_object.text == "sibling":
             category = "SIBLING_OF"
-        elif question_object.text == "friend":
+        elif question_object.text == "friend" or question_object.text == "girlfriend":
             category = "FRIEND_OF"
     elif question_object.text == "part" or question_object.text == "member":
         category = "MEMBER_OF"
-
-    logger.info(roboy.get_relationships(key=category))
-    #TODO not all relationships are found even though they are in the memory graph... weird shit is happening
-    #relationships missing: CHILD_OF, MEMBER_Of
-    if not isinstance(roboy.get_relationships(key=category), dict):
-        node_id  = random.sample(roboy.get_relationships(key=category),1)[0]
-        memory_info = sess.retrieve(node_id=int(node_id))[0].get_name()
-
-    #get roboy info
-    if question_object.text == QuestionWord._person or question_subject.text == "name":
+    elif question_object.text == QuestionWord._person:
         category = "full_name"
         memory_info = roboy.get_properties(key=category)
     elif question_object.text == QuestionWord._form:
-        if question_predicate.text == "old" or question_predicate_subplement.text == "old":
+        logger.info(question_predicate.text)
+        if question_predicate.lemma_ == "old" or question_predicate_subplement.lemma_ == "old":
             category = "age"
             memory_info = roboy_age(roboy.get_properties(key="birthdate"))
-        elif question_predicate.text == "be": #question: How are you
-            #TODO get add a list of possible answers
-            pass
-    elif question_object.text == QuestionWord._object:
-        if question_predicate.text == "learn" or question_predicate_subplement.text == "learn" or question_object.text == "skills":
-            #category = "skills"
-            pass
-        elif question_subject.text == "age":
-            category = "age"
-            memory_info = roboy_age(roboy.get_properties(key="birthdate"))  
-        #elif question_predicate.text == "become" or question_predicate_subplement.text == "become":  
-            #TODO add futur plans for roboy
+        elif question_predicate.lemma_ == "be":
+            category = "well_being"
+
+    if category and category.isupper() and not isinstance(roboy.get_relationships(key=category), dict):
+        node_id  = random.sample(roboy.get_relationships(key=category),1)[0]
+        try: 
+            memory_info = sess.retrieve(node_id=int(node_id))[0].get_name()
+        except AttributeError:
+            #TODO figure our why this happens; question: what are you a member of -> finds node 20! but causes error 
+            logger.error("Could not get name of node")
 
     if memory_info:
         ctx["rawio:out"] =  verbaliser.get_random_successful_answer(category) % memory_info
+    elif category == "well_being":
+        ctx["rawio:out"] =  verbaliser.get_random_successful_answer(category)
     else:
         ctx["rawio:out"] =  "Sorry I do not know."
 
