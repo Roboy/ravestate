@@ -9,7 +9,7 @@ from ravestate.constraint import Constraint, s
 from ravestate.iactivation import IActivation, ISpike
 from ravestate.spike import Spike
 from ravestate.causal import CausalGroup
-from ravestate.state import State, Emit, Delete
+from ravestate.state import State, Emit, Delete, Resign
 from ravestate.wrappers import ContextWrapper
 
 from reggol import get_logger
@@ -174,6 +174,11 @@ class Activation(IActivation):
             else:
                 logger.error(f"Attempt to emit from state {self.name}, which does not specify a signal name!")
         elif isinstance(result, Delete):
+            self.ctx.rm_state(st=self.state_to_activate)
+        elif isinstance(result, Resign):
+            for cg in self.consenting_causal_groups:
+                with cg:
+                    cg.resigned(self)
             self.ctx.rm_state(st=self.state_to_activate)
 
         # Let participating causal groups know about consumed properties

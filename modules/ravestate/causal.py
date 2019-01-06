@@ -224,6 +224,16 @@ class CausalGroup:
         # Mark the consented w-props as unavailable
         self._unwritten_props -= act.write_props()
 
+    def resigned(self, act: IActivation) -> None:
+        """
+        Called by activation, to let the causal group know that it failed,
+         and a less specific activation may now be considered for
+         the resigned state's write props.
+        :param unconsumed_props: The props that are available for writing again.
+        """
+        # Mark the act's w-props as available again
+        self._unwritten_props |= act.write_props()
+
     def consumed(self, consumed_props: Set[str]) -> None:
         """
         Called by activation to notify the group, that it has been

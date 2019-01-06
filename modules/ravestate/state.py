@@ -29,6 +29,15 @@ class Emit(StateActivationResult):
     pass
 
 
+class Resign(StateActivationResult):
+    """
+    Return an instance of this class, if the state invocation should be regarded unsuccessful.
+     This means, that the state's signal will not be emitted, and the spikes
+     that were allocated for it's activation may be re-used by another state.
+    """
+    pass
+
+
 class State:
 
     _signal: Signal
