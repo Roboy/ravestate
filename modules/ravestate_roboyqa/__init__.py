@@ -15,9 +15,6 @@ from os.path import realpath, dirname, join
 import random
 import datetime
 
-from reggol import get_logger
-logger = get_logger(__name__)
-
 verbaliser.add_folder(join(dirname(realpath(__file__)), "answering_phrases"))
 
 #roboy 2.0 ID in the neo4j memomry graph
@@ -27,8 +24,16 @@ ROBOY_NODE_ID = 356
 def hello_world_roboyqa(ctx):
     ctx["rawio:out"] = "Ask me something about myself!"
 
+#TODO get triggerd by "nlp:roboy"
 @state(triggers=s("nlp:triples:changed"), read="nlp:triples", write="rawio:out")
 def roboyqa(ctx):
+    """
+    answers question regarding roboy by retrieving the information out of the neo4j roboy memory graph
+    state gets triggerd when nlp extracts a new triple: subject, predicate, object
+    by analysing the triple the content of the question can be ascertained 
+    the necessary information is gathered using the neo4j memory session
+    if the triple combination is known and the information could be retrieved an answer will be given
+    """
     sess = ravestate_ontology.get_session()
     roboy = sess.retrieve(node_id=ROBOY_NODE_ID)[0]
     question_subject = ctx["nlp:triples"][0].get_subject()
@@ -40,9 +45,11 @@ def roboyqa(ctx):
     memory_info = None
 
     if question_object.text == QuestionWord._object:
-        if question_predicate.lemma_ == "like" or question_predicate_subplement.lemma_ == "like" or question_subject.text == "hobbies":
+        if question_predicate.lemma_ == "like" or question_predicate_subplement.lemma_ == "like" \
+            or question_subject.text == "hobbies":
             category = "HAS_HOBBY"   
-        elif question_predicate.lemma_ == "learn" or question_predicate_subplement.lemma_ == "learn" or question_object.text == "skills":
+        elif question_predicate.lemma_ == "learn" or question_predicate_subplement.lemma_ == "learn" \
+            or question_object.text == "skills":
             #category = "skills"
             pass
         elif question_subject.text == "age":
@@ -83,7 +90,8 @@ def roboyqa(ctx):
         try: 
             memory_info = sess.retrieve(node_id=int(node_id))[0].get_name()
         except AttributeError:
-            #TODO figure our why this happens; question: what are you a member of -> finds node 20! but causes error 
+            #TODO figure our why this happens; 
+            # question: what are you a member of -> finds node 20! but causes error 
             logger.error("Could not get name of node")
 
     if memory_info:
@@ -94,10 +102,15 @@ def roboyqa(ctx):
         ctx["rawio:out"] =  "Sorry I do not know."
 
 def roboy_age(birthdate : str):
+    """
+    calculates roboys age given his birthdate
+    example: birthdate = "12.04.18"
+    """
     birthdate = datetime.datetime.strptime(birthdate, "%d.%m.%Y")
     today = datetime.datetime.now()
     if today.year > birthdate.year and today.month > birthdate.month:
-        age = "%d years" % (today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day)))
+        age = "%d years" % (today.year - birthdate.year - \
+                            ((today.month, today.day) < (birthdate.month, birthdate.day)))
     age = "%d months" % (12-birthdate.month+today.month)
     return age
 
