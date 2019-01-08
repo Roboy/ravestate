@@ -43,8 +43,8 @@ def test_attr_triples(spacy_model, text_input, expected_triples):
 
 
 @pytest.mark.parametrize('text_input, expected_triples',
-                         [('Who are you', [('you', 'be', QuestionWord._person)]),
-                          ('Where am I', [('I', 'be', QuestionWord._place)])]
+                         [('Who are you', [('you', 'be', QuestionWord.PERSON)]),
+                          ('Where am I', [('I', 'be', QuestionWord.PLACE)])]
                          )
 def test_questions(spacy_model, text_input, expected_triples):
     basic_test(expected_triples, spacy_model, text_input)

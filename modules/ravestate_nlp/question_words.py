@@ -2,23 +2,23 @@ from spacy.tokens import Token
 
 
 class QuestionWord:
-    _form = 'FORM'
-    _choice = 'CHOICE'
-    _object = 'OBJECT'
-    _reason = 'REASON'
-    _time = 'TIME'
-    _person = 'PERSON'
-    _place = 'PLACE'
+    FORM = 'FORM'
+    CHOICE = 'CHOICE'
+    OBJECT = 'OBJECT'
+    REASON = 'REASON'
+    TIME = 'TIME'
+    PERSON = 'PERSON'
+    PLACE = 'PLACE'
 
     question_pos = 'QUESTION'
     question_words = {
-        'where': _place,
-        'who': _person,
-        'when': _time,
-        'why': _reason,
-        'what': _object,
-        'which': _choice,
-        'how': _form
+        'where': PLACE,
+        'who': PERSON,
+        'when': TIME,
+        'why': REASON,
+        'what': OBJECT,
+        'which': CHOICE,
+        'how': FORM
     }
 
     def __init__(self, token: Token):

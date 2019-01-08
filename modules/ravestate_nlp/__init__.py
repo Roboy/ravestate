@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 SUBJECT_SET = {'nsubj'}
 OBJECT_SET = {'dobj', 'attr', 'advmod'}
 PREDICATE_SET = {'ROOT', 'conj'}
-PREDICATE_SUB_SET = {'acomp', 'aux', 'xcomp'}
+PREDICATE_AUX_SET = {'acomp', 'aux', 'xcomp'}
 VERB = 'VERB'
 
 def init_model():
@@ -59,8 +59,8 @@ def triple_search(triple: Triple, token: Token):
             triple.set_object(word)
         if word.dep_ in SUBJECT_SET:
             triple.set_subject(word)
-        if word.dep_ in PREDICATE_SUB_SET and word.pos_ == VERB :
-            triple.set_predicate_subplement(word)
+        if word.dep_ in PREDICATE_AUX_SET and word.pos_ == VERB:
+            triple.set_predicate_aux(word)
         if isinstance(word, Token):
             triple = triple_search(triple, word)
     if not triple.get_subject() and question_word: 
@@ -73,8 +73,8 @@ def triple_search(triple: Triple, token: Token):
        triple.set_subject(empty_token)
     if not triple.get_predicate():
         triple.set_predicate(empty_token) 
-    if not triple.get_predicate_subplement():
-        triple.set_predicate_subplement(empty_token)
+    if not triple.get_predicate_aux():
+        triple.set_predicate_aux(empty_token)
     if not triple.get_object():
         triple.set_object(empty_token)  
         

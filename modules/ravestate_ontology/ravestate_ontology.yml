@@ -24,7 +24,7 @@ relationships: [EQUALS, FROM, HAS_HOBBY, LIVE_IN, FRIEND_OF, MEMBER_OF, CHILD_OF
 
 ---
 !OType
-entity: Organisation
+entity: Organization
 properties: [name, birthdate, timestamp]
 relationships: [EQUALS, FROM, SUBSIDIARY_OF, WORK_FOR, STUDY_AT]
 

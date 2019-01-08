@@ -20,14 +20,16 @@ logger = get_logger(__name__)
 
 verbaliser.add_folder(join(dirname(realpath(__file__)), "answering_phrases"))
 
-#roboy 2.0 ID in the neo4j memomry graph
+# roboy 2.0 ID in the neo4j memomry graph
 ROBOY_NODE_ID = 356
+
 
 @state(triggers=s(":startup"), write="rawio:out")
 def hello_world_roboyqa(ctx):
     ctx["rawio:out"] = "Ask me something about myself!"
 
-#TODO get triggerd by "nlp:roboy"
+
+# TODO get triggerd by "nlp:roboy"
 @state(triggers=s("nlp:triples:changed"), read="nlp:triples", write="rawio:out")
 def roboyqa(ctx):
     """
@@ -39,83 +41,75 @@ def roboyqa(ctx):
     """
     sess = ravestate_ontology.get_session()
     roboy = sess.retrieve(node_id=ROBOY_NODE_ID)[0]
-    question_subject = ctx["nlp:triples"][0].get_subject()
-    question_predicate = ctx["nlp:triples"][0].get_predicate()
-    question_predicate_subplement = ctx["nlp:triples"][0].get_predicate_subplement()
-    question_object = ctx["nlp:triples"][0].get_object()
+    triple = ctx["nlp:triples"][0]
 
     category = None
     memory_info = None
 
-    if question_object.text == QuestionWord._object:
-        if question_predicate.lemma_ == "like" or question_predicate_subplement.lemma_ == "like" \
-            or question_subject.text == "hobbies" or question_subject.text == "hobby":
-            category = "HAS_HOBBY"   
-        elif question_predicate.lemma_ == "learn" or question_predicate_subplement.lemma_ == "learn" \
-            or question_subject.text == "skills" or question_subject.text == "skill":
+    if triple.is_question(QuestionWord.OBJECT):
+        if triple.match_either_lemma(pred={"like"}, subj={"hobby"}):
+            category = "HAS_HOBBY"
+        elif triple.match_either_lemma(pred={"learn"}, subj={"skill"}):
             category = "skills"
-        elif question_predicate.lemma_ == "can" or question_predicate_subplement.lemma_ == "can" \
-            or question_subject.text == "abilities" or question_subject.text == "ability":
+        elif triple.match_either_lemma(pred={"can"}, subj={"ability"}):
             category = "abilities"
-        elif question_subject.text == "age":
+        elif triple.match_either_lemma(subj={"age"}):
             category = "age"
             memory_info = roboy_age(roboy.get_properties(key="birthdate"))
-        elif question_subject.text == "name":
+        elif triple.match_either_lemma(subj={"name"}):
             category = "full_name"
             memory_info = roboy.get_properties(key=category)
-        elif question_predicate.lemma_ == "become" or question_predicate_subplement.lemma_ == "become":  
+        elif triple.match_either_lemma(pred={"become"}):
             category = "future"   
-    elif question_object.text == QuestionWord._place:
-        if question_predicate.lemma_ == "be":
+    elif triple.is_question(QuestionWord.PLACE):
+        if triple.match_either_lemma(pred={"be"}):
             category = "FROM"
-        elif question_predicate.lemma_ == "live":
+        elif triple.match_either_lemma(pred={"live"}):
             category = "LIVE_IN"
-    elif question_subject.text == QuestionWord._person:
-        if question_object.text == "father" or question_object.text == "dad":
+    elif triple.is_question(QuestionWord.PERSON):
+        if triple.match_either_lemma(obj={"father", "dad"}):
             category = "CHILD_OF"
-        elif question_object.text == "brother" or question_object.text == "sibling":
+        elif triple.match_either_lemma(obj={"brother", "sibling"}):
             category = "SIBLING_OF"
-        elif question_object.text == "friend" or question_object.text == "girlfriend":
+        elif triple.match_either_lemma(obj={"friend", "girlfriend"}):
             category = "FRIEND_OF"
-    elif question_object.text == "part" or question_object.text == "member":
+        else:
+            category = "full_name"
+            memory_info = roboy.get_properties(key=category)
+    elif triple.match_either_lemma(obj={"part", "member"}):
         category = "MEMBER_OF"
-    elif question_object.text == QuestionWord._person:
-        category = "full_name"
-        memory_info = roboy.get_properties(key=category)
-    elif question_object.text == QuestionWord._form:
-        logger.info(question_predicate.text)
-        if question_predicate.lemma_ == "old" or question_predicate_subplement.lemma_ == "old":
+    elif triple.is_question(QuestionWord.FORM):
+        if triple.match_either_lemma(pred={"old"}):
             category = "age"
             memory_info = roboy_age(roboy.get_properties(key="birthdate"))
-        elif question_predicate.lemma_ == "be":
+        elif triple.match_either_lemma(pred={"be"}):
             category = "well_being"
-    elif question_object.text == "skills" or question_object.text == "abilities":
-        category = question_object.text
+    elif triple.match_either_lemma(obj={"skill"}):
+        category = "skills"
+    elif triple.match_either_lemma(obj={"ability"}):
+        category = "abilities"
 
     if category and category.isupper() and not isinstance(roboy.get_relationships(key=category), dict):
-        node_id  = random.sample(roboy.get_relationships(key=category),1)[0]
-        try: 
-            memory_info = sess.retrieve(node_id=int(node_id))[0].get_name()
-        except AttributeError:
-            #TODO figure our why this happens; 
-            # question: what are you a member of -> finds node 20! but causes error 
-            logger.error("Could not get name of node")
+        node_id = random.sample(roboy.get_relationships(key=category),1)[0]
+        memory_info = sess.retrieve(node_id=int(node_id))[0].get_name()
+
     elif category and category.islower() and not isinstance(roboy.get_properties(key=category), dict):
         property_list = [x.strip() for x in roboy.get_properties(key=category).split(',')]
-        memory_info = random.sample(property_list,1)[0]
+        memory_info = random.sample(property_list, 1)[0]
 
     if memory_info:
-        ctx["rawio:out"] =  verbaliser.get_random_successful_answer(category) % memory_info
+        ctx["rawio:out"] = verbaliser.get_random_successful_answer(category) % memory_info
     elif category == "well_being":
-        ctx["rawio:out"] =  verbaliser.get_random_successful_answer(category)
+        ctx["rawio:out"] = verbaliser.get_random_successful_answer(category)
     else:
-        ctx["rawio:out"] =  "Sorry I do not know."
+        ctx["rawio:out"] = "Sorry I do not know."
 
 def roboy_age(birthdate : str):
     """
     calculates roboys age given his birthdate
     example: birthdate = "12.04.18"
     """
+    # TODO
     birthdate = datetime.datetime.strptime(birthdate, "%d.%m.%Y")
     today = datetime.datetime.now()
     if today.year > birthdate.year and today.month > birthdate.month:
