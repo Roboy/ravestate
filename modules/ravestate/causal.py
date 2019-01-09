@@ -1,6 +1,6 @@
 # Ravestate class which encapsulates a graph of signal parent/offspring instances
 
-from typing import Set, Dict, Optional
+from typing import Set, Dict, Optional, List
 from ravestate.iactivation import IActivation, ISpike
 from threading import Lock
 from collections import defaultdict
@@ -44,7 +44,7 @@ class CausalGroup:
 
     # Refcount per state activations per spike per property name.
     #  Refcount, because one activation may hold multiple references to one spike for multiple
-    #  differently timed constraints. We essentially keep a {(propname, activation, spike, refcount)}
+    #  differently timed constraints. We essentially keep a {(propname, spike, activation, refcount)}
     #  index structure, that will be necessary for the following use-cases:
     #
     #  * Determining whether an activation is the most specific for a certain property set
@@ -74,22 +74,25 @@ class CausalGroup:
         ]
     ]
 
-    # Names of member spikes for __repr__
-    _signal_names: Set[str]
+    # Names of member spikes for __repr__, added by Spike ctor
+    signal_names: List[str]
 
     def __init__(self, properties: Set[str]):
         """
         Create a new causal group, with a set of unwritten props.
         """
+        self.signal_names = []
         self._lock = Lock()
         self._locked_lock = None
         self._unwritten_props = properties.copy()
-        self._signal_names = set()
         self._ref_index = {
             # TODO: Create refcount prop entries on demand
             prop: defaultdict(lambda: defaultdict(int))
             for prop in properties
         }
+
+    def __del__(self):
+        logger.debug(f"Deleted {self}")
 
     def __enter__(self) -> 'CausalGroup':
         # Remember current lock, since it might change,
@@ -117,7 +120,11 @@ class CausalGroup:
         return self._lock.__hash__()
 
     def __repr__(self):
-        return f"CausalGroup({','.join(self._signal_names)})"
+        if len(self.signal_names) < 4:
+            spikes = ','.join(self.signal_names)
+        else:
+            spikes = f"{self.signal_names[0]},...[{len(self.signal_names)-2} more],{self.signal_names[-1]}"
+        return f"CausalGroup@{id(self._lock)}({spikes})"
 
     def merge(self, other: 'CausalGroup'):
         """
@@ -131,7 +138,8 @@ class CausalGroup:
         allowed_propnames = self._ref_index.keys() & other._ref_index.keys()
         self.consumed(set(self._ref_index.keys()) - allowed_propnames)
         other.consumed(set(other._ref_index.keys()) - allowed_propnames)
-        self._signal_names |= other._signal_names
+        self.signal_names += other.signal_names
+        other.signal_names = self.signal_names
         # Retarget other's members
         other._lock = self._lock
         other._unwritten_props = self._unwritten_props
@@ -154,7 +162,6 @@ class CausalGroup:
                 return False
         for prop in acquired_by.write_props():
             self._ref_index[prop][spike][acquired_by] += 1
-        self._signal_names.add(spike.name())
         return True
 
     def rejected(self, spike: 'ISpike', rejected_by: IActivation) -> None:
@@ -205,6 +212,7 @@ class CausalGroup:
                     for candidate in self._ref_index[prop][spike]:
                         # TODO: Call pressure() on higher specificity candidates to make a decision
                         if candidate.specificity() > specificity:
+                            logger.debug(f"{self}.pressure_activation({ready_suitor.name}) -> 0: {specificity} > {candidate.specificity()}")
                             return False
             else:
                 # Easy exit condition: prop not free for writing
@@ -240,6 +248,8 @@ class CausalGroup:
          consumed for the given set of properties.
         :param consumed_props: The properties which have been consumed.
         """
+        if not consumed_props:
+            return
         for prop in consumed_props:
             # Notify all concerned activations, that the
             # spikes they are referencing are no longer available

@@ -34,12 +34,18 @@ class Activation(IActivation):
     def __init__(self, st: State, ctx: IContext):
         self.name = st.name
         self.state_to_activate = st
-        self.constraint = copy.deepcopy(st.constraint)
+        self.constraint = copy.deepcopy(st.constraint_)
         self.ctx = ctx
         self.args = []
         self.kwargs = {}
         self.spikes = set()
         self.consenting_causal_groups = set()
+
+    def __del__(self):
+        logger.debug(f"Deleted {self}")
+
+    def __repr__(self):
+        return f"Activation(st={self.name})"
 
     def write_props(self) -> Set[str]:
         """
@@ -164,6 +170,11 @@ class Activation(IActivation):
         self.kwargs = kwargs
         Thread(target=self._run_private).start()
 
+    def _unique_consenting_causal_groups(self) -> Set[CausalGroup]:
+        # if a signal was emitted by this activation, the consenting
+        #  causal groups will be merged. this must be respected -> recreate the set.
+        return {group for group in self.consenting_causal_groups}
+
     def _run_private(self):
         context_wrapper = ContextWrapper(ctx=self.ctx, st=self.state_to_activate, spike_parents=self.spikes)
 
@@ -191,13 +202,13 @@ class Activation(IActivation):
             self.ctx.rm_state(st=self.state_to_activate)
 
         elif isinstance(result, Resign):
-            for cg in self.consenting_causal_groups:
+            for cg in self._unique_consenting_causal_groups():
                 with cg:
                     cg.resigned(self)
             return
 
         # Let participating causal groups know about consumed properties
         if self.state_to_activate.write_props:
-            for cg in self.consenting_causal_groups:
+            for cg in self._unique_consenting_causal_groups():
                 with cg:
                     cg.consumed(set(self.state_to_activate.write_props))

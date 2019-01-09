@@ -404,7 +404,7 @@ class Context(IContext):
 
     def _new_state_activation(self, st: State) -> None:
         activation = Activation(st, self)
-        for signal in st.constraint.signals():
+        for signal in st.constraint_.signals():
             if signal in self._act_per_state_per_signal_age:
                 # TODO: (Here and below) Determine, whether indexing by min age is actually necessary
                 #  -> may not, because immediate acquisition is necessary -> otherwise, the
@@ -418,7 +418,7 @@ class Context(IContext):
 
     def _del_state_activations(self, st: State) -> None:
         activations_to_wipe: Set[Activation] = set()
-        for signal in st.constraint.signals():
+        for signal in st.constraint_.signals():
             if signal in self._act_per_state_per_signal_age:
                 for act in self._act_per_state_per_signal_age[signal][0][st]:  # signal.min_age
                     activations_to_wipe.add(act)
@@ -448,7 +448,7 @@ class Context(IContext):
                 Conjunct(*conj_signals)
                 for conj_signals in self._complete_conjunction(conj, known_signals))
             assert len(known_signals) == 0
-        st.constraint = Disjunct(*new_conjuncts)
+        st.constraint_ = Disjunct(*new_conjuncts)
 
     def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
         result = [set(conj.signals())]

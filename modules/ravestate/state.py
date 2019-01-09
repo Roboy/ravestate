@@ -56,6 +56,7 @@ class State:
     write_props: Tuple
     read_props: Tuple
     constraint: Constraint
+    constraint_: Constraint  # Updated by context, to add constraint causes to constraint
     module_name: str
 
     def __init__(self, *,
@@ -95,6 +96,7 @@ class State:
         self.write_props = write
         self.read_props = read
         self.constraint = cond
+        self.constraint_ = cond
         self.action = action
         self.module_name = ""
         self._signal = None

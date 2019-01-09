@@ -52,11 +52,16 @@ class Spike(ISpike):
         self._name = sig
         self._age = 0
         self._offspring = set()
-        self._parents = parents
+        self._parents = parents.copy() if parents else set()
         self._causal_group = next(iter(parents)).causal_group() if parents else CausalGroup(properties)
         self._suitors_per_property = {prop: set() for prop in properties}
         for parent in parents:
             parent.adopt(self)
+        with self._causal_group as cg:
+            cg.signal_names.append(sig)
+
+    def __del__(self):
+        logger.debug(f"Deleted {self}")
 
     def __repr__(self):
         return f"Spike({self._name}, age={self._age})"
@@ -118,6 +123,7 @@ class Spike(ISpike):
         if not already_wiped_in_causal_group:
             with self.causal_group() as causal:
                 causal.wiped(self)
+        # del self._causal_group
 
     def has_offspring(self):
         """

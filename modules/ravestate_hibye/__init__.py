@@ -8,12 +8,12 @@ import ravestate_phrases_basic_en
 import ravestate_interloc
 
 
-@state(cond=s("interloc:all:pushed"), write="verbaliser:intent")
+@state(cond=s("interloc:all:pushed") & s("rawio:in:changed"), write="verbaliser:intent")
 def react_to_pushed_interloc(ctx: ContextWrapper):
     ctx["verbaliser:intent"] = "greeting"
 
 
-@state(cond=s("interloc:all:popped"), write="verbaliser:intent")
+@state(cond=s("interloc:all:popped") & s("rawio:in:changed"), write="verbaliser:intent")
 def react_to_popped_interloc(ctx: ContextWrapper):
     ctx["verbaliser:intent"] = "farewells"
 

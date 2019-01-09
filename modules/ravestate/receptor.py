@@ -21,7 +21,7 @@ def receptor(*, ctx_wrap: ContextWrapper, write: Union[str, Tuple[str]]):
         receptor_state = State(
             write=write,
             read=(),
-            signal=None,
+            signal_name=None,
             cond=None,
             action=action,
             is_receptor=True)

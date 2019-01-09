@@ -1,7 +1,2 @@
-module: core
-config:
-  tickrate: 20  # Target context update rate per second
-  import:
-    - ravestate_conio
-    - ravestate_wildtalk
-    - ravestate_nlp
+
+!include generic.yml
