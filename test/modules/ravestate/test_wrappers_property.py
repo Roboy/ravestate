@@ -32,7 +32,7 @@ def state_mock(mocker):
     state_mock = mocker.Mock(name=State.__class__)
     state_mock.module_name = DEFAULT_MODULE_NAME
     state_mock.read_props = ()
-    state_mock.write_props = ()
+    state_mock.resources = ()
     return state_mock
 
 

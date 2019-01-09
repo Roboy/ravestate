@@ -47,11 +47,18 @@ class Activation(IActivation):
     def __repr__(self):
         return f"Activation(st={self.name})"
 
-    def write_props(self) -> Set[str]:
+    def resources(self) -> Set[str]:
         """
         Return's the set of the activation's write-access property names.
         """
-        return set(self.state_to_activate.write_props)
+        if self.state_to_activate.write_props:
+            return set(self.state_to_activate.write_props)
+        else:
+            # Return a dummy resource that will be "consumed" by the activation.
+            #  This allows CausalGroup to track the spike acquisitions for this
+            #  activation, and make sure that a single spike cannot activate
+            #  multiple activations for a write-prop-less state.
+            return {self.state_to_activate.consumable.fullname()}
 
     def specificity(self) -> float:
         """
@@ -106,10 +113,12 @@ class Activation(IActivation):
         """
         return self.ctx.secs_to_ticks(seconds)
 
-    def update(self) -> None:
+    def update(self) -> bool:
         """
         Called once per tick on this activation, to give it a chance to activate
          itself, or auto-eliminate, or reject spikes which have become too old.
+        :return: True, if the target state is activated and teh activation be forgotten,
+         false if needs further attention in the form of updates() by context in the future.
         """
         # Update constraint, reacquire for rejected spikes
         for spike in self.constraint.update(self):
@@ -163,7 +172,8 @@ class Activation(IActivation):
             self.run()
 
             # Do not further iterate over candidate conjunctions
-            break
+            return True
+        return False
 
     def run(self, *args, **kwargs):
         self.args = args
@@ -208,7 +218,6 @@ class Activation(IActivation):
             return
 
         # Let participating causal groups know about consumed properties
-        if self.state_to_activate.write_props:
-            for cg in self._unique_consenting_causal_groups():
-                with cg:
-                    cg.consumed(set(self.state_to_activate.write_props))
+        for cg in self._unique_consenting_causal_groups():
+            with cg:
+                cg.consumed(self.resources())

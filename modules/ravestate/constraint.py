@@ -114,7 +114,7 @@ class Signal(Constraint):
         return self.spike and self._min_age_ticks <= self.spike.age()
 
     def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
-        if (not spike and self.spike) or (self.spike is spike):
+        if (not spike and self.spike) or (spike and self.spike is spike):
             former_signal_instance = self.spike
             self.spike = None
             yield self, former_signal_instance

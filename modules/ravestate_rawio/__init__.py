@@ -5,5 +5,7 @@ from ravestate.property import PropertyBase
 
 registry.register(
     name="rawio",
-    props=(PropertyBase(name="in", default_value=""), PropertyBase(name="out", default_value=""))
+    props=(
+        PropertyBase(name="in", default_value="", allow_pop=False, allow_push=False),
+        PropertyBase(name="out", default_value="", allow_pop=False, allow_push=False))
 )

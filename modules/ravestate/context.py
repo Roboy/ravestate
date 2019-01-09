@@ -24,7 +24,6 @@ logger = get_logger(__name__)
 class Context(IContext):
 
     default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
-    default_property_signal_names: Tuple[str] = (":changed", ":pushed", ":popped", ":deleted")
 
     core_module_name = "core"
     import_modules_config = "import"
@@ -45,6 +44,11 @@ class Context(IContext):
             ]
         ]
     ]
+
+    # Some activations that have all constraints fulfilled
+    #  still need to be updated, because they are waiting for
+    #  their turn. While they wait, they are stored here.
+    _activations: Set[Activation]
 
     # This data structure is used to complete state constraints:
     #  If a state depends on a signal X that is an effect of signals
@@ -76,6 +80,7 @@ class Context(IContext):
         self._spikes = defaultdict(lambda: True)
         self._act_per_state_per_signal_age = dict()
         self._signal_causes = dict()
+        self._activations = set()
         self._run_task = None
 
         # Register default signals
@@ -105,7 +110,7 @@ class Context(IContext):
         if wipe:
             self.wipe(signal)
         with self._lock:
-            self._spikes[Spike(sig=signal.name, parents=parents, properties=set(self._properties.keys()))] = True
+            self._spikes[Spike(sig=signal.name, parents=parents, consumable_resources=set(self._properties.keys()))] = True
 
     def wipe(self, signal: Signal):
         """
@@ -191,11 +196,12 @@ class Context(IContext):
             states_to_recomplete: Set[State] = {st}
             for conj in st.constraint.conjunctions():
                 for propname in st.write_props:
-                    changed_signal = s(f"{propname}:changed")
-                    self._signal_causes[changed_signal].append(conj)
-                    # Since a new cause for the property's :changed-signal is added,
-                    #  it must be added to all states depending on that signal.
-                    states_to_recomplete.update(self._states_for_signal(changed_signal))
+                    if propname in self._properties:
+                        for signal in self._properties[propname].signals():
+                            self._signal_causes[signal].append(conj)
+                            # Since a new cause for the property's signal is added,
+                            #  it must be added to all states depending on that signal.
+                            states_to_recomplete.update(self._states_for_signal(signal))
                 if st.signal():
                     self._signal_causes[st.signal()].append(conj)
 
@@ -208,6 +214,10 @@ class Context(IContext):
 
             # add state to states, so that it cannot be added again
             self._states.add(st)
+
+        # register the state's consumable dummy, so that it is passed
+        #  to Spike and from there to CausalGroup as a consumable resource.
+        self.add_prop(prop=st.consumable)
 
     def rm_state(self, *, st: State) -> None:
         """
@@ -227,6 +237,8 @@ class Context(IContext):
             self._del_state_activations(st)
             # Actually forget about the state
             self._states.remove(st)
+        # unregister the state's consumable dummy
+        self.rm_prop(prop=st.consumable)
 
     def add_prop(self, *, prop: PropertyBase) -> None:
         """
@@ -237,12 +249,12 @@ class Context(IContext):
         if prop.fullname() in self._properties:
             logger.error(f"Attempt to add property {prop.fullname()} twice!")
             return
-        # register property
-        self._properties[prop.fullname()] = prop
-        # register all of the property's signals
         with self._lock:
-            for signalname in self.default_property_signal_names:
-                self._add_sig(s(prop.fullname() + signalname))
+            # register property
+            self._properties[prop.fullname()] = prop
+            # register all of the property's signals
+            for signal in prop.signals():
+                self._add_sig(signal)
 
     def rm_prop(self, *, prop: PropertyBase) -> None:
         """
@@ -258,8 +270,8 @@ class Context(IContext):
         states_to_remove: Set[State] = set()
         with self._lock:
             # remove all of the property's signals
-            for signame in self.default_property_signal_names:
-                self._rm_sig(s(prop.fullname() + signame))
+            for signal in prop.signals():
+                self._rm_sig(signal)
             # remove all states that depend upon property
             for st in self._states:
                 if prop.fullname() in st.read_props + st.write_props:
@@ -404,6 +416,7 @@ class Context(IContext):
 
     def _new_state_activation(self, st: State) -> None:
         activation = Activation(st, self)
+        self._activations.add(activation)
         for signal in st.constraint_.signals():
             if signal in self._act_per_state_per_signal_age:
                 # TODO: (Here and below) Determine, whether indexing by min age is actually necessary
@@ -425,15 +438,10 @@ class Context(IContext):
                 del self._act_per_state_per_signal_age[signal][0][st]  # signal.min_age
         for act in activations_to_wipe:
             act.dereference(spike=None, reacquire=False, reject=True)
+            self._activations.discard(act)
 
     def _state_activations(self, *, st: Optional[State]=None) -> Set[Activation]:
-        return set(
-            act
-            for acts_per_state_per_age in self._act_per_state_per_signal_age.values()
-            for acts_per_state in acts_per_state_per_age.values()
-            for acts in acts_per_state.values()
-            for act in acts
-            if not st or act.state_to_activate == st)
+        return {act for act in self._activations if not st or act.state_to_activate == st}
 
     def _states_for_signal(self, sig: Signal) -> Iterable[State]:
         if sig not in self._act_per_state_per_signal_age:
@@ -487,9 +495,6 @@ class Context(IContext):
         while not self._shutdown_flag.wait(tick_interval):
 
             with self._lock:
-                # Some acts may be removed during acquisition, but still need to be updated to run later.
-                all_activations = self._state_activations()
-
                 # Acquire new state activations for every spike
                 for spike, acquisition_allowed in self._spikes.items():
                     if not acquisition_allowed:
@@ -510,9 +515,9 @@ class Context(IContext):
                                     "An activation rejected a spike it was registered to be interested in.")
 
                 # Update all state activations.
-                all_activations |= self._state_activations()
-                for act in all_activations:
-                    act.update()
+                for act in self._activations.copy():
+                    if act.update():
+                        self._activations.discard(act)
 
                 # Forget fully unreferenced spikes
                 old_spike_set = self._spikes.copy()

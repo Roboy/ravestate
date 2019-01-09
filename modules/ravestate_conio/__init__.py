@@ -1,3 +1,5 @@
+from h5py.h5p import DEFAULT
+
 from ravestate import registry
 from ravestate.constraint import s
 from ravestate.property import PropertyBase
@@ -18,6 +20,8 @@ from scientio.ontology.ontology import Ontology
 from reggol import get_logger
 logger = get_logger(__name__)
 
+DEFAULT_INTERLOC_ID = "terminal_user"
+
 
 @state(cond=s(":startup"), read="interloc:all")
 def console_input(ctx: ContextWrapper):
@@ -28,19 +32,19 @@ def console_input(ctx: ContextWrapper):
 
     @receptor(ctx_wrap=ctx, write="interloc:all")
     def push_console_interloc(ctx: ContextWrapper, console_node: Node):
-        if ctx.push(parentpath="interloc:all", child=PropertyBase(name='x', default_value=console_node)):
+        if ctx.push(parentpath="interloc:all", child=PropertyBase(name=DEFAULT_INTERLOC_ID, default_value=console_node)):
             logger.debug(f"Pushed {console_node} to interloc:all")
 
     @receptor(ctx_wrap=ctx, write="interloc:all")
     def pop_console_interloc(ctx: ContextWrapper):
-        if ctx.pop("interloc:all:x"):
-            logger.debug(f"Popped interloc:all:x")
+        if ctx.pop(f"interloc:all:{DEFAULT_INTERLOC_ID}"):
+            logger.debug(f"Popped interloc:all:{DEFAULT_INTERLOC_ID}")
 
     while not ctx.shutting_down():
         input_value = input("> ")
         write_console_input(input_value)
 
-        console_interloc_exists = "interloc:all:x" in ctx.enum("interloc:all")
+        console_interloc_exists = f"interloc:all:{DEFAULT_INTERLOC_ID}" in ctx.enum("interloc:all")
         # push Node if you got a greeting
         if input_value.strip() in get_phrase_list("greeting") and not console_interloc_exists:
             # set up scientio
@@ -57,7 +61,7 @@ def console_input(ctx: ContextWrapper):
             elif len(console_node_list) == 1:
                 console_node = console_node_list[0]
             else:
-                logger.error('Found multiple Persons with name x in scientio session. Cannot push node to interloc:all!')
+                logger.error(f'Found multiple Persons with name {DEFAULT_INTERLOC_ID} in scientio session. Cannot push node to interloc:all!')
                 continue
 
             # push interloc-Node

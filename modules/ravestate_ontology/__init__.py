@@ -27,6 +27,7 @@ def hello_world_ontology(ctx):
     their properties and relationships)
     then the session is created - it can be accessed with a getter
     """
+    # TODO: Make sess and onto context properties?
     global onto, sess
     onto = Ontology(path_to_yaml=join(dirname(realpath(__file__)), "ravestate_ontology.yml"))
     # Create a session (with default Neo4j backend)
@@ -49,8 +50,17 @@ registry.register(
 
 
 def get_session():
+    if not sess:
+        logger.error("get_session() called before hello_world_ontology was invoked by context.")
+        return None
     return sess
 
 
 def get_ontology():
+    if not onto:
+        logger.error("get_ontology() called before hello_world_ontology was invoked by context.")
+        return None
     return onto
+
+
+# TODO: Offer ScientioNodeProperty subclass, which enforces that value is a scientio.ontology.Node?!

@@ -40,7 +40,7 @@ class CausalGroup:
     # Also, _ref_index needs to be as
     #  sparse as possible to optimise performance.
     #
-    _unwritten_props: Set[str]
+    _available_resources: Set[str]
 
     # Refcount per state activations per spike per property name.
     #  Refcount, because one activation may hold multiple references to one spike for multiple
@@ -64,7 +64,7 @@ class CausalGroup:
     #    -> O(p * log i)
     #
     _ref_index: Dict[
-        str,  # Property name
+        str,  # Resource name
         Dict[
             ISpike,
             Dict[
@@ -77,18 +77,18 @@ class CausalGroup:
     # Names of member spikes for __repr__, added by Spike ctor
     signal_names: List[str]
 
-    def __init__(self, properties: Set[str]):
+    def __init__(self, resources: Set[str]):
         """
         Create a new causal group, with a set of unwritten props.
         """
         self.signal_names = []
         self._lock = Lock()
         self._locked_lock = None
-        self._unwritten_props = properties.copy()
+        self._available_resources = resources.copy()
         self._ref_index = {
             # TODO: Create refcount prop entries on demand
             prop: defaultdict(lambda: defaultdict(int))
-            for prop in properties
+            for prop in resources
         }
 
     def __del__(self):
@@ -134,7 +134,7 @@ class CausalGroup:
          all properties that are consumed by other, but not this.
         Afterwards, other's member objects will be set to this's.
         """
-        self._unwritten_props = self._unwritten_props & other._unwritten_props
+        self._available_resources = self._available_resources & other._available_resources
         allowed_propnames = self._ref_index.keys() & other._ref_index.keys()
         self.consumed(set(self._ref_index.keys()) - allowed_propnames)
         other.consumed(set(other._ref_index.keys()) - allowed_propnames)
@@ -142,7 +142,7 @@ class CausalGroup:
         other.signal_names = self.signal_names
         # Retarget other's members
         other._lock = self._lock
-        other._unwritten_props = self._unwritten_props
+        other._available_resources = self._available_resources
         other._ref_index = self._ref_index
 
     def acquired(self, spike: 'ISpike', acquired_by: IActivation) -> bool:
@@ -157,10 +157,10 @@ class CausalGroup:
          free, and the group now refs. the activation, False otherwise.
         """
         # Make sure that all properties are actually still writable
-        for prop in acquired_by.write_props():
+        for prop in acquired_by.resources():
             if prop not in self._ref_index:
                 return False
-        for prop in acquired_by.write_props():
+        for prop in acquired_by.resources():
             self._ref_index[prop][spike][acquired_by] += 1
         return True
 
@@ -174,7 +174,7 @@ class CausalGroup:
         :param rejected_by: State activation instance, which is no longer
          interested in this property.
         """
-        for prop in rejected_by.write_props():
+        for prop in rejected_by.resources():
             if prop in self._ref_index and \
                spike in self._ref_index[prop] and \
                rejected_by in self._ref_index[prop][spike]:
@@ -206,17 +206,19 @@ class CausalGroup:
         # TODO: Gather candidate state activations that compete with ready_suitor
         #  For now, just abort once the first higher-specificity candidate is found.
         specificity = ready_suitor.specificity()
-        for prop in ready_suitor.write_props():
-            if prop in self._unwritten_props:
+        for prop in ready_suitor.resources():
+            if prop in self._available_resources:
                 for spike in self._ref_index[prop]:
                     for candidate in self._ref_index[prop][spike]:
                         # TODO: Call pressure() on higher specificity candidates to make a decision
                         if candidate.specificity() > specificity:
-                            logger.debug(f"{self}.pressure_activation({ready_suitor.name}) -> 0: {specificity} > {candidate.specificity()}")
+                            logger.debug(
+                                f"{self}.pressure_activation({ready_suitor.name}) -> 0:"
+                                f"{str(specificity)[:4]} < {str(candidate.specificity())[:4]}")
                             return False
             else:
                 # Easy exit condition: prop not free for writing
-                logger.debug(f"{self}.pressure_activation({ready_suitor.name}) -> 0: {prop} not writable.")
+                logger.debug(f"{self}.pressure_activation({ready_suitor.name}) -> 0: {prop} unavailable.")
                 return False
         logger.debug(f"{self}.pressure_activation({ready_suitor.name}) -> 1")
         return True
@@ -230,7 +232,7 @@ class CausalGroup:
         :param act: The activation that is now running.
         """
         # Mark the consented w-props as unavailable
-        self._unwritten_props -= act.write_props()
+        self._available_resources -= act.resources()
 
     def resigned(self, act: IActivation) -> None:
         """
@@ -240,17 +242,17 @@ class CausalGroup:
         :param unconsumed_props: The props that are available for writing again.
         """
         # Mark the act's w-props as available again
-        self._unwritten_props |= act.write_props()
+        self._available_resources |= act.resources()
 
-    def consumed(self, consumed_props: Set[str]) -> None:
+    def consumed(self, resources: Set[str]) -> None:
         """
         Called by activation to notify the group, that it has been
          consumed for the given set of properties.
-        :param consumed_props: The properties which have been consumed.
+        :param resources: The properties which have been consumed.
         """
-        if not consumed_props:
+        if not resources:
             return
-        for prop in consumed_props:
+        for prop in resources:
             # Notify all concerned activations, that the
             # spikes they are referencing are no longer available
             for sig in self._ref_index[prop]:
@@ -258,7 +260,7 @@ class CausalGroup:
                     act.dereference(spike=sig, reacquire=True)
             # Remove the consumed prop from the index
             del self._ref_index[prop]
-        logger.debug(f"{self}.consumed({consumed_props})")
+        logger.debug(f"{self}.consumed({resources})")
 
     def wiped(self, spike: 'ISpike') -> None:
         """

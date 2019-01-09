@@ -48,7 +48,7 @@ class IActivation:
 
     name: str
 
-    def write_props(self) -> Set[str]:
+    def resources(self) -> Set[str]:
         """
         Return's the set of the activation's write-access property names.
         """
