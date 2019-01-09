@@ -43,7 +43,7 @@ def telegram_run(ctx: ContextWrapper):
         """
         Push the telegram_node into interloc:all:name
         """
-        if ctx.push(parentpath="interloc:all", child=PropertyBase(name=name, default=telegram_node)):
+        if ctx.push(parentpath="interloc:all", child=PropertyBase(name=name, default_value=telegram_node)):
             logger.debug(f"Pushed {telegram_node} to interloc:all")
 
     def handle_input(bot: Bot, update: Update):

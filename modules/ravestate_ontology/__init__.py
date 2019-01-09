@@ -17,7 +17,7 @@ NEO4J_USERNAME_KEY: str = "neo4j_username"
 NEO4J_PASSWORD_KEY: str = "neo4j_pw"
 
 
-@state(triggers=s(":startup"))
+@state(cond=s(":startup"))
 def hello_world_ontology(ctx):
     """
     Creates a scientio session with neo4j backend.

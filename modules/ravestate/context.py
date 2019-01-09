@@ -491,7 +491,7 @@ class Context(IContext):
                 all_activations = self._state_activations()
 
                 # Acquire new state activations for every spike
-                for spike, acquisition_allowed in self._spikes:
+                for spike, acquisition_allowed in self._spikes.items():
                     if not acquisition_allowed:
                         continue
                     for state, acts in self._act_per_state_per_signal_age[s(spike.name())][spike.age()].items():

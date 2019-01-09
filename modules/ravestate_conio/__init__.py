@@ -28,7 +28,7 @@ def console_input(ctx: ContextWrapper):
 
     @receptor(ctx_wrap=ctx, write="interloc:all")
     def push_console_interloc(ctx: ContextWrapper, console_node: Node):
-        if ctx.push(parentpath="interloc:all", child=PropertyBase(name='x', default=console_node)):
+        if ctx.push(parentpath="interloc:all", child=PropertyBase(name='x', default_value=console_node)):
             logger.debug(f"Pushed {console_node} to interloc:all")
 
     @receptor(ctx_wrap=ctx, write="interloc:all")
