@@ -77,11 +77,15 @@ class CausalGroup:
     # Names of member spikes for __repr__, added by Spike ctor
     signal_names: List[str]
 
+    # Object to count the number of CausalGroups merged in this instance
+    merges: List[int]
+
     def __init__(self, resources: Set[str]):
         """
         Create a new causal group, with a set of unwritten props.
         """
         self.signal_names = []
+        self.merges = [1]
         self._lock = Lock()
         self._locked_lock = None
         self._available_resources = resources.copy()
@@ -92,6 +96,8 @@ class CausalGroup:
         }
 
     def __del__(self):
+        with self._lock:
+            self.merges[0] -= 1
         logger.debug(f"Deleted {self}")
 
     def __enter__(self) -> 'CausalGroup':
@@ -124,7 +130,7 @@ class CausalGroup:
             spikes = ','.join(self.signal_names)
         else:
             spikes = f"{self.signal_names[0]},...[{len(self.signal_names)-2} more],{self.signal_names[-1]}"
-        return f"CausalGroup@{id(self._lock)}({spikes})"
+        return f"CausalGroup*{self.merges[0]}@{hex(id(self._lock))[2:]}({spikes})"
 
     def merge(self, other: 'CausalGroup'):
         """
@@ -134,13 +140,26 @@ class CausalGroup:
          all properties that are consumed by other, but not this.
         Afterwards, other's member objects will be set to this's.
         """
+        # Intersect _available_resources
         self._available_resources = self._available_resources & other._available_resources
+
+        # Intersect/merge _ref_index
         allowed_propnames = self._ref_index.keys() & other._ref_index.keys()
         self.consumed(set(self._ref_index.keys()) - allowed_propnames)
         other.consumed(set(other._ref_index.keys()) - allowed_propnames)
+        for prop, spikes in other._ref_index.items():
+            for spike, act_refcount in spikes.items():
+                for act, refcount in act_refcount.items():
+                    if refcount > 0:
+                        self._ref_index[prop][spike][act] += refcount
+
+        # Merge signal names/merge count
         self.signal_names += other.signal_names
-        other.signal_names = self.signal_names
+        self.merges[0] += other.merges[0]
+
         # Retarget other's members
+        other.signal_names = self.signal_names
+        other.merges = self.merges
         other._lock = self._lock
         other._available_resources = self._available_resources
         other._ref_index = self._ref_index
@@ -159,6 +178,7 @@ class CausalGroup:
         # Make sure that all properties are actually still writable
         for prop in acquired_by.resources():
             if prop not in self._ref_index:
+                logger.error(f"{prop} is unavailable, but {acquired_by} wants it from {self}!")
                 return False
         for prop in acquired_by.resources():
             self._ref_index[prop][spike][acquired_by] += 1
@@ -191,7 +211,7 @@ class CausalGroup:
                 if len(self._ref_index[prop][spike]) == 0:
                     del self._ref_index[prop][spike]
 
-    def pressure_activation(self, ready_suitor: IActivation) -> bool:
+    def consent(self, ready_suitor: IActivation) -> bool:
         """
         Called by constraint, to inquire whether this causal group would happily
          be consumed for the given state activation's properties.
@@ -213,20 +233,20 @@ class CausalGroup:
                         # TODO: Call pressure() on higher specificity candidates to make a decision
                         if candidate.specificity() > specificity:
                             logger.debug(
-                                f"{self}.pressure_activation({ready_suitor.name}) -> 0:"
-                                f"{str(specificity)[:4]} < {str(candidate.specificity())[:4]}")
+                                f"{self}.consent({ready_suitor})->N: "
+                                f"{str(specificity)[:4]} < {str(candidate.specificity())[:4]} ({candidate})")
                             return False
             else:
                 # Easy exit condition: prop not free for writing
-                logger.debug(f"{self}.pressure_activation({ready_suitor.name}) -> 0: {prop} unavailable.")
+                logger.debug(f"{self}.consent({ready_suitor})->N: {prop} unavailable.")
                 return False
-        logger.debug(f"{self}.pressure_activation({ready_suitor.name}) -> 1")
+        logger.debug(f"{self}.consent({ready_suitor})->Y")
         return True
 
     def activated(self, act: IActivation):
         """
         Called by activation which previously received a go-ahead
-         from pressure_activation(), when it is truly proceeding with
+         from consent(), when it is truly proceeding with
          running (after it got the go-ahead from all it's depended=on
          causal groups).
         :param act: The activation that is now running.

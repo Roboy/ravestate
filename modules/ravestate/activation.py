@@ -3,6 +3,7 @@ import copy
 
 from threading import Thread
 from typing import Set, Optional, List, Dict
+from collections import defaultdict
 
 from ravestate.icontext import IContext
 from ravestate.constraint import Constraint, s
@@ -22,6 +23,10 @@ class Activation(IActivation):
      of Spikes to fulfill of the state-defined activation constraints.
     """
 
+    # Count how many activations were created per state
+    count_for_state: Dict[State, int] = defaultdict(int)
+
+    id: str  # count_for_state[self.state_to_activate] from ctor time
     name: str
     state_to_activate: State
     constraint: Constraint
@@ -32,6 +37,8 @@ class Activation(IActivation):
     consenting_causal_groups: Set[CausalGroup]
 
     def __init__(self, st: State, ctx: IContext):
+        self.id = f"{st.name}#{Activation.count_for_state[st]}"
+        Activation.count_for_state[st] += 1
         self.name = st.name
         self.state_to_activate = st
         self.constraint = copy.deepcopy(st.constraint_)
@@ -45,7 +52,7 @@ class Activation(IActivation):
         logger.debug(f"Deleted {self}")
 
     def __repr__(self):
-        return f"Activation(st={self.name})"
+        return self.id
 
     def resources(self) -> Set[str]:
         """
@@ -130,14 +137,14 @@ class Activation(IActivation):
                 continue
 
             # Ask each spike's causal group for activation consent
-            spikes = set((sig.spike, sig.detached) for sig in conjunction.signals())
+            spikes_for_conjunct = set((sig.spike, sig.detached) for sig in conjunction.signals())
             consenting_causal_groups = set()
             all_consented = True
-            for spike, _ in spikes:
+            for spike, _ in spikes_for_conjunct:
                 cg: CausalGroup = spike.causal_group()
                 if cg not in consenting_causal_groups:
                     with cg:
-                        if cg.pressure_activation(self):
+                        if cg.consent(self):
                             consenting_causal_groups.add(cg)
                         else:
                             all_consented = False
@@ -150,14 +157,12 @@ class Activation(IActivation):
                 with cg:
                     cg.activated(self)
 
-            # Remove self from all causal groups
-            for spike, _ in spikes:
-                with spike.causal_group() as cg:
-                    cg.rejected(spike, self)
-
-            # Make sure that constraint doesn't hold any unneeded references to spike
-            for _ in self.constraint.dereference():
-                pass
+            # Remove references between causal groups <-> self
+            for signal in self.constraint.signals():
+                if signal.spike:
+                    with signal.spike.causal_group() as cg:
+                        cg.rejected(signal.spike, self)
+                    signal.spike = None
 
             # Withdraw from context for all (unfulfilled) signals (there might
             #  be some unfulfilled conjunctions next to the fulfilled one).
@@ -165,7 +170,7 @@ class Activation(IActivation):
                 self.ctx.withdraw(self, sig)
 
             # Remember spikes/causal-groups for use in activation
-            self.spikes = {spike for spike, detached in spikes if not detached}
+            self.spikes = {spike for spike, detached in spikes_for_conjunct if not detached}
             self.consenting_causal_groups = consenting_causal_groups
 
             # Run activation

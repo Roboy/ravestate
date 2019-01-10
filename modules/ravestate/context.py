@@ -527,7 +527,7 @@ class Context(IContext):
                             # This should lead to the deletion of the spike
                             self._spikes.pop(spike)
                             spike.wipe(already_wiped_in_causal_group=True)
-                            logger.debug(f"{cg}.stale({spike.name()}) -> 1")
+                            logger.debug(f"{cg}.stale({spike.name()})->Y")
 
                 # Increment age on active spikes
                 for spike in self._spikes:
