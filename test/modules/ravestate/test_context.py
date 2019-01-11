@@ -91,7 +91,7 @@ def test_add_state(
     context_with_property_fixture.add_state(st=state_signal_b_fixture)
     context_with_property_fixture.add_state(st=state_signal_c_fixture)
     context_with_property_fixture.add_state(st=state_signal_d_fixture)
-    assert len(context_with_property_fixture._states) == 5
+    assert len(context_with_property_fixture._activations_per_state) == 5
 
     # Make sure, that d's constraint was completed correctly
     d_conjunctions = list(state_signal_d_fixture.constraint.conjunctions())

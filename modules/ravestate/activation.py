@@ -120,6 +120,14 @@ class Activation(IActivation):
         """
         return self.ctx.secs_to_ticks(seconds)
 
+    def spiky(self) -> bool:
+        """
+        Returns true, if the activation has acquired any spikes at all.
+        :return: True, if any of this activation's constraint's
+         signal is referencing a spike.
+        """
+        return sum(1 for sig in self.constraint.signals() if sig.spike) > 0
+
     def update(self) -> bool:
         """
         Called once per tick on this activation, to give it a chance to activate
