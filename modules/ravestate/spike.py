@@ -34,7 +34,7 @@ class Spike(ISpike):
     # Parent instances, which are notified when this spike is wiped
     _parents: Set['Spike']
 
-    def __init__(self, *, sig: str, parents: Set['Spike']=None, properties: Set[str]=None):
+    def __init__(self, *, sig: str, parents: Set['Spike']=None, consumable_resources: Set[str]=None):
         """
         Construct a spike from a signal name and a list of causing parent signals.
         :param sig: Name of the signal which is represented by this spike
@@ -42,21 +42,26 @@ class Spike(ISpike):
          and with which unwritten properties will be synchronized: This spike's
          causal group will be inferred from the parents, and the parent's causal
          groups will be merged if they are different.
-        :param properties: The set of property names from context,
+        :param consumable_resources: The set of property names from context,
          which are available for consumption.
         """
         if parents is None:
             parents = set()
-        if properties is None:
-            properties = set()
+        if consumable_resources is None:
+            consumable_resources = set()
         self._name = sig
         self._age = 0
         self._offspring = set()
-        self._parents = parents
-        self._causal_group = next(iter(parents)).causal_group() if parents else CausalGroup(properties)
-        self._suitors_per_property = {prop: set() for prop in properties}
+        self._parents = parents.copy() if parents else set()
+        self._causal_group = next(iter(parents)).causal_group() if parents else CausalGroup(consumable_resources)
+        self._suitors_per_property = {prop: set() for prop in consumable_resources}
         for parent in parents:
             parent.adopt(self)
+        with self._causal_group as cg:
+            cg.signal_names.append(sig)
+
+    def __del__(self):
+        logger.debug(f"Deleted {self}")
 
     def __repr__(self):
         return f"Spike({self._name}, age={self._age})"
@@ -118,6 +123,7 @@ class Spike(ISpike):
         if not already_wiped_in_causal_group:
             with self.causal_group() as causal:
                 causal.wiped(self)
+        # del self._causal_group
 
     def has_offspring(self):
         """

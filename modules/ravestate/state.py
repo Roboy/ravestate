@@ -3,6 +3,7 @@
 from typing import Callable, Optional, Any, Tuple, Union
 
 from ravestate.constraint import Conjunct, Disjunct, Signal, s, Constraint
+from ravestate.consumable import Consumable
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -56,7 +57,12 @@ class State:
     write_props: Tuple
     read_props: Tuple
     constraint: Constraint
+    constraint_: Constraint  # Updated by context, to add constraint causes to constraint
     module_name: str
+
+    # Dummy resource which allows CausalGroups to track acquisitions
+    #  for states that don't have any write-props.
+    consumable: Consumable
 
     def __init__(self, *,
                  signal_name: Optional[str],
@@ -68,6 +74,7 @@ class State:
 
         assert(callable(action))
         self.name = action.__name__
+        self.consumable = Consumable(f"@{action.__module__}:{action.__name__}")
 
         # check to recognize states using old signal implementation
         if isinstance(cond, str):
@@ -95,6 +102,7 @@ class State:
         self.write_props = write
         self.read_props = read
         self.constraint = cond
+        self.constraint_ = cond
         self.action = action
         self.module_name = ""
         self._signal = None

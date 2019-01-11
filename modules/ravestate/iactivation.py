@@ -39,6 +39,7 @@ class ISpike:
         Recursively yields this spike's offspring and it's children's offspring.
         :return: All of this spike's offspring spikes.
         """
+        yield None
 
 
 class IActivation:
@@ -48,7 +49,7 @@ class IActivation:
 
     name: str
 
-    def write_props(self) -> Set[str]:
+    def resources(self) -> Set[str]:
         """
         Return's the set of the activation's write-access property names.
         """
@@ -99,7 +100,7 @@ class IActivation:
     def secs_to_ticks(self, seconds: float) -> int:
         """
         Convert seconds to an equivalent integer number of ticks,
-         given this activation's tick rate.
+         given this activation's context's tick rate.
         :param seconds: Seconds to convert to ticks.
         :return: An integer tick count.
         """

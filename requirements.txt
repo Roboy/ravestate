@@ -1,6 +1,6 @@
 stanfordcorenlp
 argparse
-pyyaml
+pyyaml>=4.2b1
 watson-developer-cloud>=2.2.6
 PyAudio
 Flask
@@ -13,3 +13,4 @@ pytest
 click
 flask
 requests
+scientio

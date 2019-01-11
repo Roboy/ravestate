@@ -3,6 +3,7 @@ import copy
 
 from threading import Thread
 from typing import Set, Optional, List, Dict
+from collections import defaultdict
 
 from ravestate.icontext import IContext
 from ravestate.constraint import Constraint, s
@@ -22,6 +23,10 @@ class Activation(IActivation):
      of Spikes to fulfill of the state-defined activation constraints.
     """
 
+    # Count how many activations were created per state
+    count_for_state: Dict[State, int] = defaultdict(int)
+
+    id: str  # count_for_state[self.state_to_activate] from ctor time
     name: str
     state_to_activate: State
     constraint: Constraint
@@ -32,20 +37,35 @@ class Activation(IActivation):
     consenting_causal_groups: Set[CausalGroup]
 
     def __init__(self, st: State, ctx: IContext):
+        self.id = f"{st.name}#{Activation.count_for_state[st]}"
+        Activation.count_for_state[st] += 1
         self.name = st.name
         self.state_to_activate = st
-        self.constraint = copy.deepcopy(st.constraint)
+        self.constraint = copy.deepcopy(st.constraint_)
         self.ctx = ctx
         self.args = []
         self.kwargs = {}
         self.spikes = set()
         self.consenting_causal_groups = set()
 
-    def write_props(self) -> Set[str]:
+    def __del__(self):
+        logger.debug(f"Deleted {self}")
+
+    def __repr__(self):
+        return self.id
+
+    def resources(self) -> Set[str]:
         """
         Return's the set of the activation's write-access property names.
         """
-        return set(self.state_to_activate.write_props)
+        if self.state_to_activate.write_props:
+            return set(self.state_to_activate.write_props)
+        else:
+            # Return a dummy resource that will be "consumed" by the activation.
+            #  This allows CausalGroup to track the spike acquisitions for this
+            #  activation, and make sure that a single spike cannot activate
+            #  multiple activations for a write-prop-less state.
+            return {self.state_to_activate.consumable.fullname()}
 
     def specificity(self) -> float:
         """
@@ -100,10 +120,20 @@ class Activation(IActivation):
         """
         return self.ctx.secs_to_ticks(seconds)
 
-    def update(self) -> None:
+    def spiky(self) -> bool:
+        """
+        Returns true, if the activation has acquired any spikes at all.
+        :return: True, if any of this activation's constraint's
+         signal is referencing a spike.
+        """
+        return sum(1 for sig in self.constraint.signals() if sig.spike) > 0
+
+    def update(self) -> bool:
         """
         Called once per tick on this activation, to give it a chance to activate
          itself, or auto-eliminate, or reject spikes which have become too old.
+        :return: True, if the target state is activated and teh activation be forgotten,
+         false if needs further attention in the form of updates() by context in the future.
         """
         # Update constraint, reacquire for rejected spikes
         for spike in self.constraint.update(self):
@@ -115,14 +145,14 @@ class Activation(IActivation):
                 continue
 
             # Ask each spike's causal group for activation consent
-            spikes = set((sig.spike, sig.detached) for sig in conjunction.signals())
+            spikes_for_conjunct = set((sig.spike, sig.detached) for sig in conjunction.signals())
             consenting_causal_groups = set()
             all_consented = True
-            for spike, _ in spikes:
+            for spike, _ in spikes_for_conjunct:
                 cg: CausalGroup = spike.causal_group()
                 if cg not in consenting_causal_groups:
                     with cg:
-                        if cg.pressure_activation(self):
+                        if cg.consent(self):
                             consenting_causal_groups.add(cg)
                         else:
                             all_consented = False
@@ -135,14 +165,12 @@ class Activation(IActivation):
                 with cg:
                     cg.activated(self)
 
-            # Remove self from all causal groups
-            for spike, _ in spikes:
-                with spike.causal_group() as cg:
-                    cg.rejected(spike, self)
-
-            # Make sure that constraint doesn't hold any unneeded references to spike
-            for _ in self.constraint.dereference():
-                pass
+            # Remove references between causal groups <-> self
+            for signal in self.constraint.signals():
+                if signal.spike:
+                    with signal.spike.causal_group() as cg:
+                        cg.rejected(signal.spike, self)
+                    signal.spike = None
 
             # Withdraw from context for all (unfulfilled) signals (there might
             #  be some unfulfilled conjunctions next to the fulfilled one).
@@ -150,19 +178,25 @@ class Activation(IActivation):
                 self.ctx.withdraw(self, sig)
 
             # Remember spikes/causal-groups for use in activation
-            self.spikes = {spike for spike, detached in spikes if not detached}
+            self.spikes = {spike for spike, detached in spikes_for_conjunct if not detached}
             self.consenting_causal_groups = consenting_causal_groups
 
             # Run activation
             self.run()
 
             # Do not further iterate over candidate conjunctions
-            break
+            return True
+        return False
 
     def run(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
         Thread(target=self._run_private).start()
+
+    def _unique_consenting_causal_groups(self) -> Set[CausalGroup]:
+        # if a signal was emitted by this activation, the consenting
+        #  causal groups will be merged. this must be respected -> recreate the set.
+        return {group for group in self.consenting_causal_groups}
 
     def _run_private(self):
         context_wrapper = ContextWrapper(ctx=self.ctx, st=self.state_to_activate, spike_parents=self.spikes)
@@ -191,13 +225,12 @@ class Activation(IActivation):
             self.ctx.rm_state(st=self.state_to_activate)
 
         elif isinstance(result, Resign):
-            for cg in self.consenting_causal_groups:
+            for cg in self._unique_consenting_causal_groups():
                 with cg:
                     cg.resigned(self)
             return
 
         # Let participating causal groups know about consumed properties
-        if self.state_to_activate.write_props:
-            for cg in self.consenting_causal_groups:
-                with cg:
-                    cg.consumed(set(self.state_to_activate.write_props))
+        for cg in self._unique_consenting_causal_groups():
+            with cg:
+                cg.consumed(self.resources())

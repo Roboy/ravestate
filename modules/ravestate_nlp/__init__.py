@@ -81,12 +81,12 @@ registry.register(
     name="nlp",
     states=(nlp_preprocess,),
     props=(
-        PropertyBase(name="tokens", default_value="", always_signal_changed=True),
-        PropertyBase(name="postags", default_value="", always_signal_changed=True),
-        PropertyBase(name="lemmas", default_value="", always_signal_changed=True),
-        PropertyBase(name="tags", default_value="", always_signal_changed=True),
-        PropertyBase(name="ner", default_value="", always_signal_changed=True),
-        PropertyBase(name="triples", default_value="", always_signal_changed=True),
-        PropertyBase(name="roboy", default_value="", always_signal_changed=True)
+        PropertyBase(name="tokens", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+        PropertyBase(name="postags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+        PropertyBase(name="lemmas", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+        PropertyBase(name="tags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+        PropertyBase(name="ner", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+        PropertyBase(name="triples", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+        PropertyBase(name="roboy", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
     )
 )
