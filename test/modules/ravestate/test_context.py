@@ -61,10 +61,10 @@ def test_remove_dependent_state(context_fixture: Context, state_fixture: State):
     prop.set_parent_path(DEFAULT_MODULE_NAME)
     context_fixture.add_prop(prop=prop)
     context_fixture.add_state(st=state_fixture)
-    assert state_fixture in context_fixture._states
+    assert state_fixture in context_fixture._activations_per_state
     assert prop.fullname() in context_fixture._properties
     context_fixture.rm_prop(prop=prop)
-    assert state_fixture not in context_fixture._states
+    assert state_fixture not in context_fixture._activations_per_state
     assert prop.fullname() not in context_fixture._properties
 
 
@@ -94,7 +94,7 @@ def test_add_state(
     assert len(context_with_property_fixture._activations_per_state) == 5
 
     # Make sure, that d's constraint was completed correctly
-    d_conjunctions = list(state_signal_d_fixture.constraint.conjunctions())
+    d_conjunctions = list(state_signal_d_fixture.constraint_.conjunctions())
     assert len(d_conjunctions) == 2
     assert s(DEFAULT_PROPERTY_CHANGED) in d_conjunctions[0]
     assert state_signal_a_fixture.signal() in d_conjunctions[0]
