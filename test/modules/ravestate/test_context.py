@@ -1,9 +1,14 @@
+from ravestate.constraint import Signal
+from ravestate.spike import Spike
 from ravestate.testfixtures import *
 
 
-def test_emit(context_fixture):
+def test_emit(context_fixture, spike_fixture):
     context_fixture.emit(s(DEFAULT_PROPERTY_CHANGED))
     assert len(context_fixture._spikes) == 1
+    list(context_fixture._spikes.keys())[0].adopt(spike_fixture)
+    context_fixture.emit(s(DEFAULT_PROPERTY_CHANGED), wipe=True)
+    assert len(context_fixture._spikes) == 3
 
 
 def test_run(mocker, context_fixture):

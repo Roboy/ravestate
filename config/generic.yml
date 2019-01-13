@@ -23,6 +23,7 @@ config:
     - ravestate_wildtalk
     - ravestate_nlp
     - ravestate_hibye
+  ros2-node-name: "ros2-node-name"
 
 ---
 module: genqa

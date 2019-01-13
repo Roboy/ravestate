@@ -1,5 +1,5 @@
 # Ravestate context class
-
+import copy
 from threading import Thread, Lock, Event
 from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
 from collections import defaultdict
@@ -131,12 +131,14 @@ class Context(IContext):
          should be invalidated and forgotten.
         """
         with self._lock:
+            spikes_change = {}
             for spike in self._spikes:
                 if spike.name() == signal.name:
                     spike.wipe()
-                    self._spikes[spike] = False
+                    spikes_change[spike] = False
                     for child_spike in spike.offspring():
-                        self._spikes[child_spike] = False
+                        spikes_change[child_spike] = False
+            self._spikes.update(spikes_change)
         # Final cleanup will be performed while update is running,
         #  and cg.stale(spike) returns true.
         # TODO: Make sure, that it is not a problem if the spike is currently referenced
