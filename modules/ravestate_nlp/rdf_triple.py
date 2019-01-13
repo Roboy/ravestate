@@ -16,7 +16,7 @@ class Triple:
         self.set_predicate_aux(predicate_aux)
         self.set_object(object)
 
-    def set_subject(self, subject: Token):
+    def set_subject(self, subject: Union[Token, QuestionWord]):
         self._subject = subject
 
     def set_predicate(self, predicate: Token):
@@ -25,10 +25,10 @@ class Triple:
     def set_predicate_aux(self, predicate_aux: Token):
         self._predicate_aux = predicate_aux
 
-    def set_object(self, object: Token):
+    def set_object(self, object: Union[Token, QuestionWord]):
         self._object = object
 
-    def get_subject(self) -> Token:
+    def get_subject(self) -> Union[Token, QuestionWord]:
         return self._subject
 
     def get_predicate(self) -> Token:
@@ -37,7 +37,7 @@ class Triple:
     def get_predicate_aux(self) -> Token:
         return self._predicate_aux
 
-    def get_object(self) -> Token:
+    def get_object(self) -> Union[Token, QuestionWord]:
         return self._object
 
     def to_tuple(self) -> tuple:
@@ -60,8 +60,11 @@ class Triple:
                 return True
         return False
 
-    def is_question(self, question_word: str):
-        return self.match_either_lemma(obj={question_word}, subj={question_word})
+    def is_question(self, question_word: Optional[str]=None):
+        if question_word:
+            return self.match_either_lemma(obj={question_word}, subj={question_word})
+        else:
+            return isinstance(self._subject, QuestionWord) or isinstance(self._object, QuestionWord)
 
     def __eq__(self, other) -> bool:
         if isinstance(other, self.__class__):

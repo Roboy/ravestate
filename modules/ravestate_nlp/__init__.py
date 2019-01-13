@@ -1,11 +1,11 @@
 
 from ravestate import registry
-from ravestate.constraint import s
 from ravestate.property import PropertyBase
 from ravestate.state import state
-from ravestate.receptor import receptor
 from ravestate_nlp.question_words import QuestionWord
 from ravestate_nlp.rdf_triple import Triple
+from ravestate.state import Emit
+
 
 import spacy
 from spacy.tokens import Token
@@ -66,9 +66,9 @@ def triple_search(triple: Triple, token: Token):
     if not triple.get_subject() and question_word: 
         triple.set_subject(question_word)
 
-    #do not allow empty triples
-    emoty_doc = nlp(u' ')
-    empty_token = emoty_doc[0]
+    # do not allow empty triples
+    empty_doc = nlp(u' ')
+    empty_token = empty_doc[0]
     if not triple.get_subject():
        triple.set_subject(empty_token)
     if not triple.get_predicate():
@@ -114,10 +114,28 @@ def nlp_preprocess(ctx):
     logger.info(f"[NLP:roboy]: {nlp_roboy}")
 
 
+@state(signal_name="contains-roboy", read="nlp:roboy")
+def nlp_contains_roboy_signal(ctx):
+    if ctx["nlp:roboy"]:
+        return Emit()
+    return False
+
+
+@state(signal_name="is-question", read="nlp:triples")
+def nlp_is_question_signal(ctx):
+    if ctx["nlp:triples"][0].is_question():
+        return Emit()
+    return False
+
+
 init_model()
 registry.register(
     name="nlp",
-    states=(nlp_preprocess,),
+    states=(
+        nlp_preprocess,
+        nlp_contains_roboy_signal,
+        nlp_is_question_signal
+    ),
     props=(
         PropertyBase(name="tokens", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
         PropertyBase(name="postags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),

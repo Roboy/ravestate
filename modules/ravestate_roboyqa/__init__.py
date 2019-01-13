@@ -20,17 +20,16 @@ logger = get_logger(__name__)
 
 verbaliser.add_folder(join(dirname(realpath(__file__)), "answering_phrases"))
 
-# roboy 2.0 ID in the neo4j memomry graph
-ROBOY_NODE_ID = 356
+ROBOY_NODE_CONF_KEY = "roboy_node_id"
 
 
-@state(triggers=s(":startup"), write="rawio:out")
-def hello_world_roboyqa(ctx):
-    ctx["rawio:out"] = "Ask me something about myself!"
+# TODO: Change this to cond=idle:bored
+# @state(cond=s(":startup"), write="rawio:out")
+# def hello_world_roboyqa(ctx):
+#     ctx["rawio:out"] = "Ask me something about myself!"
 
 
-# TODO get triggerd by "nlp:roboy"
-@state(triggers=s("nlp:triples:changed"), read="nlp:triples", write="rawio:out")
+@state(cond=s("nlp:contains-roboy") & s("nlp:is-question"), read="nlp:triples", write="rawio:out")
 def roboyqa(ctx):
     """
     answers question regarding roboy by retrieving the information out of the neo4j roboy memory graph
@@ -40,7 +39,7 @@ def roboyqa(ctx):
     if the triple combination is known and the information could be retrieved an answer will be given
     """
     sess = ravestate_ontology.get_session()
-    roboy = sess.retrieve(node_id=ROBOY_NODE_ID)[0]
+    roboy = sess.retrieve(node_id=ctx.conf(key=ROBOY_NODE_CONF_KEY))[0]
     triple = ctx["nlp:triples"][0]
 
     category = None
@@ -104,9 +103,10 @@ def roboyqa(ctx):
     else:
         ctx["rawio:out"] = "Sorry I do not know."
 
-def roboy_age(birthdate : str):
+
+def roboy_age(birthdate: str):
     """
-    calculates roboys age given his birthdate
+    Calculates roboys age given his birthdate
     example: birthdate = "12.04.18"
     """
     # TODO
@@ -118,7 +118,9 @@ def roboy_age(birthdate : str):
     age = "%d months" % (12-birthdate.month+today.month)
     return age
 
+
 registry.register(
     name="roboyqa",
-    states=(hello_world_roboyqa, roboyqa)
+    states=(roboyqa,),
+    config={ROBOY_NODE_CONF_KEY: 356}
 )

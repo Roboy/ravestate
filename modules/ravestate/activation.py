@@ -26,6 +26,7 @@ class Activation(IActivation):
     # Count how many activations were created per state
     count_for_state: Dict[State, int] = defaultdict(int)
 
+    death_clock: Optional[int]  # set once pressure() is called
     id: str  # count_for_state[self.state_to_activate] from ctor time
     name: str
     state_to_activate: State
@@ -47,12 +48,13 @@ class Activation(IActivation):
         self.kwargs = {}
         self.spikes = set()
         self.consenting_causal_groups = set()
+        self.death_clock = None
 
     def __del__(self):
         logger.debug(f"Deleted {self}")
 
     def __repr__(self):
-        return self.id
+        return self.id + (f"[t-{self.death_clock}]" if self.death_clock is not None else "")
 
     def resources(self) -> Set[str]:
         """
@@ -100,7 +102,7 @@ class Activation(IActivation):
                 self.ctx.reacquire(self, sig_to_reacquire)
             if reject and dereferenced_instance:
                 with dereferenced_instance.causal_group() as cg:
-                    cg.rejected(dereferenced_instance, self)
+                    cg.rejected(dereferenced_instance, self, reason=0)
 
     def acquire(self, spike: Spike) -> bool:
         """
@@ -109,6 +111,8 @@ class Activation(IActivation):
          signal constraints.
         :return: Should return True.
         """
+        if self.death_clock is not None:
+            self._reset_death_clock()
         return self.constraint.acquire(spike, self)
 
     def secs_to_ticks(self, seconds: float) -> int:
@@ -119,6 +123,17 @@ class Activation(IActivation):
         :return: An integer tick count.
         """
         return self.ctx.secs_to_ticks(seconds)
+
+    def pressure(self):
+        """
+        Called by CausalGroup, to pressure the activation to
+         make a decision on whether it is going to retain a reference
+         to the given spike, given that there is a lower-
+         specificity activation which is ready to run.
+        """
+        # Add one to compensate for acquire-update order in context run
+        if self.death_clock is None:
+            self._reset_death_clock()
 
     def spiky(self) -> bool:
         """
@@ -169,7 +184,7 @@ class Activation(IActivation):
             for signal in self.constraint.signals():
                 if signal.spike:
                     with signal.spike.causal_group() as cg:
-                        cg.rejected(signal.spike, self)
+                        cg.rejected(signal.spike, self, reason=2)
                     signal.spike = None
 
             # Withdraw from context for all (unfulfilled) signals (there might
@@ -186,12 +201,26 @@ class Activation(IActivation):
 
             # Do not further iterate over candidate conjunctions
             return True
+
+        # Update auto-elimination countdown
+        if self.death_clock is not None:
+            self.death_clock -= 1
+            if self.death_clock <= 0:
+                self.death_clock = None
+                logger.info(f"{self} chose to auto-eliminate.")
+                self.dereference(reacquire=True, reject=True)
+
         return False
 
     def run(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+        logger.info(f"Activating {self}")
         Thread(target=self._run_private).start()
+
+    def _reset_death_clock(self):
+        self.death_clock = 1 + self.ctx.lowest_upper_bound_eta(set(
+            sig for sig in self.constraint.signals() if not sig.spike))
 
     def _unique_consenting_causal_groups(self) -> Set[CausalGroup]:
         # if a signal was emitted by this activation, the consenting

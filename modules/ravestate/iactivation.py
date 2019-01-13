@@ -83,18 +83,13 @@ class IActivation:
         """
         pass
 
-    def pressure(self, give_me_up: ISpike):
+    def pressure(self):
         """
         Called by CausalGroup, to pressure the activation to
          make a decision on whether it is going to retain a reference
          to the given spike, given that there is a lower-
          specificity activation which is ready to run.
         """
-        # TODO: Implement Activation.pressure(). Impl will use Context.lowest_upper_bound_eta(signals)
-        #  to get a time estimate on when progress on the activations constraints
-        #  is to be expected. If progress is not made within the predicted
-        #  time period, the activation is going to auto-eliminate for the pressured
-        #  spikes.
         pass
 
     def secs_to_ticks(self, seconds: float) -> int:

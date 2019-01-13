@@ -6,7 +6,7 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-def s(signal_name: str, *, min_age=0, max_age=1., detached=False):
+def s(signal_name: str, *, min_age=0, max_age=5., detached=False):
     """
     Alias to call Signal-constructor
     :param signal_name: Name of the Signal
@@ -102,7 +102,7 @@ class Signal(Constraint):
         yield Conjunct(self)
 
     def acquire(self, spike: Spike, act: IActivation):
-        if self.name == spike.name() and (self.max_age < 0 or spike.age() <= act.secs_to_ticks(self.max_age)):
+        if not self.spike and self.name == spike.name() and (self.max_age < 0 or spike.age() <= act.secs_to_ticks(self.max_age)):
             self._min_age_ticks = act.secs_to_ticks(self.min_age)
             self.spike = spike
             with spike.causal_group() as cg:
@@ -121,9 +121,9 @@ class Signal(Constraint):
 
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
         # Reject spike, once it has become too old
-        if self.spike and self.max_age > 0 and self.spike.age() > act.secs_to_ticks(self.max_age):
+        if self.spike and self.max_age >= 0 and self.spike.age() > act.secs_to_ticks(self.max_age):
             with self.spike.causal_group() as cg:
-                cg.rejected(self.spike, act)
+                cg.rejected(self.spike, act, reason=1)
                 self.spike = None
                 yield self
 
@@ -135,7 +135,8 @@ class Conjunct(Constraint):
     """
     Class that represents a Conjunction of Signals
     """
-    _signals: Set[Signal] = set()
+    _signals: Set[Signal]
+    _hash: Tuple[str]
 
     def __init__(self, *args):
         for arg in args:
@@ -143,6 +144,7 @@ class Conjunct(Constraint):
                 logger.error("Conjunct can only be constructed with Signals.")
                 raise ValueError
         self._signals = set(args)
+        self._hash = hash(tuple(sorted(sig.name for sig in self._signals)))
 
     def __iter__(self):
         for signal in self._signals:
@@ -169,6 +171,12 @@ class Conjunct(Constraint):
 
     def __contains__(self, item):
         return item in self._signals
+
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, other):
+        return isinstance(other, Conjunct) and self._hash == other._hash
 
     def signals(self) -> Generator['Signal', None, None]:
         return (sig for sig in self._signals)
@@ -199,7 +207,7 @@ class Disjunct(Constraint):
     """
     Class that represents a Disjunction of Conjunctions
     """
-    _conjunctions: Set[Conjunct] = set()
+    _conjunctions: Set[Conjunct]
 
     def __init__(self, *args):
         for arg in args:
