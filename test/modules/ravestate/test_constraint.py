@@ -1,45 +1,46 @@
-import pytest
+from ravestate.testfixtures import *
 from ravestate.constraint import s
+from ravestate.spike import Spike
 
 
-def test_signal():
+def test_signal(activation_fixture):
     sig = s("mysig")
     assert not sig.evaluate()
-    assert sig.get_all_signals() == {s("mysig")}
-    sig.set_signal_true(s("notmysig"))
+    assert set(sig.signals()) == {s("mysig")}
+    sig.acquire(Spike(sig="notmysig"), activation_fixture)
     assert not sig.evaluate()
-    sig.set_signal_true(s("mysig"))
+    sig.acquire(Spike(sig="mysig"), activation_fixture)
     assert sig.evaluate()
 
     sig_and_dis = s("sig") & (s("dis") | s("junct"))
     assert not sig_and_dis.evaluate()
-    sig_and_dis.set_signal_true(s("sig"))
+    sig_and_dis.acquire(Spike(sig="sig"), activation_fixture)
     assert not sig_and_dis.evaluate()
-    sig_and_dis.set_signal_true(s("junct"))
+    sig_and_dis.acquire(Spike(sig="junct"), activation_fixture)
     assert sig_and_dis.evaluate()
 
 
-def test_conjunct():
+def test_conjunct(activation_fixture):
     conjunct = s("sig1") & s("sig2") & s("sig3")
     assert not conjunct.evaluate()
-    assert conjunct.get_all_signals() == {s("sig1"), s("sig2"), s("sig3")}
-    conjunct.set_signal_true(s("sig1"))
+    assert set(conjunct.signals()) == {s("sig1"), s("sig2"), s("sig3")}
+    conjunct.acquire(Spike(sig="sig1"), activation_fixture)
     assert not conjunct.evaluate()
-    conjunct.set_signal_true(s("sig2"))
+    conjunct.acquire(Spike(sig="sig2"), activation_fixture)
     assert not conjunct.evaluate()
-    conjunct.set_signal_true(s("sig2"))
+    conjunct.acquire(Spike(sig="sig2"), activation_fixture)
     assert not conjunct.evaluate()
-    conjunct.set_signal_true(s("sig3"))
+    conjunct.acquire(Spike(sig="sig3"), activation_fixture)
     assert conjunct.evaluate()
 
 
-def test_disjunct():
+def test_disjunct(activation_fixture):
     disjunct = (s("sig1") & s("sig2")) | s("sig3")
     assert not disjunct.evaluate()
-    assert disjunct.get_all_signals() == {s("sig1"), s("sig2"), s("sig3")}
-    disjunct.set_signal_true(s("sig1"))
+    assert set(disjunct.signals()) == {s("sig1"), s("sig2"), s("sig3")}
+    disjunct.acquire(Spike(sig="sig1"), activation_fixture)
     assert not disjunct.evaluate()
-    disjunct.set_signal_true(s("sig3"))
+    disjunct.acquire(Spike(sig="sig3"), activation_fixture)
     assert disjunct.evaluate()
 
 

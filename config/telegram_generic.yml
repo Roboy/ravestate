@@ -1,6 +1,8 @@
+---
 module: core
 config:
   import:
+    - ravestate_telegramio
     - ravestate_conio
     - ravestate_wildtalk
     - ravestate_nlp

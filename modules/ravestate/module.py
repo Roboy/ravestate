@@ -19,13 +19,15 @@ class Module:
         if not isinstance(props, tuple):
             props = (props,)
         if not isinstance(states, tuple):
-            props = (states,)
+            states = (states,)
         if not config:
             config = {}
+
         self.name = name
         self.props = props
         self.states = states
         self.conf = config
+
         for prop in props:
             prop.set_parent_path(name)
         for st in states:

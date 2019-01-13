@@ -1,12 +1,9 @@
-import pytest
+from ravestate.testfixtures import *
 from ravestate.constraint import s
-from testfixtures import LogCapture
-
 from ravestate.icontext import IContext
 from ravestate.state import State
 from ravestate.property import PropertyBase
 from ravestate.wrappers import PropertyWrapper, ContextWrapper
-from reggol import strip_prefix
 
 DEFAULT_MODULE_NAME = 'module'
 DEFAULT_PROPERTY_NAME = 'property'
@@ -35,13 +32,13 @@ def state_mock(mocker):
     state_mock = mocker.Mock(name=State.__class__)
     state_mock.module_name = DEFAULT_MODULE_NAME
     state_mock.read_props = ()
-    state_mock.write_props = ()
+    state_mock.resources = ()
     return state_mock
 
 
 @pytest.fixture
 def default_property_base():
-    prop = PropertyBase(name=DEFAULT_PROPERTY_NAME, default=DEFAULT_PROPERTY_VALUE)
+    prop = PropertyBase(name=DEFAULT_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE)
     prop.set_parent_path(DEFAULT_MODULE_NAME)
     return prop
 
@@ -63,7 +60,7 @@ def under_test_read_write(default_property_base, context_mock):
 
 @pytest.fixture
 def under_test_context_wrapper(context_mock, state_mock):
-    return ContextWrapper(context_mock, state_mock)
+    return ContextWrapper(ctx=context_mock, st=state_mock)
 
 
 def test_property(under_test_read_only: PropertyWrapper, default_property_base: PropertyBase):
@@ -102,17 +99,20 @@ def test_property_write(under_test_read_write: PropertyWrapper, default_property
     assert (default_property_base._lock.locked())
     under_test_read_write.set(NEW_PROPERTY_VALUE)
     assert (under_test_read_write.get() == NEW_PROPERTY_VALUE)
-    context_mock.emit.assert_called_once_with(s(f"{under_test_read_write.prop.fullname()}:changed"))
+    context_mock.emit.assert_called_once_with(
+        s(f"{under_test_read_write.prop.fullname()}:changed"),
+        parents=None,
+        wipe=True)
 
 
 def test_property_child(under_test_read_write: PropertyWrapper, default_property_base, context_mock):
-    assert under_test_read_write.push(PropertyBase(name=CHILD_PROPERTY_NAME, default=DEFAULT_PROPERTY_VALUE))
+    assert under_test_read_write.push(PropertyBase(name=CHILD_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE))
     assert list(under_test_read_write.enum())[0] == CHILD_PROPERTY_FULLNAME
     assert under_test_read_write.prop.children[CHILD_PROPERTY_NAME].read() == DEFAULT_PROPERTY_VALUE
 
 
 def test_property_illegal_push(context_mock):
-    prop_no_push = PropertyBase(name=DEFAULT_PROPERTY_NAME, default=DEFAULT_PROPERTY_VALUE, allow_push=False)
+    prop_no_push = PropertyBase(name=DEFAULT_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE, allow_push=False)
     prop_no_push.set_parent_path(DEFAULT_MODULE_NAME)
     wrapper = PropertyWrapper(prop=prop_no_push, ctx=context_mock, allow_read=True, allow_write=True)
     with LogCapture(attributes=strip_prefix) as log_capture:
@@ -123,7 +123,7 @@ def test_property_illegal_push(context_mock):
 
 
 def test_property_illegal_pop(context_mock):
-    prop_no_pop = PropertyBase(name=DEFAULT_PROPERTY_NAME, default=DEFAULT_PROPERTY_VALUE, allow_pop=False)
+    prop_no_pop = PropertyBase(name=DEFAULT_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE, allow_pop=False)
     prop_no_pop.set_parent_path(DEFAULT_MODULE_NAME)
     wrapper = PropertyWrapper(prop=prop_no_pop, ctx=context_mock, allow_read=True, allow_write=True)
     assert wrapper.push(child=PropertyBase(name=CHILD_PROPERTY_NAME))

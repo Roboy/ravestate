@@ -1,10 +1,10 @@
 # Ravestate property classes
 
 from threading import Lock
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Generator
+from ravestate.constraint import s, Signal
 
 from reggol import get_logger
-
 logger = get_logger(__name__)
 
 
@@ -21,17 +21,15 @@ class PropertyBase:
             allow_write=True,
             allow_push=True,
             allow_pop=True,
-            allow_delete=True,
-            default=None,
-            always_signal_changed=False, ):
+            default_value=None,
+            always_signal_changed=False):
 
         self.name = name
         self.allow_read = allow_read
         self.allow_write = allow_write
         self.allow_push = allow_push
         self.allow_pop = allow_pop
-        self.allow_delete = allow_delete
-        self.value = default
+        self.value = default_value
         self.children: Dict[str, PropertyBase] = dict()
         self._lock = Lock()
         self.parent_path: str = ""
@@ -121,3 +119,32 @@ class PropertyBase:
             logger.error(f"Tried to remove non-existent child-property {self.fullname()}:{child_name}")
             return False
 
+    def changed_signal(self) -> Signal:
+        """
+        Signal that is emitted by PropertyWrapper when #write() returns True.
+        """
+        return s(f"{self.fullname()}:changed")
+
+    def pushed_signal(self) -> Signal:
+        """
+        Signal that is emitted by PropertyWrapper when #push() returns True.
+        """
+        return s(f"{self.fullname()}:pushed")
+
+    def popped_signal(self) -> Signal:
+        """
+        Signal that is emitted by PropertyWrapper when #pop() returns True.
+        """
+        return s(f"{self.fullname()}:popped")
+
+    def signals(self) -> Generator[Signal, None, None]:
+        """
+        Yields all signals that may be emitted because of
+         this property, given it's write/push/pop permissions.
+        """
+        if self.allow_write:
+            yield self.changed_signal()
+        if self.allow_push:
+            yield self.pushed_signal()
+        if self.allow_pop:
+            yield self.popped_signal()
