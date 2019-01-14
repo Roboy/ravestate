@@ -60,7 +60,7 @@ class Triple:
                 return True
         return False
 
-    def is_question(self, question_word: Optional[str]=None):
+    def is_question(self, question_word: Optional[str] = None):
         if question_word:
             return self.match_either_lemma(obj={question_word}, subj={question_word})
         else:
@@ -92,7 +92,7 @@ class Triple:
     def __str__(self):
         sub = ''
         pred = ''
-        pred_sub = ''
+        pred_aux = ''
         obj = ''
         space = ''
         if self._subject:
@@ -100,16 +100,16 @@ class Triple:
         if self._predicate:
             pred = self._predicate.lemma_
         if self._predicate_aux and not self._predicate_aux.text == " ":
-            pred_sub = self._predicate_aux.lemma_
+            pred_aux = self._predicate_aux.lemma_
             space = ' '
         if self._object:
             obj = self._object.text
-        return f'{sub}:{pred}{space}{pred_sub}:{obj}'.lower()
+        return f'{sub}:{pred}{space}{pred_aux}:{obj}'.lower()
 
     def __repr__(self):
         sub = ''
         pred = ''
-        pred_sub = ''
+        pred_aux = ''
         obj = ''
         space = ''
         if self._subject:
@@ -117,8 +117,8 @@ class Triple:
         if self._predicate:
             pred = self._predicate.lemma_
         if self._predicate_aux and not self._predicate_aux.text == " ":
-            pred_sub = self._predicate_aux.lemma_
+            pred_aux = self._predicate_aux.lemma_
             space = ' '
         if self._object:
             obj = self._object.text
-        return f'<Triple object {sub}:{pred}{space}{pred_sub}:{obj}>'
+        return f'<Triple object {sub}:{pred}{space}{pred_aux}:{obj}>'

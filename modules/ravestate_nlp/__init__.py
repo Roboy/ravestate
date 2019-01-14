@@ -23,8 +23,8 @@ VERB_AUX_SET = {'VERB', 'ADJ'}
 def init_model():
     global nlp
     nlp = spacy.load('en_core_web_sm')
-    roboy_names = ('you', 'roboy', 'robot', 'roboboy', 'your')
-    roboy_getter = lambda doc: any(roboy in doc.text.lower() for roboy in roboy_names)
+    about_roboy = ('you', 'roboy', 'robot', 'roboboy', 'your')
+    roboy_getter = lambda doc: any(roboy in doc.text.lower() for roboy in about_roboy)
     from spacy.tokens import Doc
     Doc.set_extension('about_roboy', getter=roboy_getter)
     Doc.set_extension('triple', getter=extract_triples)
@@ -33,8 +33,30 @@ def init_model():
 def extract_triples(doc):
     """
     triple: subject, predicate, object
-    finding the triple of a sentence: determine all the dependencies
-    starts with predicate and searches through the dependency tree -> triple_search()
+    finding the triple of a sentence:
+    this is done by using the dependency tree of the sentence
+    a dependency tree shows the relation between the words of a sentence
+    the finite verb (predicate) is the structural center of the sentence and therefor of the tree
+    so starting with the predicate the algorithm searches through the dependency tree to find subject and object
+    -> triple_search()
+
+    examples:
+    - How are you?
+     tree depth = 1     predicate: "are"
+                            -> relation to "how": adverbial modifier (advmod) => object of this sentence
+                            -> relation to "you": nominal subject (nsubj) => subject of this sentence
+
+    - How old are you?
+    tree depth = 2      predicate: "are"
+                            -> relation to "old": adjectival complement (acomp) => auxiliary predicate
+                                    -> relation to "how":  adverbial modifier (advmod) => object of this sentence
+                            -> relation to "you": nominal subject (nsubj) => subject of this sentence
+
+    - Who is your father?
+    tree depth = 2      predicate: "is"
+                            -> relation to "who": nominal subject (nsubj) => subject of this sentence
+                            -> relation to "father": attribute (attr) => object of this sentence
+                                    ->relation to "your": possession modifier (poss)
     """
     triples = []
     for token in doc:
@@ -44,7 +66,7 @@ def extract_triples(doc):
     return triples
 
 
-def triple_search(triple: Triple, token: Token): 
+def triple_search(triple: Triple, token: Token):
     """
     Recursive search through the dependency tree
     looks for triple values in each of the children and calls itself with the children nodes

@@ -1,15 +1,9 @@
 from ravestate import registry
 from ravestate.state import state
 from ravestate.constraint import s
-from ravestate_nlp.rdf_triple import Triple
 from ravestate_nlp.question_words import QuestionWord
 import ravestate_ontology
 from ravestate_verbaliser import verbaliser
-
-from scientio.session import Session
-from scientio.ontology.node import Node
-
-from spacy.tokens import Token
 
 from os.path import realpath, dirname, join
 import random
@@ -33,7 +27,7 @@ ROBOY_NODE_CONF_KEY = "roboy_node_id"
 def roboyqa(ctx):
     """
     answers question regarding roboy by retrieving the information out of the neo4j roboy memory graph
-    state gets triggerd when nlp extracts a new triple: subject, predicate, object
+    state gets triggered when nlp extracts a new triple: subject, predicate, object
     by analysing the triple the content of the question can be ascertained 
     the necessary information is gathered using the neo4j memory session
     if the triple combination is known and the information could be retrieved an answer will be given
@@ -43,23 +37,20 @@ def roboyqa(ctx):
     - what is your name?
     - how old are you?
     - what is your age?
-    - what is your hobby
-    - TODO what are your hobbies
-    - what do you like
+    - what is your hobby?
+    - what are your hobbies?
+    - what do you like?
     - where are you from?
     - where do you live?
-    - who is your father/dad
-    - who is your brother/sibling
-    - who is your friend
+    - who is your father/dad?
+    - who is your brother/sibling?
+    - who is your friend?
     - what do you want to become?
-    - TODO what do you see in your future
     - what are you a member of?
-    - what can you do
-    - what are your skills
-    - TODO what skills do you have
-    - what have you learned
-    - what are your abilities
-    - TODO what abilities do you have
+    - what can you do?
+    - what are your skills?
+    - what have you learned?
+    - what are your abilities?
     """
     sess = ravestate_ontology.get_session()
     roboy = sess.retrieve(node_id=ctx.conf(key=ROBOY_NODE_CONF_KEY))[0]
@@ -68,6 +59,7 @@ def roboyqa(ctx):
     category = None
     memory_info = None
 
+    # question word: What?
     if triple.is_question(QuestionWord.OBJECT):
         if triple.match_either_lemma(pred={"like"}, subj={"hobby"}):
             category = "HAS_HOBBY"
@@ -82,12 +74,14 @@ def roboyqa(ctx):
             category = "full_name"
             memory_info = roboy.get_properties(key=category)
         elif triple.match_either_lemma(pred={"become"}):
-            category = "future"   
+            category = "future"
+    # question word: Where?
     elif triple.is_question(QuestionWord.PLACE):
         if triple.match_either_lemma(pred={"be"}):
             category = "FROM"
         elif triple.match_either_lemma(pred={"live"}):
             category = "LIVE_IN"
+    # question word: Who?
     elif triple.is_question(QuestionWord.PERSON):
         if triple.match_either_lemma(obj={"father", "dad"}):
             category = "CHILD_OF"
@@ -100,6 +94,7 @@ def roboyqa(ctx):
             memory_info = roboy.get_properties(key=category)
     elif triple.match_either_lemma(obj={"part", "member"}):
         category = "MEMBER_OF"
+    # question word: How?
     elif triple.is_question(QuestionWord.FORM):
         if triple.match_either_lemma(pred={"old"}):
             category = "age"
