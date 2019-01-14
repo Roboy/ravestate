@@ -16,15 +16,21 @@
 ---
 module: core
 config:
-  tickrate: 5
+  tickrate: 10
   import:
     - ravestate_interloc
     - ravestate_conio
     - ravestate_wildtalk
     - ravestate_nlp
     - ravestate_hibye
+    - ravestate_roboyqa
 
 ---
 module: genqa
 config:
   genqa_server_address: "http://localhost:4999"
+
+---
+module: roboyqa
+config:
+  roboy_node_id: 356

@@ -4,6 +4,7 @@ from threading import Thread, Lock, Event
 from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
 from collections import defaultdict
 from math import ceil
+from copy import deepcopy
 
 from ravestate.icontext import IContext
 from ravestate.module import Module
@@ -324,7 +325,7 @@ class Context(IContext):
          signals to arrive. Fixed value (1) for now.
         """
         # TODO: Proper implementation w/ state runtime_upper_bound
-        return 1
+        return 3
 
     def signal_specificity(self, sig: Signal) -> float:
         """
@@ -463,7 +464,7 @@ class Context(IContext):
                 Conjunct(*conj_signals)
                 for conj_signals in self._complete_conjunction(conj, known_signals))
             assert len(known_signals) == 0
-        st.constraint_ = Disjunct(*new_conjuncts)
+        st.constraint_ = Disjunct(*{conj for conj in new_conjuncts})
 
     def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
         result = [set(conj.signals())]
@@ -472,7 +473,7 @@ class Context(IContext):
             if completion is not None and len(completion) > 0:
                 # the signal is non-cyclic, and has at least one cause (secondary signal).
                 #  permute existing disjunct conjunctions with new conjunction(s)
-                result = [result_conj | completion_conj for result_conj in result for completion_conj in completion]
+                result = [deepcopy(result_conj) | deepcopy(completion_conj) for result_conj in result for completion_conj in completion]
         return result
 
     def _complete_signal(self, sig: Signal, known_signals: Set[Signal]) -> Optional[List[Set[Signal]]]:

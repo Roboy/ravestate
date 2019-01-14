@@ -2,11 +2,11 @@ stanfordcorenlp
 argparse
 pyyaml>=4.2b1
 watson-developer-cloud>=2.2.6
-PyAudio
 Flask
 python-telegram-bot
 pyyaml-include
 roboy_parlai>=0.1.post3
+scientio
 spacy
 https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.0.0/en_core_web_sm-2.0.0.tar.gz
 pytest

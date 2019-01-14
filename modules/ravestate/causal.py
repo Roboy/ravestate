@@ -184,15 +184,18 @@ class CausalGroup:
             self._ref_index[prop][spike][acquired_by] += 1
         return True
 
-    def rejected(self, spike: 'ISpike', rejected_by: IActivation) -> None:
+    def rejected(self, spike: 'ISpike', rejected_by: IActivation, reason: int) -> None:
         """
         Called by a state activation, to notify the group that a member spike
          is no longer being referenced for the given state's write props.
-        This may be either because the state activation resigned,
-         or because this spike got too old.
+        This may be because ...
+         * ... the state activation auto-eliminated. (reason=0)
+         * ... the spike got too old. (reason=1)
+         * ... the activation is happening and dereferencing it's spikes. (reason=2)
         :param spike: The member spike whose ref-set should be reduced.
         :param rejected_by: State activation instance, which is no longer
          interested in this property.
+        :param reason: See about.
         """
         for prop in rejected_by.resources():
             if prop in self._ref_index and \
@@ -210,6 +213,8 @@ class CausalGroup:
                 del self._ref_index[prop][spike][rejected_by]
                 if len(self._ref_index[prop][spike]) == 0:
                     del self._ref_index[prop][spike]
+        if reason == 1:
+            logger.debug(f"{self}.rejected({spike} by {rejected_by} due to age)")
 
     def consent(self, ready_suitor: IActivation) -> bool:
         """
@@ -223,23 +228,34 @@ class CausalGroup:
         :return: True if this instance agrees to proceeding with the given consumer
          for the consumer's write props, False otherwise.
         """
-        # TODO: Gather candidate state activations that compete with ready_suitor
-        #  For now, just abort once the first higher-specificity candidate is found.
         specificity = ready_suitor.specificity()
+        higher_specificity_acts = set()
+        highest_higher_specificity = .0
+        highest_higher_specificity_act = None
         for prop in ready_suitor.resources():
             if prop in self._available_resources:
                 for spike in self._ref_index[prop]:
                     for candidate in self._ref_index[prop][spike]:
-                        # TODO: Call pressure() on higher specificity candidates to make a decision
-                        if candidate.specificity() > specificity:
-                            logger.debug(
-                                f"{self}.consent({ready_suitor})->N: "
-                                f"{str(specificity)[:4]} < {str(candidate.specificity())[:4]} ({candidate})")
-                            return False
+                        if candidate not in higher_specificity_acts:
+                            cand_specificity = candidate.specificity()
+                            if cand_specificity > specificity:
+                                higher_specificity_acts.add(candidate)
+                                if cand_specificity > highest_higher_specificity:
+                                    highest_higher_specificity = cand_specificity
+                                    highest_higher_specificity_act = candidate
             else:
                 # Easy exit condition: prop not free for writing
                 logger.debug(f"{self}.consent({ready_suitor})->N: {prop} unavailable.")
                 return False
+
+        if higher_specificity_acts:
+            highest_higher_specificity_act.pressure()
+            logger.debug(
+                f"{self}.consent({ready_suitor})->N: "
+                f"{str(specificity)[:4]} < {str(highest_higher_specificity)[:4]} "
+                f"({highest_higher_specificity_act} + {len(higher_specificity_acts)-1} others)")
+            return False
+
         logger.debug(f"{self}.consent({ready_suitor})->Y")
         return True
 
@@ -259,7 +275,8 @@ class CausalGroup:
         Called by activation, to let the causal group know that it failed,
          and a less specific activation may now be considered for
          the resigned state's write props.
-        :param unconsumed_props: The props that are available for writing again.
+        :param act: The activation that is unexpectedly not consuming it's resources,
+         because it's state resigned/failed.
         """
         # Mark the act's w-props as available again
         self._available_resources |= act.resources()
