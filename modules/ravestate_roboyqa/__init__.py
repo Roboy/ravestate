@@ -37,6 +37,29 @@ def roboyqa(ctx):
     by analysing the triple the content of the question can be ascertained 
     the necessary information is gathered using the neo4j memory session
     if the triple combination is known and the information could be retrieved an answer will be given
+
+    list of questions that can be answered:
+    - who are you?
+    - what is your name?
+    - how old are you?
+    - what is your age?
+    - what is your hobby
+    - TODO what are your hobbies
+    - what do you like
+    - where are you from?
+    - where do you live?
+    - who is your father/dad
+    - who is your brother/sibling
+    - who is your friend
+    - what do you want to become?
+    - TODO what do you see in your future
+    - what are you a member of?
+    - what can you do
+    - what are your skills
+    - TODO what skills do you have
+    - what have you learned
+    - what are your abilities
+    - TODO what abilities do you have
     """
     sess = ravestate_ontology.get_session()
     roboy = sess.retrieve(node_id=ctx.conf(key=ROBOY_NODE_CONF_KEY))[0]
@@ -104,18 +127,18 @@ def roboyqa(ctx):
         ctx["rawio:out"] = "Sorry I do not know."
 
 
-def roboy_age(birthdate: str):
+def roboy_age(birth_date: str):
     """
-    Calculates roboys age given his birthdate
-    example: birthdate = "12.04.18"
+    Calculates roboys age given his birth date
+    example: birth date = "12.04.18"
     """
-    # TODO
-    birthdate = datetime.datetime.strptime(birthdate, "%d.%m.%Y")
+    birth_date = datetime.datetime.strptime(birth_date, "%d.%m.%Y")
     today = datetime.datetime.now()
-    if today.year > birthdate.year and today.month > birthdate.month:
-        age = "%d years" % (today.year - birthdate.year - \
-                            ((today.month, today.day) < (birthdate.month, birthdate.day)))
-    age = "%d months" % (12-birthdate.month+today.month)
+    if today.year > birth_date.year and today.month > birth_date.month:
+        age = "%d years" % (today.year - birth_date.year - \
+                            ((today.month, today.day) < (birth_date.month, birth_date.day)))
+    else:
+        age = "%d months" % (12-birth_date.month+today.month)
     return age
 
 
