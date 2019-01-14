@@ -131,7 +131,6 @@ class Activation(IActivation):
          to the given spike, given that there is a lower-
          specificity activation which is ready to run.
         """
-        # Add one to compensate for acquire-update order in context run
         if self.death_clock is None:
             self._reset_death_clock()
 
@@ -204,11 +203,11 @@ class Activation(IActivation):
 
         # Update auto-elimination countdown
         if self.death_clock is not None:
-            self.death_clock -= 1
             if self.death_clock <= 0:
                 self.death_clock = None
                 logger.info(f"{self} chose to auto-eliminate.")
                 self.dereference(reacquire=True, reject=True)
+            self.death_clock -= 1
 
         return False
 
@@ -219,7 +218,7 @@ class Activation(IActivation):
         Thread(target=self._run_private).start()
 
     def _reset_death_clock(self):
-        self.death_clock = 1 + self.ctx.lowest_upper_bound_eta(set(
+        self.death_clock = self.ctx.lowest_upper_bound_eta(set(
             sig for sig in self.constraint.signals() if not sig.spike))
 
     def _unique_consenting_causal_groups(self) -> Set[CausalGroup]:
