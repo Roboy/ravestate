@@ -205,9 +205,10 @@ class Activation(IActivation):
         if self.death_clock is not None:
             if self.death_clock <= 0:
                 self.death_clock = None
-                logger.info(f"{self} chose to auto-eliminate.")
+                logger.info(f"{self} choose to auto-eliminate.")
                 self.dereference(reacquire=True, reject=True)
-            self.death_clock -= 1
+            else:
+                self.death_clock -= 1
 
         return False
 
