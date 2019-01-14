@@ -17,7 +17,8 @@ SUBJECT_SET = {'nsubj'}
 OBJECT_SET = {'dobj', 'attr', 'advmod'}
 PREDICATE_SET = {'ROOT', 'conj'}
 PREDICATE_AUX_SET = {'acomp', 'aux', 'xcomp'}
-VERB = 'VERB'
+VERB_AUX_SET = {'VERB', 'ADJ'}
+
 
 def init_model():
     global nlp
@@ -59,7 +60,7 @@ def triple_search(triple: Triple, token: Token):
             triple.set_object(word)
         if word.dep_ in SUBJECT_SET:
             triple.set_subject(word)
-        if word.dep_ in PREDICATE_AUX_SET and word.pos_ == VERB:
+        if word.dep_ in PREDICATE_AUX_SET and word.pos_ in VERB_AUX_SET:
             triple.set_predicate_aux(word)
         if isinstance(word, Token):
             triple = triple_search(triple, word)
