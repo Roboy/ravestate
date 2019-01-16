@@ -21,7 +21,6 @@ def hello_world_genqa(ctx):
         logger.error('Server address is not set. Shutting down GenQA.')
         return Delete()
     if not server_up(server):
-        logger.error("The DrQA server does not seem to be running correctly. GenQA will not work.")
         return Delete()
 
 
@@ -35,7 +34,6 @@ def drqa_module(ctx):
     """
     server = ctx.conf(key=DRQA_SERVER_ADDRESS)
     if not server_up(server):
-        logger.error("The DrQA server does not seem to be running correctly. GenQA will not work.")
         return Delete()
     params = {'question': ctx["rawio:in"]}
     response = requests.get(server, params=params)
@@ -53,13 +51,12 @@ def drqa_module(ctx):
 
 
 def server_up(server):
+    status = None
     try:
         status = requests.head(server).status_code
-    except requests.exceptions.RequestException:
-        logger.error("The DrQA server does not seem to be running. GenQA will not work.")
-        return Delete()
-    else:
-        return status == SERVER_AVAILABLE_CODE
+    except requests.exceptions.RequestException or requests.exceptions.ConnectionError:
+        logger.error("The DrQA server does not seem to be running. GenQA will not work, so not ask general questions.")
+    return status == SERVER_AVAILABLE_CODE
 
 
 registry.register(
