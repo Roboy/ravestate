@@ -64,6 +64,6 @@ registry.register(
     states=(hello_world_genqa, drqa_module),
     config={
         DRQA_SERVER_ADDRESS: "http://localhost:5000",
-        ROBOY_ANSWER_SANITY: 100000
+        ROBOY_ANSWER_SANITY: 5000
     }
 )
