@@ -27,4 +27,10 @@ config:
 ---
 module: genqa
 config:
-  genqa_server_address: "http://localhost:4999"
+  genqa_server_address: "http://localhost:5000"
+  roboy_answer_sanity: 1000
+
+---
+module: roboyqa
+config:
+  roboy_node_id: 356
