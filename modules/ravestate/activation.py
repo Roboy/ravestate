@@ -205,8 +205,8 @@ class Activation(IActivation):
         if self.death_clock is not None:
             if self.death_clock <= 0:
                 self.death_clock = None
-                logger.info(f"{self} choose to auto-eliminate.")
                 self.dereference(reacquire=True, reject=True)
+                logger.info(f"Eliminated {self}.")
             else:
                 self.death_clock -= 1
 
@@ -252,6 +252,11 @@ class Activation(IActivation):
 
         elif isinstance(result, Delete):
             self.ctx.rm_state(st=self.state_to_activate)
+            if result.resign:
+                for cg in self._unique_consenting_causal_groups():
+                    with cg:
+                        cg.resigned(self)
+                return
 
         elif isinstance(result, Resign):
             for cg in self._unique_consenting_causal_groups():

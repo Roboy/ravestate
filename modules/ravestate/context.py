@@ -5,6 +5,7 @@ from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
 from collections import defaultdict
 from math import ceil
 from copy import deepcopy
+import gc
 
 from ravestate.icontext import IContext
 from ravestate.module import Module
@@ -560,3 +561,6 @@ class Context(IContext):
                 # Increment age on active spikes
                 for spike in self._spikes:
                     spike.tick()
+
+                # Force garbage collect
+                gc.collect()

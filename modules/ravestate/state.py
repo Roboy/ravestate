@@ -19,8 +19,13 @@ class StateActivationResult:
 class Delete(StateActivationResult):
     """
     Return an instance of this class, if the invoked state should be deleted.
+    :param resign: Set to true, if the state being deleted is due to
+     it failing to execute, so a resignation is implied.
+     This means, that the spikes that were allocated for it's activation
+      may be re-used by another state.
     """
-    pass
+    def __init__(self, resign: bool=False):
+        self.resign = resign
 
 
 class Wipe(StateActivationResult):
