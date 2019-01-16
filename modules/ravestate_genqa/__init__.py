@@ -34,7 +34,7 @@ def drqa_module(ctx):
     """
     server = ctx.conf(key=DRQA_SERVER_ADDRESS)
     if not server_up(server):
-        return Delete()
+        return Delete(resign=True)
     params = {'question': ctx["rawio:in"]}
     response = requests.get(server, params=params)
     response_json = response.json()
@@ -55,7 +55,11 @@ def server_up(server):
     try:
         status = requests.head(server).status_code
     except requests.exceptions.RequestException or requests.exceptions.ConnectionError:
-        logger.error("The DrQA server does not seem to be running. GenQA will not work, so not ask general questions.")
+        logger.error(
+            "\n--------"
+            "\nThe DrQA server does not seem to be running. GenQA will not work, so no asking general questions!"
+            "\nTo set up DrQA, follow the instructions here: https://github.com/roboy/drqa."
+            "\n--------")
     return status == SERVER_AVAILABLE_CODE
 
 
