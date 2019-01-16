@@ -30,7 +30,7 @@ config:
 module: genqa
 config:
   genqa_server_address: "http://localhost:5000"
-  roboy_answer_sanity: 10000
+  roboy_answer_sanity: 1000
 
 ---
 module: roboyqa
