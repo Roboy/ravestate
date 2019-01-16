@@ -1,7 +1,7 @@
 from ravestate import registry
-from ravestate.state import state
+from ravestate.state import state, Resign
 from ravestate.constraint import s
-from ravestate_nlp.question_words import QuestionWord
+from ravestate_nlp.question_word import QuestionWord
 import ravestate_ontology
 from ravestate_verbaliser import verbaliser
 
@@ -119,7 +119,7 @@ def roboyqa(ctx):
     elif category == "well_being":
         ctx["rawio:out"] = verbaliser.get_random_successful_answer(category)
     else:
-        ctx["rawio:out"] = "Sorry I do not know."
+        return Resign()
 
 
 def roboy_age(birth_date: str):

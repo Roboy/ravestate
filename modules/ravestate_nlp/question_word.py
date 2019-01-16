@@ -23,5 +23,7 @@ class QuestionWord:
 
     def __init__(self, token: Token):
         self.text = self.question_words[token.text.lower()]
+        self.lemma_ = self.question_words[token.text.lower()]
         self.pos_ = self.question_pos
         self.dep_ = token.dep_
+        self.is_space = False

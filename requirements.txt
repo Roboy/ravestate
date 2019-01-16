@@ -1,6 +1,6 @@
 stanfordcorenlp
 argparse
-pyyaml>=4.2b1
+pyyaml<4.0
 watson-developer-cloud>=2.2.6
 Flask
 python-telegram-bot
