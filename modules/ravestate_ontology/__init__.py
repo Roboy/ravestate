@@ -7,6 +7,8 @@ from scientio.session import Session
 
 from os.path import realpath, dirname, join
 
+from ravestate_ontology.dummy_session import DummySession
+
 from reggol import get_logger
 logger = get_logger(__name__)
 
@@ -31,12 +33,19 @@ def hello_world_ontology(ctx):
     global onto, sess
     onto = Ontology(path_to_yaml=join(dirname(realpath(__file__)), "ravestate_ontology.yml"))
     # Create a session (with default Neo4j backend)
-    sess = Session(
-        ontology=onto,
-        neo4j_address=ctx.conf(key=NEO4J_ADDRESS_KEY),
-        neo4j_username=ctx.conf(key=NEO4J_USERNAME_KEY),
-        neo4j_password=ctx.conf(key=NEO4J_PASSWORD_KEY))
-
+    try:
+        sess = Session(
+            ontology=onto,
+            neo4j_address=ctx.conf(key=NEO4J_ADDRESS_KEY),
+            neo4j_username=ctx.conf(key=NEO4J_USERNAME_KEY),
+            neo4j_password=ctx.conf(key=NEO4J_PASSWORD_KEY))
+    except Exception:
+        logger.error(
+            "\n--------"
+            f"\nFailed to create scientio session with {ctx.conf(key=NEO4J_ADDRESS_KEY)}!"
+            "\nFor more info on how to set up a server, see https://pypi.org/project/scientio."
+            "\n--------")
+        sess = DummySession()
 
 registry.register(
     name="ontology",
