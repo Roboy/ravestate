@@ -130,10 +130,10 @@ def roboy_age(birth_date: str):
     birth_date = datetime.datetime.strptime(birth_date, "%d.%m.%Y")
     today = datetime.datetime.now()
     if today.year > birth_date.year and today.month > birth_date.month:
-        age = "%d years" % (today.year - birth_date.year - \
+        age = "%d years" % (today.year - birth_date.year -
                             ((today.month, today.day) < (birth_date.month, birth_date.day)))
     else:
-        age = "%d months" % (12-birth_date.month+today.month)
+        age = "%d months" % (12 - birth_date.month+today.month)
     return age
 
 
