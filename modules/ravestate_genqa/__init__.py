@@ -4,15 +4,14 @@ from ravestate_verbaliser import verbaliser
 from ravestate.constraint import s
 
 import requests
-from reggol import get_logger
 
+from reggol import get_logger
 logger = get_logger(__name__)
 
 DRQA_SERVER_ADDRESS: str = "drqa_server_address"
 ROBOY_ANSWER_SANITY: str = "roboy_answer_sanity"
 
 SERVER_AVAILABLE_CODE = 200
-best_answer = 0
 
 
 @state(cond=s(":startup"), write="rawio:out")
@@ -28,28 +27,36 @@ def hello_world_genqa(ctx):
 
 @state(cond=s("nlp:is-question"), read="rawio:in", write="rawio:out")
 def drqa_module(ctx):
-    params = {'question': ctx["rawio:in"]}
+    """
+    general question answering using DrQA through a HTTP server
+    connection check to server
+    post input question and get DrQA answer through the HTTP interface
+    depending on the answer score the answer is introduced as sane or insane/unsure :)
+    """
     server = ctx.conf(key=DRQA_SERVER_ADDRESS)
     if not server_up(server):
         logger.error("The DrQA server does not seem to be running correctly. GenQA will not work.")
         return Delete()
+    params = {'question': ctx["rawio:in"]}
     response = requests.get(server, params=params)
     response_json = response.json()
-    certainty = response_json["answers"][best_answer]["span_score"]
+    certainty = response_json["answers"][0]["span_score"]
+    # sane answer
     if certainty > ctx.conf(key=ROBOY_ANSWER_SANITY):
         ctx["rawio:out"] = verbaliser.get_random_phrase("question-answering-starting-phrases") + " " + \
-                           response_json["answers"][best_answer]["span"]
+                           response_json["answers"][0]["span"]
+    # insane/unsure answer
     else:
         ctx["rawio:out"] = verbaliser.get_random_phrase("unsure-question-answering-phrases") \
-                           % response_json["answers"][best_answer]["span"] \
+                           % response_json["answers"][0]["span"] \
                            + "\n" + "Maybe I can find out more if your rephrase the question for me."
 
 
 def server_up(server):
     try:
         status = requests.head(server).status_code
-    except requests.exceptions.RequestException as e:
-        logger.error(e + ": " + "The DrQA server does not seem to be running. GenQA will not work.")
+    except requests.exceptions.RequestException:
+        logger.error("The DrQA server does not seem to be running. GenQA will not work.")
         return Delete()
     else:
         return status == SERVER_AVAILABLE_CODE
