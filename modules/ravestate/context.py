@@ -100,7 +100,7 @@ class Context(IContext):
             self._core_config[self._tick_rate_config] = 1
 
         # Load required modules
-        for module_name in self._core_config[self.import_modules_config]+modules:
+        for module_name in self._core_config[self._import_modules_config]+modules:
             self.add_module(module_name)
 
     def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False) -> None:
