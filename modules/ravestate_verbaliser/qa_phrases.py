@@ -43,7 +43,8 @@ class QAPhrases:
         """
         Initializes the lists for the different QA-elements with the data in the yaml_data-dict
 
-        :param yaml_data: dict of one section of a yml file with the structure of the above example
+
+        * `yaml_data`: dict of one section of a yml file with the structure of the above example
             converted to a dict by yaml.safe_load_all(path)
         """
 

@@ -1,6 +1,6 @@
 # Ravestate module class
 
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Tuple
 from ravestate.property import PropertyBase
 from ravestate.state import State
 
@@ -12,21 +12,23 @@ class Module:
     """
 
     def __init__(self, *, name: str,
-                 props: List[PropertyBase]=(),
-                 states: List[State]=(),
+                 props: Tuple[PropertyBase]=(),
+                 states: Tuple[State]=(),
                  config: Dict[str, Any]=None):
 
         if not isinstance(props, tuple):
             props = (props,)
         if not isinstance(states, tuple):
-            props = (states,)
+            states = (states,)
         if not config:
             config = {}
+
         self.name = name
         self.props = props
         self.states = states
         self.conf = config
+
         for prop in props:
-            prop.module_name = name
+            prop.set_parent_path(name)
         for st in states:
             st.module_name = name

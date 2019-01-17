@@ -2,16 +2,19 @@
 
 from ravestate.state import State
 from ravestate.wrappers import ContextWrapper
-from ravestate.activation import StateActivation
+from ravestate.activation import Activation
+from typing import Union, Set, Tuple
 
 
-def receptor(*, ctx_wrap: ContextWrapper, write):
+def receptor(*, ctx_wrap: ContextWrapper, write: Union[str, Tuple[str]]):
     """
     A receptor is a special state which can be invoked from outside,
      to push values into the context.
-    :param ctx_wrap: A context wrapper as is always given
+
+    * `ctx_wrap`: A context wrapper as is always given
      into the state functions as their first argument.
-    :param write: The property, or tuple of properties, which are going to be written.
+
+    * `write`: The property, or tuple of properties, which are going to be written.
     """
 
     def receptor_decorator(action):
@@ -20,16 +23,14 @@ def receptor(*, ctx_wrap: ContextWrapper, write):
         receptor_state = State(
             write=write,
             read=(),
-            signal=None,
-            triggers=(),
+            signal_name=None,
+            cond=None,
             action=action,
             is_receptor=True)
 
         def receptor_function(*args, **kwargs):
             nonlocal receptor_state, ctx
-            activation = StateActivation(st=receptor_state, ctx=ctx)
-            act_thread = activation.run(args, kwargs)
-            act_thread.start()
+            Activation(st=receptor_state, ctx=ctx).run(*args, **kwargs)
 
         return receptor_function
 

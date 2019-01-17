@@ -1,0 +1,22 @@
+---
+type: phrases
+name: "question-answering-starting-phrases"
+opts:
+- "I think, the answer is"
+- "I am sure that it is"
+- "How about"
+- "I know for sure, it must be"
+- "Calculating..."
+- "And the answer is"
+- "Ping, got you an answer. Here you go:"
+- "Your request is processed."
+- "Ta-da!"
+---
+type: phrases
+name: "unsure-question-answering-phrases"
+opts:
+- "I am not sure but I think, the answer is %s."
+- "I think I read somewhere that the answer is %s."
+- "Well...I do not know. How about %s."
+- "I doubt that %s is the right answer but that is all that comes to my mind."
+- "I looked it up but I do not believe that %s is the right answer."

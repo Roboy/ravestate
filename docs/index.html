@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
+  
+  <link rel="shortcut icon" href="img/favicon.ico">
+  <title>Home - Ravestate</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Home";
+    var mkdocs_page_input_path = "index.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="js/jquery-2.1.1.min.js" defer></script>
+  <script src="js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="." class="icon icon-home"> Ravestate</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href=".">Home</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#about">About</a></li>
+    
+
+    <li class="toctree-l2"><a href="#dependencies">Dependencies</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#portaudio-on-macos">portaudio on macOS</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l2"><a href="#installation">Installation</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#via-pip">Via PIP</a></li>
+        
+            <li><a class="toctree-l3" href="#for-developers">For developers</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l2"><a href="#running-hello-world">Running Hello World</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#running-with-command-line-spec">Running with command line spec</a></li>
+        
+            <li><a class="toctree-l3" href="#running-with-config-files">Running with config file(s)</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l2"><a href="#running-tests">Running tests</a></li>
+    
+
+    <li class="toctree-l2"><a href="#buildingmaintaining-the-docs">Building/maintaining the docs</a></li>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">API</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="modules/">Modules</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="states/">States</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="properties/">Properties</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="context/">Context</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="config/">Configuration</a>
+                </li>
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href=".">Ravestate</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Home</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <pre><code>                                 _ __    _ __     
+    _ ___ ____  __  ______  ______/ /_____/ /___     
+ _ _ /  \/ __ \/ / / / __ \/ ___\, / __ \, /__  \  
+_ _ / /\/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /     
+  _ \/ _\__/\/ _\__/ ,___/\____/\/\__/\/\/ ,___/
+ _____          _ _\____/             _ _\____/                    
+/_   _\
+ 0&gt;  0&gt; 
+\__⊽__/  (C) Roboy 2019
+   ⋂                                           
+</code></pre>
+
+<h2 id="about">About</h2>
+<p>Ravestate is a reactive library for real-time natural language dialog systems.</p>
+<h2 id="dependencies">Dependencies</h2>
+<h3 id="portaudio-on-macos">portaudio on macOS</h3>
+<p>In order to install PyAudio with pip, you need to install portaudio first using:</p>
+<p><code>brew install portaudio</code></p>
+<h2 id="installation">Installation</h2>
+<h3 id="via-pip">Via PIP</h3>
+<p>The easiest way to install ravestate is through pip:</p>
+<p><code>pip install ravestate</code></p>
+<h3 id="for-developers">For developers</h3>
+<p>First, install dependencies:</p>
+<pre><code class="bash">pip install -r requirements.txt
+
+# To run tests, install pytest, mocking, fixtures...
+pip install -r requirements-dev.txt
+</code></pre>
+
+<p>Then, you may open the repository in any IDE, and mark the
+<code>modules</code> folder as a sources root. </p>
+<h2 id="running-hello-world">Running Hello World</h2>
+<p>Ravestate applications are defined by a configuration,
+which specifies the ravestate modules that should be loaded.</p>
+<p>To run the basic hello world application, run ravestate
+with a config file or command line arguments:</p>
+<h3 id="running-with-command-line-spec">Running with command line spec</h3>
+<p>You can easily run a combination of ravestate modules in a shared context,
+by listing them as arguments to the <code>rasta</code> command, which is installed
+with ravestate:</p>
+<pre><code class="bash">rasta ravestate_conio ravestate_hello_world
+</code></pre>
+
+<p>Run <code>rasta -h</code> to see more options!</p>
+<h3 id="running-with-config-files">Running with config file(s)</h3>
+<p>You may specify a series of config files to configure ravestate context,
+when specifying everything through the command line becomes too laborious:</p>
+<pre><code class="yaml"># In file hello_world.yml
+module: core
+config:
+  import:
+    - ravestate_conio
+    - ravestate_hello_world
+</code></pre>
+
+<p>Then, run <code>rasta</code> with this config file:</p>
+<pre><code class="bash">rasta -f hello_world.yml
+</code></pre>
+
+<h2 id="running-tests">Running tests</h2>
+<p>If you have installed the dependencies from <code>requirements-dev.txt</code> you
+may run the ravestate test suite as follows:</p>
+<p><code>./run_tests.sh</code></p>
+<h2 id="buildingmaintaining-the-docs">Building/maintaining the docs</h2>
+<p>If you have installed the dependencies from <code>requirements-dev.txt</code>,
+generate the docs by running this command at project root:</p>
+<p><code>pydocmd build</code></p>
+<p>The structure and content of the docs are defined in the file <code>pydocmd.yml</code>.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="modules/" class="btn btn-neutral float-right" title="Modules">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+        <span style="margin-left: 15px"><a href="modules/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.0.4
+Build Date UTC : 2019-01-17 00:34:43
+-->

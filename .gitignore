@@ -8,7 +8,10 @@ tts.wav
 keys.yml
 dist/*
 build/*
+_build/*
+*.log
 *.egg-info
 ros2/build
 ros2/install
 ros2/log
+mkdocs.yml
