@@ -15,7 +15,8 @@ def set_default_loglevel(loglevel: str) -> None:
     """
     Set the default loglevel. Should be one of the loglevels
      known by python's logging.
-    :param loglevel: The name of the loglevel.
+
+    * `loglevel`: The name of the loglevel.
     """
     global _level
     _level = loglevel
@@ -24,7 +25,8 @@ def set_default_loglevel(loglevel: str) -> None:
 def set_default_logpath(logpath: str) -> None:
     """
     Set the default logger for all subsequent get_logger calls.
-    :param logpath: The directory under which to store logfiles
+
+    * `logpath`: The directory under which to store logfiles
      by default. Will be created if it doesn't exist.
     """
     global _default_logpath
@@ -37,12 +39,15 @@ def set_default_logpath(logpath: str) -> None:
 def get_logger(name: str, logpath: str=None):
     """
     Obtain a file/console logger with a certain name.
-    :param name: The name for the logger. Will appear in all log messages.
-    :param logpath: The path under which a logfile should be created.
+
+    * `name`: The name for the logger. Will appear in all log messages.
+
+    * `logpath`: The path under which a logfile should be created.
      If no path is specified, a default path is used.
      The default path is the working directory if no other path was specified
      by _any_ other reggol client using set_default_logpath(...)!
-    :return: A new logger with the given name.
+
+    **Returns:** A new logger with the given name.
     """
     global _default_logpath
     if not logpath:
@@ -67,7 +72,8 @@ argparser.add_argument('--logdir', '-ld', metavar='DIR', type=str,
 def help_string() -> str:
     """
     Get a string which describes reggols command line arguments.
-    :return: A descriptive help text you can add to your help epilogue.
+
+    **Returns:** A descriptive help text you can add to your help epilogue.
     """
     return "\n".join(argparser.format_help().split("\n")[2:])
 
@@ -76,7 +82,8 @@ def strip_prefix(lr: logging.LogRecord) -> str:
     """
     Split the prefix from a logging record, such that the
      original message may be recovered for tests.
-    :return: The original message from the log record,
+
+    **Returns:** The original message from the log record,
      without `[module] [level] ` prefix.
     """
     return "".join(lr.msg.split("] ")[2:])

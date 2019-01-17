@@ -19,7 +19,8 @@ class StateActivationResult:
 class Delete(StateActivationResult):
     """
     Return an instance of this class, if the invoked state should be deleted.
-    :param resign: Set to true, if the state being deleted is due to
+
+    * `resign`: Set to true, if the state being deleted is due to
      it failing to execute, so a resignation is implied.
      This means, that the spikes that were allocated for it's activation
       may be re-used by another state.
@@ -39,7 +40,8 @@ class Wipe(StateActivationResult):
 class Emit(StateActivationResult):
     """
     Return an instance of this class, if the invoked state's signal should be emitted.
-    :param wipe: Set to true, if context.wipe(signal) should be called before emit,
+
+    * `wipe`: Set to true, if context.wipe(signal) should be called before emit,
      to ensure that there is only one free spike for the given signal.
     """
     def __init__(self, wipe: bool=False):

@@ -21,8 +21,10 @@ class IContext:
          will be `bar:foo`.
         An error message will be generated if no property with the given name was
          added to the context, and None will be returned.
-        :param key: The full name of the property.
-        :return: The property object, or None, if no property with the given name
+
+        * `key`: The full name of the property.
+
+        **Returns:** The property object, or None, if no property with the given name
          was added to the context.
         """
         pass
@@ -31,7 +33,8 @@ class IContext:
         """
         Add a property to this context. An error message will be generated,
          if a property with the same name has already been added previously.
-        :param prop: The property object that should be added.
+
+        * `prop`: The property object that should be added.
         """
         pass
 
@@ -40,7 +43,8 @@ class IContext:
         Remove a property from this context.
         Generates error message, if the property was not added with add_prop()
          to the context previously.
-        :param prop: The property to remove.object
+
+        * `prop`: The property to remove.object
         """
         pass
 
@@ -48,9 +52,12 @@ class IContext:
         """
         Emit a signal to the signal processing loop. Note:
          The signal will only be processed if run() has been called!
-        :param signal: The signal to be emitted.
-        :param parents: The signal's parents, if it is supposed to be integrated into a causal group.
-        :param wipe: Boolean to control, whether wipe(signal) should be called
+
+        * `signal`: The signal to be emitted.
+
+        * `parents`: The signal's parents, if it is supposed to be integrated into a causal group.
+
+        * `wipe`: Boolean to control, whether wipe(signal) should be called
          before the new spike is created.
         """
         pass
@@ -60,7 +67,8 @@ class IContext:
         Delete all spikes for the given signal. Partially fulfilled states
          that have acquired an affected spike will be forced to reject it.
         Wiping a parent spike will also wipe all child spikes.
-        :param signal: The signal for which all existing spikes (and their children)
+
+        * `signal`: The signal for which all existing spikes (and their children)
          should be invalidated and forgotten.
         """
         pass
@@ -69,7 +77,8 @@ class IContext:
         """
         Add a state to this context. It will be indexed wrt/ the properties/signals
          it depends on. Error messages will be generated for unknown signals/properties.
-        :param st: The state which should be added to this context.
+
+        * `st`: The state which should be added to this context.
         """
         pass
 
@@ -77,7 +86,8 @@ class IContext:
         """
         Remove a state from this context. Note, that any state which is constrained
          on the signal that is emitted by the deleted state will also be deleted.
-        :param st: The state to remove. An error message will be generated,
+
+        * `st`: The state to remove. An error message will be generated,
          if the state was not previously added to this context with add_state().
         """
         pass
@@ -97,10 +107,13 @@ class IContext:
     def conf(self, *, mod, key=None):
         """
         Get a single config value, or all config values for a particular module.
-        :param mod: The module whose configuration should be retrieved.
-        :param key: A specific config key of the given module, if only a single
+
+        * `mod`: The module whose configuration should be retrieved.
+
+        * `key`: A specific config key of the given module, if only a single
          config value should be retrieved.
-        :return: The value of a single config entry if key and module are both
+
+        **Returns:** The value of a single config entry if key and module are both
          specified and valid, or a dictionary of config entries if only the
          module name is specified (and valid).
         """
@@ -110,9 +123,11 @@ class IContext:
         """
         Called by activation when it is pressured to resign. The activation wants
          to know the earliest ETA of one of it's remaining required constraints.
-        :param signals: The signals, whose ETA will be calculated, and among the
+
+        * `signals`: The signals, whose ETA will be calculated, and among the
          results the minimum ETA will be returned.
-        :return: Number of ticks it should take for at least one of the required
+
+        **Returns:** Number of ticks it should take for at least one of the required
          signals to arrive. Fixed value (1) for now.
         """
         pass
@@ -120,8 +135,10 @@ class IContext:
     def signal_specificity(self, sig: Signal) -> float:
         """
         Called by state activation to determine it's constraint's specificity.
-        :param sig: The signal whose specificity should be returned.
-        :return: The given signal's specificity.
+
+        * `sig`: The signal whose specificity should be returned.
+
+        **Returns:** The given signal's specificity.
         """
         pass
 
@@ -129,8 +146,10 @@ class IContext:
         """
         Called by activation to go shopping for a new Spike
          for the specified signal, and should for this purpose be referenced by context.
-        :param act: The activation that needs a new spike of the specified nature.
-        :param sig: Signal type for which a new spike is needed.
+
+        * `act`: The activation that needs a new spike of the specified nature.
+
+        * `sig`: Signal type for which a new spike is needed.
         """
         pass
 
@@ -142,8 +161,10 @@ class IContext:
          due to activation pressure, or because one of the activations
          conjunctions was fulfilled, so it is no longer looking for
          signals to fulfill the remaining conjunctions.
-        :param act: The activation that has lost interest in the specified signal.
-        :param sig: Signal type for which interest is lost.
+
+        * `act`: The activation that has lost interest in the specified signal.
+
+        * `sig`: Signal type for which interest is lost.
         """
         pass
 
@@ -151,7 +172,9 @@ class IContext:
         """
         Convert seconds to an equivalent integer number of ticks,
          given this context's tick rate.
-        :param seconds: Seconds to convert to ticks.
-        :return: An integer tick count.
+
+        * `seconds`: Seconds to convert to ticks.
+
+        **Returns:** An integer tick count.
         """
         pass

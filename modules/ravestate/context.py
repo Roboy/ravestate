@@ -25,11 +25,11 @@ logger = get_logger(__name__)
 
 class Context(IContext):
 
-    default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
+    _default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
 
-    core_module_name = "core"
-    import_modules_config = "import"
-    tick_rate_config = "tickrate"
+    _core_module_name = "core"
+    _import_modules_config = "import"
+    _tick_rate_config = "tickrate"
 
     _lock: Lock
 
@@ -68,16 +68,17 @@ class Context(IContext):
     def __init__(self, *arguments):
         """
         Construct a context from command line arguments.
-        :param arguments: A series of command line arguments which can be parsed
+
+        * `arguments`: A series of command line arguments which can be parsed
          by the ravestate command line parser (see argparse.py).
         """
         modules, overrides, config_files = argparse.handle_args(*arguments)
         self._config = Configuration(config_files)
         self._core_config = {
-            self.import_modules_config: [],
-            self.tick_rate_config: 20
+            self._import_modules_config: [],
+            self._tick_rate_config: 20
         }
-        self._config.add_conf(Module(name=self.core_module_name, config=self._core_config))
+        self._config.add_conf(Module(name=self._core_module_name, config=self._core_config))
         self._lock = Lock()
         self._shutdown_flag = Event()
         self._properties = dict()
@@ -88,15 +89,15 @@ class Context(IContext):
         self._run_task = None
 
         # Register default signals
-        for signame in self.default_signal_names:
+        for signame in self._default_signal_names:
             self._add_sig(s(signame))
 
         # Set required config overrides
         for module_name, key, value in overrides:
             self._config.set(module_name, key, value)
-        if self._core_config[self.tick_rate_config] < 1:
+        if self._core_config[self._tick_rate_config] < 1:
             logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
-            self._core_config[self.tick_rate_config] = 1
+            self._core_config[self._tick_rate_config] = 1
 
         # Load required modules
         for module_name in self._core_config[self.import_modules_config]+modules:
@@ -106,9 +107,12 @@ class Context(IContext):
         """
         Emit a signal to the signal processing loop. Note:
          The signal will only be processed if run() has been called!
-        :param signal: The signal to be emitted.
-        :param parents: The signal's parents, if it is supposed to be integrated into a causal group.
-        :param wipe: Boolean to control, whether wipe(signal) should be called
+
+        * `signal`: The signal to be emitted.
+
+        * `parents`: The signal's parents, if it is supposed to be integrated into a causal group.
+
+        * `wipe`: Boolean to control, whether wipe(signal) should be called
          before the new spike is created.
         """
         if wipe:
@@ -122,7 +126,8 @@ class Context(IContext):
         Delete all spikes for the given signal. Partially fulfilled states
          that have acquired an affected spike will be forced to reject it.
         Wiping a parent spike will also wipe all child spikes.
-        :param signal: The signal for which all existing spikes (and their children)
+
+        * `signal`: The signal for which all existing spikes (and their children)
          should be invalidated and forgotten.
         """
         with self._lock:
@@ -165,7 +170,8 @@ class Context(IContext):
     def add_module(self, module_name: str) -> None:
         """
         Add a module by python module folder name, or by ravestate module name.
-        :param module_name: The name of the module to be added. If it is the
+
+        * `module_name`: The name of the module to be added. If it is the
          name of a python module that has not been imported yet, the python module
          will be imported, and any ravestate modules registered during the python
          import will also be added to this context.
@@ -179,7 +185,8 @@ class Context(IContext):
         """
         Add a state to this context. It will be indexed wrt/ the properties/signals
          it depends on. Error messages will be generated for unknown signals/properties.
-        :param st: The state which should be added to this context.
+
+        * `st`: The state which should be added to this context.
         """
         if st in self._activations_per_state:
             logger.error(f"Attempt to add state `{st.name}` twice!")
@@ -228,7 +235,8 @@ class Context(IContext):
         """
         Remove a state from this context. Note, that any state which is constrained
          on the signal that is emitted by the deleted state will also be deleted.
-        :param st: The state to remove. An error message will be generated,
+
+        * `st`: The state to remove. An error message will be generated,
          if the state was not previously added to this context with add_state().
         """
         if st not in self._activations_per_state:
@@ -249,7 +257,8 @@ class Context(IContext):
         """
         Add a property to this context. An error message will be generated, if a property with
          the same name has already been added previously.
-        :param prop: The property object that should be added.
+
+        * `prop`: The property object that should be added.
         """
         if prop.fullname() in self._properties:
             logger.error(f"Attempt to add property {prop.fullname()} twice!")
@@ -265,7 +274,8 @@ class Context(IContext):
         """
         Remove a property from this context.
         Generates error message, if the property was not added with add_prop() to the context previously
-        :param prop: The property to remove.object
+
+        * `prop`: The property to remove.object
         """
         if prop.fullname() not in self._properties:
             logger.error(f"Attempt to remove unknown property {prop.fullname()}!")
@@ -293,8 +303,10 @@ class Context(IContext):
          will be `bar:foo`.
         An error message will be generated if no property with the given name was
          added to the context, and None will be returned.
-        :param key: The full name of the property.
-        :return: The property object, or None, if no property with the given name
+
+        * `key`: The full name of the property.
+
+        **Returns:** The property object, or None, if no property with the given name
          was added to the context.
         """
         if key not in self._properties:
@@ -305,10 +317,13 @@ class Context(IContext):
     def conf(self, *, mod: str, key: Optional[str]=None) -> Any:
         """
         Get a single config value, or all config values for a particular module.
-        :param mod: The module whose configuration should be retrieved.
-        :param key: A specific config key of the given module, if only a single
+
+        * `mod`: The module whose configuration should be retrieved.
+
+        * `key`: A specific config key of the given module, if only a single
          config value should be retrieved.
-        :return: The value of a single config entry if key and module are both
+
+        **Returns:** The value of a single config entry if key and module are both
          specified and valid, or a dictionary of config entries if only the
          module name is specified (and valid).
         """
@@ -320,9 +335,11 @@ class Context(IContext):
         """
         Called by activation when it is pressured to resign. The activation wants
          to know the earliest ETA of one of it's remaining required constraints.
-        :param signals: The signals, whose ETA will be calculated, and among the
+
+        * `signals`: The signals, whose ETA will be calculated, and among the
          results the minimum ETA will be returned.
-        :return: Lowest upper bound number of ticks it should take for at least one of the required
+
+        **Returns:** Lowest upper bound number of ticks it should take for at least one of the required
          signals to arrive. Fixed value (1) for now.
         """
         # TODO: Proper implementation w/ state runtime_upper_bound
@@ -331,8 +348,10 @@ class Context(IContext):
     def signal_specificity(self, sig: Signal) -> float:
         """
         Called by state activation to determine it's constraint's specificity.
-        :param sig: The signal whose specificity should be returned.
-        :return: The given signal's specificity.
+
+        * `sig`: The signal whose specificity should be returned.
+
+        **Returns:** The given signal's specificity.
         """
         # Count activations which are interested in the signal
         if sig not in self._act_per_state_per_signal_age:
@@ -350,8 +369,10 @@ class Context(IContext):
         Called by activation, to indicate, that it needs a new Spike
          for the specified signal, and should for this purpose be referenced by context.
         Note: Not thread-safe, sync must be guaranteed by caller.
-        :param act: The activation that needs a new spike of the specified nature.
-        :param sig: Signal type for which a new spike is needed.
+
+        * `act`: The activation that needs a new spike of the specified nature.
+
+        * `sig`: Signal type for which a new spike is needed.
         """
         assert isinstance(act, Activation)  # No way around it to avoid import loop
         if sig not in self._act_per_state_per_signal_age:
@@ -369,8 +390,10 @@ class Context(IContext):
          conjunctions was fulfilled, so it is no longer looking for
          signals to fulfill the remaining conjunctions.
         Note: Not thread-safe, sync must be guaranteed by caller.
-        :param act: The activation that has lost interest in the specified signal.
-        :param sig: Signal type for which interest is lost.
+
+        * `act`: The activation that has lost interest in the specified signal.
+
+        * `sig`: Signal type for which interest is lost.
         """
         assert isinstance(act, Activation)  # No way around it to avoid import loop
         if sig not in self._act_per_state_per_signal_age:
@@ -383,10 +406,12 @@ class Context(IContext):
         """
         Convert seconds to an equivalent integer number of ticks,
          given this context's tick rate.
-        :param seconds: Seconds to convert to ticks.
-        :return: An integer tick count.
+
+        * `seconds`: Seconds to convert to ticks.
+
+        **Returns:** An integer tick count.
         """
-        return ceil(seconds * float(self._core_config[self.tick_rate_config]))
+        return ceil(seconds * float(self._core_config[self._tick_rate_config]))
 
     def _add_sig(self, sig: Signal):
         if sig in self._act_per_state_per_signal_age:
@@ -500,7 +525,7 @@ class Context(IContext):
 
     def _run_private(self):
 
-        tick_interval = 1. / self._core_config[self.tick_rate_config]
+        tick_interval = 1. / self._core_config[self._tick_rate_config]
         while not self._shutdown_flag.wait(tick_interval):
 
             with self._lock:

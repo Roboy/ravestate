@@ -33,7 +33,8 @@ class Configuration:
     def __init__(self, paths: List[str]):
         """
         Constructor for a Configuration instance.
-        :param paths: Yaml file paths, where each file contains zero or more
+
+        * `paths`: Yaml file paths, where each file contains zero or more
         yaml documents according to the layout described above.
         """
         self.parsed_config_per_module = defaultdict(lambda: {})
@@ -47,7 +48,8 @@ class Configuration:
         Correctly typed values for allowed keys, that were previously
         parsed during construction from the yaml files, will be applied
         immediately.
-        :param mod: A module object with a name and a conf dict.
+
+        * `mod`: A module object with a name and a conf dict.
         """
         if mod.name in self.config_per_module:
             logger.warning(f"add_conf called repeatedly for module name f{mod.name}!")
@@ -58,8 +60,10 @@ class Configuration:
         """
         Retrieve updated config values for a module that was previously
         registered with add_conf.
-        :param module_name: The module name for which configuration should be retrieved.
-        :return: A dictionary which contains exactly the keys that were contained in
+
+        * `module_name`: The module name for which configuration should be retrieved.
+
+        **Returns:** A dictionary which contains exactly the keys that were contained in
         the module configuration dictionary during add_conf, or an empty dictionary
         if the module name is unknown.
         """
@@ -71,9 +75,12 @@ class Configuration:
     def get(self, module_name: str, key: str) -> Any:
         """
         Gte the current value of a config entry.
-        :param module_name: The module that provides the config entry.
-        :param key: A config key for the module that was previously added through add_conf.
-        :return: The current value, or None, if the entry does not exist.
+
+        * `module_name`: The module that provides the config entry.
+
+        * `key`: A config key for the module that was previously added through add_conf.
+
+        **Returns:** The current value, or None, if the entry does not exist.
         """
         if module_name not in self.config_per_module:
             logger.error(f"Attempt to run get() for unknown modname {module_name}!")
@@ -87,9 +94,12 @@ class Configuration:
     def set(self, module_name: str, key: str, value: Any):
         """
         Set the current value of a config entry.
-        :param module_name: The module of the config entry.
-        :param key: A config key for the module that was previously added through add_conf.
-        :param value: The new value for the config entry. An error will be raised,
+
+        * `module_name`: The module of the config entry.
+
+        * `key`: A config key for the module that was previously added through add_conf.
+
+        * `value`: The new value for the config entry. An error will be raised,
          if the type of the new value does not match the type of the old value.
         """
         if module_name not in self.config_per_module:
@@ -114,7 +124,8 @@ class Configuration:
     def write(self, path: str):
         """
         Write all current config entries to a yaml file.
-        :param path: The file path to write. Will be overwritten!
+
+        * `path`: The file path to write. Will be overwritten!
         """
         with open(path, mode='w') as file:
             yaml.safe_dump_all((
@@ -127,7 +138,8 @@ class Configuration:
         """
         Loads all documents from a yaml file and tries to interpret them
         as configuration objects as described above.
-        :param path: The yaml file path from which to load config documents.
+
+        * `path`: The yaml file path from which to load config documents.
         """
         with open(path, mode='r') as file:
             try:

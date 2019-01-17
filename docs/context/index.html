@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Context - Ravestate</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Context";
+    var mkdocs_page_input_path = "context.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Ravestate</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">API</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../modules/">Modules</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../states/">States</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../properties/">Properties</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Context</a>
+    <ul class="subnav">
+            
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../config/">Configuration</a>
+                </li>
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Ravestate</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>API &raquo;</li>
+        
+      
+    
+    <li>Context</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="ravestate.context">ravestate.context</h1>
+
+<h2 id="ravestate.context.Context">Context</h2>
+
+<pre><code class="python">Context(self, *arguments)
+</code></pre>
+
+<h3 id="ravestate.context.Context.emit">emit</h3>
+
+<pre><code class="python">Context.emit(self, signal: ravestate.constraint.Signal, parents: Set[ravestate.spike.Spike] = None, wipe: bool = False) -&gt; None
+</code></pre>
+
+<p>Emit a signal to the signal processing loop. Note:
+ The signal will only be processed if run() has been called!</p>
+<ul>
+<li>
+<p><code>signal</code>: The signal to be emitted.</p>
+</li>
+<li>
+<p><code>parents</code>: The signal's parents, if it is supposed to be integrated into a causal group.</p>
+</li>
+<li>
+<p><code>wipe</code>: Boolean to control, whether wipe(signal) should be called
+ before the new spike is created.</p>
+</li>
+</ul>
+<h3 id="ravestate.context.Context.wipe">wipe</h3>
+
+<pre><code class="python">Context.wipe(self, signal: ravestate.constraint.Signal)
+</code></pre>
+
+<p>Delete all spikes for the given signal. Partially fulfilled states
+ that have acquired an affected spike will be forced to reject it.
+Wiping a parent spike will also wipe all child spikes.</p>
+<ul>
+<li><code>signal</code>: The signal for which all existing spikes (and their children)
+ should be invalidated and forgotten.</li>
+</ul>
+<h3 id="ravestate.context.Context.run">run</h3>
+
+<pre><code class="python">Context.run(self) -&gt; None
+</code></pre>
+
+<p>Creates a signal processing thread, starts it, and emits the :startup signal.</p>
+<h3 id="ravestate.context.Context.shutting_down">shutting_down</h3>
+
+<pre><code class="python">Context.shutting_down(self) -&gt; bool
+</code></pre>
+
+<p>Retrieve the shutdown flag value, which indicates whether shutdown() has been called.</p>
+<h3 id="ravestate.context.Context.shutdown">shutdown</h3>
+
+<pre><code class="python">Context.shutdown(self) -&gt; None
+</code></pre>
+
+<p>Sets the shutdown flag and waits for the signal processing thread to join.</p>
+<h3 id="ravestate.context.Context.add_module">add_module</h3>
+
+<pre><code class="python">Context.add_module(self, module_name: str) -&gt; None
+</code></pre>
+
+<p>Add a module by python module folder name, or by ravestate module name.</p>
+<ul>
+<li><code>module_name</code>: The name of the module to be added. If it is the
+ name of a python module that has not been imported yet, the python module
+ will be imported, and any ravestate modules registered during the python
+ import will also be added to this context.</li>
+</ul>
+<h3 id="ravestate.context.Context.add_state">add_state</h3>
+
+<pre><code class="python">Context.add_state(self, *, st: ravestate.state.State) -&gt; None
+</code></pre>
+
+<p>Add a state to this context. It will be indexed wrt/ the properties/signals
+ it depends on. Error messages will be generated for unknown signals/properties.</p>
+<ul>
+<li><code>st</code>: The state which should be added to this context.</li>
+</ul>
+<h3 id="ravestate.context.Context.rm_state">rm_state</h3>
+
+<pre><code class="python">Context.rm_state(self, *, st: ravestate.state.State) -&gt; None
+</code></pre>
+
+<p>Remove a state from this context. Note, that any state which is constrained
+ on the signal that is emitted by the deleted state will also be deleted.</p>
+<ul>
+<li><code>st</code>: The state to remove. An error message will be generated,
+ if the state was not previously added to this context with add_state().</li>
+</ul>
+<h3 id="ravestate.context.Context.add_prop">add_prop</h3>
+
+<pre><code class="python">Context.add_prop(self, *, prop: ravestate.property.PropertyBase) -&gt; None
+</code></pre>
+
+<p>Add a property to this context. An error message will be generated, if a property with
+ the same name has already been added previously.</p>
+<ul>
+<li><code>prop</code>: The property object that should be added.</li>
+</ul>
+<h3 id="ravestate.context.Context.rm_prop">rm_prop</h3>
+
+<pre><code class="python">Context.rm_prop(self, *, prop: ravestate.property.PropertyBase) -&gt; None
+</code></pre>
+
+<p>Remove a property from this context.
+Generates error message, if the property was not added with add_prop() to the context previously</p>
+<ul>
+<li><code>prop</code>: The property to remove.object</li>
+</ul>
+<h3 id="ravestate.context.Context.conf">conf</h3>
+
+<pre><code class="python">Context.conf(self, *, mod: str, key: Union[str, NoneType] = None) -&gt; Any
+</code></pre>
+
+<p>Get a single config value, or all config values for a particular module.</p>
+<ul>
+<li>
+<p><code>mod</code>: The module whose configuration should be retrieved.</p>
+</li>
+<li>
+<p><code>key</code>: A specific config key of the given module, if only a single
+ config value should be retrieved.</p>
+</li>
+</ul>
+<p><strong>Returns:</strong> The value of a single config entry if key and module are both
+ specified and valid, or a dictionary of config entries if only the
+ module name is specified (and valid).</p>
+<h3 id="ravestate.context.Context.lowest_upper_bound_eta">lowest_upper_bound_eta</h3>
+
+<pre><code class="python">Context.lowest_upper_bound_eta(self, signals: Set[ravestate.constraint.Signal]) -&gt; int
+</code></pre>
+
+<p>Called by activation when it is pressured to resign. The activation wants
+ to know the earliest ETA of one of it's remaining required constraints.</p>
+<ul>
+<li><code>signals</code>: The signals, whose ETA will be calculated, and among the
+ results the minimum ETA will be returned.</li>
+</ul>
+<p><strong>Returns:</strong> Lowest upper bound number of ticks it should take for at least one of the required
+ signals to arrive. Fixed value (1) for now.</p>
+<h3 id="ravestate.context.Context.signal_specificity">signal_specificity</h3>
+
+<pre><code class="python">Context.signal_specificity(self, sig: ravestate.constraint.Signal) -&gt; float
+</code></pre>
+
+<p>Called by state activation to determine it's constraint's specificity.</p>
+<ul>
+<li><code>sig</code>: The signal whose specificity should be returned.</li>
+</ul>
+<p><strong>Returns:</strong> The given signal's specificity.</p>
+<h3 id="ravestate.context.Context.reacquire">reacquire</h3>
+
+<pre><code class="python">Context.reacquire(self, act: ravestate.iactivation.IActivation, sig: ravestate.constraint.Signal)
+</code></pre>
+
+<p>Called by activation, to indicate, that it needs a new Spike
+ for the specified signal, and should for this purpose be referenced by context.
+Note: Not thread-safe, sync must be guaranteed by caller.</p>
+<ul>
+<li>
+<p><code>act</code>: The activation that needs a new spike of the specified nature.</p>
+</li>
+<li>
+<p><code>sig</code>: Signal type for which a new spike is needed.</p>
+</li>
+</ul>
+<h3 id="ravestate.context.Context.withdraw">withdraw</h3>
+
+<pre><code class="python">Context.withdraw(self, act: ravestate.iactivation.IActivation, sig: ravestate.constraint.Signal)
+</code></pre>
+
+<p>Called by activation to make sure that it isn't referenced
+ anymore as looking for the specified signal.
+This might be, because the activation chose to eliminate itself
+ due to activation pressure, or because one of the activations
+ conjunctions was fulfilled, so it is no longer looking for
+ signals to fulfill the remaining conjunctions.
+Note: Not thread-safe, sync must be guaranteed by caller.</p>
+<ul>
+<li>
+<p><code>act</code>: The activation that has lost interest in the specified signal.</p>
+</li>
+<li>
+<p><code>sig</code>: Signal type for which interest is lost.</p>
+</li>
+</ul>
+<h3 id="ravestate.context.Context.secs_to_ticks">secs_to_ticks</h3>
+
+<pre><code class="python">Context.secs_to_ticks(self, seconds: float) -&gt; int
+</code></pre>
+
+<p>Convert seconds to an equivalent integer number of ticks,
+ given this context's tick rate.</p>
+<ul>
+<li><code>seconds</code>: Seconds to convert to ticks.</li>
+</ul>
+<p><strong>Returns:</strong> An integer tick count.</p>
+<h1 id="ravestate.spike">ravestate.spike</h1>
+
+<h2 id="ravestate.spike.Spike">Spike</h2>
+
+<pre><code class="python">Spike(self, *, sig: str, parents: Set[ForwardRef('Spike')] = None, consumable_resources: Set[str] = None)
+</code></pre>
+
+<p>This class encapsulates a single spike, to track ... <br>
+... it's consumption for different output properties (through <code>CausalGroup</code>). <br>
+... it's offspring instances (causal group -&gt; spikes caused by this spike)</p>
+<h3 id="ravestate.spike.Spike.name">name</h3>
+
+<pre><code class="python">Spike.name(self) -&gt; str
+</code></pre>
+
+<p>Returns the name of this spike's signal.</p>
+<h3 id="ravestate.spike.Spike.causal_group">causal_group</h3>
+
+<pre><code class="python">Spike.causal_group(self) -&gt; ravestate.causal.CausalGroup
+</code></pre>
+
+<p>Get this spike's causal group.</p>
+<p><strong>Returns:</strong> This instances causal group. Should never be None.</p>
+<h3 id="ravestate.spike.Spike.adopt">adopt</h3>
+
+<pre><code class="python">Spike.adopt(self, child: 'Spike') -&gt; None
+</code></pre>
+
+<p>Called in spike constructor, for instances which claim to be
+ caused by this spike.</p>
+<ul>
+<li><code>child</code>: The child to add to this spike's causal group.</li>
+</ul>
+<h3 id="ravestate.spike.Spike.wiped">wiped</h3>
+
+<pre><code class="python">Spike.wiped(self, child: 'ISpike') -&gt; None
+</code></pre>
+
+<p>Called by an offspring signal, to notify the spike
+ that it was wiped, and should therefore be removed from the children set.</p>
+<ul>
+<li><code>child</code>: The child to be forgotten.</li>
+</ul>
+<h3 id="ravestate.spike.Spike.wipe">wipe</h3>
+
+<pre><code class="python">Spike.wipe(self, already_wiped_in_causal_group: bool = False) -&gt; None
+</code></pre>
+
+<p>Called either in Context run loop when the spike is found to be stale
+ (with wiped_in_causal_group=True), or in Context.wipe(spike),
+ or by parent (recursively).
+After this function is called, the spike should be cleaned up by GC.</p>
+<ul>
+<li><code>already_wiped_in_causal_group</code>: Boolean which indicates, whether wiped(spike)
+ must still be called on the group to make sure sure that no dangling references
+ to the spike are maintained by any state activations.</li>
+</ul>
+<h3 id="ravestate.spike.Spike.has_offspring">has_offspring</h3>
+
+<pre><code class="python">Spike.has_offspring(self)
+</code></pre>
+
+<p>Called by CausalGroup.stale(spike).</p>
+<p><strong>Returns:</strong> True if the spike has active offspring, false otherwise.</p>
+<h3 id="ravestate.spike.Spike.tick">tick</h3>
+
+<pre><code class="python">Spike.tick(self) -&gt; None
+</code></pre>
+
+<p>Increment this spike's age by 1.</p>
+<h3 id="ravestate.spike.Spike.age">age</h3>
+
+<pre><code class="python">Spike.age(self) -&gt; int
+</code></pre>
+
+<p>Obtain this spike's age (in ticks).</p>
+<h3 id="ravestate.spike.Spike.offspring">offspring</h3>
+
+<pre><code class="python">Spike.offspring(self) -&gt; Generator[ForwardRef('Spike'), NoneType, NoneType]
+</code></pre>
+
+<p>Recursively yields this spike's offspring and it's children's offspring.</p>
+<p><strong>Returns:</strong> All of this spike's offspring spikes.</p>
+<h1 id="ravestate.activation">ravestate.activation</h1>
+
+<h2 id="ravestate.activation.Activation">Activation</h2>
+
+<pre><code class="python">Activation(self, st: ravestate.state.State, ctx: ravestate.icontext.IContext)
+</code></pre>
+
+<p>Encapsulates the potential activation of a state. Tracks the collection
+ of Spikes to fulfill of the state-defined activation constraints.</p>
+<h3 id="ravestate.activation.Activation.resources">resources</h3>
+
+<pre><code class="python">Activation.resources(self) -&gt; Set[str]
+</code></pre>
+
+<p>Return's the set of the activation's write-access property names.</p>
+<h3 id="ravestate.activation.Activation.specificity">specificity</h3>
+
+<pre><code class="python">Activation.specificity(self) -&gt; float
+</code></pre>
+
+<p>Returns the lowest specificity among the specificity values of the
+ activation's conjunct constraints. The specificity for a single conjunction
+ is calculated as the sum of it's component signal's specificities,
+ which in turn is calculated as one over the signal's subscriber count.</p>
+<h3 id="ravestate.activation.Activation.dereference">dereference</h3>
+
+<pre><code class="python">Activation.dereference(self, *, spike: Union[ravestate.iactivation.ISpike, NoneType] = None, reacquire: bool = False, reject: bool = False) -&gt; None
+</code></pre>
+
+<p>Notify the activation, that a single or all spike(s) are not available
+ anymore, and should therefore not be referenced anymore by the activation.
+This is called by ... <br>
+... context when a state is deleted. <br>
+... causal group, when a referenced signal was consumed for a required property. <br>
+... causal group, when a referenced signal was wiped. <br>
+... this activation (with reacquire=True), if it gives in to activation pressure.</p>
+<ul>
+<li>
+<p><code>spike</code>: The spike that should be forgotten by the activation, or
+ none, if all referenced spikes should be forgotten.</p>
+</li>
+<li>
+<p><code>reacquire</code>: Flag which tells the function, whether for every rejected
+ spike, the activation should hook into context for reacquisition
+ of a replacement spike.</p>
+</li>
+<li>
+<p><code>reject</code>: Flag which controls, whether de-referenced spikes
+ should be explicitely rejected through their causal groups.</p>
+</li>
+</ul>
+<h3 id="ravestate.activation.Activation.acquire">acquire</h3>
+
+<pre><code class="python">Activation.acquire(self, spike: ravestate.spike.Spike) -&gt; bool
+</code></pre>
+
+<p>Let the activation acquire a signal it is registered to be interested in.</p>
+<ul>
+<li><code>spike</code>: The signal which should fulfill at least one of this activation's
+ signal constraints.</li>
+</ul>
+<p><strong>Returns:</strong> Should return True.</p>
+<h3 id="ravestate.activation.Activation.secs_to_ticks">secs_to_ticks</h3>
+
+<pre><code class="python">Activation.secs_to_ticks(self, seconds: float) -&gt; int
+</code></pre>
+
+<p>Convert seconds to an equivalent integer number of ticks,
+ given this activation's tick rate.</p>
+<ul>
+<li><code>seconds</code>: Seconds to convert to ticks.</li>
+</ul>
+<p><strong>Returns:</strong> An integer tick count.</p>
+<h3 id="ravestate.activation.Activation.pressure">pressure</h3>
+
+<pre><code class="python">Activation.pressure(self)
+</code></pre>
+
+<p>Called by CausalGroup, to pressure the activation to
+ make a decision on whether it is going to retain a reference
+ to the given spike, given that there is a lower-
+ specificity activation which is ready to run.</p>
+<h3 id="ravestate.activation.Activation.spiky">spiky</h3>
+
+<pre><code class="python">Activation.spiky(self) -&gt; bool
+</code></pre>
+
+<p>Returns true, if the activation has acquired any spikes at all.</p>
+<p><strong>Returns:</strong> True, if any of this activation's constraint's
+ signal is referencing a spike.</p>
+<h3 id="ravestate.activation.Activation.update">update</h3>
+
+<pre><code class="python">Activation.update(self) -&gt; bool
+</code></pre>
+
+<p>Called once per tick on this activation, to give it a chance to activate
+ itself, or auto-eliminate, or reject spikes which have become too old.</p>
+<p><strong>Returns:</strong> True, if the target state is activated and teh activation be forgotten,
+ false if needs further attention in the form of updates() by context in the future.</p>
+<h1 id="ravestate.causal">ravestate.causal</h1>
+
+<h2 id="ravestate.causal.CausalGroup">CausalGroup</h2>
+
+<pre><code class="python">CausalGroup(self, resources: Set[str])
+</code></pre>
+
+<p>Class which represents a causal group graph of spike parent/offspring
+ spikes (a "superspike"). These must synchronize wrt/ their (un)written
+ properties and state activation candidates, such that they don't cause output races.</p>
+<p>Note: Always use a <code>with ...</code> construct to interact with a causal group.
+ Otherwise, undefined behavior may occur due to race conditions.</p>
+<h3 id="ravestate.causal.CausalGroup.merge">merge</h3>
+
+<pre><code class="python">CausalGroup.merge(self, other: 'CausalGroup')
+</code></pre>
+
+<p>Merge this causal group with another. Unwritten props will become
+ the set intersection of this group's unwritten props and
+ other's unwritten props. consumed() will be called with
+ all properties that are consumed by other, but not this.
+Afterwards, other's member objects will be set to this's.</p>
+<h3 id="ravestate.causal.CausalGroup.acquired">acquired</h3>
+
+<pre><code class="python">CausalGroup.acquired(self, spike: 'ISpike', acquired_by: ravestate.iactivation.IActivation) -&gt; bool
+</code></pre>
+
+<p>Called by Activation to notify the causal group, that
+ it is being referenced by an activation constraint for a certain member spike.</p>
+<ul>
+<li>
+<p><code>spike</code>: State activation instance, which is now being
+ referenced by the specified causal group.</p>
+</li>
+<li>
+<p><code>acquired_by</code>: State activation instance,
+ which is interested in this property.</p>
+</li>
+</ul>
+<p><strong>Returns:</strong> Returns True if all of the acquiring's write-props are
+ free, and the group now refs. the activation, False otherwise.</p>
+<h3 id="ravestate.causal.CausalGroup.rejected">rejected</h3>
+
+<pre><code class="python">CausalGroup.rejected(self, spike: 'ISpike', rejected_by: ravestate.iactivation.IActivation, reason: int) -&gt; None
+</code></pre>
+
+<p>Called by a state activation, to notify the group that a member spike
+ is no longer being referenced for the given state's write props.
+This may be because ... <br>
+... the state activation auto-eliminated. (reason=0) <br>
+... the spike got too old. (reason=1) <br>
+... the activation is happening and dereferencing it's spikes. (reason=2)</p>
+<ul>
+<li>
+<p><code>spike</code>: The member spike whose ref-set should be reduced.</p>
+</li>
+<li>
+<p><code>rejected_by</code>: State activation instance, which is no longer
+ interested in this property.</p>
+</li>
+<li>
+<p><code>reason</code>: See about.</p>
+</li>
+</ul>
+<h3 id="ravestate.causal.CausalGroup.consent">consent</h3>
+
+<pre><code class="python">CausalGroup.consent(self, ready_suitor: ravestate.iactivation.IActivation) -&gt; bool
+</code></pre>
+
+<p>Called by constraint, to inquire whether this causal group would happily
+ be consumed for the given state activation's properties.
+This will be called periodically on the group by state activations
+ that are ready to go. Therefore, a False return value from this
+ function is never a final judgement (more like a "maybe later").</p>
+<ul>
+<li><code>ready_suitor</code>: The state activation which would like to consume
+ this instance for it's write props.</li>
+</ul>
+<p><strong>Returns:</strong> True if this instance agrees to proceeding with the given consumer
+ for the consumer's write props, False otherwise.</p>
+<h3 id="ravestate.causal.CausalGroup.activated">activated</h3>
+
+<pre><code class="python">CausalGroup.activated(self, act: ravestate.iactivation.IActivation)
+</code></pre>
+
+<p>Called by activation which previously received a go-ahead
+ from consent(), when it is truly proceeding with
+ running (after it got the go-ahead from all it's depended=on
+ causal groups).</p>
+<ul>
+<li><code>act</code>: The activation that is now running.</li>
+</ul>
+<h3 id="ravestate.causal.CausalGroup.resigned">resigned</h3>
+
+<pre><code class="python">CausalGroup.resigned(self, act: ravestate.iactivation.IActivation) -&gt; None
+</code></pre>
+
+<p>Called by activation, to let the causal group know that it failed,
+ and a less specific activation may now be considered for
+ the resigned state's write props.</p>
+<ul>
+<li><code>act</code>: The activation that is unexpectedly not consuming it's resources,
+ because it's state resigned/failed.</li>
+</ul>
+<h3 id="ravestate.causal.CausalGroup.consumed">consumed</h3>
+
+<pre><code class="python">CausalGroup.consumed(self, resources: Set[str]) -&gt; None
+</code></pre>
+
+<p>Called by activation to notify the group, that it has been
+ consumed for the given set of properties.</p>
+<ul>
+<li><code>resources</code>: The properties which have been consumed.</li>
+</ul>
+<h3 id="ravestate.causal.CausalGroup.wiped">wiped</h3>
+
+<pre><code class="python">CausalGroup.wiped(self, spike: 'ISpike') -&gt; None
+</code></pre>
+
+<p>Called by a spike, to notify the causal group that
+ the instance was wiped and should no longer be remembered.</p>
+<ul>
+<li><code>spike</code>: The instance that should be henceforth forgotten.</li>
+</ul>
+<h3 id="ravestate.causal.CausalGroup.stale">stale</h3>
+
+<pre><code class="python">CausalGroup.stale(self, spike: 'ISpike') -&gt; bool
+</code></pre>
+
+<p>Determine, whether a spike is stale (has no
+remaining interested activations and no children).</p>
+<p><strong>Returns:</strong> True, if no activations reference the given
+ spike for any unwritten property. False otherwise.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../config/" class="btn btn-neutral float-right" title="Configuration">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../properties/" class="btn btn-neutral" title="Properties"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../properties/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../config/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>

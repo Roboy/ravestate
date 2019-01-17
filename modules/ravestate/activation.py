@@ -24,10 +24,10 @@ class Activation(IActivation):
     """
 
     # Count how many activations were created per state
-    count_for_state: Dict[State, int] = defaultdict(int)
+    _count_for_state: Dict[State, int] = defaultdict(int)
 
     death_clock: Optional[int]  # set once pressure() is called
-    id: str  # count_for_state[self.state_to_activate] from ctor time
+    id: str  # _count_for_state[self.state_to_activate] from ctor time
     name: str
     state_to_activate: State
     constraint: Constraint
@@ -38,8 +38,8 @@ class Activation(IActivation):
     consenting_causal_groups: Set[CausalGroup]
 
     def __init__(self, st: State, ctx: IContext):
-        self.id = f"{st.name}#{Activation.count_for_state[st]}"
-        Activation.count_for_state[st] += 1
+        self.id = f"{st.name}#{Activation._count_for_state[st]}"
+        Activation._count_for_state[st] += 1
         self.name = st.name
         self.state_to_activate = st
         self.constraint = copy.deepcopy(st.constraint_)
@@ -84,17 +84,20 @@ class Activation(IActivation):
         """
         Notify the activation, that a single or all spike(s) are not available
          anymore, and should therefore not be referenced anymore by the activation.
-        This is called by ...
-         ... context when a state is deleted.
-         ... causal group, when a referenced signal was consumed for a required property.
-         ... causal group, when a referenced signal was wiped.
-         ... this activation (with reacquire=True), if it gives in to activation pressure.
-        :param spike: The spike that should be forgotten by the activation, or
+        This is called by ... <br>
+        ... context when a state is deleted. <br>
+        ... causal group, when a referenced signal was consumed for a required property. <br>
+        ... causal group, when a referenced signal was wiped. <br>
+        ... this activation (with reacquire=True), if it gives in to activation pressure.
+
+        * `spike`: The spike that should be forgotten by the activation, or
          none, if all referenced spikes should be forgotten.
-        :param reacquire: Flag which tells the function, whether for every rejected
+
+        * `reacquire`: Flag which tells the function, whether for every rejected
          spike, the activation should hook into context for reacquisition
          of a replacement spike.
-        :param reject: Flag which controls, whether de-referenced spikes
+
+        * `reject`: Flag which controls, whether de-referenced spikes
          should be explicitely rejected through their causal groups.
         """
         for sig_to_reacquire, dereferenced_instance in self.constraint.dereference(spike):
@@ -107,9 +110,11 @@ class Activation(IActivation):
     def acquire(self, spike: Spike) -> bool:
         """
         Let the activation acquire a signal it is registered to be interested in.
-        :param spike: The signal which should fulfill at least one of this activation's
+
+        * `spike`: The signal which should fulfill at least one of this activation's
          signal constraints.
-        :return: Should return True.
+
+        **Returns:** Should return True.
         """
         if self.death_clock is not None:
             self._reset_death_clock()
@@ -119,8 +124,10 @@ class Activation(IActivation):
         """
         Convert seconds to an equivalent integer number of ticks,
          given this activation's tick rate.
-        :param seconds: Seconds to convert to ticks.
-        :return: An integer tick count.
+
+        * `seconds`: Seconds to convert to ticks.
+
+        **Returns:** An integer tick count.
         """
         return self.ctx.secs_to_ticks(seconds)
 
@@ -137,7 +144,8 @@ class Activation(IActivation):
     def spiky(self) -> bool:
         """
         Returns true, if the activation has acquired any spikes at all.
-        :return: True, if any of this activation's constraint's
+
+        **Returns:** True, if any of this activation's constraint's
          signal is referencing a spike.
         """
         return sum(1 for sig in self.constraint.signals() if sig.spike) > 0
@@ -146,7 +154,8 @@ class Activation(IActivation):
         """
         Called once per tick on this activation, to give it a chance to activate
          itself, or auto-eliminate, or reject spikes which have become too old.
-        :return: True, if the target state is activated and teh activation be forgotten,
+
+        **Returns:** True, if the target state is activated and teh activation be forgotten,
          false if needs further attention in the form of updates() by context in the future.
         """
         # Update constraint, reacquire for rejected spikes

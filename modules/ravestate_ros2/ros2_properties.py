@@ -109,11 +109,16 @@ class Ros2SubProperty(PropertyBase):
     def __init__(self, name: str, topic: str, msg_type, default_value=None, always_signal_changed: bool = True):
         """
         Initialize Property
-        :param name: Name of the property
-        :param topic: ROS2-Topic that should be subscribed
-        :param msg_type: ROS2-Message type of messages in the topic
-        :param default_value: Default value of the property
-        :param always_signal_changed: if signal:changed should be emitted if value is written again without changing
+
+        * `name`: Name of the property
+
+        * `topic`: ROS2-Topic that should be subscribed
+
+        * `msg_type`: ROS2-Message type of messages in the topic
+
+        * `default_value`: Default value of the property
+
+        * `always_signal_changed`: if signal:changed should be emitted if value is written again without changing
         """
         super().__init__(
             name=name,
@@ -137,7 +142,8 @@ class Ros2SubProperty(PropertyBase):
     def ros_subscription_callback(self, msg):
         """
         Writes the message from ROS to the property
-        :param msg: ROS2-Message that should be written into the property
+
+        * `msg`: ROS2-Message that should be written into the property
         """
         if self.ros_to_ctx_callback:
             logger.debug(f"{self.fullname()} received message {str(msg)} from topic {self.topic}")
@@ -148,9 +154,12 @@ class Ros2PubProperty(PropertyBase):
     def __init__(self, name: str, topic: str, msg_type):
         """
         Initialize Property
-        :param name: Name of the property
-        :param topic: ROS2-Topic that messages should be pubished to
-        :param msg_type: ROS2-Message type of messages in the topic
+
+        * `name`: Name of the property
+
+        * `topic`: ROS2-Topic that messages should be pubished to
+
+        * `msg_type`: ROS2-Message type of messages in the topic
         """
         super().__init__(
             name=name,
@@ -173,7 +182,8 @@ class Ros2PubProperty(PropertyBase):
     def write(self, value):
         """
         Publish value on ROS
-        :param value: ROS2-Message that should be published
+
+        * `value`: ROS2-Message that should be published
         """
         if super().write(value):
             if self.publisher:
@@ -188,10 +198,14 @@ class Ros2CallProperty(PropertyBase):
     def __init__(self, name: str, service_name: str, service_type, call_timeout: float = 10.0):
         """
         Initialize Property
-        :param name: Name of the property
-        :param service_name: ROS2-Service that should be called
-        :param service_type: Type of the service used
-        :param call_timeout: Timeout when waiting for availability of a service in seconds
+
+        * `name`: Name of the property
+
+        * `service_name`: ROS2-Service that should be called
+
+        * `service_type`: Type of the service used
+
+        * `call_timeout`: Timeout when waiting for availability of a service in seconds
         """
         super().__init__(
             name=name,
@@ -217,7 +231,8 @@ class Ros2CallProperty(PropertyBase):
         Call Service and receive result directly in the property.
         Blocks during service-call.
         If service is not available, writes None into the property value and returns.
-        :param value: Either Request-Object for the service or dict containing the attributes of the Request
+
+        * `value`: Either Request-Object for the service or dict containing the attributes of the Request
         """
         if super().write(value):
             if self.client:

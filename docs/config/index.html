@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Configuration - Ravestate</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Configuration";
+    var mkdocs_page_input_path = "config.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Ravestate</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">API</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../modules/">Modules</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../states/">States</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../properties/">Properties</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../context/">Context</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Configuration</a>
+    <ul class="subnav">
+            
+    </ul>
+                </li>
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Ravestate</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>API &raquo;</li>
+        
+      
+    
+    <li>Configuration</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="ravestate.argparse">ravestate.argparse</h1>
+
+<h2 id="ravestate.argparse.handle_args">handle_args</h2>
+
+<pre><code class="python">handle_args(*args) -&gt; Tuple[List[str], List[Tuple[str, str, Any]], List[str]]
+</code></pre>
+
+<p>Runs an argument parser for the given args. Returns modules-to-load,
+config value-overrides and config file-pathes.
+ Note: If the arguments are ill-formatted, or the -h argument is passed,
+help will be printed to the console and the program will abort.</p>
+<ul>
+<li><code>args</code>: Argument list which will be fed into argparse.parse_args.</li>
+</ul>
+<p><strong>Returns:</strong> A Tuple with three items:
+1.) A list of module names which should be imported.
+2.) A list of tuples, where each tuple is a module name, a config key name, and a value.
+3.) A list of yaml file paths.</p>
+<h1 id="ravestate.config">ravestate.config</h1>
+
+<h2 id="ravestate.config.Configuration">Configuration</h2>
+
+<pre><code class="python">Configuration(self, paths: List[str])
+</code></pre>
+
+<p>The Configuration class maintains a dictionary of key-value stores, which
+represent configuration entries for specific named modules. The key-value
+stores may be successively updated with consecutive yaml files, where each
+yaml document has the following content:</p>
+<hr />
+<p>module: module-name
+  config:
+    key-a: value-a
+    key-b: value-b
+    # etc</p>
+<hr />
+<h3 id="ravestate.config.Configuration.add_conf">add_conf</h3>
+
+<pre><code class="python">Configuration.add_conf(self, mod: ravestate.module.Module)
+</code></pre>
+
+<p>Register a set of allowed config entries for a specific module.
+Correctly typed values for allowed keys, that were previously
+parsed during construction from the yaml files, will be applied
+immediately.</p>
+<ul>
+<li><code>mod</code>: A module object with a name and a conf dict.</li>
+</ul>
+<h3 id="ravestate.config.Configuration.get_conf">get_conf</h3>
+
+<pre><code class="python">Configuration.get_conf(self, module_name: str)
+</code></pre>
+
+<p>Retrieve updated config values for a module that was previously
+registered with add_conf.</p>
+<ul>
+<li><code>module_name</code>: The module name for which configuration should be retrieved.</li>
+</ul>
+<p><strong>Returns:</strong> A dictionary which contains exactly the keys that were contained in
+the module configuration dictionary during add_conf, or an empty dictionary
+if the module name is unknown.</p>
+<h3 id="ravestate.config.Configuration.get">get</h3>
+
+<pre><code class="python">Configuration.get(self, module_name: str, key: str) -&gt; Any
+</code></pre>
+
+<p>Gte the current value of a config entry.</p>
+<ul>
+<li>
+<p><code>module_name</code>: The module that provides the config entry.</p>
+</li>
+<li>
+<p><code>key</code>: A config key for the module that was previously added through add_conf.</p>
+</li>
+</ul>
+<p><strong>Returns:</strong> The current value, or None, if the entry does not exist.</p>
+<h3 id="ravestate.config.Configuration.set">set</h3>
+
+<pre><code class="python">Configuration.set(self, module_name: str, key: str, value: Any)
+</code></pre>
+
+<p>Set the current value of a config entry.</p>
+<ul>
+<li>
+<p><code>module_name</code>: The module of the config entry.</p>
+</li>
+<li>
+<p><code>key</code>: A config key for the module that was previously added through add_conf.</p>
+</li>
+<li>
+<p><code>value</code>: The new value for the config entry. An error will be raised,
+ if the type of the new value does not match the type of the old value.</p>
+</li>
+</ul>
+<h3 id="ravestate.config.Configuration.write">write</h3>
+
+<pre><code class="python">Configuration.write(self, path: str)
+</code></pre>
+
+<p>Write all current config entries to a yaml file.</p>
+<ul>
+<li><code>path</code>: The file path to write. Will be overwritten!</li>
+</ul>
+<h3 id="ravestate.config.Configuration.read">read</h3>
+
+<pre><code class="python">Configuration.read(self, path: str)
+</code></pre>
+
+<p>Loads all documents from a yaml file and tries to interpret them
+as configuration objects as described above.</p>
+<ul>
+<li><code>path</code>: The yaml file path from which to load config documents.</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../context/" class="btn btn-neutral" title="Context"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../context/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>

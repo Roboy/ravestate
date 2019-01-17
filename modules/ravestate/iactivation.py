@@ -21,7 +21,8 @@ class ISpike:
          (with wiped_in_causal_group=True), or in Context.wipe(signal_inst),
          or by parent (recursively).
         After this function is called, the spike should be cleaned up by GC.
-        :param already_wiped_in_causal_group: Boolean which indicates, whether wiped(signal_inst)
+
+        * `already_wiped_in_causal_group`: Boolean which indicates, whether wiped(signal_inst)
          must still be called on the group to make sure sure that no dangling references
          to the spike are maintained by any state activations.
         """
@@ -30,14 +31,16 @@ class ISpike:
     def has_offspring(self):
         """
         Called by CausalGroup.stale(spike).
-        :return: True if the spike has active offspring, false otherwise.
+
+        **Returns:** True if the spike has active offspring, false otherwise.
         """
         pass
 
     def offspring(self) -> Generator['Spike', None, None]:
         """
         Recursively yields this spike's offspring and it's children's offspring.
-        :return: All of this spike's offspring spikes.
+
+        **Returns:** All of this spike's offspring spikes.
         """
         yield None
 
@@ -68,17 +71,20 @@ class IActivation:
         """
         Notify the activation, that a single or all spike(s) are not available
          anymore, and should therefore not be referenced anymore by the activation.
-        This is called by ...
-         ... context when a state is deleted.
-         ... causal group, when a referenced signal was consumed for a required property.
-         ... causal group, when a referenced signal was wiped.
+        This is called by ... <br>
+         ... context when a state is deleted. <br>
+         ... causal group, when a referenced signal was consumed for a required property. <br>
+         ... causal group, when a referenced signal was wiped. <br>
          ... this activation (with reacquire=True), if it gives in to activation pressure.
-        :param spike: The spike that should be forgotten by the activation, or
+
+        * `spike`: The spike that should be forgotten by the activation, or
          none, if all referenced spikes should be forgotten.
-        :param reacquire: Flag which tells the function, whether for every rejected
+
+        * `reacquire`: Flag which tells the function, whether for every rejected
          spike, the activation should hook into context for reacquisition
          of a replacement spike.
-        :param reject: Flag which controls, whether de-referenced spikes
+
+        * `reject`: Flag which controls, whether de-referenced spikes
          should be explicitely rejected through their causal groups.
         """
         pass
@@ -96,7 +102,9 @@ class IActivation:
         """
         Convert seconds to an equivalent integer number of ticks,
          given this activation's context's tick rate.
-        :param seconds: Seconds to convert to ticks.
-        :return: An integer tick count.
+
+        * `seconds`: Seconds to convert to ticks.
+
+        **Returns:** An integer tick count.
         """
         pass

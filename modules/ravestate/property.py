@@ -41,7 +41,8 @@ class PropertyBase:
     def set_parent_path(self, path):
         """
         Set the ancestors (including modulename) for a property
-        :param path: ancestry in the form of modulename:parent_prop_name (or simply modulename)
+
+        * `path`: ancestry in the form of modulename:parent_prop_name (or simply modulename)
         """
         if not self.parent_path:
             self.parent_path = path
@@ -75,8 +76,10 @@ class PropertyBase:
     def write(self, value):
         """
         Write a new value to the property
-        :param value: The new value.
-        :return: True if the value has changed and :changed should be signaled, false otherwise.
+
+        * `value`: The new value.
+
+        **Returns:** True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
             logger.error(f"Unauthorized write access in property {self.fullname()}!")
@@ -90,8 +93,10 @@ class PropertyBase:
     def push(self, child: 'PropertyBase'):
         """
         Add a child to the property
-        :param child: The child object
-        :return: True if the child was added successfully, false otherwise.
+
+        * `child`: The child object
+
+        **Returns:** True if the child was added successfully, false otherwise.
         """
         if not self.allow_push:
             logger.error(f"Unauthorized push in property {self.fullname()}!")
@@ -106,8 +111,10 @@ class PropertyBase:
     def pop(self, child_name: str):
         """
         Remove a child from the property by it's name.
-        :param child_name: Name of the child to be removed.
-        :return: True if the pop was successful, False otherwise
+
+        * `child_name`: Name of the child to be removed.
+
+        **Returns:** True if the pop was successful, False otherwise
         """
         if not self.allow_pop:
             logger.error(f"Unauthorized pop in property {self.fullname()}!")

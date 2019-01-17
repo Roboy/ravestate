@@ -168,11 +168,14 @@ class CausalGroup:
         """
         Called by Activation to notify the causal group, that
          it is being referenced by an activation constraint for a certain member spike.
-        :param spike: State activation instance, which is now being
+
+        * `spike`: State activation instance, which is now being
          referenced by the specified causal group.
-        :param acquired_by: State activation instance,
+
+        * `acquired_by`: State activation instance,
          which is interested in this property.
-        :return: Returns True if all of the acquiring's write-props are
+
+        **Returns:** Returns True if all of the acquiring's write-props are
          free, and the group now refs. the activation, False otherwise.
         """
         # Make sure that all properties are actually still writable
@@ -188,14 +191,17 @@ class CausalGroup:
         """
         Called by a state activation, to notify the group that a member spike
          is no longer being referenced for the given state's write props.
-        This may be because ...
-         * ... the state activation auto-eliminated. (reason=0)
-         * ... the spike got too old. (reason=1)
-         * ... the activation is happening and dereferencing it's spikes. (reason=2)
-        :param spike: The member spike whose ref-set should be reduced.
-        :param rejected_by: State activation instance, which is no longer
+        This may be because ... <br>
+        ... the state activation auto-eliminated. (reason=0) <br>
+        ... the spike got too old. (reason=1) <br>
+        ... the activation is happening and dereferencing it's spikes. (reason=2)
+
+        * `spike`: The member spike whose ref-set should be reduced.
+
+        * `rejected_by`: State activation instance, which is no longer
          interested in this property.
-        :param reason: See about.
+
+        * `reason`: See about.
         """
         for prop in rejected_by.resources():
             if prop in self._ref_index and \
@@ -223,9 +229,11 @@ class CausalGroup:
         This will be called periodically on the group by state activations
          that are ready to go. Therefore, a False return value from this
          function is never a final judgement (more like a "maybe later").
-        :param ready_suitor: The state activation which would like to consume
+
+        * `ready_suitor`: The state activation which would like to consume
          this instance for it's write props.
-        :return: True if this instance agrees to proceeding with the given consumer
+
+        **Returns:** True if this instance agrees to proceeding with the given consumer
          for the consumer's write props, False otherwise.
         """
         specificity = ready_suitor.specificity()
@@ -265,7 +273,8 @@ class CausalGroup:
          from consent(), when it is truly proceeding with
          running (after it got the go-ahead from all it's depended=on
          causal groups).
-        :param act: The activation that is now running.
+
+        * `act`: The activation that is now running.
         """
         # Mark the consented w-props as unavailable
         self._available_resources -= act.resources()
@@ -275,7 +284,8 @@ class CausalGroup:
         Called by activation, to let the causal group know that it failed,
          and a less specific activation may now be considered for
          the resigned state's write props.
-        :param act: The activation that is unexpectedly not consuming it's resources,
+
+        * `act`: The activation that is unexpectedly not consuming it's resources,
          because it's state resigned/failed.
         """
         # Mark the act's w-props as available again
@@ -285,7 +295,8 @@ class CausalGroup:
         """
         Called by activation to notify the group, that it has been
          consumed for the given set of properties.
-        :param resources: The properties which have been consumed.
+
+        * `resources`: The properties which have been consumed.
         """
         if not resources:
             return
@@ -303,7 +314,8 @@ class CausalGroup:
         """
         Called by a spike, to notify the causal group that
          the instance was wiped and should no longer be remembered.
-        :param spike: The instance that should be henceforth forgotten.
+
+        * `spike`: The instance that should be henceforth forgotten.
         """
         for prop in self._ref_index:
             if spike in self._ref_index[prop]:
@@ -315,7 +327,8 @@ class CausalGroup:
         """
         Determine, whether a spike is stale (has no
         remaining interested activations and no children).
-        :return: True, if no activations reference the given
+
+        **Returns:** True, if no activations reference the given
          spike for any unwritten property. False otherwise.
         """
         for prop in self._ref_index:

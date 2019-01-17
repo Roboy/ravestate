@@ -10,9 +10,9 @@ logger = get_logger(__name__)
 
 class Spike(ISpike):
     """
-    This class encapsulates a single spike, to track
-     ... it's consumption for different output properties
-     ... it's offspring instances (causal group -> spikes caused by this spike)
+    This class encapsulates a single spike, to track ... <br>
+    ... it's consumption for different output properties (through #CausalGroup). <br>
+    ... it's offspring instances (causal group -> spikes caused by this spike)
     """
 
     # Age of the spike in ticks
@@ -37,12 +37,15 @@ class Spike(ISpike):
     def __init__(self, *, sig: str, parents: Set['Spike']=None, consumable_resources: Set[str]=None):
         """
         Construct a spike from a signal name and a list of causing parent signals.
-        :param sig: Name of the signal which is represented by this spike
-        :param parents: The parent spikes which were involved in causing this spike,
+
+        * `sig`: Name of the signal which is represented by this spike
+
+        * `parents`: The parent spikes which were involved in causing this spike,
          and with which unwritten properties will be synchronized: This spike's
          causal group will be inferred from the parents, and the parent's causal
          groups will be merged if they are different.
-        :param consumable_resources: The set of property names from context,
+
+        * `consumable_resources`: The set of property names from context,
          which are available for consumption.
         """
         if parents is None:
@@ -75,7 +78,8 @@ class Spike(ISpike):
     def causal_group(self) -> CausalGroup:
         """
         Get this spike's causal group.
-        :return: This instances causal group. Should never be None.
+
+        **Returns:** This instances causal group. Should never be None.
         """
         return self._causal_group
 
@@ -83,7 +87,8 @@ class Spike(ISpike):
         """
         Called in spike constructor, for instances which claim to be
          caused by this spike.
-        :param child: The child to add to this spike's causal group.
+
+        * `child`: The child to add to this spike's causal group.
         """
         self._offspring.add(child)
         if self.causal_group() != child.causal_group():
@@ -94,7 +99,8 @@ class Spike(ISpike):
         """
         Called by an offspring signal, to notify the spike
          that it was wiped, and should therefore be removed from the children set.
-        :param child: The child to be forgotten.
+
+        * `child`: The child to be forgotten.
         """
         if child not in self._offspring:
             logger.warning(f"Offspring {child.name()} requested to be removed from {self.name()}, but it's unfamiliar!")
@@ -107,7 +113,8 @@ class Spike(ISpike):
          (with wiped_in_causal_group=True), or in Context.wipe(spike),
          or by parent (recursively).
         After this function is called, the spike should be cleaned up by GC.
-        :param already_wiped_in_causal_group: Boolean which indicates, whether wiped(spike)
+
+        * `already_wiped_in_causal_group`: Boolean which indicates, whether wiped(spike)
          must still be called on the group to make sure sure that no dangling references
          to the spike are maintained by any state activations.
         """
@@ -128,7 +135,8 @@ class Spike(ISpike):
     def has_offspring(self):
         """
         Called by CausalGroup.stale(spike).
-        :return: True if the spike has active offspring, false otherwise.
+
+        **Returns:** True if the spike has active offspring, false otherwise.
         """
         return len(self._offspring) > 0
 
@@ -147,7 +155,8 @@ class Spike(ISpike):
     def offspring(self) -> Generator['Spike', None, None]:
         """
         Recursively yields this spike's offspring and it's children's offspring.
-        :return: All of this spike's offspring spikes.
+
+        **Returns:** All of this spike's offspring spikes.
         """
         for child in self._offspring:
             yield child

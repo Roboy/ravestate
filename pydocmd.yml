@@ -1,30 +1,40 @@
-site_name: "My Documentation"
+site_name: "Ravestate"
 
 # This tells pydocmd which pages to generate from which Python modules,
 # functions and classes. At the first level is the page name, below that
 # is a tree of Python member names (modules, classes, etc.) that should be
 # documented. Higher indentation leads to smaller header size.
 generate:
-- modules.md:
-  - ravestate.argparse++
+- states.md:
+  - ravestate.state++
   - ravestate.constraint++
-  - ravestate.module++
-  - ravestate.config++
-  - ravestate.property++
   - ravestate.receptor++
+- properties.md:
+  - ravestate.property++
+- modules.md:
+  - ravestate.module++
   - ravestate.registry++
-  - ravestate.state++    # (++ to include members, and their members)
-  - ravestate.wrappers++
-- nlp.md:
-  - ravestate_nlp++
+- context.md:
+  - ravestate.context++
+  - ravestate.spike++
+  - ravestate.activation++
+  - ravestate.causal++
+- config.md:
+  - ravestate.argparse++
+  - ravestate.config++
+
 
 # MkDocs pages configuration. The `<<` operator is sugar added by pydocmd
 # that allows you to use an external Markdown file (eg. your project's README)
 # in the documentation. The path must be relative to current working directory.
 pages:
 - Home: index.md << README.md
-- Modules: modules.md
-- NLP: nlp.md
+- API:
+  - Modules: modules.md
+  - States: states.md
+  - Properties: properties.md
+  - Context: context.md
+  - Configuration: config.md
 
 site_dir: docs
 

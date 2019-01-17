@@ -15,8 +15,10 @@ def handle_args(*args) -> Tuple[List[str], List[Tuple[str, str, Any]], List[str]
     config value-overrides and config file-pathes.
      Note: If the arguments are ill-formatted, or the -h argument is passed,
     help will be printed to the console and the program will abort.
-    :param args: Argument list which will be fed into argparse.parse_args.
-    :return: A Tuple with three items:
+
+    * `args`: Argument list which will be fed into argparse.parse_args.
+
+    **Returns:** A Tuple with three items:
     1.) A list of module names which should be imported.
     2.) A list of tuples, where each tuple is a module name, a config key name, and a value.
     3.) A list of yaml file paths.

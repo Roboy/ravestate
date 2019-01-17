@@ -10,9 +10,11 @@ def receptor(*, ctx_wrap: ContextWrapper, write: Union[str, Tuple[str]]):
     """
     A receptor is a special state which can be invoked from outside,
      to push values into the context.
-    :param ctx_wrap: A context wrapper as is always given
+
+    * `ctx_wrap`: A context wrapper as is always given
      into the state functions as their first argument.
-    :param write: The property, or tuple of properties, which are going to be written.
+
+    * `write`: The property, or tuple of properties, which are going to be written.
     """
 
     def receptor_decorator(action):

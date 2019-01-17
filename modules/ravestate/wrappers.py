@@ -46,7 +46,8 @@ class PropertyWrapper:
     def get(self) -> Any:
         """
         Read the current property value or the value of children of the property if child-param is given
-        :param child: top-down list of child ancestry of the child to get the value from
+
+        * `child`: top-down list of child ancestry of the child to get the value from
         """
         if not self.allow_read:
             logger.error(f"Unauthorized read access in property-wrapper for {self.prop.fullname()}!")
@@ -58,8 +59,10 @@ class PropertyWrapper:
     def set(self, value: Any):
         """
         Write a new value to the property.
-        :param value: The new value.
-        :return: True if the value has changed and :changed should be signaled, false otherwise.
+
+        * `value`: The new value.
+
+        **Returns:** True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
             logger.error(f"Unauthorized write access in property-wrapper {self.prop.fullname()}!")
@@ -72,9 +75,11 @@ class PropertyWrapper:
     def push(self, child: PropertyBase):
         """
         Add a child to the property or to children of the property
-        :param child: Parent-less, child-less property object to add.
+
+        * `child`: Parent-less, child-less property object to add.
          Name of the child must be unique among existing children of this property.
-        :return: True if the push was successful, False otherwise
+
+        **Returns:** True if the push was successful, False otherwise
         """
         if not self.allow_write:
             logger.error(f"Unauthorized push access in property-wrapper {self.prop.fullname()}!")
@@ -87,8 +92,10 @@ class PropertyWrapper:
     def pop(self, childname: str):
         """
         Remove a child from the property or from children of the property
-        :param childname: Name of the direct child to be removed
-        :return: True if the pop was successful, False otherwise
+
+        * `childname`: Name of the direct child to be removed
+
+        **Returns:** True if the pop was successful, False otherwise
         """
         if not self.allow_write:
             logger.error(f"Unauthorized pop access in property-wrapper {self.prop.fullname()}!")
@@ -164,9 +171,12 @@ class ContextWrapper:
         Add a child to a property.
          Note: Child must not yet have a parent or children of itself.
           Write-access to parent is needed.
-        :param parentpath: Path of the parent that should receive the new child.
-        :param child: Parent-less, child-less property object to add.
-        :return: True if the push was successful, False otherwise
+
+        * `parentpath`: Path of the parent that should receive the new child.
+
+        * `child`: Parent-less, child-less property object to add.
+
+        **Returns:** True if the push was successful, False otherwise
         """
         if child.parent_path:
             logger.error(f"State {self.st.name} attempted to push child property {child.name} to parent {parentpath}, but it already has parent {child.parent_path}!")
@@ -188,8 +198,10 @@ class ContextWrapper:
         """
         Delete a property (remove it from context and it's parent).
          Note: Write-access to parent is needed!
-        :param path: Path to the property. Must be nested (not root-level)!
-        :return: True if the pop was successful, False otherwise
+
+        * `path`: Path to the property. Must be nested (not root-level)!
+
+        **Returns:** True if the pop was successful, False otherwise
         """
         path_parts = path.split(":")
         if len(path_parts) < 3:

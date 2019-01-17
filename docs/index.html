@@ -8,7 +8,7 @@
   <meta name="description" content="None">
   
   <link rel="shortcut icon" href="img/favicon.ico">
-  <title>Home - My Documentation</title>
+  <title>Home - Ravestate</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="css/theme.css" type="text/css" />
@@ -36,7 +36,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href="." class="icon icon-home"> My Documentation</a>
+        <a href="." class="icon icon-home"> Ravestate</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
@@ -53,21 +53,44 @@
     <a class="current" href=".">Home</a>
     <ul class="subnav">
             
-    <li class="toctree-l2"><a href="#welcome-to-the-reactive-dialog-state-library">Welcome to the Reactive Dialog State Library</a></li>
+    <li class="toctree-l2"><a href="#about">About</a></li>
+    
+
+    <li class="toctree-l2"><a href="#dependencies">Dependencies</a></li>
     
         <ul>
         
-            <li><a class="toctree-l3" href="#about">About</a></li>
-        
-            <li><a class="toctree-l3" href="#dependencies">Dependencies</a></li>
-        
-            <li><a class="toctree-l3" href="#installation">Installation</a></li>
-        
-            <li><a class="toctree-l3" href="#running-hello-world">Running Hello World</a></li>
-        
-            <li><a class="toctree-l3" href="#running-tests">Running tests</a></li>
+            <li><a class="toctree-l3" href="#portaudio-on-macos">portaudio on macOS</a></li>
         
         </ul>
+    
+
+    <li class="toctree-l2"><a href="#installation">Installation</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#via-pip">Via PIP</a></li>
+        
+            <li><a class="toctree-l3" href="#for-developers">For developers</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l2"><a href="#running-hello-world">Running Hello World</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#running-with-command-line-spec">Running with command line spec</a></li>
+        
+            <li><a class="toctree-l3" href="#running-with-config-files">Running with config file(s)</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l2"><a href="#running-tests">Running tests</a></li>
+    
+
+    <li class="toctree-l2"><a href="#buildingmaintaining-the-docs">Building/maintaining the docs</a></li>
     
 
     </ul>
@@ -75,12 +98,29 @@
           
             <li class="toctree-l1">
 		
+    <span class="caption-text">API</span>
+    <ul class="subnav">
+                <li class="">
+                    
     <a class="" href="modules/">Modules</a>
-	    </li>
-          
-            <li class="toctree-l1">
-		
-    <a class="" href="nlp/">NLP</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="states/">States</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="properties/">Properties</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="context/">Context</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="config/">Configuration</a>
+                </li>
+    </ul>
 	    </li>
           
         </ul>
@@ -93,7 +133,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href=".">My Documentation</a>
+        <a href=".">Ravestate</a>
       </nav>
 
       
@@ -115,19 +155,15 @@
           <div role="main">
             <div class="section">
               
-                <p><a href="https://travis-ci.org/ro-boy/ravestate"><img alt="Build Status" src="https://travis-ci.org/ro-boy/ravestate.svg?branch=master" /></a>
-<a href="https://codecov.io/gh/ro-boy/ravestate"><img alt="codecov" src="https://codecov.io/gh/ro-boy/ravestate/branch/master/graph/badge.svg" /></a>
-<a href="https://www.codacy.com/app/ro-boy/ravestate?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ro-boy/ravestate&amp;utm_campaign=Badge_Grade"><img alt="Codacy Badge" src="https://api.codacy.com/project/badge/Grade/93ebb2077393423496669b5657ab16ac" /></a></p>
-<h1 id="welcome-to-the-reactive-dialog-state-library">Welcome to the Reactive Dialog State Library</h1>
-<pre><code>                                 _ __    _ __     
+                <pre><code>                                 _ __    _ __     
     _ ___ ____  __  ______  ______/ /_____/ /___     
- _ _ /  \/ __ \/ / / /__  \/ ___\, / __ \, /__  \  
+ _ _ /  \/ __ \/ / / / __ \/ ___\, / __ \, /__  \  
 _ _ / /\/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /     
   _ \/ _\__/\/ _\__/ ,___/\____/\/\__/\/\/ ,___/
  _____          _ _\____/             _ _\____/                    
 /_   _\
  0&gt;  0&gt; 
-\__⊽__/  (C) Roboy 2018
+\__⊽__/  (C) Roboy 2019
    ⋂                                           
 </code></pre>
 
@@ -183,6 +219,11 @@ config:
 <p>If you have installed the dependencies from <code>requirements-dev.txt</code> you
 may run the ravestate test suite as follows:</p>
 <p><code>./run_tests.sh</code></p>
+<h2 id="buildingmaintaining-the-docs">Building/maintaining the docs</h2>
+<p>If you have installed the dependencies from <code>requirements-dev.txt</code>,
+generate the docs by running this command at project root:</p>
+<p><code>pydocmd build</code></p>
+<p>The structure and content of the docs are defined in the file <code>pydocmd.yml</code>.</p>
               
             </div>
           </div>
@@ -231,5 +272,5 @@ may run the ravestate test suite as follows:</p>
 
 <!--
 MkDocs version : 1.0.4
-Build Date UTC : 2019-01-02 22:29:25
+Build Date UTC : 2019-01-17 00:34:43
 -->
