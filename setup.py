@@ -16,7 +16,7 @@ packages = setuptools.find_packages("modules", exclude=["reggol*"])
 
 setuptools.setup(
     name="ravestate",
-    version="0.1.post3",
+    version="0.3.0",
     url="https://github.com/roboy/ravestate",
     author="Roboy",
     author_email="info@roboy.org",
@@ -28,12 +28,16 @@ setuptools.setup(
     package_dir={package: 'modules/'+package for package in packages},
     packages=packages,
     include_package_data=True,
-    package_data={'ravestate_phrases_basic_en': ['en/*.yml']},
+    package_data={
+        'ravestate_phrases_basic_en': ['en/*.yml'],
+        'ravestate_ontology': ['ravestate_ontology.yml'],
+        'ravestate_roboyqa': ['answering_phrases/RoboyInfoList.yml']
+    },
     scripts=["rasta"],
 
     install_requires=required + ["reggol"],
     dependency_links=required_url,
-    python_requires='>=3.6',
+    python_requires='>=3.7',
 
     classifiers=[
         "Programming Language :: Python :: 3",

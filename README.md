@@ -100,8 +100,10 @@ may run the ravestate test suite as follows:
 If you have installed the dependencies from ``requirements-dev.txt``,
 generate the docs by running this command at project root:
 
-``
+```bash
+git rm -rf docs
+rm -rf _build docs
 pydocmd build
-``
+```
 
 The structure and content of the docs are defined in the file ``pydocmd.yml``.
