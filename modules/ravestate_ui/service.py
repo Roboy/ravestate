@@ -1,6 +1,8 @@
 from flask import Flask, url_for, render_template, send_from_directory
 from flask import jsonify
 
+from ravestate import registry
+
 app = Flask(__name__)
 context = None
 
@@ -13,26 +15,27 @@ def index():
 def get_data():
     global context
     sets = []
-    for state in context.states:
-        for trigger in state.triggers:
-            set = {}
-            set['source'] = trigger[0]
-            set['target'] = state.name
-            set['type'] = 'notifies'
-            sets.append(set)
-        for target in state.write_props:
-            set = {}
-            set['source'] = state.name
-            set['target'] = target
-            set['type'] = 'changes'
-            sets.append(set)
-    for prop in context.properties.keys():
-        for type in context.default_property_signals:
-            set = {}
-            set['source'] = prop
-            set['target'] = "{}{}".format(prop, type)
-            set['type'] = 'creates'
-            sets.append(set)
+    for module in registry._registered_modules.items():
+        for state in module[1].states:
+            for trigger in state.read_props:
+                set = {}
+                set['source'] = " " + str(trigger)
+                set['target'] = state.name
+                set['type'] = 'notifies'
+                sets.append(set)
+            for target in state.write_props:
+                set = {}
+                set['source'] = state.name
+                set['target'] = target
+                set['type'] = 'changes'
+                sets.append(set)
+    # for prop in context._properties.keys():
+    #     for type in context.default_property_signals:
+    #         set = {}
+    #         set['source'] = prop
+    #         set['target'] = "{}{}".format(prop, type)
+    #         set['type'] = 'creates'
+    #         sets.append(set)
 
     cleanSet = []
     for set in sets: # Don't display unused signals
