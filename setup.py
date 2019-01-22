@@ -3,20 +3,16 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-required_url = []
 required = []
 with open("requirements.txt", "r") as freq:
     for line in freq.read().split():
-        if "://" in line:
-            required_url.append(line)
-        else:
-            required.append(line)
+        required.append(line)
 
 packages = setuptools.find_packages("modules", exclude=["reggol*"])
 
 setuptools.setup(
     name="ravestate",
-    version="0.3.post",
+    version="0.3.post1",
     url="https://github.com/roboy/ravestate",
     author="Roboy",
     author_email="info@roboy.org",
@@ -36,7 +32,6 @@ setuptools.setup(
     scripts=["rasta"],
 
     install_requires=required + ["reggol"],
-    dependency_links=required_url,
     python_requires='>=3.7',
 
     classifiers=[
