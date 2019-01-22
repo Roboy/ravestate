@@ -141,6 +141,9 @@ class Activation(IActivation):
         if self.death_clock is None:
             self._reset_death_clock()
 
+    def is_pressured(self):
+        return self.death_clock is not None
+
     def spiky(self) -> bool:
         """
         Returns true, if the activation has acquired any spikes at all.
@@ -245,11 +248,10 @@ class Activation(IActivation):
         # Process state function result
         if isinstance(result, Emit):
             if self.state_to_activate.signal():
-                if result.wipe:
-                    self.ctx.wipe(self.state_to_activate.signal())
                 self.ctx.emit(
                     self.state_to_activate.signal(),
-                    parents=self.spikes)
+                    parents=self.spikes,
+                    wipe=result.wipe)
             else:
                 logger.error(f"Attempt to emit spike from state {self.name}, which does not specify a signal name!")
 

@@ -130,6 +130,7 @@ class Spike(ISpike):
         if not already_wiped_in_causal_group:
             with self.causal_group() as causal:
                 causal.wiped(self)
+        logger.debug(f"Wiped {self}")
         # del self._causal_group
 
     def has_offspring(self):

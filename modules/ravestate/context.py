@@ -7,6 +7,8 @@ from math import ceil
 from copy import deepcopy
 import gc
 
+from ravestate.wrappers import PropertyWrapper
+
 from ravestate.icontext import IContext
 from ravestate.module import Module
 from ravestate.state import State
@@ -16,7 +18,7 @@ from ravestate.activation import Activation
 from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
-from ravestate.constraint import s, Signal, Conjunct, Disjunct
+from ravestate.constraint import s, Signal, Conjunct, Disjunct, ConfigurableAge
 from ravestate.spike import Spike
 
 from reggol import get_logger
@@ -24,8 +26,23 @@ logger = get_logger(__name__)
 
 
 class Context(IContext):
-
     _default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
+    _default_properties: Tuple[PropertyBase] = (PropertyBase(name="pressure",
+                                                             allow_read=True,
+                                                             allow_write=True,
+                                                             allow_push=False,
+                                                             allow_pop=False,
+                                                             default_value=False,
+                                                             always_signal_changed=False,
+                                                             is_flag_property=True),
+                                                PropertyBase(name="activity",
+                                                             allow_read=True,
+                                                             allow_write=True,
+                                                             allow_push=False,
+                                                             allow_pop=False,
+                                                             default_value=0,
+                                                             always_signal_changed=False)
+                                                )
 
     _core_module_name = "core"
     _import_modules_config = "import"
@@ -92,6 +109,10 @@ class Context(IContext):
         for signame in self._default_signal_names:
             self._add_sig(s(signame))
 
+        # Register default properties
+        for prop in self._default_properties:
+            self.add_prop(prop=prop)
+
         # Set required config overrides
         for module_name, key, value in overrides:
             self._config.set(module_name, key, value)
@@ -118,6 +139,7 @@ class Context(IContext):
         if wipe:
             self.wipe(signal)
         with self._lock:
+            logger.debug(f"Emitting {signal}")
             self._spikes[
                 Spike(sig=signal.name, parents=parents, consumable_resources=set(self._properties.keys()))] = True
 
@@ -197,6 +219,24 @@ class Context(IContext):
             if prop not in self._properties:
                 logger.error(f"Attempt to add state which depends on unknown property `{prop}`!")
                 return
+
+        # replace configurable ages with their config values
+        # TODO Unit test
+        for signal in st.constraint.signals():
+            if isinstance(signal.min_age, ConfigurableAge):
+                conf_entry = self.conf(mod=st.module_name, key=signal.min_age.key)
+                if conf_entry is None:
+                    logger.error(f"Could not set min_age for cond of state {st.name} in module {st.module_name}")
+                    signal.min_age = 0.
+                else:
+                    signal.min_age = conf_entry
+            if isinstance(signal.max_age, ConfigurableAge):
+                conf_entry = self.conf(mod=st.module_name, key=signal.max_age.key)
+                if conf_entry is None:
+                    logger.error(f"Could not set max_age for cond of state {st.name} in module {st.module_name}")
+                    signal.max_age = 5.
+                else:
+                    signal.max_age = conf_entry
 
         # register the state's signal
         with self._lock:
@@ -526,6 +566,8 @@ class Context(IContext):
     def _run_private(self):
 
         tick_interval = 1. / self._core_config[self._tick_rate_config]
+
+        counter = 0
         while not self._shutdown_flag.wait(tick_interval):
 
             with self._lock:
@@ -589,3 +631,16 @@ class Context(IContext):
 
                 # Force garbage collect
                 gc.collect()
+
+
+            #activation_pressure_present = any(activation.is_pressured() for activation in self._state_activations())
+            activation_pressure_present = (counter % 5) != 0
+            counter += 1
+            PropertyWrapper(prop=self[":pressure"], ctx=self, allow_write=True, allow_read=True)\
+                .set(activation_pressure_present)
+
+            number_of_partially_fulfilled_states = \
+                sum(1 if any(activation.spiky() for activation in self._activations_per_state[st]) else 0
+                    for st in self._activations_per_state)
+            PropertyWrapper(prop=self[":activity"], ctx=self, allow_write=True, allow_read=True)\
+                .set(number_of_partially_fulfilled_states)

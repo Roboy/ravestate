@@ -185,6 +185,7 @@ class CausalGroup:
                 return False
         for prop in acquired_by.resources():
             self._ref_index[prop][spike][acquired_by] += 1
+        logger.debug(f"{self}.acquired({spike} by {acquired_by})")
         return True
 
     def rejected(self, spike: 'ISpike', rejected_by: IActivation, reason: int) -> None:
@@ -192,7 +193,7 @@ class CausalGroup:
         Called by a state activation, to notify the group that a member spike
          is no longer being referenced for the given state's write props.
         This may be because ... <br>
-        ... the state activation auto-eliminated. (reason=0) <br>
+        ... the state activation's dereference function was called. (reason=0) <br>
         ... the spike got too old. (reason=1) <br>
         ... the activation is happening and dereferencing it's spikes. (reason=2)
 
@@ -300,14 +301,14 @@ class CausalGroup:
         """
         if not resources:
             return
-        for prop in resources:
+        for resource in resources:
             # Notify all concerned activations, that the
             # spikes they are referencing are no longer available
-            for sig in self._ref_index[prop]:
-                for act in self._ref_index[prop][sig]:
+            for sig in self._ref_index[resource]:
+                for act in self._ref_index[resource][sig]:
                     act.dereference(spike=sig, reacquire=True)
             # Remove the consumed prop from the index
-            del self._ref_index[prop]
+            del self._ref_index[resource]
         logger.debug(f"{self}.consumed({resources})")
 
     def wiped(self, spike: 'ISpike') -> None:
