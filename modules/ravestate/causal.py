@@ -181,7 +181,7 @@ class CausalGroup:
         # Make sure that all properties are actually still writable
         for prop in acquired_by.resources():
             if prop not in self._ref_index:
-                logger.error(f"{prop} is unavailable, but {acquired_by} wants it from {self}!")
+                logger.error(f"{prop} is unavailable, but {acquired_by} wants it from {self} for {spike}!")
                 return False
         for prop in acquired_by.resources():
             self._ref_index[prop][spike][acquired_by] += 1

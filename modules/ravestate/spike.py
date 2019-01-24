@@ -1,6 +1,7 @@
 # Ravestate class which encapsulates a single spike
 
-from typing import Set, Generator
+from typing import Set, Generator, Dict
+from collections import defaultdict
 from ravestate.iactivation import ISpike
 from ravestate.causal import CausalGroup
 
@@ -15,11 +16,20 @@ class Spike(ISpike):
     ... it's offspring instances (causal group -> spikes caused by this spike)
     """
 
+    # Count how spikes were created per signal
+    _count_for_signal: Dict[str, int] = defaultdict(int)
+
     # Age of the spike in ticks
     _age: int
 
-    # Name of the spike's signal
+    # Name of the spike
     _name: str
+
+    # Name of the spike's signal
+    _signal: str
+
+    # Flag which tells whether wipe() has been called on this spike
+    _wiped: bool
 
     # This spike's causal group. The causal group
     #  is shared by an spike's family (children/parents),
@@ -52,8 +62,12 @@ class Spike(ISpike):
             parents = set()
         if consumable_resources is None:
             consumable_resources = set()
-        self._name = sig
+        assert sig
+        self._name = f"{sig}#{self._count_for_signal[sig]}"
+        self._signal = sig
+        self._count_for_signal[sig] += 1
         self._age = 0
+        self._wiped = False
         self._offspring = set()
         self._parents = parents.copy() if parents else set()
         self._causal_group = next(iter(parents)).causal_group() if parents else CausalGroup(consumable_resources)
@@ -67,13 +81,10 @@ class Spike(ISpike):
         logger.debug(f"Deleted {self}")
 
     def __repr__(self):
-        return f"Spike({self._name}, age={self._age})"
+        return self._name + f"[t+{self._age}]"
 
-    def name(self) -> str:
-        """
-        Returns the name of this spike's signal.
-        """
-        return self._name
+    def name(self):
+        return self._signal
 
     def causal_group(self) -> CausalGroup:
         """
@@ -103,7 +114,7 @@ class Spike(ISpike):
         * `child`: The child to be forgotten.
         """
         if child not in self._offspring:
-            logger.warning(f"Offspring {child.name()} requested to be removed from {self.name()}, but it's unfamiliar!")
+            logger.warning(f"Offspring {child} requested to be removed from {self}, but it's unfamiliar!")
             return
         self._offspring.remove(child)
 
@@ -130,6 +141,7 @@ class Spike(ISpike):
         if not already_wiped_in_causal_group:
             with self.causal_group() as causal:
                 causal.wiped(self)
+        self._wiped = True
         logger.debug(f"Wiped {self}")
         # del self._causal_group
 
@@ -162,3 +174,9 @@ class Spike(ISpike):
         for child in self._offspring:
             yield child
             yield from child.offspring()
+
+    def is_wiped(self):
+        """
+        Check, whether this spike has been wiped, and should therefore not be acquired anymore.
+        """
+        return self._wiped

@@ -115,6 +115,7 @@ class Signal(Constraint):
 
     def acquire(self, spike: Spike, act: IActivation):
         if not self.spike and self.name == spike.name() and (self.max_age < 0 or spike.age() <= act.secs_to_ticks(self.max_age)):
+            assert not spike.is_wiped()
             self._min_age_ticks = act.secs_to_ticks(self.min_age)
             self.spike = spike
             with spike.causal_group() as cg:
