@@ -25,6 +25,7 @@ config:
     - ravestate_hibye
     - ravestate_roboyqa
     - ravestate_genqa
+    - ravestate_akinator
 
 ---
 module: genqa
