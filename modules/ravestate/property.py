@@ -22,7 +22,8 @@ class PropertyBase:
             allow_push=True,
             allow_pop=True,
             default_value=None,
-            always_signal_changed=False):
+            always_signal_changed=False,
+            is_flag_property=False):
 
         self.name = name
         self.allow_read = allow_read
@@ -34,6 +35,7 @@ class PropertyBase:
         self._lock = Lock()
         self.parent_path: str = ""
         self.always_signal_changed = always_signal_changed
+        self.is_flag_property = is_flag_property
 
     def fullname(self):
         return f'{self.parent_path}:{self.name}'
@@ -144,6 +146,18 @@ class PropertyBase:
         """
         return s(f"{self.fullname()}:popped")
 
+    def flag_true_signal(self) -> Signal:
+        """ TODO Docstring for flagprops
+        Signal that is emitted by PropertyWrapper when #self.value is set to True.
+        """
+        return s(f"{self.fullname()}:true")
+
+    def flag_false_signal(self) -> Signal:
+        """ TODO Docstring for flagprops
+        Signal that is emitted by PropertyWrapper when #self.value is set to False.
+        """
+        return s(f"{self.fullname()}:false")
+
     def signals(self) -> Generator[Signal, None, None]:
         """
         Yields all signals that may be emitted because of
@@ -155,3 +169,6 @@ class PropertyBase:
             yield self.pushed_signal()
         if self.allow_pop:
             yield self.popped_signal()
+        if self.is_flag_property:
+            yield self.flag_true_signal()
+            yield self.flag_false_signal()

@@ -7,6 +7,8 @@ from math import ceil
 from copy import deepcopy
 import gc
 
+from ravestate.wrappers import PropertyWrapper
+
 from ravestate.icontext import IContext
 from ravestate.module import Module
 from ravestate.state import State
@@ -16,7 +18,7 @@ from ravestate.activation import Activation
 from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
-from ravestate.constraint import s, Signal, Conjunct, Disjunct
+from ravestate.constraint import s, Signal, Conjunct, Disjunct, ConfigurableAge
 from ravestate.spike import Spike
 
 from reggol import get_logger
@@ -24,8 +26,28 @@ logger = get_logger(__name__)
 
 
 class Context(IContext):
-
     _default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
+    _default_properties: Tuple[PropertyBase] = (
+        PropertyBase(
+            name="pressure",
+            allow_read=True,
+            allow_write=True,
+            allow_push=False,
+            allow_pop=False,
+            default_value=False,
+            always_signal_changed=False,
+            is_flag_property=True
+        ),
+        PropertyBase(
+            name="activity",
+            allow_read=True,
+            allow_write=True,
+            allow_push=False,
+            allow_pop=False,
+            default_value=0,
+            always_signal_changed=False
+        )
+    )
 
     _core_module_name = "core"
     _import_modules_config = "import"
@@ -34,7 +56,7 @@ class Context(IContext):
     _lock: Lock
 
     _properties: Dict[str, PropertyBase]
-    _spikes: Dict[Spike, bool]  # Bool says not-wiped (acquisition allowed) true/false
+    _spikes: Set[Spike]
 
     # Some activations that have all constraints fulfilled
     #  still need to be updated, because they are waiting for
@@ -82,7 +104,7 @@ class Context(IContext):
         self._lock = Lock()
         self._shutdown_flag = Event()
         self._properties = dict()
-        self._spikes = defaultdict(lambda: True)
+        self._spikes = set()
         self._act_per_state_per_signal_age = dict()
         self._signal_causes = dict()
         self._activations_per_state = dict()
@@ -91,6 +113,10 @@ class Context(IContext):
         # Register default signals
         for signame in self._default_signal_names:
             self._add_sig(s(signame))
+
+        # Register default properties
+        for prop in self._default_properties:
+            self.add_prop(prop=prop)
 
         # Set required config overrides
         for module_name, key, value in overrides:
@@ -105,21 +131,22 @@ class Context(IContext):
 
     def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False) -> None:
         """
-        Emit a signal to the signal processing loop. Note:
-         The signal will only be processed if run() has been called!
+        Emit a signal to the signal processing loop. _Note:_
+         The signal will only be processed if #run() has been called!
 
         * `signal`: The signal to be emitted.
 
         * `parents`: The signal's parents, if it is supposed to be integrated into a causal group.
 
-        * `wipe`: Boolean to control, whether wipe(signal) should be called
+        * `wipe`: Boolean to control, whether #wipe(signal) should be called
          before the new spike is created.
         """
         if wipe:
             self.wipe(signal)
         with self._lock:
-            self._spikes[
-                Spike(sig=signal.name, parents=parents, consumable_resources=set(self._properties.keys()))] = True
+            new_spike = Spike(sig=signal.name, parents=parents, consumable_resources=set(self._properties.keys()))
+            logger.debug(f"Emitting {new_spike}")
+            self._spikes.add(new_spike)
 
     def wipe(self, signal: Signal):
         """
@@ -134,9 +161,6 @@ class Context(IContext):
             for spike in self._spikes:
                 if spike.name() == signal.name:
                     spike.wipe()
-                    self._spikes[spike] = False
-                    for child_spike in spike.offspring():
-                        self._spikes[child_spike] = False
         # Final cleanup will be performed while update is running,
         #  and cg.stale(spike) returns true.
         # TODO: Make sure, that it is not a problem if the spike is currently referenced
@@ -197,6 +221,24 @@ class Context(IContext):
             if prop not in self._properties:
                 logger.error(f"Attempt to add state which depends on unknown property `{prop}`!")
                 return
+
+        # replace configurable ages with their config values
+        # TODO Unit test
+        for signal in st.constraint.signals():
+            if isinstance(signal.min_age, ConfigurableAge):
+                conf_entry = self.conf(mod=st.module_name, key=signal.min_age.key)
+                if conf_entry is None:
+                    logger.error(f"Could not set min_age for cond of state {st.name} in module {st.module_name}")
+                    signal.min_age = 0.
+                else:
+                    signal.min_age = conf_entry
+            if isinstance(signal.max_age, ConfigurableAge):
+                conf_entry = self.conf(mod=st.module_name, key=signal.max_age.key)
+                if conf_entry is None:
+                    logger.error(f"Could not set max_age for cond of state {st.name} in module {st.module_name}")
+                    signal.max_age = 5.
+                else:
+                    signal.max_age = conf_entry
 
         # register the state's signal
         with self._lock:
@@ -523,9 +565,23 @@ class Context(IContext):
         known_signals.discard(sig)
         return result if len(result) else None
 
+    def _update_core_properties(self):
+        with self._lock:
+            activation_pressure_present = any(activation.is_pressured() for activation in self._state_activations())
+            number_of_partially_fulfilled_states = \
+                sum(1 if any(activation.spiky() for activation in self._activations_per_state[st]) else 0
+                    for st in self._activations_per_state)
+
+        PropertyWrapper(prop=self[":pressure"], ctx=self, allow_write=True, allow_read=True) \
+            .set(activation_pressure_present)
+        PropertyWrapper(prop=self[":activity"], ctx=self, allow_write=True, allow_read=True) \
+            .set(number_of_partially_fulfilled_states)
+
     def _run_private(self):
 
         tick_interval = 1. / self._core_config[self._tick_rate_config]
+
+        ctx_loop_count = 0
         while not self._shutdown_flag.wait(tick_interval):
 
             with self._lock:
@@ -550,8 +606,8 @@ class Context(IContext):
                                     allowed_unfulfilled = act
 
                 # Acquire new state activations for every spike
-                for spike, acquisition_allowed in self._spikes.items():
-                    if not acquisition_allowed:
+                for spike in self._spikes:
+                    if spike.is_wiped():
                         continue
                     for state, acts in self._act_per_state_per_signal_age[s(spike.name())][spike.age()].items():
                         old_acts = acts.copy()
@@ -579,9 +635,9 @@ class Context(IContext):
                     with spike.causal_group() as cg:
                         if cg.stale(spike):
                             # This should lead to the deletion of the spike
-                            self._spikes.pop(spike)
+                            self._spikes.remove(spike)
                             spike.wipe(already_wiped_in_causal_group=True)
-                            logger.debug(f"{cg}.stale({spike.name()})->Y")
+                            logger.debug(f"{cg}.stale({spike})->Y")
 
                 # Increment age on active spikes
                 for spike in self._spikes:
@@ -589,3 +645,6 @@ class Context(IContext):
 
                 # Force garbage collect
                 gc.collect()
+                ctx_loop_count += 1
+
+            self._update_core_properties()

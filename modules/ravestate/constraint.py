@@ -1,4 +1,4 @@
-from typing import List, Set, Generator, Optional, Tuple
+from typing import List, Set, Generator, Optional, Tuple, Union, Callable, Any
 from ravestate.spike import Spike
 from ravestate.iactivation import IActivation
 
@@ -6,7 +6,15 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-def s(signal_name: str, *, min_age=0, max_age=5., detached=False):
+class ConfigurableAge:
+    key = ""
+
+    def __init__(self, key: str):
+        self.key = key
+
+
+def s(signal_name: str, *, min_age: Union[float, ConfigurableAge] = 0., max_age: Union[float, ConfigurableAge] = 5.,
+      detached: bool = False):
     """
     Alias to call Signal-constructor
 
@@ -107,6 +115,7 @@ class Signal(Constraint):
 
     def acquire(self, spike: Spike, act: IActivation):
         if not self.spike and self.name == spike.name() and (self.max_age < 0 or spike.age() <= act.secs_to_ticks(self.max_age)):
+            assert not spike.is_wiped()
             self._min_age_ticks = act.secs_to_ticks(self.min_age)
             self.spike = spike
             with spike.causal_group() as cg:
