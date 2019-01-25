@@ -119,7 +119,7 @@ class Signal(Constraint):
             self._min_age_ticks = act.secs_to_ticks(self.min_age)
             self.spike = spike
             with spike.causal_group() as cg:
-                cg.acquired(spike, act)
+                cg.acquired(spike, act, self.detached)
             return True
         return False
 

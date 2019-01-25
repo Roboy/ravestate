@@ -174,7 +174,9 @@ class Activation(IActivation):
             spikes_for_conjunct = set((sig.spike, sig.detached) for sig in conjunction.signals())
             consenting_causal_groups = set()
             all_consented = True
-            for spike, _ in spikes_for_conjunct:
+            for spike, detached in spikes_for_conjunct:
+                if detached:
+                    continue
                 cg: CausalGroup = spike.causal_group()
                 if cg not in consenting_causal_groups:
                     with cg:

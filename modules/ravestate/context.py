@@ -534,17 +534,24 @@ class Context(IContext):
             assert len(known_signals) == 0
         st.constraint_ = Disjunct(*{conj for conj in new_conjuncts})
 
-    def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
-        result = [set(conj.signals())]
+    def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal], detached=False) -> List[Set[Signal]]:
+        result = [set(deepcopy(sig) for sig in conj.signals())]
+        for sig in result[0]:
+            # if this (or a parent signal) is detached, then the completion must be detached too!
+            sig.detached |= detached
+            # maximum age for completions is infinite
+            sig.max_age = -1
+
         for conj_sig in conj.signals():
-            completion = self._complete_signal(conj_sig, known_signals)
+            completion = self._complete_signal(conj_sig, known_signals, detached)
             if completion is not None and len(completion) > 0:
                 # the signal is non-cyclic, and has at least one cause (secondary signal).
                 #  permute existing disjunct conjunctions with new conjunction(s)
                 result = [deepcopy(result_conj) | deepcopy(completion_conj) for result_conj in result for completion_conj in completion]
+
         return result
 
-    def _complete_signal(self, sig: Signal, known_signals: Set[Signal]) -> Optional[List[Set[Signal]]]:
+    def _complete_signal(self, sig: Signal, known_signals: Set[Signal], detached=False) -> Optional[List[Set[Signal]]]:
         # detect and handle cyclic causal chain
         if sig in known_signals:
             return None
@@ -559,10 +566,11 @@ class Context(IContext):
         result = []
         known_signals.add(sig)
         for conj in self._signal_causes[sig]:
-            completion = self._complete_conjunction(conj, known_signals)
+            completion = self._complete_conjunction(conj, known_signals, sig.detached or detached)
             if completion:
                 result += [conj | {sig} for conj in completion]
         known_signals.discard(sig)
+
         return result if len(result) else None
 
     def _update_core_properties(self):

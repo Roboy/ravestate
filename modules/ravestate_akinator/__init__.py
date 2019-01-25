@@ -17,7 +17,7 @@ EXCLUSION_URL = "https://srv11.akinator.com:9152/ws/exclusion"
 GLB_URL = "https://pastebin.com/gTua3dg2"
 
 
-@state(signal_name="initiate-play", read="akinator:initiate_play")
+@state(signal_name="initiate-play", read="akinator:initiate_play", cond=s("akinator:initiate_play:changed", detached=True))
 def akinator_initiate_play_signal(ctx):
     if ctx["akinator:initiate_play"]:
         return Emit()
@@ -31,7 +31,7 @@ def akinator_play_ask(ctx):
     ctx["akinator:initiate_play"] = True
 
 
-@state(cond=s("nlp:yes-no") & s("initiate-play", max_age=1000), read="nlp:yesno", write=("rawio:out", "akinator:question", "akinator:in_progress"))
+@state(cond=s("nlp:yes-no") & s("akinator:initiate-play", max_age=1000), read="nlp:yesno", write=("rawio:out", "akinator:question", "akinator:in_progress"))
 def akinator_start(ctx):
     if ctx["nlp:yesno"] == "yes":
         logger.info("Start Akinator session.")
@@ -70,11 +70,11 @@ def answer_to_int_str(answer: str):
 registry.register(
     name="akinator",
     states=(
+        akinator_initiate_play_signal,
         akinator_play_ask,
         akinator_start,
         akinator_question_answered,
-        akinator_is_it_answered,
-        akinator_initiate_play_signal
+        akinator_is_it_answered
     ),
     props=(
         PropertyBase(name="is_it", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),

@@ -74,6 +74,20 @@ class CausalGroup:
         ]
     ]
 
+    # Detached signal references need to be tracked separately.
+    #  The reason is, that the activations with detached signal
+    #  constraints do not expect to need any consent for their
+    #  write-activities from those signal's causal groups.
+    # They are therefore not rejected upon consumed(), but upon wiped()
+    #  or rejected().
+    _detached_ref_index: Dict[
+        ISpike,
+        Dict[
+            IActivation,
+            int
+        ]
+    ]
+
     # Names of member spikes for __repr__, added by Spike ctor
     signal_names: List[str]
 
@@ -94,6 +108,7 @@ class CausalGroup:
             prop: defaultdict(lambda: defaultdict(int))
             for prop in resources
         }
+        self._detached_ref_index = defaultdict(lambda: defaultdict(int))
 
     def __del__(self):
         with self._lock:
@@ -153,6 +168,9 @@ class CausalGroup:
                     if refcount > 0:
                         self._ref_index[prop][spike][act] += refcount
 
+        # Merge _detached_ref_index
+        self._detached_ref_index.update(other._detached_ref_index)
+
         # Merge signal names/merge count
         self.signal_names += other.signal_names
         self.merges[0] += other.merges[0]
@@ -163,8 +181,9 @@ class CausalGroup:
         other._lock = self._lock
         other._available_resources = self._available_resources
         other._ref_index = self._ref_index
+        other._detached_ref_index = self._detached_ref_index
 
-    def acquired(self, spike: 'ISpike', acquired_by: IActivation) -> bool:
+    def acquired(self, spike: 'ISpike', acquired_by: IActivation, detached: bool) -> bool:
         """
         Called by Activation to notify the causal group, that
          it is being referenced by an activation constraint for a certain member spike.
@@ -175,16 +194,22 @@ class CausalGroup:
         * `acquired_by`: State activation instance,
          which is interested in this property.
 
+        * `detached`: Tells the causal group, whether the reference is detached,
+          and should therefore receive special treatment.
+
         **Returns:** Returns True if all of the acquiring's write-props are
          free, and the group now refs. the activation, False otherwise.
         """
         # Make sure that all properties are actually still writable
-        for prop in acquired_by.resources():
-            if prop not in self._ref_index:
-                logger.error(f"{prop} is unavailable, but {acquired_by} wants it from {self} for {spike}!")
-                return False
-        for prop in acquired_by.resources():
-            self._ref_index[prop][spike][acquired_by] += 1
+        if detached:
+            self._detached_ref_index[spike][acquired_by] += 1
+        else:
+            for prop in acquired_by.resources():
+                if prop not in self._ref_index:
+                    logger.error(f"{prop} is unavailable, but {acquired_by} wants it from {self} for {spike}!")
+                    return False
+            for prop in acquired_by.resources():
+                self._ref_index[prop][spike][acquired_by] += 1
         logger.debug(f"{self}.acquired({spike} by {acquired_by})")
         return True
 
@@ -204,20 +229,22 @@ class CausalGroup:
 
         * `reason`: See about.
         """
-        for prop in rejected_by.resources():
-            if prop in self._ref_index and \
-               spike in self._ref_index[prop] and \
-               rejected_by in self._ref_index[prop][spike]:
-                remaining_refcount = self._ref_index[prop][spike][rejected_by]
+        def _decrement_refcount(refcount_for_act_for_spike):
+            if spike in refcount_for_act_for_spike and rejected_by in refcount_for_act_for_spike[spike]:
+                remaining_refcount = refcount_for_act_for_spike[spike][rejected_by]
                 if remaining_refcount > 0:
-                    self._ref_index[prop][spike][rejected_by] -= 1
+                    refcount_for_act_for_spike[spike][rejected_by] -= 1
                     if remaining_refcount > 1:
                         # do not fall through to ref deletion
-                        continue
+                        return
                 else:
                     logger.error(f"Attempt to deref group for unref'd activation {rejected_by.name}")
+                del refcount_for_act_for_spike[spike][rejected_by]
 
-                del self._ref_index[prop][spike][rejected_by]
+        _decrement_refcount(self._detached_ref_index)
+        for prop in rejected_by.resources():
+            if prop in self._ref_index:
+                _decrement_refcount(self._ref_index[prop])
                 if len(self._ref_index[prop][spike]) == 0:
                     del self._ref_index[prop][spike]
         if reason == 1:
@@ -318,11 +345,14 @@ class CausalGroup:
 
         * `spike`: The instance that should be henceforth forgotten.
         """
-        for prop in self._ref_index:
-            if spike in self._ref_index[prop]:
-                for act in self._ref_index[prop][spike]:
+        def _remove_spike_from_index(refcount_for_act_for_spike):
+            if spike in refcount_for_act_for_spike:
+                for act in refcount_for_act_for_spike[spike]:
                     act.dereference(spike=spike, reacquire=True)
-                del self._ref_index[prop][spike]
+                del refcount_for_act_for_spike[spike]
+        for prop in self._ref_index:
+            _remove_spike_from_index(self._ref_index[prop])
+        _remove_spike_from_index(self._detached_ref_index)
 
     def stale(self, spike: 'ISpike') -> bool:
         """
@@ -339,5 +369,11 @@ class CausalGroup:
                 else:
                     # Do some cleanup
                     del self._ref_index[prop][spike]
+        if spike in self._detached_ref_index:
+            if len(self._detached_ref_index[spike]) > 0:
+                return False
+            else:
+                # Do some cleanup
+                del self._detached_ref_index[spike]
         result = not spike.has_offspring()
         return result
