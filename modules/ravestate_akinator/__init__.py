@@ -17,18 +17,11 @@ EXCLUSION_URL = "https://srv11.akinator.com:9152/ws/exclusion"
 GLB_URL = "https://pastebin.com/gTua3dg2"
 
 
-@state(signal_name="initiate-play", read="akinator:initiate_play", cond=s("akinator:initiate_play:changed", detached=True))
-def akinator_initiate_play_signal(ctx):
-    if ctx["akinator:initiate_play"]:
-        return Emit()
-    return False
-
-
 # TODO: Change this to cond=idle:bored
-@state(cond=s(":startup"), write=("rawio:out", "akinator:initiate_play"))
+@state(cond=s(":startup", detached=True), write="rawio:out", signal_name="initiate-play")
 def akinator_play_ask(ctx):
     ctx["rawio:out"] = "Do you want to play 20 questions?"
-    ctx["akinator:initiate_play"] = True
+    return Emit()
 
 
 @state(cond=s("nlp:yes-no") & s("akinator:initiate-play", max_age=1000), read="nlp:yesno", write=("rawio:out", "akinator:question", "akinator:in_progress"))
@@ -46,9 +39,14 @@ def akinator_start(ctx):
         return Resign()
 
 
-@state(cond=s("nlp:yes-no") & s("akinator:in_progress:changed"), read="nlp:yesno", write=("rawio:out", "akinator:is_it", "akinator:question"))
+@state(cond=s("akinator:question:changed", detached=True), read="akinator:question", signal_name="question-asked")
+def akinator_question_asked(ctx):
+    return Emit()
+
+
+@state(cond=s("nlp:yes-no") & s("akinator:question-asked", max_age=-1), read="nlp:yesno", write=("rawio:out", "akinator:is_it", "akinator:question"))
 def akinator_question_answered(ctx):
-    logger.info("Test")
+    ctx["rawio:out"] = "Is your character brown and fabulous?"
 
 
 @state(read="nlp:triples", write="rawio:out")
@@ -70,16 +68,31 @@ def answer_to_int_str(answer: str):
 registry.register(
     name="akinator",
     states=(
-        akinator_initiate_play_signal,
         akinator_play_ask,
+        akinator_question_asked,
         akinator_start,
         akinator_question_answered,
         akinator_is_it_answered
     ),
     props=(
-        PropertyBase(name="is_it", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-        PropertyBase(name="question", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-        PropertyBase(name="in_progress", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-        PropertyBase(name="initiate_play", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+        PropertyBase(
+            name="is_it",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False),
+        PropertyBase(
+            name="question",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False),
+        PropertyBase(
+            name="in_progress",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False,
+            is_flag_property=True)
     )
 )

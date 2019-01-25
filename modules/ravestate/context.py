@@ -248,7 +248,7 @@ class Context(IContext):
             # add state's constraints as causes for the written prop's :changed signals,
             #  as well as the state's own signal.
             states_to_recomplete: Set[State] = {st}
-            for conj in st.constraint.conjunctions():
+            for conj in st.constraint.conjunctions(filter_detached=True):
                 for propname in st.write_props:
                     if propname in self._properties:
                         for signal in self._properties[propname].signals():
@@ -525,7 +525,7 @@ class Context(IContext):
         return self._act_per_state_per_signal_age[sig][0].keys()  # sig.min_age
 
     def _complete_constraint(self, st: State):
-        new_conjuncts: Set[Conjunct] = set()
+        new_conjuncts: Set[Conjunct] = deepcopy(set(st.constraint.conjunctions()))
         for conj in st.constraint.conjunctions():
             known_signals = set()
             new_conjuncts.update(
@@ -534,16 +534,14 @@ class Context(IContext):
             assert len(known_signals) == 0
         st.constraint_ = Disjunct(*{conj for conj in new_conjuncts})
 
-    def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal], detached=False) -> List[Set[Signal]]:
+    def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
         result = [set(deepcopy(sig) for sig in conj.signals())]
         for sig in result[0]:
-            # if this (or a parent signal) is detached, then the completion must be detached too!
-            sig.detached |= detached
             # maximum age for completions is infinite
             sig.max_age = -1
 
         for conj_sig in conj.signals():
-            completion = self._complete_signal(conj_sig, known_signals, detached)
+            completion = self._complete_signal(conj_sig, known_signals)
             if completion is not None and len(completion) > 0:
                 # the signal is non-cyclic, and has at least one cause (secondary signal).
                 #  permute existing disjunct conjunctions with new conjunction(s)
@@ -551,14 +549,14 @@ class Context(IContext):
 
         return result
 
-    def _complete_signal(self, sig: Signal, known_signals: Set[Signal], detached=False) -> Optional[List[Set[Signal]]]:
+    def _complete_signal(self, sig: Signal, known_signals: Set[Signal]) -> Optional[List[Set[Signal]]]:
         # detect and handle cyclic causal chain
         if sig in known_signals:
             return None
         assert sig in self._signal_causes
 
         # a signal without cause (a primary signal) needs no further completion
-        if not self._signal_causes[sig]:
+        if not self._signal_causes[sig] or sig.detached:
             return []
 
         # a signal with at least one secondary cause needs at least one non-cyclic
@@ -566,7 +564,7 @@ class Context(IContext):
         result = []
         known_signals.add(sig)
         for conj in self._signal_causes[sig]:
-            completion = self._complete_conjunction(conj, known_signals, sig.detached or detached)
+            completion = self._complete_conjunction(conj, known_signals)
             if completion:
                 result += [conj | {sig} for conj in completion]
         known_signals.discard(sig)
