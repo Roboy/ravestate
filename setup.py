@@ -32,7 +32,7 @@ setuptools.setup(
     scripts=["rasta"],
 
     install_requires=required + ["reggol"],
-    python_requires='>=3.7',
+    python_requires='>=3.6',
 
     classifiers=[
         "Programming Language :: Python :: 3",
