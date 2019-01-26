@@ -20,6 +20,7 @@ GLB_URL = "https://pastebin.com/gTua3dg2"
 akinator_data = None
 first_question = True
 
+
 # TODO: Change this to cond=idle:bored
 @state(cond=s(":startup", detached=True), write="rawio:out", signal_name="initiate-play")
 def akinator_play_ask(ctx):
