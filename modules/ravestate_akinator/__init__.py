@@ -17,6 +17,9 @@ EXCLUSION_URL = "https://srv11.akinator.com:9152/ws/exclusion"
 GLB_URL = "https://pastebin.com/gTua3dg2"
 
 
+akinator_data = None
+first_question = True
+
 # TODO: Change this to cond=idle:bored
 @state(cond=s(":startup", detached=True), write="rawio:out", signal_name="initiate-play")
 def akinator_play_ask(ctx):
@@ -24,50 +27,86 @@ def akinator_play_ask(ctx):
     return Emit()
 
 
-@state(cond=s("nlp:yes-no") & s("akinator:initiate-play", max_age=-1), read="nlp:yesno", write=("rawio:out", "akinator:question", "akinator:in_progress"))
+@state(cond=s("nlp:yes-no") & s("akinator:initiate-play", max_age=1000), read="nlp:yesno", write=("rawio:out", "akinator:question", "akinator:in_progress", "akinator:session", "akinator:signature"))
 def akinator_start(ctx):
     if ctx["nlp:yesno"] == "yes":
         logger.info("Start Akinator session.")
         akinator_session = requests.get(NEW_SESSION_URL)
+        global akinator_data
         akinator_data = akinator_session.json()
-        ctx["akinator:akinator_data"] = akinator_data
+        ctx["akinator:question"] = akinator_data
+        ctx["akinator:question"] = akinator_data['parameters']['step_information']['question']
         ctx["akinator:in_progress"] = True
         ctx["rawio:out"] = "Question " + str(int(akinator_data['parameters']['step_information']['step']) + 1) + ":\n" \
                            + akinator_data['parameters']['step_information']['question'] \
                            + '\n"yes", "no", "idk", "probably", "probably not"'
+
+        ctx["akinator:session"] = akinator_data['parameters']['identification']['session']
+        ctx["akinator:signature"] = akinator_data['parameters']['identification']['signature']
     else:
         return Resign()
 
 
-@state(cond=s("akinator:akinator_data:changed", detached=True), read="akinator:akinator_data", signal_name="question-asked")
+@state(cond=s("akinator:question:changed", detached=True), read="akinator:question", signal_name="question-asked")
 def akinator_question_asked(ctx):
     return Emit()
 
 
-@state(cond=s("nlp:yes-no") & s("akinator:question-asked", max_age=-1), read=("nlp:yesno", "akinator:akinator_data"), write=("rawio:out", "akinator:is_it", "akinator:question"))
+@state(cond=s("nlp:yes-no") & s("akinator:question-asked", max_age=-1), read=("nlp:yesno", "akinator:session", "akinator:signature"), write=("rawio:out", "akinator:is_it", "akinator:question"))
 def akinator_question_answered(ctx):
-    akinator_data = ctx["akinator:akinator_data"]
-    response = ctx["nlp:yesno"]
+    global first_question
+    global akinator_data
+
+    if first_question:
+        first_question = False
+        step = akinator_data['parameters']['step_information']['step']
+    else:
+        step = akinator_data['parameters']['step']
+    response = answer_to_int_str(ctx["nlp:yesno"])
     params = {
-        "session": akinator_data['parameters']['identification']['session'],
-        "signature": akinator_data['parameters']['identification']['signature'],
-        "step": akinator_data['parameters']['step_information']['step'],
+        "session": ctx["akinator:session"],
+        "signature": ctx["akinator:signature"],
+        "step": step,
         "answer": response
     }
-    session = akinator_data['parameters']['identification']['session']
-    signature = akinator_data['parameters']['identification']['signature']
-
     akinator_session = requests.get(ANSWER_URL, params=params)
     akinator_data = akinator_session.json()
 
-    ctx["rawio:out"] = "Question " + str(int(akinator_data['parameters']['step_information']['step']) + 1) + ":\n" \
-                       + akinator_data['parameters']['step_information']['question'] \
-                       + '\n"yes", "no", "idk", "probably", "probably not"'
+    if int(float(akinator_data['parameters']['progression'])) <= 90:
+        ctx["akinator:question"] = akinator_data['parameters']['question']
+        ctx["rawio:out"] = "Question " + str(int(akinator_data['parameters']['step']) + 1) + ":\n" \
+                           + akinator_data['parameters']['question'] \
+                           + '\n"yes", "no", "idk", "probably", "probably not"'
+    else:
+        ctx["akinator:is_it"] = True
 
 
-@state(cond=s("akinator:is_it:changed"), read="nlp:triples", write="rawio:out")
+@state(cond=s("akinator:is_it:changed", detached=True), read="akinator:question", signal_name="is-it")
+def akinator_is_it(ctx):
+    params = {
+        "session": ctx["akinator:session"],
+        "signature": ctx["akinator:signature"],
+        "step": akinator_data['parameters']['step']
+    }
+
+    guess_session = requests.get(GET_GUESS_URL, params=params)
+    guess_data = guess_session.json()
+
+    name = guess_data['parameters']['elements'][0]['element']['name']
+    desc = guess_data['parameters']['elements'][0]['element']['description']
+    ctx["rawio:out"] = "Is this your character? [yes/no]\n" + name + "\n" + desc + "\n"
+    return Emit()
+
+
+@state(cond=s("nlp:yes-no") & s("akinator:is-it", max_age=-1), read="nlp:triples", write="rawio:out")
 def akinator_is_it_answered(ctx):
-    pass
+    if ctx["nlp:yesno"] == "yes":
+        output = "I guessed right! Thanks for playing with me."
+    elif ctx["nlp:yesno"] == "no":
+        output = "I guessed right! Thanks for playing with me."
+    else:
+        output = "Shit"
+    ctx["rawio:out"] = output
 
 
 def answer_to_int_str(answer: str):
@@ -88,6 +127,7 @@ registry.register(
         akinator_question_asked,
         akinator_start,
         akinator_question_answered,
+        akinator_is_it,
         akinator_is_it_answered
     ),
     props=(
@@ -96,9 +136,10 @@ registry.register(
             default_value="",
             always_signal_changed=True,
             allow_pop=False,
-            allow_push=False),
+            allow_push=False,
+            is_flag_property=True),
         PropertyBase(
-            name="akinator_data",
+            name="question",
             default_value="",
             always_signal_changed=True,
             allow_pop=False,
@@ -109,6 +150,18 @@ registry.register(
             always_signal_changed=True,
             allow_pop=False,
             allow_push=False,
-            is_flag_property=True)
+            is_flag_property=True),
+        PropertyBase(
+            name="session",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False),
+        PropertyBase(
+            name="signature",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False)
     )
 )
