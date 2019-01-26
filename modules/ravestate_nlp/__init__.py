@@ -16,8 +16,14 @@ logger = get_logger(__name__)
 def init_model():
     # TODO: Create nlp instance in :startup state, save in context instead of global var
     global nlp, empty_token
-    nlp = spacy.load('en_core_web_sm')
-    empty_token = nlp(u' ')[0]
+    try:
+        import en_core_web_sm as spacy_en
+    except ImportError:
+        from spacy.cli import download as spacy_download
+        spacy_download("en_core_web_sm")
+        import en_core_web_sm as spacy_en
+    nlp = spacy_en.load()
+    empty_token = nlp(u" ")[0]
 
     # TODO: Make agent id configurable, rename nlp:contains-roboy to nlp:agent-mentioned
     about_roboy = ('you', 'roboy', 'robot', 'roboboy', 'your')
