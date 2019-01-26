@@ -24,13 +24,13 @@ def akinator_play_ask(ctx):
     return Emit()
 
 
-@state(cond=s("nlp:yes-no") & s("akinator:initiate-play", max_age=1000), read="nlp:yesno", write=("rawio:out", "akinator:question", "akinator:in_progress"))
+@state(cond=s("nlp:yes-no") & s("akinator:initiate-play", max_age=-1), read="nlp:yesno", write=("rawio:out", "akinator:question", "akinator:in_progress"))
 def akinator_start(ctx):
     if ctx["nlp:yesno"] == "yes":
         logger.info("Start Akinator session.")
         akinator_session = requests.get(NEW_SESSION_URL)
         akinator_data = akinator_session.json()
-        ctx["akinator:question"] = akinator_data['parameters']['step_information']['question']
+        ctx["akinator:akinator_data"] = akinator_data
         ctx["akinator:in_progress"] = True
         ctx["rawio:out"] = "Question " + str(int(akinator_data['parameters']['step_information']['step']) + 1) + ":\n" \
                            + akinator_data['parameters']['step_information']['question'] \
@@ -39,17 +39,33 @@ def akinator_start(ctx):
         return Resign()
 
 
-@state(cond=s("akinator:question:changed", detached=True), read="akinator:question", signal_name="question-asked")
+@state(cond=s("akinator:akinator_data:changed", detached=True), read="akinator:akinator_data", signal_name="question-asked")
 def akinator_question_asked(ctx):
     return Emit()
 
 
-@state(cond=s("nlp:yes-no") & s("akinator:question-asked", max_age=-1), read="nlp:yesno", write=("rawio:out", "akinator:is_it", "akinator:question"))
+@state(cond=s("nlp:yes-no") & s("akinator:question-asked", max_age=-1), read=("nlp:yesno", "akinator:akinator_data"), write=("rawio:out", "akinator:is_it", "akinator:question"))
 def akinator_question_answered(ctx):
-    ctx["rawio:out"] = "Is your character brown and fabulous?"
+    akinator_data = ctx["akinator:akinator_data"]
+    response = ctx["nlp:yesno"]
+    params = {
+        "session": akinator_data['parameters']['identification']['session'],
+        "signature": akinator_data['parameters']['identification']['signature'],
+        "step": akinator_data['parameters']['step_information']['step'],
+        "answer": response
+    }
+    session = akinator_data['parameters']['identification']['session']
+    signature = akinator_data['parameters']['identification']['signature']
+
+    akinator_session = requests.get(ANSWER_URL, params=params)
+    akinator_data = akinator_session.json()
+
+    ctx["rawio:out"] = "Question " + str(int(akinator_data['parameters']['step_information']['step']) + 1) + ":\n" \
+                       + akinator_data['parameters']['step_information']['question'] \
+                       + '\n"yes", "no", "idk", "probably", "probably not"'
 
 
-@state(read="nlp:triples", write="rawio:out")
+@state(cond=s("akinator:is_it:changed"), read="nlp:triples", write="rawio:out")
 def akinator_is_it_answered(ctx):
     pass
 
@@ -82,7 +98,7 @@ registry.register(
             allow_pop=False,
             allow_push=False),
         PropertyBase(
-            name="question",
+            name="akinator_data",
             default_value="",
             always_signal_changed=True,
             allow_pop=False,
