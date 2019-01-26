@@ -2,7 +2,7 @@
 
 from typing import Set, Dict, Optional, List
 from ravestate.iactivation import IActivation, ISpike
-from threading import Lock
+from threading import RLock
 from collections import defaultdict
 
 from reggol import get_logger
@@ -20,9 +20,9 @@ class CausalGroup:
     """
 
     # Lock for the whole causal group
-    _lock: Lock
+    _lock: RLock
     # Remember the locked lock, since the lock member might be re-targeted in merge()
-    _locked_lock: Optional[Lock]
+    _locked_lock: Optional[RLock]
 
     # Set of property names for which no writing state has been
     #  activated yet within this causal group.
@@ -100,7 +100,7 @@ class CausalGroup:
         """
         self.signal_names = []
         self.merges = [1]
-        self._lock = Lock()
+        self._lock = RLock()
         self._locked_lock = None
         self._available_resources = resources.copy()
         self._ref_index = {
