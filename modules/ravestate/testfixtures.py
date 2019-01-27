@@ -104,3 +104,10 @@ def activation_fixture_fallback(activation_fixture: Activation):
 @pytest.fixture
 def spike_fixture():
     return Spike(sig=DEFAULT_PROPERTY_CHANGED)
+
+
+@pytest.fixture
+def triple_fixture(mocker):
+    token_mock = mocker.Mock()
+    from ravestate_nlp import Triple
+    return Triple(token_mock, token_mock, token_mock, token_mock)
