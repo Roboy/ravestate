@@ -223,7 +223,6 @@ class Context(IContext):
                 return
 
         # replace configurable ages with their config values
-        # TODO Unit test
         for signal in st.constraint.signals():
             if isinstance(signal.min_age, ConfigurableAge):
                 conf_entry = self.conf(mod=st.module_name, key=signal.min_age.key)
