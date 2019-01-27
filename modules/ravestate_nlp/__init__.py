@@ -7,6 +7,7 @@ from ravestate_nlp.triple import Triple
 from ravestate_nlp.extract_triples import extract_triples
 from ravestate.state import Emit
 from ravestate.constraint import s
+from ravestate_nlp.yes_no import yes_no
 
 import spacy
 
@@ -31,6 +32,7 @@ def init_model():
     Doc.set_extension('about_roboy', getter=roboy_getter)
     Doc.set_extension('empty_token', getter=lambda doc: empty_token)
     Doc.set_extension('triples', getter=extract_triples)
+    Doc.set_extension('yesno', getter=yes_no)
 
 
 @state(cond=s("rawio:in:changed"), read="rawio:in", write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:triples", "nlp:roboy","nlp:triples", "nlp:yesno"))
@@ -65,15 +67,9 @@ def nlp_preprocess(ctx):
     ctx["nlp:roboy"] = nlp_roboy
     logger.info(f"[NLP:roboy]: {nlp_roboy}")
 
-    for i in nlp_tokens:
-        if i == "no":
-            ctx["nlp:yesno"] = "no"
-        elif i == "yes":
-            ctx["nlp:yesno"] = "yes"
-        elif i == "maybe":
-            ctx["nlp:yesno"] = "maybe"
-        else:
-            pass
+    nlp_yesno = nlp_doc._.yesno
+    ctx["nlp:yesno"] = nlp_yesno
+    logger.info(f"[NLP:yesno]: {nlp_yesno}")
 
 
 @state(signal_name="contains-roboy", read="nlp:roboy")

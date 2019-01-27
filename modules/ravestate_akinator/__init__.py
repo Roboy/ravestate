@@ -28,7 +28,9 @@ def akinator_play_ask(ctx):
     return Emit()
 
 
-@state(cond=s("nlp:yes-no") & s("akinator:initiate-play", max_age=1000), read="nlp:yesno", write=("rawio:out", "akinator:question", "akinator:in_progress", "akinator:session", "akinator:signature"))
+@state(cond=s("nlp:yes-no") & (s("akinator:initiate-play", max_age=-1) | s("akinator:initiate-play-again", max_age=-1, detached=True)),
+       read="nlp:yesno",
+       write=("rawio:out", "akinator:question", "akinator:in_progress", "akinator:session", "akinator:signature"))
 def akinator_start(ctx):
     if ctx["nlp:yesno"] == "yes":
         logger.info("Start Akinator session.")
@@ -38,9 +40,10 @@ def akinator_start(ctx):
         ctx["akinator:question"] = akinator_data
         ctx["akinator:question"] = akinator_data['parameters']['step_information']['question']
         ctx["akinator:in_progress"] = True
-        ctx["rawio:out"] = "Question " + str(int(akinator_data['parameters']['step_information']['step']) + 1) + ":\n" \
-                           + akinator_data['parameters']['step_information']['question'] \
-                           + '\n"yes", "no", "idk", "probably", "probably not"'
+        ctx["rawio:out"] = "You can answer the questions with:" \
+                           + '\n"yes", "no", "i do not know", "probably", "probably not"' \
+                           + "\nQuestion " + str(int(akinator_data['parameters']['step_information']['step']) + 1) \
+                           + ":\n" + akinator_data['parameters']['step_information']['question']
 
         ctx["akinator:session"] = akinator_data['parameters']['identification']['session']
         ctx["akinator:signature"] = akinator_data['parameters']['identification']['signature']
@@ -53,11 +56,12 @@ def akinator_question_asked(ctx):
     return Emit()
 
 
-@state(cond=s("nlp:yes-no") & s("akinator:question-asked", max_age=-1), read=("nlp:yesno", "akinator:session", "akinator:signature"), write=("rawio:out", "akinator:is_it", "akinator:question"))
+@state(cond=s("nlp:yes-no") & s("akinator:question-asked", max_age=-1),
+       read=("nlp:yesno", "akinator:session", "akinator:signature"),
+       write=("rawio:out", "akinator:is_it", "akinator:question"))
 def akinator_question_answered(ctx):
     global first_question
     global akinator_data
-
     if first_question:
         first_question = False
         step = akinator_data['parameters']['step_information']['step']
@@ -76,14 +80,16 @@ def akinator_question_answered(ctx):
     if int(float(akinator_data['parameters']['progression'])) <= 90:
         ctx["akinator:question"] = akinator_data['parameters']['question']
         ctx["rawio:out"] = "Question " + str(int(akinator_data['parameters']['step']) + 1) + ":\n" \
-                           + akinator_data['parameters']['question'] \
-                           + '\n"yes", "no", "idk", "probably", "probably not"'
+                           + akinator_data['parameters']['question']
     else:
         ctx["akinator:is_it"] = True
 
 
-@state(cond=s("akinator:is_it:changed", detached=True), read="akinator:question", signal_name="is-it")
+@state(cond=s("akinator:is_it:changed", detached=True),
+       read=("akinator:question", "akinator:session", "akinator:signature"), signal_name="is-it", write="rawio:out")
 def akinator_is_it(ctx):
+    global akinator_data
+    global guess_data
     params = {
         "session": ctx["akinator:session"],
         "signature": ctx["akinator:signature"],
@@ -95,19 +101,23 @@ def akinator_is_it(ctx):
 
     name = guess_data['parameters']['elements'][0]['element']['name']
     desc = guess_data['parameters']['elements'][0]['element']['description']
-    ctx["rawio:out"] = "Is this your character? [yes/no]\n" + name + "\n" + desc + "\n"
+    ctx["rawio:out"] = "Is this your character? \n" + name + "\n" + desc + "\n"
     return Emit()
 
 
-@state(cond=s("nlp:yes-no") & s("akinator:is-it", max_age=-1), read="nlp:triples", write="rawio:out")
+@state(cond=s("nlp:yes-no") & s("akinator:is-it", max_age=-1),
+       read=("nlp:yesno", "akinator:session", "akinator:signature"),
+       write="rawio:out", signal_name="initiate-play-again")
 def akinator_is_it_answered(ctx):
     if ctx["nlp:yesno"] == "yes":
-        output = "I guessed right! Thanks for playing with me."
+        ctx["rawio:out"] = "Yeah! I guessed right! Thanks for playing with me! \nDo you want to play again?"
+        return Emit()
     elif ctx["nlp:yesno"] == "no":
-        output = "I guessed right! Thanks for playing with me."
+        pass
+        #ctx["rawio:out"] = "I guessed wrong :("
     else:
-        output = "Shit"
-    ctx["rawio:out"] = output
+        pass
+        #ctx["rawio:out"] = "Shit"
 
 
 def answer_to_int_str(answer: str):
@@ -115,8 +125,12 @@ def answer_to_int_str(answer: str):
         return "0"
     elif answer == "no":
         return "1"
-    elif answer == "maybe":
+    elif answer == "idk":
         return "2"
+    elif answer == "p":
+        return "3"
+    elif answer == "pn":
+        return "4"
     else:
         return "-1"
 
@@ -124,12 +138,12 @@ def answer_to_int_str(answer: str):
 registry.register(
     name="akinator",
     states=(
+        akinator_is_it,
+        akinator_is_it_answered,
         akinator_play_ask,
         akinator_question_asked,
         akinator_start,
-        akinator_question_answered,
-        akinator_is_it,
-        akinator_is_it_answered
+        akinator_question_answered
     ),
     props=(
         PropertyBase(
