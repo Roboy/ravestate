@@ -1,4 +1,4 @@
-from typing import List, Set, Generator, Optional, Tuple
+from typing import List, Set, Generator, Optional, Tuple, Union, Callable, Any
 from ravestate.spike import Spike
 from ravestate.iactivation import IActivation
 
@@ -6,7 +6,15 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-def s(signal_name: str, *, min_age=0, max_age=5., detached=False) -> 'Signal':
+class ConfigurableAge:
+    key = ""
+
+    def __init__(self, key: str):
+        self.key = key
+
+
+def s(signal_name: str, *, min_age: Union[float, ConfigurableAge] = 0., max_age: Union[float, ConfigurableAge] = 5.,
+      detached: bool = False) -> 'Signal':
     """
     Alias to call Signal-constructor
 
@@ -33,7 +41,7 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         yield None
 
-    def conjunctions(self) -> Generator['Conjunct', None, None]:
+    def conjunctions(self, filter_detached=False) -> Generator['Conjunct', None, None]:
         logger.error("Don't call this method on the super class Constraint")
         yield None
 
@@ -102,15 +110,17 @@ class Signal(Constraint):
     def signals(self) -> Generator['Signal', None, None]:
         yield self
 
-    def conjunctions(self) -> Generator['Conjunct', None, None]:
-        yield Conjunct(self)
+    def conjunctions(self, filter_detached=False) -> Generator['Conjunct', None, None]:
+        if not filter_detached or not self.detached:
+            yield Conjunct(self)
 
     def acquire(self, spike: Spike, act: IActivation):
         if not self.spike and self.name == spike.name() and (self.max_age < 0 or spike.age() <= act.secs_to_ticks(self.max_age)):
+            assert not spike.is_wiped()
             self._min_age_ticks = act.secs_to_ticks(self.min_age)
             self.spike = spike
             with spike.causal_group() as cg:
-                cg.acquired(spike, act)
+                cg.acquired(spike, act, self.detached)
             return True
         return False
 
@@ -185,8 +195,12 @@ class Conjunct(Constraint):
     def signals(self) -> Generator['Signal', None, None]:
         return (sig for sig in self._signals)
 
-    def conjunctions(self) -> Generator['Conjunct', None, None]:
-        yield self
+    def conjunctions(self, filter_detached=False) -> Generator['Conjunct', None, None]:
+        result = self
+        if filter_detached:
+            result = Conjunct(*(sig for sig in self._signals if not sig.detached))
+        if result._signals:
+            yield result
 
     def acquire(self, spike: Spike, act: IActivation):
         result = False
@@ -250,8 +264,9 @@ class Disjunct(Constraint):
     def signals(self) -> Generator['Signal', None, None]:
         return (signal for conjunct in self._conjunctions for signal in conjunct._signals)
 
-    def conjunctions(self) -> Generator['Conjunct', None, None]:
-        return (conj for conj in self._conjunctions)
+    def conjunctions(self, filter_detached=False) -> Generator['Conjunct', None, None]:
+        for conj in self._conjunctions:
+            yield from conj.conjunctions(filter_detached=filter_detached)
 
     def acquire(self, spike: Spike, act: IActivation):
         result = False

@@ -6,6 +6,9 @@ from ravestate_nlp.question_word import QuestionWord
 from ravestate_nlp.triple import Triple
 from ravestate_nlp.extract_triples import extract_triples
 from ravestate.state import Emit
+from ravestate.constraint import s
+from ravestate_nlp.yes_no import yes_no
+
 import spacy
 
 
@@ -21,6 +24,7 @@ def init_model():
 
     # TODO: Make agent id configurable, rename nlp:contains-roboy to nlp:agent-mentioned
     about_roboy = ('you', 'roboy', 'robot', 'roboboy', 'your')
+
     def roboy_getter(doc) -> bool:
         return any(roboy in doc.text.lower() for roboy in about_roboy)
 
@@ -28,9 +32,10 @@ def init_model():
     Doc.set_extension('about_roboy', getter=roboy_getter)
     Doc.set_extension('empty_token', getter=lambda doc: empty_token)
     Doc.set_extension('triples', getter=extract_triples)
+    Doc.set_extension('yesno', getter=yes_no)
 
 
-@state(read="rawio:in", write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:triples", "nlp:roboy","nlp:triples"))
+@state(cond=s("rawio:in:changed"), read="rawio:in", write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:triples", "nlp:roboy","nlp:triples", "nlp:yesno"))
 def nlp_preprocess(ctx):
     nlp_doc = nlp(ctx["rawio:in"])
     
@@ -62,6 +67,10 @@ def nlp_preprocess(ctx):
     ctx["nlp:roboy"] = nlp_roboy
     logger.info(f"[NLP:roboy]: {nlp_roboy}")
 
+    nlp_yesno = nlp_doc._.yesno
+    ctx["nlp:yesno"] = nlp_yesno
+    logger.info(f"[NLP:yesno]: {nlp_yesno}")
+
 
 @state(signal_name="contains-roboy", read="nlp:roboy")
 def nlp_contains_roboy_signal(ctx):
@@ -77,13 +86,21 @@ def nlp_is_question_signal(ctx):
     return False
 
 
+@state(signal_name="yes-no", read="nlp:yesno")
+def nlp_yes_no_signal(ctx):
+    if ctx["nlp:yesno"][0]:
+        return Emit()
+    return False
+
+
 init_model()
 registry.register(
     name="nlp",
     states=(
         nlp_preprocess,
         nlp_contains_roboy_signal,
-        nlp_is_question_signal
+        nlp_is_question_signal,
+        nlp_yes_no_signal
     ),
     props=(
         PropertyBase(name="tokens", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
@@ -92,6 +109,7 @@ registry.register(
         PropertyBase(name="tags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
         PropertyBase(name="ner", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
         PropertyBase(name="triples", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-        PropertyBase(name="roboy", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+        PropertyBase(name="roboy", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+        PropertyBase(name="yesno", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
     )
 )

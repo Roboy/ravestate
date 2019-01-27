@@ -141,6 +141,9 @@ class Activation(IActivation):
         if self.death_clock is None:
             self._reset_death_clock()
 
+    def is_pressured(self):
+        return self.death_clock is not None
+
     def spiky(self) -> bool:
         """
         Returns true, if the activation has acquired any spikes at all.
@@ -171,7 +174,9 @@ class Activation(IActivation):
             spikes_for_conjunct = set((sig.spike, sig.detached) for sig in conjunction.signals())
             consenting_causal_groups = set()
             all_consented = True
-            for spike, _ in spikes_for_conjunct:
+            for spike, detached in spikes_for_conjunct:
+                if detached:
+                    continue
                 cg: CausalGroup = spike.causal_group()
                 if cg not in consenting_causal_groups:
                     with cg:
@@ -245,11 +250,10 @@ class Activation(IActivation):
         # Process state function result
         if isinstance(result, Emit):
             if self.state_to_activate.signal():
-                if result.wipe:
-                    self.ctx.wipe(self.state_to_activate.signal())
                 self.ctx.emit(
                     self.state_to_activate.signal(),
-                    parents=self.spikes)
+                    parents=self.spikes,
+                    wipe=result.wipe)
             else:
                 logger.error(f"Attempt to emit spike from state {self.name}, which does not specify a signal name!")
 
