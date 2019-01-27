@@ -6,7 +6,7 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-def s(signal_name: str, *, min_age=0, max_age=5., detached=False):
+def s(signal_name: str, *, min_age=0, max_age=5., detached=False) -> 'Signal':
     """
     Alias to call Signal-constructor
 

@@ -8,6 +8,42 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
+def changed(property_name, **kwargs) -> Signal:
+    """
+    Returns the `changed` Signal for the given property.
+    This signal is emitted, when the Property is written to,
+     and the new property value is different from the old one,
+     or the propertie's `always_signal_changed` flag is True.<br>
+    __Hint:__ All key-word arguments of #constraint.s(...)
+     (`min_age`, `max_age`, `detached`) are supported.
+    """
+    return s(f"{property_name}:changed", **kwargs)
+
+
+def pushed(property_name, **kwargs) -> Signal:
+    """
+    Returns the `pushed` Signal for the given property. This signal
+     is emitted, when a new child property is added to it.
+     From the perspective of a state, this can be achieved
+     with the `ContextWrapper.push(...)` function.<br>
+    __Hint:__ All key-word arguments of #constraint.s(...)
+     (`min_age`, `max_age`, `detached`) are supported.
+    """
+    return s(f"{property_name}:pushed", **kwargs)
+
+
+def popped(property_name, **kwargs) -> Signal:
+    """
+    Returns the `popped` Signal for the given property. This signal
+     is emitted, when a child property removed from it.
+     From the perspective of a state, this can be achieved
+     with the `ContextWrapper.pop(...)` function.<br>
+    __Hint:__ All key-word arguments of #constraint.s(...)
+     (`min_age`, `max_age`, `detached`) are supported.
+    """
+    return s(f"{property_name}:popped", **kwargs)
+
+
 class PropertyBase:
     """
     Base class for context properties. Controls read/write/push/pop/delete permissions,
@@ -130,19 +166,19 @@ class PropertyBase:
         """
         Signal that is emitted by PropertyWrapper when #write() returns True.
         """
-        return s(f"{self.fullname()}:changed")
+        return changed(self.fullname())
 
     def pushed_signal(self) -> Signal:
         """
         Signal that is emitted by PropertyWrapper when #push() returns True.
         """
-        return s(f"{self.fullname()}:pushed")
+        return pushed(self.fullname())
 
     def popped_signal(self) -> Signal:
         """
         Signal that is emitted by PropertyWrapper when #pop() returns True.
         """
-        return s(f"{self.fullname()}:popped")
+        return popped(self.fullname())
 
     def signals(self) -> Generator[Signal, None, None]:
         """
@@ -155,3 +191,4 @@ class PropertyBase:
             yield self.pushed_signal()
         if self.allow_pop:
             yield self.popped_signal()
+

@@ -23,9 +23,27 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
+def startup(**kwargs) -> Signal:
+    """
+    Obtain the startup signal, which is fired once when `Context.run()` is executed.<br>
+    __Hint:__ All key-word arguments of #constraint.s(...)
+     (`min_age`, `max_age`, `detached`) are supported.
+    """
+    return s(":startup", **kwargs)
+
+
+def shutdown(**kwargs) -> Signal:
+    """
+    Obtain the shutdown signal, which is fired once when `Context.shutdown()` is called.<br>
+    __Hint:__ All key-word arguments of #constraint.s(...)
+     (`min_age`, `max_age`, `detached`) are supported.
+    """
+    return s(":shutdown", **kwargs)
+
+
 class Context(IContext):
 
-    _default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
+    _default_signal_names: Tuple[str] = (startup(), shutdown())
 
     _core_module_name = "core"
     _import_modules_config = "import"

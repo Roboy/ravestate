@@ -9,14 +9,14 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-class StateActivationResult:
+class _StateActivationResult:
     """
     Base class for return values of state activation functions.
     """
     pass
 
 
-class Delete(StateActivationResult):
+class Delete(_StateActivationResult):
     """
     Return an instance of this class, if the invoked state should be deleted.
 
@@ -29,7 +29,7 @@ class Delete(StateActivationResult):
         self.resign = resign
 
 
-class Wipe(StateActivationResult):
+class Wipe(_StateActivationResult):
     """
     Return an instance of this class, if context.wipe(signal) should be called,
      to ensure that there are no more active spikes for the state's signal.
@@ -37,7 +37,7 @@ class Wipe(StateActivationResult):
     pass
 
 
-class Emit(StateActivationResult):
+class Emit(_StateActivationResult):
     """
     Return an instance of this class, if the invoked state's signal should be emitted.
 
@@ -48,7 +48,7 @@ class Emit(StateActivationResult):
         self.wipe = wipe
 
 
-class Resign(StateActivationResult):
+class Resign(_StateActivationResult):
     """
     Return an instance of this class, if the state invocation should be regarded unsuccessful.
      This means, that the state's signal will not be emitted, and the spikes
@@ -114,7 +114,7 @@ class State:
         self.module_name = ""
         self._signal = None
 
-    def __call__(self, context, *args, **kwargs) -> Optional[StateActivationResult]:
+    def __call__(self, context, *args, **kwargs) -> Optional[_StateActivationResult]:
         args = (context,) + args
         return self.action(*args, **kwargs)
 
