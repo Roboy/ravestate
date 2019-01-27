@@ -147,14 +147,14 @@ class PropertyBase:
         return s(f"{self.fullname()}:popped")
 
     def flag_true_signal(self) -> Signal:
-        """ TODO Docstring for flagprops
-        Signal that is emitted by PropertyWrapper when #self.value is set to True.
+        """
+        Signal that is emitted by PropertyWrapper when it is a flag-property and #self.value is set to True.
         """
         return s(f"{self.fullname()}:true")
 
     def flag_false_signal(self) -> Signal:
-        """ TODO Docstring for flagprops
-        Signal that is emitted by PropertyWrapper when #self.value is set to False.
+        """
+        Signal that is emitted by PropertyWrapper when it is a flag-property and #self.value is set to False.
         """
         return s(f"{self.fullname()}:false")
 

@@ -2,10 +2,9 @@ from ravestate import registry
 from ravestate.constraint import ConfigurableAge
 from ravestate.constraint import s
 from ravestate.wrappers import ContextWrapper
-from ravestate.state import state, Emit, Delete
+from ravestate.state import state, Emit
 
 from reggol import get_logger
-
 logger = get_logger(__name__)
 
 IMPATIENCE_THRESHOLD_CONFIG_KEY = "impatience_threshold"
@@ -26,18 +25,15 @@ def am_i_bored(ctx: ContextWrapper):
               max_age=-1.),
        signal_name="impatient")
 def am_i_impatient(ctx: ContextWrapper):
+    """
+    Emits idle:impatient signal if there are pressured activations for a (configurable) amount of time
+    """
     logger.debug("Emitting idle:impatient")
     return Emit(wipe=True)
 
 
-# This state is just for testing the bored signal
-@state(cond=s("idle:bored"), write="rawio:out")
-def play_with_me(ctx: ContextWrapper):
-    ctx["rawio:out"] = "Play with me, I am bored!"
-
-
-registry.register(name="idle", states=(am_i_bored, am_i_impatient, play_with_me),
+registry.register(name="idle", states=(am_i_bored, am_i_impatient),
                   config={
                       # duration in seconds how long ":pressure" should be true before getting impatient
-                      IMPATIENCE_THRESHOLD_CONFIG_KEY:  0.1
+                      IMPATIENCE_THRESHOLD_CONFIG_KEY:  2.
                   })
