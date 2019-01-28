@@ -1,4 +1,3 @@
-
 import rclpy
 from ravestate import registry
 from ravestate.constraint import s
@@ -10,6 +9,7 @@ from std_msgs.msg import String
 
 rclpy.init()
 node = rclpy.create_node("vision_node")
+
 
 @state(cond=s(":startup"))
 def facerec_run(ctx):

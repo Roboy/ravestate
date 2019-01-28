@@ -1,6 +1,7 @@
 from os.path import join, dirname, realpath
 from typing import List
 
+from ravestate.property import PropertyBase
 from ravestate_verbaliser import verbaliser
 
 

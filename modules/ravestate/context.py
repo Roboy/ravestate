@@ -1,5 +1,5 @@
 # Ravestate context class
-
+import copy
 from threading import Thread, Lock, Event
 from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
 from collections import defaultdict
@@ -158,6 +158,7 @@ class Context(IContext):
          should be invalidated and forgotten.
         """
         with self._lock:
+            spikes_change = {}
             for spike in self._spikes:
                 if spike.name() == signal.name:
                     spike.wipe()

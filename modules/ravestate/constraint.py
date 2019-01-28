@@ -139,10 +139,10 @@ class Signal(Constraint):
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
         # Reject spike, once it has become too old
         if self.spike and self.max_age >= 0 and self.spike.age() > act.secs_to_ticks(self.max_age):
-            with self.spike.causal_group() as cg:
-                cg.rejected(self.spike, act, reason=1)
-                self.spike = None
-                yield self
+                with self.spike.causal_group() as cg:
+                    cg.rejected(self.spike, act, reason=1)
+                    self.spike = None
+                    yield self
 
     def __str__(self):
         return self.name
