@@ -28,13 +28,13 @@ class Api:
         return self.signature
 
     # get first question
-    def get_parameter(self, parameter_type: str):
+    def get_parameter(self, parameter_type: str) -> dict:
         if 'step_information' in self.data['parameters']:
             return self.data['parameters']['step_information'][parameter_type]
         else:
             return self.data['parameters'][parameter_type]
 
-    def get_progression(self):
+    def get_progression(self) -> float:
         return float(self.data['parameters']['progression'])
 
     def response_get_request(self, response: str):
@@ -46,7 +46,7 @@ class Api:
         }
         self.data = requests.get(ANSWER_URL, params=params).json()
 
-    def guess_get_request(self):
+    def guess_get_request(self) -> dict:
         params = {
             "session": self.get_session(),
             "signature": self.get_signature(),
