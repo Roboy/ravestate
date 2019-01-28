@@ -8,7 +8,7 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 akinator_api: Api
-CERTAINTY = 90
+CERTAINTY = "certainty_percentage"
 
 
 # TODO: Change this to cond=idle:bored
@@ -48,7 +48,7 @@ def akinator_question_answered(ctx):
     response = answer_to_int_str(ctx["nlp:yesno"])
     if not response == "-1":
         akinator_api.response_get_request(response)
-        if akinator_api.get_progression() <= CERTAINTY:
+        if akinator_api.get_progression() <= ctx.conf(key=CERTAINTY):
             ctx["akinator:question"] = True
             ctx["rawio:out"] = "Question " + str(int(akinator_api.get_parameter('step')) + 1) \
                                + ":\n" + akinator_api.get_parameter('question')
@@ -150,5 +150,6 @@ registry.register(
             allow_pop=False,
             allow_push=False,
             is_flag_property=True)
-    )
+    ),
+    config={CERTAINTY: 90}
 )
