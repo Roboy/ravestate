@@ -11,8 +11,7 @@ akinator_api: Api
 CERTAINTY = "certainty_percentage"
 
 
-# TODO: Change this to cond=idle:bored
-@state(cond=s("nlp:play:changed", detached=True),
+@state(cond=s("nlp:play:changed", detached=True) | s("idle:bored", detached=True),
        write="rawio:out",
        signal_name="initiate-play",
        emit_detached=True)
