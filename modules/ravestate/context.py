@@ -569,7 +569,7 @@ class Context(IContext):
             activation_pressure_present = any(activation.is_pressured() for activation in self._state_activations())
             # don't count states that have ':activity:changed' in their constraint to avoid self-influencing
             number_of_partially_fulfilled_states = \
-                sum(1 if any(activation.spiky() and s(':activity:changed') not in list(activation.constraint.signals())
+                sum(1 if any(activation.spiky() and self[":activity"].changed_signal() not in list(activation.constraint.signals())
                              for activation in self._activations_per_state[st]) else 0
                     for st in self._activations_per_state)
 
