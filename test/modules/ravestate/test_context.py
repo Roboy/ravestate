@@ -1,5 +1,6 @@
-from ravestate.constraint import Signal
+from ravestate.constraint import Signal, ConfigurableAge
 from ravestate.spike import Spike
+from ravestate.module import Module
 from ravestate.testfixtures import *
 
 
@@ -126,3 +127,30 @@ def test_add_state(
     assert b_acts[0].specificity() == a_sig_spec + propchange_sig_spec
     assert 1.53 < d_acts[0].specificity() < 1.54
 
+
+def test_add_state_configurable_age(context_with_property_fixture: Context):
+    my_cond = s(signal_name=DEFAULT_PROPERTY_CHANGED, min_age=ConfigurableAge(key="min_age_key"),
+                max_age=ConfigurableAge(key="max_age_key"))
+
+    @state(cond=my_cond)
+    def conf_st(ctx):
+        pass
+    conf_st.module_name = DEFAULT_MODULE_NAME
+    context_with_property_fixture._config.add_conf(mod=Module(name=DEFAULT_MODULE_NAME,
+                                                              config={"min_age_key": 2.5, "max_age_key": 4.5}))
+    context_with_property_fixture.add_state(st=conf_st)
+    assert my_cond.min_age == 2.5
+    assert my_cond.max_age == 4.5
+
+
+def test_add_state_configurable_age_not_in_config(context_with_property_fixture: Context):
+    my_cond = s(signal_name=DEFAULT_PROPERTY_CHANGED, min_age=ConfigurableAge(key="min_age_key"),
+                max_age=ConfigurableAge(key="max_age_key"))
+
+    @state(cond=my_cond)
+    def conf_st(ctx):
+        pass
+    conf_st.module_name = DEFAULT_MODULE_NAME
+    context_with_property_fixture.add_state(st=conf_st)
+    assert my_cond.min_age == 0.
+    assert my_cond.max_age == 5.

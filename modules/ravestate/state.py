@@ -66,6 +66,7 @@ class State:
     constraint: Constraint
     constraint_: Constraint  # Updated by context, to add constraint causes to constraint
     module_name: str
+    emit_detached: bool
 
     # Dummy resource which allows CausalGroups to track acquisitions
     #  for states that don't have any write-props.
@@ -77,7 +78,8 @@ class State:
                  read: Union[str, Tuple[str]],
                  cond: Constraint,
                  action,
-                 is_receptor: Optional[bool]=False):
+                 is_receptor: bool=False,
+                 emit_detached: bool=False):
 
         assert(callable(action))
         self.name = action.__name__
@@ -113,6 +115,7 @@ class State:
         self.action = action
         self.module_name = ""
         self._signal = None
+        self.emit_detached = emit_detached
 
     def __call__(self, context, *args, **kwargs) -> Optional[StateActivationResult]:
         args = (context,) + args
@@ -125,7 +128,7 @@ class State:
         return self._signal
 
 
-def state(*, signal_name: Optional[str]="", write: tuple=(), read: tuple=(), cond: Constraint=None):
+def state(*, signal_name: Optional[str]="", write: tuple=(), read: tuple=(), cond: Constraint=None, emit_detached=False):
     """
     Decorator to declare a new state, which may emit a certain signal,
     write to a certain set of properties (calling write, push, pop),
@@ -133,5 +136,5 @@ def state(*, signal_name: Optional[str]="", write: tuple=(), read: tuple=(), con
     """
     def state_decorator(action):
         nonlocal signal_name, write, read, cond
-        return State(signal_name=signal_name, write=write, read=read, cond=cond, action=action)
+        return State(signal_name=signal_name, write=write, read=read, cond=cond, action=action, emit_detached=emit_detached)
     return state_decorator

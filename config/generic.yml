@@ -16,13 +16,15 @@
 ---
 module: core
 config:
-  tickrate: 5
+  tickrate: 10
   import:
     - ravestate_interloc
     - ravestate_conio
     - ravestate_wildtalk
     - ravestate_nlp
     - ravestate_hibye
+    - ravestate_idle
+    - ravestate_fillers
   ros2-node-name: "ros2-node-name"
 
 ---

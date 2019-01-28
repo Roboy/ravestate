@@ -25,6 +25,9 @@ config:
     - ravestate_hibye
     - ravestate_roboyqa
     - ravestate_genqa
+    - ravestate_idle
+    - ravestate_fillers
+    - ravestate_akinator
 
 ---
 module: genqa
@@ -36,3 +39,8 @@ config:
 module: roboyqa
 config:
   roboy_node_id: 356
+
+---
+module: akinator
+config:
+  certainty_percentage: 90
