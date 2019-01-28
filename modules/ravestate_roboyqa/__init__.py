@@ -17,10 +17,9 @@ verbaliser.add_folder(join(dirname(realpath(__file__)), "answering_phrases"))
 ROBOY_NODE_CONF_KEY = "roboy_node_id"
 
 
-# TODO: Change this to cond=idle:bored
-# @state(cond=s(":startup"), write="rawio:out")
-# def hello_world_roboyqa(ctx):
-#     ctx["rawio:out"] = "Ask me something about myself!"
+@state(cond=s("idle:bored"), write="rawio:out")
+def hello_world_roboyqa(ctx):
+    ctx["rawio:out"] = "Ask me something about myself!"
 
 
 @state(cond=s("nlp:contains-roboy") & s("nlp:is-question"), read="nlp:triples", write="rawio:out")
