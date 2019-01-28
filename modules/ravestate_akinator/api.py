@@ -28,7 +28,7 @@ class Api:
         return self.signature
 
     # get first question
-    def get_parameter(self, parameter_type: str) -> dict:
+    def get_parameter(self, parameter_type: str) -> str:
         if 'step_information' in self.data['parameters']:
             return self.data['parameters']['step_information'][parameter_type]
         else:
