@@ -5,6 +5,7 @@ from ravestate.state import state
 from ravestate_nlp.question_word import QuestionWord
 from ravestate_nlp.triple import Triple
 from ravestate_nlp.extract_triples import extract_triples
+from ravestate_nlp.triple import Triple
 from ravestate.state import Emit
 from ravestate.constraint import s
 from ravestate_nlp.yes_no import yes_no
@@ -35,7 +36,9 @@ def init_model():
     Doc.set_extension('yesno', getter=yes_no)
 
 
-@state(cond=s("rawio:in:changed"), read="rawio:in", write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:triples", "nlp:roboy","nlp:triples", "nlp:yesno"))
+@state(cond=s("rawio:in:changed"),
+       read="rawio:in",
+       write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:triples", "nlp:roboy","nlp:triples", "nlp:yesno", "nlp:play"))
 def nlp_preprocess(ctx):
     nlp_doc = nlp(ctx["rawio:in"])
     
@@ -71,6 +74,10 @@ def nlp_preprocess(ctx):
     ctx["nlp:yesno"] = nlp_yesno
     logger.info(f"[NLP:yesno]: {nlp_yesno}")
 
+    if nlp_triples[0].get_object().lemma_ == "game" or nlp_triples[0].get_predicate().lemma_ == "play":
+        nlp_play = True
+        ctx["nlp:play"] = nlp_play
+
 
 @state(signal_name="contains-roboy", read="nlp:roboy")
 def nlp_contains_roboy_signal(ctx):
@@ -103,13 +110,60 @@ registry.register(
         nlp_yes_no_signal
     ),
     props=(
-        PropertyBase(name="tokens", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-        PropertyBase(name="postags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-        PropertyBase(name="lemmas", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-        PropertyBase(name="tags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-        PropertyBase(name="ner", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-        PropertyBase(name="triples", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-        PropertyBase(name="roboy", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-        PropertyBase(name="yesno", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+        PropertyBase(
+            name="tokens",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False),
+        PropertyBase(
+            name="postags",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False),
+        PropertyBase(
+            name="lemmas",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False),
+        PropertyBase(
+            name="tags",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False),
+        PropertyBase(
+            name="ner",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False),
+        PropertyBase(
+            name="triples",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False),
+        PropertyBase(
+            name="roboy",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False),
+        PropertyBase(
+            name="yesno",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False),
+        PropertyBase(
+            name="play",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False,
+            is_flag_property=True)
     )
 )

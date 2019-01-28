@@ -3,7 +3,7 @@ import requests
 from reggol import get_logger
 logger = get_logger(__name__)
 
-
+# put in config
 NEW_SESSION_URL = "https://srv11.akinator.com:9152/ws/new_session?callback=&partner=&player=website-desktop&uid_ext_session=&frontaddr=NDYuMTA1LjExMC40NQ==&constraint=ETAT<>'AV'"
 ANSWER_URL = "https://srv11.akinator.com:9152/ws/answer"
 GET_GUESS_URL = "https://srv11.akinator.com:9152/ws/list"
@@ -19,13 +19,6 @@ class Api:
         self.data = requests.get(NEW_SESSION_URL).json()
         self.session = self.data['parameters']['identification']['session']
         self.signature = self.data['parameters']['identification']['signature']
-        self.dict_structure = ['parameters', 'step_information']
-
-    def get_session(self):
-        return self.session
-
-    def get_signature(self):
-        return self.signature
 
     # get first question
     def get_parameter(self, parameter_type: str) -> str:
@@ -39,8 +32,8 @@ class Api:
 
     def response_get_request(self, response: str):
         params = {
-            "session": self.get_session(),
-            "signature": self.get_signature(),
+            "session": self.session,
+            "signature": self.signature,
             "step": self.get_parameter('step'),
             "answer": response
         }
@@ -48,8 +41,8 @@ class Api:
 
     def guess_get_request(self) -> dict:
         params = {
-            "session": self.get_session(),
-            "signature": self.get_signature(),
+            "session": self.session,
+            "signature": self.signature,
             "step": self.get_parameter('step')
         }
         guess_data = requests.get(GET_GUESS_URL, params=params).json()
