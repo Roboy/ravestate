@@ -17,6 +17,10 @@ CERTAINTY = "certainty_percentage"
        signal_name="initiate-play",
        emit_detached=True)
 def akinator_play_ask(ctx):
+    """
+    Asks if interlocutor wants to play 20 question / akinator
+    Triggered when nlp:play property is changed by "i want to play a game" or a similar input
+    """
     ctx["rawio:out"] = "Do you want to play 20 questions?"
     return Emit()
 
@@ -26,6 +30,12 @@ def akinator_play_ask(ctx):
        write=("rawio:out", "akinator:question"),
        emit_detached=True)
 def akinator_start(ctx):
+    """
+    Starts akinator session
+    Triggered by signal from akinator_play_ask state and nlp:yes-no signal given by the input
+    It is also triggered if one game is finished and the interlocutor wants to play again
+    Output: First question
+    """
     global akinator_api
     if ctx["nlp:yesno"] == "yes":
         logger.info("Akinator session is started.")
@@ -44,11 +54,17 @@ def akinator_start(ctx):
        write=("rawio:out", "akinator:is_it", "akinator:question", "akinator:wrong_input"),
        emit_detached=True)
 def akinator_question_answered(ctx):
+    """
+    Reads the answer to a question and outputs the next question
+    Gets triggered by akinator:question which is always updated by a new question and nlp:yes-no signal
+    Triggers the wrong_input state id it cannot process the input
+    If the answer certainty of akinator is over the configurable CERTAINTY threshold the is_it state is triggered
+    """
     global akinator_api
-    response = answer_to_int_str(ctx["nlp:yesno"])
+    response = akinator_api.answer_to_int_str(ctx["nlp:yesno"])
     if not response == "-1":
         akinator_api.response_get_request(response)
-        if akinator_api.get_progression() <= ctx.conf(key=CERTAINTY):
+        if float(akinator_api.get_parameter('progression')) <= ctx.conf(key=CERTAINTY):
             ctx["akinator:question"] = True
             ctx["rawio:out"] = "Question " + str(int(akinator_api.get_parameter('step')) + 1) \
                                + ":\n" + akinator_api.get_parameter('question')
@@ -64,51 +80,49 @@ def akinator_question_answered(ctx):
        signal_name="is-it",
        emit_detached=True)
 def akinator_is_it(ctx):
+    """
+    Outputs the solution guess of akinator: "Is this your character? ..."
+    Triggers the is_it_answer state
+    """
     global akinator_api
     guess = akinator_api.guess_get_request()
-    ctx["rawio:out"] = "Is this your character? \n" + guess['name'] + "\n" + guess['desc'] + "\n"
+    ctx["rawio:out"] = "Is this your character? \n" + guess['name'] + "\n" + guess['desc'] \
+                       + "\nPlease answer with 'yes' or 'no'."
     return Emit()
 
 
 @state(cond=s("nlp:yes-no") & s("akinator:is-it", max_age=-1),
        read="nlp:yesno",
-       write=("rawio:out", "akinator:initiate_play_again", "akinator:wrong_input"),
+       write=("rawio:out", "akinator:initiate_play_again"),
        emit_detached=True)
 def akinator_is_it_answered(ctx):
-    response = ctx["nlp:yesno"]
-    if not response == "-1":
-        if ctx["nlp:yesno"] == "yes":
-            out = "Yeah! I guessed right! Thanks for playing with me! \nDo you want to play again?"
-        elif ctx["nlp:yesno"] == "no":
-            out = "I guessed wrong but do you want to play again?"
-        ctx["rawio:out"] = out
-        ctx["akinator:initiate_play_again"] = True
+    """
+    Gets input from interlocutor on the "is it" question and posts the result
+    Asks if the interlocutor wants to play again.
+    """
+    if ctx["nlp:yesno"] == "yes":
+        akinator_api.choice_get_request()
+        out = "Yeah! I guessed right! Thanks for playing with me! \nDo you want to play again?"
+    elif ctx["nlp:yesno"] == "no":
+        akinator_api.exclusion_get_request()
+        out = "I guessed wrong but do you want to play again?"
     else:
-        ctx["akinator:wrong_input"] = True
-    return Delete()
+        # TODO catch wrong input for this state
+        out = "What? But do you want to play again?"
+    ctx["rawio:out"] = out
+    ctx["akinator:initiate_play_again"] = True
 
 
 @state(cond=s("akinator:wrong_input:changed", detached=True),
        write=("rawio:out", "akinator:question"),
        emit_detached=True)
 def akinator_wrong_input(ctx):
-    ctx["rawio:out"] = "Sadly I could not process that answer. Try to answer with 'yes' or 'no' please."
+    """
+    Catches wrong inputs from the interlocutor during questions answering and loops back to the question state
+    """
+    ctx["rawio:out"] = "Sadly I could not process that answer. Remember that you have these five answering choices: " \
+                       "\n'yes', 'no', 'i do not know', 'probably', 'probably not'"
     ctx["akinator:question"] = True
-
-
-def answer_to_int_str(answer: str):
-    if answer == "yes":
-        return "0"
-    elif answer == "no":
-        return "1"
-    elif answer == "idk":
-        return "2"
-    elif answer == "p":
-        return "3"
-    elif answer == "pn":
-        return "4"
-    else:
-        return "-1"
 
 
 registry.register(
