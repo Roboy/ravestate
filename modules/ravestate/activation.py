@@ -34,7 +34,7 @@ class Activation(IActivation):
     ctx: IContext
     args: List
     kwargs: Dict
-    spikes: Set[Spike]
+    parent_spikes: Set[Spike]
     consenting_causal_groups: Set[CausalGroup]
 
     def __init__(self, st: State, ctx: IContext):
@@ -46,7 +46,7 @@ class Activation(IActivation):
         self.ctx = ctx
         self.args = []
         self.kwargs = {}
-        self.spikes = set()
+        self.parent_spikes = set()
         self.consenting_causal_groups = set()
         self.death_clock = None
 
@@ -206,7 +206,10 @@ class Activation(IActivation):
                 self.ctx.withdraw(self, sig)
 
             # Remember spikes/causal-groups for use in activation
-            self.spikes = {spike for spike, detached in spikes_for_conjunct if not detached}
+            if self.state_to_activate.emit_detached:
+                self.parent_spikes = set()
+            else:
+                self.parent_spikes = {spike for spike, detached in spikes_for_conjunct if not detached}
             self.consenting_causal_groups = consenting_causal_groups
 
             # Run activation
@@ -242,7 +245,7 @@ class Activation(IActivation):
         return {group for group in self.consenting_causal_groups}
 
     def _run_private(self):
-        context_wrapper = ContextWrapper(ctx=self.ctx, st=self.state_to_activate, spike_parents=self.spikes)
+        context_wrapper = ContextWrapper(ctx=self.ctx, st=self.state_to_activate, spike_parents=self.parent_spikes)
 
         # Run state function
         result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
@@ -252,7 +255,7 @@ class Activation(IActivation):
             if self.state_to_activate.signal():
                 self.ctx.emit(
                     self.state_to_activate.signal(),
-                    parents=self.spikes,
+                    parents=self.parent_spikes,
                     wipe=result.wipe)
             else:
                 logger.error(f"Attempt to emit spike from state {self.name}, which does not specify a signal name!")
