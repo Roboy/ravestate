@@ -44,7 +44,7 @@ def init_model():
 
 @state(cond=s("rawio:in:changed"),
        read="rawio:in",
-       write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:triples", "nlp:roboy","nlp:triples", "nlp:yesno", "nlp:play"))
+       write=("nlp:tokens", "nlp:postags", "nlp:lemmas", "nlp:tags", "nlp:ner", "nlp:triples", "nlp:roboy","nlp:triples", "nlp:yesno"))
 def nlp_preprocess(ctx):
     nlp_doc = nlp(ctx["rawio:in"])
     
@@ -80,10 +80,6 @@ def nlp_preprocess(ctx):
     ctx["nlp:yesno"] = nlp_yesno
     logger.info(f"[NLP:yesno]: {nlp_yesno}")
 
-    if nlp_triples[0].match_either_lemma(pred={"play"}, obj={"game"}):
-        nlp_play = True
-        ctx["nlp:play"] = nlp_play
-
 
 @state(signal_name="contains-roboy", read="nlp:roboy")
 def nlp_contains_roboy_signal(ctx):
@@ -94,7 +90,7 @@ def nlp_contains_roboy_signal(ctx):
 
 @state(signal_name="is-question", read="nlp:triples")
 def nlp_is_question_signal(ctx):
-    if ctx["nlp:triples"][0].is_question():
+    if ctx["nlp:triples"] and ctx["nlp:triples"][0].is_question():
         return Emit()
     return False
 
@@ -106,6 +102,13 @@ def nlp_yes_no_signal(ctx):
     return False
 
 
+@state(signal_name="intent-play", read="nlp:triples")
+def nlp_play_signal(ctx):
+    if ctx["nlp:triples"] and ctx["nlp:triples"][0].match_either_lemma(pred={"play"}, obj={"game"}):
+        return Emit()
+    return False
+
+
 init_model()
 registry.register(
     name="nlp",
@@ -113,7 +116,8 @@ registry.register(
         nlp_preprocess,
         nlp_contains_roboy_signal,
         nlp_is_question_signal,
-        nlp_yes_no_signal
+        nlp_yes_no_signal,
+        nlp_play_signal
     ),
     props=(
         PropertyBase(
@@ -163,13 +167,6 @@ registry.register(
             default_value="",
             always_signal_changed=True,
             allow_pop=False,
-            allow_push=False),
-        PropertyBase(
-            name="play",
-            default_value="",
-            always_signal_changed=True,
-            allow_pop=False,
-            allow_push=False,
-            is_flag_property=True)
+            allow_push=False)
     )
 )
