@@ -1,4 +1,4 @@
-# Ravestate class which encapsualtes the activation of a single state
+# Ravestate class which encapsulates the activation of a single state
 import copy
 
 from threading import Thread
@@ -6,7 +6,7 @@ from typing import Set, Optional, List, Dict
 from collections import defaultdict
 
 from ravestate.icontext import IContext
-from ravestate.constraint import Constraint, s
+from ravestate.constraint import Constraint
 from ravestate.iactivation import IActivation, ISpike
 from ravestate.spike import Spike
 from ravestate.causal import CausalGroup
@@ -67,7 +67,7 @@ class Activation(IActivation):
             #  This allows CausalGroup to track the spike acquisitions for this
             #  activation, and make sure that a single spike cannot activate
             #  multiple activations for a write-prop-less state.
-            return {self.state_to_activate.consumable.fullname()}
+            return {self.state_to_activate.consumable.id()}
 
     def specificity(self) -> float:
         """
@@ -245,7 +245,11 @@ class Activation(IActivation):
         context_wrapper = ContextWrapper(ctx=self.ctx, st=self.state_to_activate, spike_parents=self.spikes)
 
         # Run state function
-        result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
+        try:
+            result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
+        except Exception as e:
+            logger.error(f"An exception occurred while activating {self}: {e}")
+            result = Resign()
 
         # Process state function result
         if isinstance(result, Emit):

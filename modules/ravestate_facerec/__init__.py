@@ -1,6 +1,6 @@
 
 import rclpy
-from ravestate import registry
+from ravestate.module import Module
 from ravestate.constraint import s
 from ravestate.state import state
 from ravestate.receptor import receptor
@@ -11,24 +11,22 @@ from std_msgs.msg import String
 rclpy.init()
 node = rclpy.create_node("vision_node")
 
-@state(cond=s(":startup"))
-def facerec_run(ctx):
+with Module(name="facerec"):
 
-    @receptor(ctx_wrap=ctx, write="facerec:face")
-    def face_recognition_callback(ctx, msg):
-        ctx["facerec:face"] = msg
+    face = PropertyBase(name="face", default_value="")
 
-    node.create_subscription(String, "/roboy/vision/recognized_faces", face_recognition_callback)
-    rclpy.spin(node)
+    @state(cond=s(":startup"))
+    def facerec_run(ctx):
 
+        @receptor(ctx_wrap=ctx, write="facerec:face")
+        def face_recognition_callback(ctx, msg):
+            ctx["facerec:face"] = msg
 
-@state(cond=s(":shutdown"))
-def facerec_shutdown():
-    node.destroy_node()
-    rclpy.shutdown()
+        node.create_subscription(String, "/roboy/vision/recognized_faces", face_recognition_callback)
+        rclpy.spin(node)
 
 
-registry.register(
-    name="facerec",
-    props=PropertyBase(name="face", default_value=""),
-    states=(facerec_run, facerec_shutdown))
+    @state(cond=s(":shutdown"))
+    def facerec_shutdown():
+        node.destroy_node()
+        rclpy.shutdown()

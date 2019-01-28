@@ -10,12 +10,11 @@ import gc
 from ravestate.wrappers import PropertyWrapper
 
 from ravestate.icontext import IContext
-from ravestate.module import Module
+from ravestate.module import Module, has_module, get_module, import_module
 from ravestate.state import State
 from ravestate.property import PropertyBase
 from ravestate.iactivation import IActivation
 from ravestate.activation import Activation
-from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
 from ravestate.constraint import s, Signal, Conjunct, Disjunct, ConfigurableAge
@@ -218,10 +217,10 @@ class Context(IContext):
          will be imported, and any ravestate modules registered during the python
          import will also be added to this context.
         """
-        if registry.has_module(module_name):
-            self._module_registration_callback(registry.get_module(module_name))
+        if has_module(module_name):
+            self._module_registration_callback(get_module(module_name))
             return
-        registry.import_module(module_name=module_name, callback=self._module_registration_callback)
+        import_module(module_name=module_name, callback=self._module_registration_callback)
 
     def add_state(self, *, st: State) -> None:
         """
@@ -320,12 +319,12 @@ class Context(IContext):
 
         * `prop`: The property object that should be added.
         """
-        if prop.fullname() in self._properties:
-            logger.error(f"Attempt to add property {prop.fullname()} twice!")
+        if prop.id() in self._properties:
+            logger.error(f"Attempt to add property {prop.id()} twice!")
             return
         with self._lock:
             # register property
-            self._properties[prop.fullname()] = prop
+            self._properties[prop.id()] = prop
             # register all of the property's signals
             for signal in prop.signals():
                 self._add_sig(signal)
@@ -337,11 +336,11 @@ class Context(IContext):
 
         * `prop`: The property to remove.object
         """
-        if prop.fullname() not in self._properties:
-            logger.error(f"Attempt to remove unknown property {prop.fullname()}!")
+        if prop.id() not in self._properties:
+            logger.error(f"Attempt to remove unknown property {prop.id()}!")
             return
         # remove property from context
-        self._properties.pop(prop.fullname())
+        self._properties.pop(prop.id())
         states_to_remove: Set[State] = set()
         with self._lock:
             # remove all of the property's signals
@@ -349,7 +348,7 @@ class Context(IContext):
                 self._rm_sig(signal)
             # remove all states that depend upon property
             for st in self._activations_per_state:
-                if prop.fullname() in st.read_props + st.write_props:
+                if prop.id() in st.read_props + st.write_props:
                     states_to_remove.add(st)
         for st in states_to_remove:
             self.rm_state(st=st)
@@ -563,7 +562,9 @@ class Context(IContext):
             if completion is not None and len(completion) > 0:
                 # the signal is non-cyclic, and has at least one cause (secondary signal).
                 #  permute existing disjunct conjunctions with new conjunction(s)
-                result = [deepcopy(result_conj) | deepcopy(completion_conj) for result_conj in result for completion_conj in completion]
+                result = [
+                    deepcopy(result_conj) | deepcopy(completion_conj)
+                    for result_conj in result for completion_conj in completion]
 
         return result
 

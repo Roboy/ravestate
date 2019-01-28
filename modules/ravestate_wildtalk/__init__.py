@@ -1,15 +1,14 @@
 
 from ravestate.state import state
-from ravestate import registry
+from ravestate.module import Module
 from ravestate.constraint import s
 
 from roboy_parlai import wildtalk
 import ravestate_rawio
 
 
-@state(cond=s("rawio:in:changed", max_age=-1), read="rawio:in", write="rawio:out")
-def wildtalk_state(ctx):
-    ctx["rawio:out"] = wildtalk(ctx["rawio:in"])
+with Module(name="wildtalk"):
 
-
-registry.register(name="wildtalk", states=(wildtalk_state,))
+    @state(cond=s("rawio:in:changed", max_age=-1), read="rawio:in", write="rawio:out")
+    def wildtalk_state(ctx):
+        ctx["rawio:out"] = wildtalk(ctx["rawio:in"])

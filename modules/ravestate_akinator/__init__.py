@@ -1,4 +1,4 @@
-from ravestate import registry
+from ravestate.module import Module
 from ravestate.property import PropertyBase
 from ravestate.state import state, Resign, Emit
 from ravestate.constraint import s

@@ -39,18 +39,18 @@ def test_shutdown(mocker, context_fixture):
 
 
 def test_add_module_new(mocker, context_fixture):
-    from ravestate import registry
-    with mocker.patch('ravestate.registry.has_module', return_value=False):
-        with mocker.patch('ravestate.registry.import_module'):
+    from ravestate.module import import_module
+    with mocker.patch('ravestate.module.has_module', return_value=False):
+        with mocker.patch('ravestate.module.import_module'):
             context_fixture.add_module(DEFAULT_MODULE_NAME)
-            registry.import_module.assert_called_once_with(
+            import_module.assert_called_once_with(
                 module_name=DEFAULT_MODULE_NAME,
                 callback=context_fixture._module_registration_callback
             )
 
 
 def test_add_module_present(mocker, context_fixture):
-    with mocker.patch('ravestate.registry.has_module', return_value=True):
+    with mocker.patch('ravestate.module.has_module', return_value=True):
         with mocker.patch.object(context_fixture, '_module_registration_callback'):
             context_fixture.add_module(DEFAULT_MODULE_NAME)
             context_fixture._module_registration_callback.assert_called_once()
@@ -62,10 +62,10 @@ def test_remove_dependent_state(context_fixture: Context, state_fixture: State):
     context_fixture.add_prop(prop=prop)
     context_fixture.add_state(st=state_fixture)
     assert state_fixture in context_fixture._activations_per_state
-    assert prop.fullname() in context_fixture._properties
+    assert prop.id() in context_fixture._properties
     context_fixture.rm_prop(prop=prop)
     assert state_fixture not in context_fixture._activations_per_state
-    assert prop.fullname() not in context_fixture._properties
+    assert prop.id() not in context_fixture._properties
 
 
 def test_add_state(
