@@ -74,7 +74,7 @@ def nlp_preprocess(ctx):
     ctx["nlp:yesno"] = nlp_yesno
     logger.info(f"[NLP:yesno]: {nlp_yesno}")
 
-    if nlp_triples[0].get_object().lemma_ == "game" or nlp_triples[0].get_predicate().lemma_ == "play":
+    if nlp_triples[0].match_either_lemma(pred={"play"}, obj={"game"}):
         nlp_play = True
         ctx["nlp:play"] = nlp_play
 

@@ -3,7 +3,7 @@ from ravestate_nlp.triple import Triple
 from spacy.tokens import Token
 
 SUBJECT_SET = {"nsubj"}
-OBJECT_SET = {"dobj", "attr", "advmod"}
+OBJECT_SET = {"dobj", "attr", "advmod", "pobj"}
 PREDICATE_SET = {"ROOT", "conj"}
 PREDICATE_AUX_SET = {"acomp", "aux", "xcomp"}
 VERB_AUX_SET = {"VERB", "ADJ"}
