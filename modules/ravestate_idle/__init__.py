@@ -35,5 +35,5 @@ def am_i_impatient(ctx: ContextWrapper):
 registry.register(name="idle", states=(am_i_bored, am_i_impatient),
                   config={
                       # duration in seconds how long ":pressure" should be true before getting impatient
-                      IMPATIENCE_THRESHOLD_CONFIG_KEY:  2.
+                      IMPATIENCE_THRESHOLD_CONFIG_KEY:  1.
                   })
