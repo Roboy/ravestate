@@ -247,7 +247,7 @@ class Context(IContext):
             # add state's constraints as causes for the written prop's :changed signals,
             #  as well as the state's own signal.
             states_to_recomplete: Set[State] = {st}
-            for conj in st.constraint.conjunctions():
+            for conj in st.constraint.conjunctions(filter_detached=True):
                 for propname in st.write_props:
                     if propname in self._properties:
                         for signal in self._properties[propname].signals():
@@ -524,7 +524,7 @@ class Context(IContext):
         return self._act_per_state_per_signal_age[sig][0].keys()  # sig.min_age
 
     def _complete_constraint(self, st: State):
-        new_conjuncts: Set[Conjunct] = set()
+        new_conjuncts: Set[Conjunct] = deepcopy(set(st.constraint.conjunctions()))
         for conj in st.constraint.conjunctions():
             known_signals = set()
             new_conjuncts.update(
@@ -534,13 +534,18 @@ class Context(IContext):
         st.constraint_ = Disjunct(*{conj for conj in new_conjuncts})
 
     def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
-        result = [set(conj.signals())]
+        result = [set(deepcopy(sig) for sig in conj.signals())]
+        for sig in result[0]:
+            # maximum age for completions is infinite
+            sig.max_age = -1
+
         for conj_sig in conj.signals():
             completion = self._complete_signal(conj_sig, known_signals)
             if completion is not None and len(completion) > 0:
                 # the signal is non-cyclic, and has at least one cause (secondary signal).
                 #  permute existing disjunct conjunctions with new conjunction(s)
                 result = [deepcopy(result_conj) | deepcopy(completion_conj) for result_conj in result for completion_conj in completion]
+
         return result
 
     def _complete_signal(self, sig: Signal, known_signals: Set[Signal]) -> Optional[List[Set[Signal]]]:
@@ -550,7 +555,7 @@ class Context(IContext):
         assert sig in self._signal_causes
 
         # a signal without cause (a primary signal) needs no further completion
-        if not self._signal_causes[sig]:
+        if not self._signal_causes[sig] or sig.detached:
             return []
 
         # a signal with at least one secondary cause needs at least one non-cyclic
@@ -562,6 +567,7 @@ class Context(IContext):
             if completion:
                 result += [conj | {sig} for conj in completion]
         known_signals.discard(sig)
+
         return result if len(result) else None
 
     def _update_core_properties(self):
