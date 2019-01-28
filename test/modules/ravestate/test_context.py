@@ -1,9 +1,15 @@
+from ravestate.constraint import Signal, ConfigurableAge
+from ravestate.spike import Spike
+from ravestate.module import Module
 from ravestate.testfixtures import *
 
 
-def test_emit(context_fixture):
+def test_emit(context_fixture, spike_fixture):
     context_fixture.emit(s(DEFAULT_PROPERTY_CHANGED))
     assert len(context_fixture._spikes) == 1
+    list(context_fixture._spikes)[0].adopt(spike_fixture)
+    context_fixture.emit(s(DEFAULT_PROPERTY_CHANGED), wipe=True)
+    assert len(context_fixture._spikes) == 2
 
 
 def test_run(mocker, context_fixture):
@@ -95,7 +101,11 @@ def test_add_state(
 
     # Make sure, that d's constraint was completed correctly
     d_conjunctions = list(state_signal_d_fixture.constraint_.conjunctions())
-    assert len(d_conjunctions) == 2
+    assert len(d_conjunctions) == 4  # 2 completed, 2 uncompleted
+    d_conjunctions = [
+        conj for conj in d_conjunctions
+        if len(tuple(conj.signals())) > 2]
+    assert len(d_conjunctions) == 2  # 2 completed
     assert s(DEFAULT_PROPERTY_CHANGED) in d_conjunctions[0]
     assert state_signal_a_fixture.signal() in d_conjunctions[0]
     assert s(DEFAULT_PROPERTY_CHANGED) in d_conjunctions[1]
@@ -118,6 +128,33 @@ def test_add_state(
     assert a_acts[0].specificity() == propchange_sig_spec
     a_sig_spec = context_with_property_fixture.signal_specificity(state_signal_a_fixture.signal())
     assert a_sig_spec == 1/3
-    assert b_acts[0].specificity() == a_sig_spec + propchange_sig_spec
-    assert 1.53 < d_acts[0].specificity() < 1.54
+    assert b_acts[0].specificity() == a_sig_spec
+    assert d_acts[0].specificity() == 1.0
 
+
+def test_add_state_configurable_age(context_with_property_fixture: Context):
+    my_cond = s(signal_name=DEFAULT_PROPERTY_CHANGED, min_age=ConfigurableAge(key="min_age_key"),
+                max_age=ConfigurableAge(key="max_age_key"))
+
+    @state(cond=my_cond)
+    def conf_st(ctx):
+        pass
+    conf_st.module_name = DEFAULT_MODULE_NAME
+    context_with_property_fixture._config.add_conf(mod=Module(name=DEFAULT_MODULE_NAME,
+                                                              config={"min_age_key": 2.5, "max_age_key": 4.5}))
+    context_with_property_fixture.add_state(st=conf_st)
+    assert my_cond.min_age == 2.5
+    assert my_cond.max_age == 4.5
+
+
+def test_add_state_configurable_age_not_in_config(context_with_property_fixture: Context):
+    my_cond = s(signal_name=DEFAULT_PROPERTY_CHANGED, min_age=ConfigurableAge(key="min_age_key"),
+                max_age=ConfigurableAge(key="max_age_key"))
+
+    @state(cond=my_cond)
+    def conf_st(ctx):
+        pass
+    conf_st.module_name = DEFAULT_MODULE_NAME
+    context_with_property_fixture.add_state(st=conf_st)
+    assert my_cond.min_age == 0.
+    assert my_cond.max_age == 5.

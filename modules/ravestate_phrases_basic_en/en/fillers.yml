@@ -1,7 +1,9 @@
 type: phrases
 name: "fillers"
 opts:
-- "I AM A FUCKING FILLER. NOTICE ME SENPAI!"
-#- "hm"
-#- "eeh"
-#- "aah"
+- "hm"
+- "er"
+- "mm"
+- "ah"
+- "oh"
+- "uh"

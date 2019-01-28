@@ -4,6 +4,7 @@ NEGATION_SET = {"neg"}
 def yes_no(doc):
     """
     checks input for "yes", "no", "i don't know", "probably" and "probably not"
+    TODO: This should also map other inputs like ("(for|not) sure", "definitely, "dont think so"...)
     """
     nlp_tokens = tuple(str(token) for token in doc)
     for token in nlp_tokens:
@@ -19,5 +20,5 @@ def yes_no(doc):
                 return "pn"
         elif "probably" in nlp_tokens:
             return "p"
-    return None
+    return "0"
 

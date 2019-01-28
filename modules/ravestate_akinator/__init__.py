@@ -1,138 +1,128 @@
 from ravestate.module import Module
 from ravestate.property import PropertyBase
-from ravestate.state import state, Resign, Emit
+from ravestate.state import state, Resign, Emit, Delete
 from ravestate.constraint import s
-
-import requests
+from ravestate_akinator.api import Api
 
 from reggol import get_logger
 logger = get_logger(__name__)
 
-
-NEW_SESSION_URL = "https://srv11.akinator.com:9152/ws/new_session?callback=&partner=&player=website-desktop&uid_ext_session=&frontaddr=NDYuMTA1LjExMC40NQ==&constraint=ETAT<>'AV'"
-ANSWER_URL = "https://srv11.akinator.com:9152/ws/answer"
-GET_GUESS_URL = "https://srv11.akinator.com:9152/ws/list"
-CHOICE_URL = "https://srv11.akinator.com:9152/ws/choice"
-EXCLUSION_URL = "https://srv11.akinator.com:9152/ws/exclusion"
-GLB_URL = "https://pastebin.com/gTua3dg2"
-
-
-akinator_data = None
-first_question = True
+akinator_api: Api
+CERTAINTY = "certainty_percentage"
 
 
 # TODO: Change this to cond=idle:bored
-@state(cond=s(":startup", detached=True), write="rawio:out", signal_name="initiate-play")
+@state(cond=s("nlp:play:changed", detached=True),
+       write="rawio:out",
+       signal_name="initiate-play",
+       emit_detached=True)
 def akinator_play_ask(ctx):
+    """
+    Asks if interlocutor wants to play 20 question / akinator
+    Triggered when nlp:play property is changed by "i want to play a game" or a similar input
+    """
     ctx["rawio:out"] = "Do you want to play 20 questions?"
     return Emit()
 
 
-@state(cond=s("nlp:yes-no") & (s("akinator:initiate-play", max_age=-1) | s("akinator:initiate-play-again", max_age=-1, detached=True)),
+@state(cond=s("nlp:yes-no") & (s("akinator:initiate-play", max_age=-1) | s("akinator:initiate_play_again:changed", max_age=-1, detached=True)),
        read="nlp:yesno",
-       write=("rawio:out", "akinator:question", "akinator:in_progress", "akinator:session", "akinator:signature"))
+       write=("rawio:out", "akinator:question"),
+       emit_detached=True)
 def akinator_start(ctx):
+    """
+    Starts akinator session
+    Triggered by signal from akinator_play_ask state and nlp:yes-no signal given by the input
+    It is also triggered if one game is finished and the interlocutor wants to play again
+    Output: First question
+    """
+    global akinator_api
     if ctx["nlp:yesno"] == "yes":
-        logger.info("Start Akinator session.")
-        akinator_session = requests.get(NEW_SESSION_URL)
-        global akinator_data
-        akinator_data = akinator_session.json()
-        ctx["akinator:question"] = akinator_data
-        ctx["akinator:question"] = akinator_data['parameters']['step_information']['question']
-        ctx["akinator:in_progress"] = True
+        logger.info("Akinator session is started.")
+        akinator_api = Api()
+        ctx["akinator:question"] = True
         ctx["rawio:out"] = "You can answer the questions with:" \
                            + '\n"yes", "no", "i do not know", "probably", "probably not"' \
-                           + "\nQuestion " + str(int(akinator_data['parameters']['step_information']['step']) + 1) \
-                           + ":\n" + akinator_data['parameters']['step_information']['question']
-
-        ctx["akinator:session"] = akinator_data['parameters']['identification']['session']
-        ctx["akinator:signature"] = akinator_data['parameters']['identification']['signature']
+                           + "\nQuestion " + str(int(akinator_api.get_parameter('step')) + 1) \
+                           + ":\n" + akinator_api.get_parameter('question')
     else:
         return Resign()
 
 
-@state(cond=s("akinator:question:changed", detached=True), read="akinator:question", signal_name="question-asked")
-def akinator_question_asked(ctx):
-    return Emit()
-
-
-@state(cond=s("nlp:yes-no") & s("akinator:question-asked", max_age=-1),
-       read=("nlp:yesno", "akinator:session", "akinator:signature"),
-       write=("rawio:out", "akinator:is_it", "akinator:question"))
+@state(cond=s("nlp:yes-no") & s("akinator:question:changed", detached=True, max_age=-1),
+       read="nlp:yesno",
+       write=("rawio:out", "akinator:is_it", "akinator:question", "akinator:wrong_input"),
+       emit_detached=True)
 def akinator_question_answered(ctx):
-    global first_question
-    global akinator_data
-    if first_question:
-        first_question = False
-        step = akinator_data['parameters']['step_information']['step']
+    """
+    Reads the answer to a question and outputs the next question
+    Gets triggered by akinator:question which is always updated by a new question and nlp:yes-no signal
+    Triggers the wrong_input state id it cannot process the input
+    If the answer certainty of akinator is over the configurable CERTAINTY threshold the is_it state is triggered
+    """
+    global akinator_api
+    response = akinator_api.answer_to_int_str(ctx["nlp:yesno"])
+    if not response == "-1":
+        akinator_api.response_get_request(response)
+        if float(akinator_api.get_parameter('progression')) <= ctx.conf(key=CERTAINTY):
+            ctx["akinator:question"] = True
+            ctx["rawio:out"] = "Question " + str(int(akinator_api.get_parameter('step')) + 1) \
+                               + ":\n" + akinator_api.get_parameter('question')
+        else:
+            ctx["akinator:is_it"] = True
     else:
-        step = akinator_data['parameters']['step']
-    response = answer_to_int_str(ctx["nlp:yesno"])
-    params = {
-        "session": ctx["akinator:session"],
-        "signature": ctx["akinator:signature"],
-        "step": step,
-        "answer": response
-    }
-    akinator_session = requests.get(ANSWER_URL, params=params)
-    akinator_data = akinator_session.json()
-
-    if int(float(akinator_data['parameters']['progression'])) <= 90:
-        ctx["akinator:question"] = akinator_data['parameters']['question']
-        ctx["rawio:out"] = "Question " + str(int(akinator_data['parameters']['step']) + 1) + ":\n" \
-                           + akinator_data['parameters']['question']
-    else:
-        ctx["akinator:is_it"] = True
+        ctx["akinator:wrong_input"] = True
 
 
 @state(cond=s("akinator:is_it:changed", detached=True),
-       read=("akinator:question", "akinator:session", "akinator:signature"), signal_name="is-it", write="rawio:out")
+       read="akinator:question",
+       write="rawio:out",
+       signal_name="is-it",
+       emit_detached=True)
 def akinator_is_it(ctx):
-    global akinator_data
-    global guess_data
-    params = {
-        "session": ctx["akinator:session"],
-        "signature": ctx["akinator:signature"],
-        "step": akinator_data['parameters']['step']
-    }
-
-    guess_session = requests.get(GET_GUESS_URL, params=params)
-    guess_data = guess_session.json()
-
-    name = guess_data['parameters']['elements'][0]['element']['name']
-    desc = guess_data['parameters']['elements'][0]['element']['description']
-    ctx["rawio:out"] = "Is this your character? \n" + name + "\n" + desc + "\n"
+    """
+    Outputs the solution guess of akinator: "Is this your character? ..."
+    Triggers the is_it_answer state
+    """
+    global akinator_api
+    guess = akinator_api.guess_get_request()
+    ctx["rawio:out"] = "Is this your character? \n" + guess['name'] + "\n" + guess['desc'] \
+                       + "\nPlease answer with 'yes' or 'no'."
     return Emit()
 
 
 @state(cond=s("nlp:yes-no") & s("akinator:is-it", max_age=-1),
-       read=("nlp:yesno", "akinator:session", "akinator:signature"),
-       write="rawio:out", signal_name="initiate-play-again")
+       read="nlp:yesno",
+       write=("rawio:out", "akinator:initiate_play_again"),
+       emit_detached=True)
 def akinator_is_it_answered(ctx):
+    """
+    Gets input from interlocutor on the "is it" question and posts the result
+    Asks if the interlocutor wants to play again.
+    """
     if ctx["nlp:yesno"] == "yes":
-        ctx["rawio:out"] = "Yeah! I guessed right! Thanks for playing with me! \nDo you want to play again?"
-        return Emit()
+        akinator_api.choice_get_request()
+        out = "Yeah! I guessed right! Thanks for playing with me! \nDo you want to play again?"
     elif ctx["nlp:yesno"] == "no":
-        pass
-        #ctx["rawio:out"] = "I guessed wrong :("
+        akinator_api.exclusion_get_request()
+        out = "I guessed wrong but do you want to play again?"
     else:
-        pass
-        #ctx["rawio:out"] = "Shit"
+        # TODO catch wrong input for this state
+        out = "What? But do you want to play again?"
+    ctx["rawio:out"] = out
+    ctx["akinator:initiate_play_again"] = True
 
 
-def answer_to_int_str(answer: str):
-    if answer == "yes":
-        return "0"
-    elif answer == "no":
-        return "1"
-    elif answer == "idk":
-        return "2"
-    elif answer == "p":
-        return "3"
-    elif answer == "pn":
-        return "4"
-    else:
-        return "-1"
+@state(cond=s("akinator:wrong_input:changed", detached=True),
+       write=("rawio:out", "akinator:question"),
+       emit_detached=True)
+def akinator_wrong_input(ctx):
+    """
+    Catches wrong inputs from the interlocutor during questions answering and loops back to the question state
+    """
+    ctx["rawio:out"] = "Sadly I could not process that answer. Remember that you have these five answering choices: " \
+                       "\n'yes', 'no', 'i do not know', 'probably', 'probably not'"
+    ctx["akinator:question"] = True
 
 
 registry.register(
@@ -141,11 +131,18 @@ registry.register(
         akinator_is_it,
         akinator_is_it_answered,
         akinator_play_ask,
-        akinator_question_asked,
         akinator_start,
-        akinator_question_answered
+        akinator_question_answered,
+        akinator_wrong_input
     ),
     props=(
+        PropertyBase(
+            name="initiate_play_again",
+            default_value="",
+            always_signal_changed=True,
+            allow_pop=False,
+            allow_push=False,
+            is_flag_property=True),
         PropertyBase(
             name="is_it",
             default_value="",
@@ -158,25 +155,15 @@ registry.register(
             default_value="",
             always_signal_changed=True,
             allow_pop=False,
-            allow_push=False),
+            allow_push=False,
+            is_flag_property=True),
         PropertyBase(
-            name="in_progress",
+            name="wrong_input",
             default_value="",
             always_signal_changed=True,
             allow_pop=False,
             allow_push=False,
-            is_flag_property=True),
-        PropertyBase(
-            name="session",
-            default_value="",
-            always_signal_changed=True,
-            allow_pop=False,
-            allow_push=False),
-        PropertyBase(
-            name="signature",
-            default_value="",
-            always_signal_changed=True,
-            allow_pop=False,
-            allow_push=False)
-    )
+            is_flag_property=True)
+    ),
+    config={CERTAINTY: 90}
 )

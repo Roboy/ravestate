@@ -25,6 +25,11 @@ def test_multiple_activation(state_fixture, context_with_property_fixture):
     assert not sa2.acquire(Spike(sig='x', consumable_resources={DEFAULT_PROPERTY_FULLNAME}))
 
 
+def test_resources_fallback(activation_fixture_fallback):
+    assert activation_fixture_fallback.resources() \
+           == {activation_fixture_fallback.state_to_activate.consumable.fullname()}
+
+
 # TODO: Add tests for update
 # def test_run(activation_fixture):
 #     result = activation_fixture.run()

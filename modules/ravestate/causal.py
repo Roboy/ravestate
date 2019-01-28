@@ -281,7 +281,8 @@ class CausalGroup:
                                     highest_higher_specificity_act = candidate
             else:
                 # Easy exit condition: prop not free for writing
-                logger.debug(f"{self}.consent({ready_suitor})->N: {prop} unavailable.")
+                logger.debug(f"\nForgot to detach?\n{self}.consent({ready_suitor})->N: {prop} unavailable. "
+                               f"Condition is {ready_suitor.constraint}")
                 return False
 
         if higher_specificity_acts:

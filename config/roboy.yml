@@ -39,3 +39,8 @@ config:
 module: roboyqa
 config:
   roboy_node_id: 356
+
+---
+module: akinator
+config:
+  certainty_percentage: 90

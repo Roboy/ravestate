@@ -1,5 +1,5 @@
 # Ravestate context class
-
+import copy
 from threading import Thread, Lock, Event
 from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
 from collections import defaultdict
@@ -175,6 +175,7 @@ class Context(IContext):
          should be invalidated and forgotten.
         """
         with self._lock:
+            spikes_change = {}
             for spike in self._spikes:
                 if spike.name() == signal.name:
                     spike.wipe()
@@ -240,7 +241,6 @@ class Context(IContext):
                 return
 
         # replace configurable ages with their config values
-        # TODO Unit test
         for signal in st.constraint.signals():
             if isinstance(signal.min_age, ConfigurableAge):
                 conf_entry = self.conf(mod=st.module_name, key=signal.min_age.key)
@@ -593,8 +593,10 @@ class Context(IContext):
     def _update_core_properties(self):
         with self._lock:
             activation_pressure_present = any(activation.is_pressured() for activation in self._state_activations())
+            # don't count states that have ':activity:changed' in their constraint to avoid self-influencing
             number_of_partially_fulfilled_states = \
-                sum(1 if any(activation.spiky() for activation in self._activations_per_state[st]) else 0
+                sum(1 if any(activation.spiky() and self[":activity"].changed_signal() not in list(activation.constraint.signals())
+                             for activation in self._activations_per_state[st]) else 0
                     for st in self._activations_per_state)
 
         PropertyWrapper(prop=self[":pressure"], ctx=self, allow_write=True, allow_read=True) \
