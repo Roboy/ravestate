@@ -23,7 +23,8 @@ def akinator_play_ask(ctx):
 
 @state(cond=s("nlp:yes-no") & (s("akinator:initiate-play", max_age=-1) | s("akinator:initiate_play_again:changed", max_age=-1, detached=True)),
        read="nlp:yesno",
-       write=("rawio:out", "akinator:question"))
+       write=("rawio:out", "akinator:question"),
+       emit_detached=True)
 def akinator_start(ctx):
     global akinator_api
     if ctx["nlp:yesno"] == "yes":
@@ -38,15 +39,10 @@ def akinator_start(ctx):
         return Resign()
 
 
-# TODO not needed anymore
-@state(cond=s("akinator:question:changed", detached=True), read="akinator:question", signal_name="question-asked")
-def akinator_question_asked(ctx):
-    return Emit()
-
-
-@state(cond=s("nlp:yes-no") & s("akinator:question-asked", max_age=-1),
+@state(cond=s("nlp:yes-no") & s("akinator:question:changed", detached=True, max_age=-1),
        read="nlp:yesno",
-       write=("rawio:out", "akinator:is_it", "akinator:question", "akinator:wrong_input"))
+       write=("rawio:out", "akinator:is_it", "akinator:question", "akinator:wrong_input"),
+       emit_detached=True)
 def akinator_question_answered(ctx):
     global akinator_api
     response = answer_to_int_str(ctx["nlp:yesno"])
@@ -65,7 +61,8 @@ def akinator_question_answered(ctx):
 @state(cond=s("akinator:is_it:changed", detached=True),
        read="akinator:question",
        write="rawio:out",
-       signal_name="is-it")
+       signal_name="is-it",
+       emit_detached=True)
 def akinator_is_it(ctx):
     global akinator_api
     guess = akinator_api.guess_get_request()
@@ -73,8 +70,10 @@ def akinator_is_it(ctx):
     return Emit()
 
 
-@state(cond=s("nlp:yes-no") & s("akinator:is-it", max_age=-1), read="nlp:yesno",
-       write=("rawio:out", "akinator:initiate_play_again", "akinator:wrong_input"), emit_detached=True)
+@state(cond=s("nlp:yes-no") & s("akinator:is-it", max_age=-1),
+       read="nlp:yesno",
+       write=("rawio:out", "akinator:initiate_play_again", "akinator:wrong_input"),
+       emit_detached=True)
 def akinator_is_it_answered(ctx):
     response = ctx["nlp:yesno"]
     if not response == "-1":
@@ -89,8 +88,10 @@ def akinator_is_it_answered(ctx):
     return Delete()
 
 
-@state(cond=s("akinator:wrong_input:changed", detached=True), write=("rawio:out", "akinator:question"))
-def akinator_wrong_input(ctx):#
+@state(cond=s("akinator:wrong_input:changed", detached=True),
+       write=("rawio:out", "akinator:question"),
+       emit_detached=True)
+def akinator_wrong_input(ctx):
     ctx["rawio:out"] = "Sadly I could not process that answer. Try to answer with 'yes' or 'no' please."
     ctx["akinator:question"] = True
 
@@ -116,7 +117,6 @@ registry.register(
         akinator_is_it,
         akinator_is_it_answered,
         akinator_play_ask,
-        akinator_question_asked,
         akinator_start,
         akinator_question_answered,
         akinator_wrong_input

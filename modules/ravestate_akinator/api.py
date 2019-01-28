@@ -7,9 +7,9 @@ logger = get_logger(__name__)
 NEW_SESSION_URL = "https://srv11.akinator.com:9152/ws/new_session?callback=&partner=&player=website-desktop&uid_ext_session=&frontaddr=NDYuMTA1LjExMC40NQ==&constraint=ETAT<>'AV'"
 ANSWER_URL = "https://srv11.akinator.com:9152/ws/answer"
 GET_GUESS_URL = "https://srv11.akinator.com:9152/ws/list"
-CHOICE_URL = "https://srv11.akinator.com:9152/ws/choice"
-EXCLUSION_URL = "https://srv11.akinator.com:9152/ws/exclusion"
-GLB_URL = "https://pastebin.com/gTua3dg2"
+# CHOICE_URL = "https://srv11.akinator.com:9152/ws/choice"
+# EXCLUSION_URL = "https://srv11.akinator.com:9152/ws/exclusion"
+# GLB_URL = "https://pastebin.com/gTua3dg2"
 
 akinator_data = None
 
