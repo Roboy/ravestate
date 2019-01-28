@@ -7,9 +7,9 @@ from ravestate.testfixtures import *
 def test_emit(context_fixture, spike_fixture):
     context_fixture.emit(s(DEFAULT_PROPERTY_CHANGED))
     assert len(context_fixture._spikes) == 1
-    list(context_fixture._spikes.keys())[0].adopt(spike_fixture)
+    list(context_fixture._spikes)[0].adopt(spike_fixture)
     context_fixture.emit(s(DEFAULT_PROPERTY_CHANGED), wipe=True)
-    assert len(context_fixture._spikes) == 3
+    assert len(context_fixture._spikes) == 2
 
 
 def test_run(mocker, context_fixture):
@@ -101,7 +101,11 @@ def test_add_state(
 
     # Make sure, that d's constraint was completed correctly
     d_conjunctions = list(state_signal_d_fixture.constraint_.conjunctions())
-    assert len(d_conjunctions) == 2
+    assert len(d_conjunctions) == 4  # 2 completed, 2 uncompleted
+    d_conjunctions = [
+        conj for conj in d_conjunctions
+        if len(tuple(conj.signals())) > 2]
+    assert len(d_conjunctions) == 2  # 2 completed
     assert s(DEFAULT_PROPERTY_CHANGED) in d_conjunctions[0]
     assert state_signal_a_fixture.signal() in d_conjunctions[0]
     assert s(DEFAULT_PROPERTY_CHANGED) in d_conjunctions[1]
@@ -124,8 +128,8 @@ def test_add_state(
     assert a_acts[0].specificity() == propchange_sig_spec
     a_sig_spec = context_with_property_fixture.signal_specificity(state_signal_a_fixture.signal())
     assert a_sig_spec == 1/3
-    assert b_acts[0].specificity() == a_sig_spec + propchange_sig_spec
-    assert 1.53 < d_acts[0].specificity() < 1.54
+    assert b_acts[0].specificity() == a_sig_spec
+    assert d_acts[0].specificity() == 1.0
 
 
 def test_add_state_configurable_age(context_with_property_fixture: Context):
