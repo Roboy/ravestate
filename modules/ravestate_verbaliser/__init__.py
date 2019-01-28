@@ -23,4 +23,4 @@ def react_to_intent(ctx):
 registry.register(
     name="verbaliser",
     states=(react_to_intent,),
-    props=(PropertyBase(name="intent", default_value="", allow_push=False, allow_pop=False),))
+    props=(PropertyBase(name="intent", default_value="", allow_push=False, allow_pop=False, always_signal_changed=True),))

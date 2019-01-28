@@ -1,4 +1,4 @@
-from typing import List, Set, Generator, Optional, Tuple
+from typing import List, Set, Generator, Optional, Tuple, Union, Callable, Any
 from ravestate.spike import Spike
 from ravestate.iactivation import IActivation
 
@@ -6,15 +6,26 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-def s(signal_name: str, *, min_age=0, max_age=5., detached=False):
+class ConfigurableAge:
+    """
+    Class for having min/max_age parameters for Constraints configurable with a config key
+    """
+    key = ""
+
+    def __init__(self, key: str):
+        self.key = key
+
+
+def s(signal_name: str, *, min_age: Union[float, ConfigurableAge] = 0., max_age: Union[float, ConfigurableAge] = 5.,
+      detached: bool = False):
     """
     Alias to call Signal-constructor
 
     * `signal_name`: Name of the Signal
 
-    * `min_age`: Minimum age for the signal, in seconds.
+    * `min_age`: Minimum age for the signal, in seconds. Can also be ConfigurableAge that gets the age from the config.
 
-    * `max_age`: Maximum age for the signal, in seconds.
+    * `max_age`: Maximum age for the signal, in seconds. Can also be ConfigurableAge that gets the age from the config.
      Set to less-than zero for unrestricted age.
 
     * `detached`: Flag which indicates, whether spikes that fulfill this signal
@@ -65,7 +76,7 @@ class Signal(Constraint):
     detached: bool
     _min_age_ticks: int  # written on acquire, when act.secs_to_ticks is available
 
-    def __init__(self, name: str, *, min_age=0., max_age=1., detached=False):
+    def __init__(self, name: str, *, min_age=0., max_age=5., detached=False):
         self.name = name
         # TODO: Convert seconds for min_age/max_age to ticks
         self.min_age = min_age
@@ -107,6 +118,7 @@ class Signal(Constraint):
 
     def acquire(self, spike: Spike, act: IActivation):
         if not self.spike and self.name == spike.name() and (self.max_age < 0 or spike.age() <= act.secs_to_ticks(self.max_age)):
+            assert not spike.is_wiped()
             self._min_age_ticks = act.secs_to_ticks(self.min_age)
             self.spike = spike
             with spike.causal_group() as cg:

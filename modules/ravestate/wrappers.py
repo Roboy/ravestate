@@ -68,6 +68,16 @@ class PropertyWrapper:
             logger.error(f"Unauthorized write access in property-wrapper {self.prop.fullname()}!")
             return False
         if self.prop.write(value):
+            # emit flag signals if it is a flag property
+            if self.prop.is_flag_property and value is True:
+                # wipe false signal, emit true signal
+                self.ctx.wipe(self.prop.flag_false_signal())
+                self.ctx.emit(self.prop.flag_true_signal(), parents=self.spike_parents, wipe=True)
+            if self.prop.is_flag_property and value is False:
+                # wipe true signal, emit false signal
+                self.ctx.wipe(self.prop.flag_true_signal())
+                self.ctx.emit(self.prop.flag_false_signal(), parents=self.spike_parents, wipe=True)
+
             self.ctx.emit(self.prop.changed_signal(), parents=self.spike_parents, wipe=True)
             return True
         return False
