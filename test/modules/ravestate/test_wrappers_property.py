@@ -13,8 +13,8 @@ CHILD_PROPERTY_NAME = 'child'
 CHILD_PROPERTY_VALUE = 'I am a child'
 GRANDCHILD_PROPERTY_NAME = 'grandchild'
 GRANDCHILD_PROPERTY_VALUE = 'I am a grandchild'
-CHILD_PROPERTY_FULLNAME = f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}"
-GRANDCHILD_PROPERTY_FULLNAME = f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}:{GRANDCHILD_PROPERTY_NAME}"
+CHILD_PROPERTY_ID = f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}"
+GRANDCHILD_PROPERTY_ID = f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}:{GRANDCHILD_PROPERTY_NAME}"
 
 
 @pytest.fixture
@@ -64,7 +64,7 @@ def under_test_context_wrapper(context_mock, state_mock):
 
 
 def test_property(under_test_read_only: PropertyWrapper, default_property_base: PropertyBase):
-    assert (default_property_base.fullname() == f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}")
+    assert (default_property_base.id() == f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}")
     assert (not default_property_base._lock.locked())
     assert (default_property_base.read() == DEFAULT_PROPERTY_VALUE)
 
@@ -79,7 +79,7 @@ def test_property_no_read(under_test_nothing: PropertyWrapper, default_property_
     with LogCapture(attributes=strip_prefix) as log_capture:
         under_test_nothing.get()
         log_capture.check(
-            f"Unauthorized read access in property-wrapper for {under_test_nothing.prop.fullname()}!",
+            f"Unauthorized read access in property-wrapper for {under_test_nothing.prop.id()}!",
         )
 
 
@@ -89,7 +89,7 @@ def test_property_read_only(under_test_read_only: PropertyWrapper, default_prope
     with LogCapture(attributes=strip_prefix) as log_capture:
         under_test_read_only.set(NEW_PROPERTY_VALUE)
         log_capture.check(
-            f"Unauthorized write access in property-wrapper {under_test_read_only.prop.fullname()}!",
+            f"Unauthorized write access in property-wrapper {under_test_read_only.prop.id()}!",
         )
     assert (under_test_read_only.get() == DEFAULT_PROPERTY_VALUE)
 
@@ -100,7 +100,7 @@ def test_property_write(under_test_read_write: PropertyWrapper, default_property
     under_test_read_write.set(NEW_PROPERTY_VALUE)
     assert (under_test_read_write.get() == NEW_PROPERTY_VALUE)
     context_mock.emit.assert_called_once_with(
-        s(f"{under_test_read_write.prop.fullname()}:changed"),
+        s(f"{under_test_read_write.prop.id()}:changed"),
         parents=None,
         wipe=True)
 
@@ -110,14 +110,15 @@ def test_flag_property(context_mock):
     prop_base.set_parent_path(DEFAULT_MODULE_NAME)
     prop_wrapper = PropertyWrapper(prop=prop_base, ctx=context_mock, allow_read=True, allow_write=True)
     assert (prop_base._lock.locked())
+
     prop_wrapper.set(True)
     assert (prop_wrapper.get() is True)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.fullname()}:changed"),
+        s(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.fullname()}:true"),
+        s(f"{prop_wrapper.prop.id()}:true"),
         parents=None,
         wipe=True)
 
@@ -125,11 +126,11 @@ def test_flag_property(context_mock):
     prop_wrapper.set(False)
     assert (prop_wrapper.get() is False)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.fullname()}:changed"),
+        s(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.fullname()}:false"),
+        s(f"{prop_wrapper.prop.id()}:false"),
         parents=None,
         wipe=True)
 
@@ -137,14 +138,14 @@ def test_flag_property(context_mock):
     prop_wrapper.set(None)
     assert (prop_wrapper.get() is None)
     context_mock.emit.assert_called_once_with(
-        s(f"{prop_wrapper.prop.fullname()}:changed"),
+        s(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True)
 
 
 def test_property_child(under_test_read_write: PropertyWrapper, default_property_base, context_mock):
     assert under_test_read_write.push(PropertyBase(name=CHILD_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE))
-    assert list(under_test_read_write.enum())[0] == CHILD_PROPERTY_FULLNAME
+    assert list(under_test_read_write.enum())[0] == CHILD_PROPERTY_ID
     assert under_test_read_write.prop.children[CHILD_PROPERTY_NAME].read() == DEFAULT_PROPERTY_VALUE
 
 

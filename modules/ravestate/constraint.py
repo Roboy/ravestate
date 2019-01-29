@@ -17,7 +17,7 @@ class ConfigurableAge:
 
 
 def s(signal_name: str, *, min_age: Union[float, ConfigurableAge] = 0., max_age: Union[float, ConfigurableAge] = 5.,
-      detached: bool = False):
+      detached: bool = False) -> 'Signal':
     """
     Alias to call Signal-constructor
 
@@ -109,6 +109,9 @@ class Signal(Constraint):
 
     def __hash__(self):
         return hash(self.name)
+
+    def __repr__(self):
+        return f"Signal({self.name}, {self.min_age}, {self.max_age}, {self.detached})"
 
     def signals(self) -> Generator['Signal', None, None]:
         yield self

@@ -1,5 +1,4 @@
 # Ravestate context class
-import copy
 from threading import Thread, Lock, Event
 from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
 from collections import defaultdict
@@ -10,12 +9,11 @@ import gc
 from ravestate.wrappers import PropertyWrapper
 
 from ravestate.icontext import IContext
-from ravestate.module import Module
+from ravestate.module import Module, has_module, get_module, import_module
 from ravestate.state import State
 from ravestate.property import PropertyBase
 from ravestate.iactivation import IActivation
 from ravestate.activation import Activation
-from ravestate import registry
 from ravestate import argparse
 from ravestate.config import Configuration
 from ravestate.constraint import s, Signal, Conjunct, Disjunct, ConfigurableAge
@@ -25,8 +23,26 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
+def startup(**kwargs) -> Signal:
+    """
+    Obtain the startup signal, which is fired once when `Context.run()` is executed.<br>
+    __Hint:__ All key-word arguments of #constraint.s(...)
+     (`min_age`, `max_age`, `detached`) are supported.
+    """
+    return s(":startup", **kwargs)
+
+
+def shutdown(**kwargs) -> Signal:
+    """
+    Obtain the shutdown signal, which is fired once when `Context.shutdown()` is called.<br>
+    __Hint:__ All key-word arguments of #constraint.s(...)
+     (`min_age`, `max_age`, `detached`) are supported.
+    """
+    return s(":shutdown", **kwargs)
+
+
 class Context(IContext):
-    _default_signal_names: Tuple[str] = (":startup", ":shutdown", ":idle")
+    _default_signals: Tuple[Signal] = (startup(), shutdown())
     _default_properties: Tuple[PropertyBase] = (
         PropertyBase(
             name="pressure",
@@ -111,8 +127,8 @@ class Context(IContext):
         self._run_task = None
 
         # Register default signals
-        for signame in self._default_signal_names:
-            self._add_sig(s(signame))
+        for signal in self._default_signals:
+            self._add_sig(signal)
 
         # Register default properties
         for prop in self._default_properties:
@@ -158,7 +174,6 @@ class Context(IContext):
          should be invalidated and forgotten.
         """
         with self._lock:
-            spikes_change = {}
             for spike in self._spikes:
                 if spike.name() == signal.name:
                     spike.wipe()
@@ -201,10 +216,10 @@ class Context(IContext):
          will be imported, and any ravestate modules registered during the python
          import will also be added to this context.
         """
-        if registry.has_module(module_name):
-            self._module_registration_callback(registry.get_module(module_name))
+        if has_module(module_name):
+            self._module_registration_callback(get_module(module_name))
             return
-        registry.import_module(module_name=module_name, callback=self._module_registration_callback)
+        import_module(module_name=module_name, callback=self._module_registration_callback)
 
     def add_state(self, *, st: State) -> None:
         """
@@ -271,7 +286,8 @@ class Context(IContext):
 
         # register the state's consumable dummy, so that it is passed
         #  to Spike and from there to CausalGroup as a consumable resource.
-        self.add_prop(prop=st.consumable)
+        if st.consumable.id() not in self._properties:
+            self.add_prop(prop=st.consumable)
 
     def rm_state(self, *, st: State) -> None:
         """
@@ -302,12 +318,12 @@ class Context(IContext):
 
         * `prop`: The property object that should be added.
         """
-        if prop.fullname() in self._properties:
-            logger.error(f"Attempt to add property {prop.fullname()} twice!")
+        if prop.id() in self._properties:
+            logger.error(f"Attempt to add property {prop.id()} twice!")
             return
         with self._lock:
             # register property
-            self._properties[prop.fullname()] = prop
+            self._properties[prop.id()] = prop
             # register all of the property's signals
             for signal in prop.signals():
                 self._add_sig(signal)
@@ -319,11 +335,11 @@ class Context(IContext):
 
         * `prop`: The property to remove.object
         """
-        if prop.fullname() not in self._properties:
-            logger.error(f"Attempt to remove unknown property {prop.fullname()}!")
+        if prop.id() not in self._properties:
+            logger.error(f"Attempt to remove unknown property {prop.id()}!")
             return
         # remove property from context
-        self._properties.pop(prop.fullname())
+        self._properties.pop(prop.id())
         states_to_remove: Set[State] = set()
         with self._lock:
             # remove all of the property's signals
@@ -331,7 +347,7 @@ class Context(IContext):
                 self._rm_sig(signal)
             # remove all states that depend upon property
             for st in self._activations_per_state:
-                if prop.fullname() in st.read_props + st.write_props:
+                if prop.id() in st.read_props + st.write_props:
                     states_to_remove.add(st)
         for st in states_to_remove:
             self.rm_state(st=st)
@@ -377,6 +393,8 @@ class Context(IContext):
         """
         Called by activation when it is pressured to resign. The activation wants
          to know the earliest ETA of one of it's remaining required constraints.
+         Also called by constraint completion algorithm, to figure out the maximum
+         age for a completed constraint.
 
         * `signals`: The signals, whose ETA will be calculated, and among the
          results the minimum ETA will be returned.
@@ -385,7 +403,7 @@ class Context(IContext):
          signals to arrive. Fixed value (1) for now.
         """
         # TODO: Proper implementation w/ state runtime_upper_bound
-        return 3
+        return self.secs_to_ticks(.5)
 
     def signal_specificity(self, sig: Signal) -> float:
         """
@@ -537,7 +555,7 @@ class Context(IContext):
     def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
         result = [set(deepcopy(sig) for sig in conj.signals())]
         for sig in result[0]:
-            # maximum age for completions is infinite
+            # TODO: Figure out through eta system
             sig.max_age = -1
 
         for conj_sig in conj.signals():
@@ -545,7 +563,9 @@ class Context(IContext):
             if completion is not None and len(completion) > 0:
                 # the signal is non-cyclic, and has at least one cause (secondary signal).
                 #  permute existing disjunct conjunctions with new conjunction(s)
-                result = [deepcopy(result_conj) | deepcopy(completion_conj) for result_conj in result for completion_conj in completion]
+                result = [
+                    deepcopy(result_conj) | deepcopy(completion_conj)
+                    for result_conj in result for completion_conj in completion]
 
         return result
 
@@ -573,17 +593,24 @@ class Context(IContext):
 
     def _update_core_properties(self):
         with self._lock:
-            activation_pressure_present = any(activation.is_pressured() for activation in self._state_activations())
-            # don't count states that have ':activity:changed' in their constraint to avoid self-influencing
-            number_of_partially_fulfilled_states = \
-                sum(1 if any(activation.spiky() and self[":activity"].changed_signal() not in list(activation.constraint.signals())
-                             for activation in self._activations_per_state[st]) else 0
-                    for st in self._activations_per_state)
-
-        PropertyWrapper(prop=self[":pressure"], ctx=self, allow_write=True, allow_read=True) \
-            .set(activation_pressure_present)
-        PropertyWrapper(prop=self[":activity"], ctx=self, allow_write=True, allow_read=True) \
-            .set(number_of_partially_fulfilled_states)
+            pressured_acts = False
+            partially_fulfilled_acts = 0
+            for act in self._state_activations():
+                if self[":activity"].changed_signal() not in set(act.constraint.signals()):
+                    pressured_acts |= act.is_pressured()
+                    partially_fulfilled_acts += act.spiky()
+        PropertyWrapper(
+            prop=self[":pressure"],
+            ctx=self,
+            allow_write=True,
+            allow_read=True
+        ).set(pressured_acts)
+        PropertyWrapper(
+            prop=self[":activity"],
+            ctx=self,
+            allow_write=True,
+            allow_read=True
+        ).set(partially_fulfilled_acts)
 
     def _run_private(self):
 

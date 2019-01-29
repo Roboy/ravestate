@@ -286,7 +286,8 @@ class CausalGroup:
                 return False
 
         if higher_specificity_acts:
-            highest_higher_specificity_act.pressure()
+            for act in higher_specificity_acts:
+                act.pressure()
             logger.debug(
                 f"{self}.consent({ready_suitor})->N: "
                 f"{str(specificity)[:4]} < {str(highest_higher_specificity)[:4]} "

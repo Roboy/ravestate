@@ -26,8 +26,9 @@ config:
     - ravestate_roboyqa
     - ravestate_genqa
     - ravestate_idle
-    - ravestate_fillers
     - ravestate_akinator
+    # TODO: Fillers sometimes overwrite good responses by race condition.
+    # - ravestate_fillers
 
 ---
 module: genqa

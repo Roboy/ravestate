@@ -27,4 +27,4 @@ def yes_no(doc):
                 return "no"
             elif token in DON_NOT_KNOW_SET:
                 return "idk"
-    return "0"
+    return "_"
