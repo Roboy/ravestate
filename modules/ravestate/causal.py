@@ -1,7 +1,7 @@
 # Ravestate class which encapsulates a graph of signal parent/offspring instances
 
 from typing import Set, Dict, Optional, List
-from ravestate.iactivation import IActivation, ISpike
+from ravestate.iactivation import IActivation, ISpike, ICausalGroup
 from threading import RLock
 from collections import defaultdict
 
@@ -9,7 +9,7 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-class CausalGroup:
+class CausalGroup(ICausalGroup):
     """
     Class which represents a causal group graph of spike parent/offspring
      spikes (a "superspike"). These must synchronize wrt/ their (un)written
@@ -119,20 +119,24 @@ class CausalGroup:
         # Remember current lock, since it might change,
         # if the lock object is switched in merge()
         lock = self._lock
-        lock.__enter__()
+        lock.acquire()
         if lock != self._lock:
-            lock.__exit__(None, None, None)
+            lock.release()
             return self.__enter__()
         # Remember the locked lock, since the lock member might be re-targeted in merge()
-        assert not self._locked_lock
         self._locked_lock = self._lock
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> bool:
+    def __exit__(self, exc_type, exc_value, traceback):
         assert self._locked_lock
-        result = self._locked_lock.__exit__(exc_type, exc_value, traceback)
-        self._locked_lock = None
-        return result
+        self._locked_lock.release()
+        if self._locked_lock.acquire(False):
+            # Test whether lock is still owned (recursively).
+            self._locked_lock.release()
+        else:
+            # If the lock is not owned anymore, it isn't locked by this thread anymore
+            #  -> acquire would block, returns False.
+            self._locked_lock = None
 
     def __eq__(self, other) -> bool:
         return isinstance(other, CausalGroup) and other._lock == self._lock
@@ -287,7 +291,7 @@ class CausalGroup:
 
         if higher_specificity_acts:
             for act in higher_specificity_acts:
-                act.pressure()
+                act.pressure(self)
             logger.debug(
                 f"{self}.consent({ready_suitor})->N: "
                 f"{str(specificity)[:4]} < {str(highest_higher_specificity)[:4]} "

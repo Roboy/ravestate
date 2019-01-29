@@ -263,16 +263,17 @@ class Context(IContext):
             # add state's constraints as causes for the written prop's :changed signals,
             #  as well as the state's own signal.
             states_to_recomplete: Set[State] = {st}
-            for conj in st.constraint.conjunctions(filter_detached=True):
-                for propname in st.write_props:
-                    if propname in self._properties:
-                        for signal in self._properties[propname].signals():
-                            self._signal_causes[signal].append(conj)
-                            # Since a new cause for the property's signal is added,
-                            #  it must be added to all states depending on that signal.
-                            states_to_recomplete.update(self._states_for_signal(signal))
-                if st.signal():
-                    self._signal_causes[st.signal()].append(conj)
+            if not st.emit_detached:
+                for conj in st.constraint.conjunctions(filter_detached=True):
+                    for propname in st.write_props:
+                        if propname in self._properties:
+                            for signal in self._properties[propname].signals():
+                                self._signal_causes[signal].append(conj)
+                                # Since a new cause for the property's signal is added,
+                                #  it must be added to all states depending on that signal.
+                                states_to_recomplete.update(self._states_for_signal(signal))
+                    if st.signal():
+                        self._signal_causes[st.signal()].append(conj)
 
             # add state to state activation map
             self._activations_per_state[st] = set()
@@ -556,7 +557,7 @@ class Context(IContext):
         result = [set(deepcopy(sig) for sig in conj.signals())]
         for sig in result[0]:
             # TODO: Figure out through eta system
-            sig.max_age = -1
+            sig.max_age = 4.
 
         for conj_sig in conj.signals():
             completion = self._complete_signal(conj_sig, known_signals)

@@ -13,7 +13,6 @@ generate:
   - ravestate.property++
 - modules.md:
   - ravestate.module++
-  - ravestate.registry++
 - context.md:
   - ravestate.context++
   - ravestate.spike++

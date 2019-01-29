@@ -1,6 +1,6 @@
 from typing import List, Set, Generator, Optional, Tuple, Union, Callable, Any
 from ravestate.spike import Spike
-from ravestate.iactivation import IActivation
+from ravestate.iactivation import IActivation, ICausalGroup
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -56,7 +56,9 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         return False
 
-    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
+    def dereference(self, *,
+                    spike: Optional[Spike]=None,
+                    causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
         logger.error("Don't call this method on the super class Constraint")
         yield None, None
 
@@ -133,8 +135,14 @@ class Signal(Constraint):
     def evaluate(self) -> bool:
         return self.spike and self._min_age_ticks <= self.spike.age()
 
-    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
+    def dereference(self, *,
+                    spike: Optional[Spike]=None,
+                    causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
         if (not spike and self.spike) or (spike and self.spike is spike):
+            if causal_groups:
+                with self.spike.causal_group() as cg:
+                    if cg not in list(causal_groups):
+                        return
             former_signal_instance = self.spike
             self.spike = None
             yield self, former_signal_instance
@@ -217,8 +225,13 @@ class Conjunct(Constraint):
     def evaluate(self) -> bool:
         return all(map(lambda si: si.evaluate(), self._signals))
 
-    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
-        return (result for child in self._signals for result in child.dereference(spike))
+    def dereference(self, *,
+                    spike: Optional[Spike]=None,
+                    causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
+        return (
+            result
+            for child in self._signals
+            for result in child.dereference(spike=spike, causal_groups=causal_groups))
 
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
         return (result for child in self._signals for result in child.update(act))
@@ -283,11 +296,16 @@ class Disjunct(Constraint):
     def evaluate(self) -> bool:
         return any(map(lambda si: si.evaluate(), self._conjunctions))
 
-    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
-        return (result for child in self._conjunctions for result in child.dereference(spike))
+    def dereference(self, *,
+                    spike: Optional[Spike]=None,
+                    causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
+        return (result for child in self._conjunctions for result in child.dereference(spike=spike, causal_groups=causal_groups))
 
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
-        return (result for child in self._conjunctions for result in child.update(act))
+        return (
+            result
+            for child in self._conjunctions
+            for result in child.update(act))
 
     def __str__(self):
         return " | ".join(map(lambda conjunct: conjunct.__str__(), self._conjunctions))

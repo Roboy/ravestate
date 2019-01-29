@@ -45,6 +45,13 @@ class ISpike:
         yield None
 
 
+class ICausalGroup:
+    """
+    Base class for causal group
+    """
+    pass
+
+
 class IActivation:
     """
     Base interface class for state activations.
@@ -67,15 +74,15 @@ class IActivation:
         """
         pass
 
-    def dereference(self, *, spike: Optional[ISpike]=None, reacquire: bool=False, reject: bool=False) -> None:
+    def dereference(self, *, spike: Optional[ISpike]=None, reacquire: bool=False, reject: bool=False, pressured: bool=False) -> None:
         """
         Notify the activation, that a single or all spike(s) are not available
          anymore, and should therefore not be referenced anymore by the activation.
         This is called by ... <br>
-         ... context when a state is deleted. <br>
-         ... causal group, when a referenced signal was consumed for a required property. <br>
-         ... causal group, when a referenced signal was wiped. <br>
-         ... this activation (with reacquire=True), if it gives in to activation pressure.
+        ... context when a state is deleted. <br>
+        ... causal group, when a referenced signal was consumed for a required property. <br>
+        ... causal group, when a referenced signal was wiped. <br>
+        ... this activation (with reacquire=True), if it gives in to activation pressure.
 
         * `spike`: The spike that should be forgotten by the activation, or
          none, if all referenced spikes should be forgotten.
@@ -86,15 +93,20 @@ class IActivation:
 
         * `reject`: Flag which controls, whether de-referenced spikes
          should be explicitely rejected through their causal groups.
+
+        * `pressured`: Flag which controls, whether de-referencing should only occur
+         for spikes of causal groups in the pressuring_causal_groups set.
         """
         pass
 
-    def pressure(self):
+    def pressure(self, give_me_up: ICausalGroup):
         """
         Called by CausalGroup, to pressure the activation to
          make a decision on whether it is going to retain a reference
          to the given spike, given that there is a lower-
          specificity activation which is ready to run.
+
+        * `give_me_up`: Causal group that wishes to be de-referenced by this activation.
         """
         pass
 
