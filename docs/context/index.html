@@ -121,6 +121,22 @@
               
                 <h1 id="ravestate.context">ravestate.context</h1>
 
+<h2 id="ravestate.context.startup">startup</h2>
+
+<pre><code class="python">startup(**kwargs) -&gt; ravestate.constraint.Signal
+</code></pre>
+
+<p>Obtain the startup signal, which is fired once when <code>Context.run()</code> is executed.<br>
+<strong>Hint:</strong> All key-word arguments of <code>constraint.s</code>(...)
+ (<code>min_age</code>, <code>max_age</code>, <code>detached</code>) are supported.</p>
+<h2 id="ravestate.context.shutdown">shutdown</h2>
+
+<pre><code class="python">shutdown(**kwargs) -&gt; ravestate.constraint.Signal
+</code></pre>
+
+<p>Obtain the shutdown signal, which is fired once when <code>Context.shutdown()</code> is called.<br>
+<strong>Hint:</strong> All key-word arguments of <code>constraint.s</code>(...)
+ (<code>min_age</code>, <code>max_age</code>, <code>detached</code>) are supported.</p>
 <h2 id="ravestate.context.Context">Context</h2>
 
 <pre><code class="python">Context(self, *arguments)
@@ -131,8 +147,8 @@
 <pre><code class="python">Context.emit(self, signal: ravestate.constraint.Signal, parents: Set[ravestate.spike.Spike] = None, wipe: bool = False) -&gt; None
 </code></pre>
 
-<p>Emit a signal to the signal processing loop. Note:
- The signal will only be processed if run() has been called!</p>
+<p>Emit a signal to the signal processing loop. <em>Note:</em>
+ The signal will only be processed if <code>run()</code> has been called!</p>
 <ul>
 <li>
 <p><code>signal</code>: The signal to be emitted.</p>
@@ -141,7 +157,7 @@
 <p><code>parents</code>: The signal's parents, if it is supposed to be integrated into a causal group.</p>
 </li>
 <li>
-<p><code>wipe</code>: Boolean to control, whether wipe(signal) should be called
+<p><code>wipe</code>: Boolean to control, whether <code>wipe</code>(signal) should be called
  before the new spike is created.</p>
 </li>
 </ul>
@@ -252,7 +268,9 @@ Generates error message, if the property was not added with add_prop() to the co
 </code></pre>
 
 <p>Called by activation when it is pressured to resign. The activation wants
- to know the earliest ETA of one of it's remaining required constraints.</p>
+ to know the earliest ETA of one of it's remaining required constraints.
+ Also called by constraint completion algorithm, to figure out the maximum
+ age for a completed constraint.</p>
 <ul>
 <li><code>signals</code>: The signals, whose ETA will be calculated, and among the
  results the minimum ETA will be returned.</li>
@@ -326,12 +344,6 @@ Note: Not thread-safe, sync must be guaranteed by caller.</p>
 <p>This class encapsulates a single spike, to track ... <br>
 ... it's consumption for different output properties (through <code>CausalGroup</code>). <br>
 ... it's offspring instances (causal group -&gt; spikes caused by this spike)</p>
-<h3 id="ravestate.spike.Spike.name">name</h3>
-
-<pre><code class="python">Spike.name(self) -&gt; str
-</code></pre>
-
-<p>Returns the name of this spike's signal.</p>
 <h3 id="ravestate.spike.Spike.causal_group">causal_group</h3>
 
 <pre><code class="python">Spike.causal_group(self) -&gt; ravestate.causal.CausalGroup
@@ -399,6 +411,12 @@ After this function is called, the spike should be cleaned up by GC.</p>
 
 <p>Recursively yields this spike's offspring and it's children's offspring.</p>
 <p><strong>Returns:</strong> All of this spike's offspring spikes.</p>
+<h3 id="ravestate.spike.Spike.is_wiped">is_wiped</h3>
+
+<pre><code class="python">Spike.is_wiped(self)
+</code></pre>
+
+<p>Check, whether this spike has been wiped, and should therefore not be acquired anymore.</p>
 <h1 id="ravestate.activation">ravestate.activation</h1>
 
 <h2 id="ravestate.activation.Activation">Activation</h2>
@@ -425,7 +443,7 @@ After this function is called, the spike should be cleaned up by GC.</p>
  which in turn is calculated as one over the signal's subscriber count.</p>
 <h3 id="ravestate.activation.Activation.dereference">dereference</h3>
 
-<pre><code class="python">Activation.dereference(self, *, spike: Union[ravestate.iactivation.ISpike, NoneType] = None, reacquire: bool = False, reject: bool = False) -&gt; None
+<pre><code class="python">Activation.dereference(self, *, spike: Union[ravestate.iactivation.ISpike, NoneType] = None, reacquire: bool = False, reject: bool = False, pressured: bool = False) -&gt; None
 </code></pre>
 
 <p>Notify the activation, that a single or all spike(s) are not available
@@ -434,7 +452,7 @@ This is called by ... <br>
 ... context when a state is deleted. <br>
 ... causal group, when a referenced signal was consumed for a required property. <br>
 ... causal group, when a referenced signal was wiped. <br>
-... this activation (with reacquire=True), if it gives in to activation pressure.</p>
+... this activation (with reacquire=True and pressured=True), if it gives in to activation pressure.</p>
 <ul>
 <li>
 <p><code>spike</code>: The spike that should be forgotten by the activation, or
@@ -448,6 +466,10 @@ This is called by ... <br>
 <li>
 <p><code>reject</code>: Flag which controls, whether de-referenced spikes
  should be explicitely rejected through their causal groups.</p>
+</li>
+<li>
+<p><code>pressured</code>: Flag which controls, whether de-referencing should only occur
+ for spikes of causal groups in the pressuring_causal_groups set.</p>
 </li>
 </ul>
 <h3 id="ravestate.activation.Activation.acquire">acquire</h3>
@@ -474,13 +496,16 @@ This is called by ... <br>
 <p><strong>Returns:</strong> An integer tick count.</p>
 <h3 id="ravestate.activation.Activation.pressure">pressure</h3>
 
-<pre><code class="python">Activation.pressure(self)
+<pre><code class="python">Activation.pressure(self, give_me_up: ravestate.iactivation.ICausalGroup)
 </code></pre>
 
 <p>Called by CausalGroup, to pressure the activation to
  make a decision on whether it is going to retain a reference
  to the given spike, given that there is a lower-
  specificity activation which is ready to run.</p>
+<ul>
+<li><code>give_me_up</code>: Causal group that wishes to be de-referenced by this activation.</li>
+</ul>
 <h3 id="ravestate.activation.Activation.spiky">spiky</h3>
 
 <pre><code class="python">Activation.spiky(self) -&gt; bool
@@ -522,7 +547,7 @@ This is called by ... <br>
 Afterwards, other's member objects will be set to this's.</p>
 <h3 id="ravestate.causal.CausalGroup.acquired">acquired</h3>
 
-<pre><code class="python">CausalGroup.acquired(self, spike: 'ISpike', acquired_by: ravestate.iactivation.IActivation) -&gt; bool
+<pre><code class="python">CausalGroup.acquired(self, spike: 'ISpike', acquired_by: ravestate.iactivation.IActivation, detached: bool) -&gt; bool
 </code></pre>
 
 <p>Called by Activation to notify the causal group, that
@@ -536,6 +561,10 @@ Afterwards, other's member objects will be set to this's.</p>
 <p><code>acquired_by</code>: State activation instance,
  which is interested in this property.</p>
 </li>
+<li>
+<p><code>detached</code>: Tells the causal group, whether the reference is detached,
+  and should therefore receive special treatment.</p>
+</li>
 </ul>
 <p><strong>Returns:</strong> Returns True if all of the acquiring's write-props are
  free, and the group now refs. the activation, False otherwise.</p>
@@ -547,7 +576,7 @@ Afterwards, other's member objects will be set to this's.</p>
 <p>Called by a state activation, to notify the group that a member spike
  is no longer being referenced for the given state's write props.
 This may be because ... <br>
-... the state activation auto-eliminated. (reason=0) <br>
+... the state activation's dereference function was called. (reason=0) <br>
 ... the spike got too old. (reason=1) <br>
 ... the activation is happening and dereferencing it's spikes. (reason=2)</p>
 <ul>

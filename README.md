@@ -93,9 +93,11 @@ If you have installed the dependencies from ``requirements-dev.txt``,
 generate the docs by running this command at project root:
 
 ```bash
+export PYTHONPATH=$PYTHONPATH:$(pwd)/modules
 git rm -rf docs
 rm -rf _build docs
 pydocmd build
+git add docs/*
 ```
 
 The structure and content of the docs are defined in the file ``pydocmd.yml``.

@@ -121,9 +121,42 @@
               
                 <h1 id="ravestate.property">ravestate.property</h1>
 
+<h2 id="ravestate.property.changed">changed</h2>
+
+<pre><code class="python">changed(property_name, **kwargs) -&gt; ravestate.constraint.Signal
+</code></pre>
+
+<p>Returns the <code>changed</code> Signal for the given property.
+This signal is emitted, when the Property is written to,
+ and the new property value is different from the old one,
+ or the propertie's <code>always_signal_changed</code> flag is True.<br>
+<strong>Hint:</strong> All key-word arguments of <code>constraint.s</code>(...)
+ (<code>min_age</code>, <code>max_age</code>, <code>detached</code>) are supported.</p>
+<h2 id="ravestate.property.pushed">pushed</h2>
+
+<pre><code class="python">pushed(property_name, **kwargs) -&gt; ravestate.constraint.Signal
+</code></pre>
+
+<p>Returns the <code>pushed</code> Signal for the given property. This signal
+ is emitted, when a new child property is added to it.
+ From the perspective of a state, this can be achieved
+ with the <code>ContextWrapper.push(...)</code> function.<br>
+<strong>Hint:</strong> All key-word arguments of <code>constraint.s</code>(...)
+ (<code>min_age</code>, <code>max_age</code>, <code>detached</code>) are supported.</p>
+<h2 id="ravestate.property.popped">popped</h2>
+
+<pre><code class="python">popped(property_name, **kwargs) -&gt; ravestate.constraint.Signal
+</code></pre>
+
+<p>Returns the <code>popped</code> Signal for the given property. This signal
+ is emitted, when a child property removed from it.
+ From the perspective of a state, this can be achieved
+ with the <code>ContextWrapper.pop(...)</code> function.<br>
+<strong>Hint:</strong> All key-word arguments of <code>constraint.s</code>(...)
+ (<code>min_age</code>, <code>max_age</code>, <code>detached</code>) are supported.</p>
 <h2 id="ravestate.property.PropertyBase">PropertyBase</h2>
 
-<pre><code class="python">PropertyBase(self, *, name='', allow_read=True, allow_write=True, allow_push=True, allow_pop=True, default_value=None, always_signal_changed=False)
+<pre><code class="python">PropertyBase(self, *, name='', allow_read=True, allow_write=True, allow_push=True, allow_pop=True, default_value=None, always_signal_changed=False, is_flag_property=False)
 </code></pre>
 
 <p>Base class for context properties. Controls read/write/push/pop/delete permissions,
@@ -197,6 +230,18 @@ property name basic impls. for the property value, parent/child mechanism.</p>
 </code></pre>
 
 <p>Signal that is emitted by PropertyWrapper when <code>pop()</code> returns True.</p>
+<h3 id="ravestate.property.PropertyBase.flag_true_signal">flag_true_signal</h3>
+
+<pre><code class="python">PropertyBase.flag_true_signal(self) -&gt; ravestate.constraint.Signal
+</code></pre>
+
+<p>Signal that is emitted by PropertyWrapper when it is a flag-property and <code>self.value</code> is set to True.</p>
+<h3 id="ravestate.property.PropertyBase.flag_false_signal">flag_false_signal</h3>
+
+<pre><code class="python">PropertyBase.flag_false_signal(self) -&gt; ravestate.constraint.Signal
+</code></pre>
+
+<p>Signal that is emitted by PropertyWrapper when it is a flag-property and <code>self.value</code> is set to False.</p>
 <h3 id="ravestate.property.PropertyBase.signals">signals</h3>
 
 <pre><code class="python">PropertyBase.signals(self) -&gt; Generator[ravestate.constraint.Signal, NoneType, NoneType]
