@@ -13,8 +13,8 @@ CHILD_PROPERTY_NAME = 'child'
 CHILD_PROPERTY_VALUE = 'I am a child'
 GRANDCHILD_PROPERTY_NAME = 'grandchild'
 GRANDCHILD_PROPERTY_VALUE = 'I am a grandchild'
-CHILD_PROPERTY_FULLNAME = f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}"
-GRANDCHILD_PROPERTY_FULLNAME = f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}:{GRANDCHILD_PROPERTY_NAME}"
+CHILD_PROPERTY_ID = f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}"
+GRANDCHILD_PROPERTY_ID = f"{DEFAULT_MODULE_NAME}:{DEFAULT_PROPERTY_NAME}:{CHILD_PROPERTY_NAME}:{GRANDCHILD_PROPERTY_NAME}"
 
 
 @pytest.fixture
@@ -145,7 +145,7 @@ def test_flag_property(context_mock):
 
 def test_property_child(under_test_read_write: PropertyWrapper, default_property_base, context_mock):
     assert under_test_read_write.push(PropertyBase(name=CHILD_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE))
-    assert list(under_test_read_write.enum())[0] == CHILD_PROPERTY_FULLNAME
+    assert list(under_test_read_write.enum())[0] == CHILD_PROPERTY_ID
     assert under_test_read_write.prop.children[CHILD_PROPERTY_NAME].read() == DEFAULT_PROPERTY_VALUE
 
 
