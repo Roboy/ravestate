@@ -17,6 +17,7 @@ def yes_no(doc):
             return "no"
         elif nlp_tokens[0] in PROBABLY_SYNONYMS:
             return "p"
+
     nlp_token_dep = tuple(str(token.dep_) for token in doc)
     if NEGATION_TUPLE[0] in nlp_token_dep or NEGATION_TUPLE[1] in nlp_tokens:
         for token in nlp_tokens:
