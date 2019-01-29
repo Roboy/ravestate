@@ -1,8 +1,7 @@
 # Ravestate State-related definitions
 
 from typing import Optional, Tuple, Union
-import threading
-
+from ravestate.threadlocal import ravestate_thread_local
 from ravestate.constraint import Conjunct, Disjunct, Signal, s, Constraint
 from ravestate.consumable import Consumable
 
@@ -73,8 +72,6 @@ class State:
     #  for states that don't have any write-props.
     consumable: Consumable
 
-    thread_local = threading.local()
-
     def __init__(self, *,
                  signal_name: Optional[str],
                  write: Union[str, Tuple[str]],
@@ -86,7 +83,7 @@ class State:
 
         assert(callable(action))
         self.name = action.__name__
-        self.consumable = Consumable(f"@{action.__module__}:{action.__name__}")
+        self.consumable = Consumable(f"@{action.__name__}")
 
         # check to recognize states using old signal implementation
         if isinstance(cond, str):
@@ -121,7 +118,7 @@ class State:
         self.emit_detached = emit_detached
 
         # add state to module in current `with Module(...)` clause
-        module_under_construction = getattr(self.thread_local, 'module_under_construction', None)
+        module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
         if module_under_construction:
             module_under_construction.add(self)
 

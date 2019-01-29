@@ -10,13 +10,8 @@ from std_msgs.msg import String
 rclpy.init()
 node = rclpy.create_node("vision_node")
 
-<<<<<<< HEAD
-with Module(name="facerec"):
-=======
 
-@state(cond=s(":startup"))
-def facerec_run(ctx):
->>>>>>> b21a042c31198e97e854d4b01b4d5aa74679bb54
+with Module(name="facerec"):
 
     face = PropertyBase(name="face", default_value="")
 
@@ -31,14 +26,7 @@ def facerec_run(ctx):
         rclpy.spin(node)
 
 
-<<<<<<< HEAD
     @state(cond=s(":shutdown"))
     def facerec_shutdown():
         node.destroy_node()
         rclpy.shutdown()
-=======
-registry.register(
-    name="facerec",
-    props=PropertyBase(name="face", default_value=""),
-    states=(facerec_run, facerec_shutdown))
->>>>>>> b21a042c31198e97e854d4b01b4d5aa74679bb54

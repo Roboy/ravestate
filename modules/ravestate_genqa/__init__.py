@@ -19,7 +19,7 @@ SERVER_AVAILABLE_CODE = 200
 
 with Module(name="genqa", config=CONFIG):
 
-    @state(cond=s(":startup"), write="rawio:out")
+    @state(cond=s(":startup"))
     def hello_world_genqa(ctx):
         server = ctx.conf(key=DRQA_SERVER_ADDRESS)
         if not server:

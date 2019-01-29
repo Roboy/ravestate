@@ -110,20 +110,15 @@ def test_flag_property(context_mock):
     prop_base.set_parent_path(DEFAULT_MODULE_NAME)
     prop_wrapper = PropertyWrapper(prop=prop_base, ctx=context_mock, allow_read=True, allow_write=True)
     assert (prop_base._lock.locked())
-<<<<<<< HEAD
-    under_test_read_write.set(True)
-    assert (under_test_read_write.get() == True)
-    context_mock.emit.assert_called_with(
-        s(f"{under_test_read_write.prop.id()}:changed"),
-=======
+
     prop_wrapper.set(True)
     assert (prop_wrapper.get() is True)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.fullname()}:changed"),
+        s(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.fullname()}:true"),
+        s(f"{prop_wrapper.prop.id()}:true"),
         parents=None,
         wipe=True)
 
@@ -131,11 +126,11 @@ def test_flag_property(context_mock):
     prop_wrapper.set(False)
     assert (prop_wrapper.get() is False)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.fullname()}:changed"),
+        s(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.fullname()}:false"),
+        s(f"{prop_wrapper.prop.id()}:false"),
         parents=None,
         wipe=True)
 
@@ -143,8 +138,7 @@ def test_flag_property(context_mock):
     prop_wrapper.set(None)
     assert (prop_wrapper.get() is None)
     context_mock.emit.assert_called_once_with(
-        s(f"{prop_wrapper.prop.fullname()}:changed"),
->>>>>>> b21a042c31198e97e854d4b01b4d5aa74679bb54
+        s(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True)
 

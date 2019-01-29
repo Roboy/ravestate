@@ -3,7 +3,7 @@
 from threading import Lock
 from typing import Dict, List, Generator
 from ravestate.constraint import s, Signal
-import threading
+from ravestate.threadlocal import ravestate_thread_local
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -51,8 +51,6 @@ class PropertyBase:
     property name basic impls. for the property value, parent/child mechanism.
     """
 
-    thread_local = threading.local()
-
     def __init__(
             self, *,
             name="",
@@ -77,7 +75,7 @@ class PropertyBase:
         self.is_flag_property = is_flag_property
 
         # add property to module in current `with Module(...)` clause
-        module_under_construction = getattr(self.thread_local, 'module_under_construction', None)
+        module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
         if module_under_construction:
             module_under_construction.add(self)
 

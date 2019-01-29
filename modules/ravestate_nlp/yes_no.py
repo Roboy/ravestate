@@ -20,5 +20,5 @@ def yes_no(doc):
                 return "pn"
         elif "probably" in nlp_tokens:
             return "p"
-    return "0"
+    return "_"
 

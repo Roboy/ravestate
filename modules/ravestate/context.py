@@ -1,5 +1,4 @@
 # Ravestate context class
-import copy
 from threading import Thread, Lock, Event
 from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
 from collections import defaultdict
@@ -43,7 +42,7 @@ def shutdown(**kwargs) -> Signal:
 
 
 class Context(IContext):
-    _default_signal_names: Tuple[str] = (startup(), shutdown())
+    _default_signals: Tuple[Signal] = (startup(), shutdown())
     _default_properties: Tuple[PropertyBase] = (
         PropertyBase(
             name="pressure",
@@ -128,8 +127,8 @@ class Context(IContext):
         self._run_task = None
 
         # Register default signals
-        for signame in self._default_signal_names:
-            self._add_sig(s(signame))
+        for signal in self._default_signals:
+            self._add_sig(signal)
 
         # Register default properties
         for prop in self._default_properties:
@@ -175,7 +174,6 @@ class Context(IContext):
          should be invalidated and forgotten.
         """
         with self._lock:
-            spikes_change = {}
             for spike in self._spikes:
                 if spike.name() == signal.name:
                     spike.wipe()
@@ -288,7 +286,8 @@ class Context(IContext):
 
         # register the state's consumable dummy, so that it is passed
         #  to Spike and from there to CausalGroup as a consumable resource.
-        self.add_prop(prop=st.consumable)
+        if st.consumable.id() not in self._properties:
+            self.add_prop(prop=st.consumable)
 
     def rm_state(self, *, st: State) -> None:
         """
@@ -394,6 +393,8 @@ class Context(IContext):
         """
         Called by activation when it is pressured to resign. The activation wants
          to know the earliest ETA of one of it's remaining required constraints.
+         Also called by constraint completion algorithm, to figure out the maximum
+         age for a completed constraint.
 
         * `signals`: The signals, whose ETA will be calculated, and among the
          results the minimum ETA will be returned.
@@ -402,7 +403,7 @@ class Context(IContext):
          signals to arrive. Fixed value (1) for now.
         """
         # TODO: Proper implementation w/ state runtime_upper_bound
-        return 3
+        return self.secs_to_ticks(.5)
 
     def signal_specificity(self, sig: Signal) -> float:
         """
@@ -554,7 +555,7 @@ class Context(IContext):
     def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
         result = [set(deepcopy(sig) for sig in conj.signals())]
         for sig in result[0]:
-            # maximum age for completions is infinite
+            # TODO: Figure out through eta system
             sig.max_age = -1
 
         for conj_sig in conj.signals():
@@ -592,17 +593,24 @@ class Context(IContext):
 
     def _update_core_properties(self):
         with self._lock:
-            activation_pressure_present = any(activation.is_pressured() for activation in self._state_activations())
-            # don't count states that have ':activity:changed' in their constraint to avoid self-influencing
-            number_of_partially_fulfilled_states = \
-                sum(1 if any(activation.spiky() and self[":activity"].changed_signal() not in list(activation.constraint.signals())
-                             for activation in self._activations_per_state[st]) else 0
-                    for st in self._activations_per_state)
-
-        PropertyWrapper(prop=self[":pressure"], ctx=self, allow_write=True, allow_read=True) \
-            .set(activation_pressure_present)
-        PropertyWrapper(prop=self[":activity"], ctx=self, allow_write=True, allow_read=True) \
-            .set(number_of_partially_fulfilled_states)
+            pressured_acts = False
+            partially_fulfilled_acts = 0
+            for act in self._state_activations():
+                if self[":activity"].changed_signal() not in set(act.constraint.signals()):
+                    pressured_acts |= act.is_pressured()
+                    partially_fulfilled_acts += act.spiky()
+        PropertyWrapper(
+            prop=self[":pressure"],
+            ctx=self,
+            allow_write=True,
+            allow_read=True
+        ).set(pressured_acts)
+        PropertyWrapper(
+            prop=self[":activity"],
+            ctx=self,
+            allow_write=True,
+            allow_read=True
+        ).set(partially_fulfilled_acts)
 
     def _run_private(self):
 

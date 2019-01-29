@@ -170,6 +170,9 @@ class Activation(IActivation):
             if not conjunction.evaluate():
                 continue
 
+            # Death is cheated if the activation is fulfilled.
+            self.death_clock = None
+
             # Ask each spike's causal group for activation consent
             spikes_for_conjunct = set((sig.spike, sig.detached) for sig in conjunction.signals())
             consenting_causal_groups = set()

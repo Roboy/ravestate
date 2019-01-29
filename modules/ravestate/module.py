@@ -4,7 +4,7 @@ from typing import Dict, Any, Union, Iterable, Callable
 import importlib
 from ravestate.property import PropertyBase
 from ravestate.state import State
-import threading
+from ravestate.threadlocal import ravestate_thread_local
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -16,7 +16,6 @@ class Module:
     which form a coherent bundle.
     """
 
-    thread_local = threading.local()
     registered_modules: Dict[str, 'Module'] = dict()
     registration_callback: Callable[['Module'], Any] = None  # set by import_module
 
@@ -40,19 +39,19 @@ class Module:
         if name in self.registered_modules:
             logger.error(f"Adding module {name} twice!")
         self.registered_modules[name] = self
-        if self.registration_callback:
-            self.registration_callback(self)
 
     def __enter__(self):
-        mod = getattr(self.thread_local, 'module_under_construction', None)
+        mod = getattr(ravestate_thread_local, 'module_under_construction', None)
         if mod:
             logger.error("Nested `with Module(...)` calls are not supported!`")
         else:
-            self.thread_local.module_under_construction = self
+            ravestate_thread_local.module_under_construction = self
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.thread_local.module_under_construction = None
+        ravestate_thread_local.module_under_construction = None
+        if self.registration_callback:
+            self.registration_callback(self)
 
     def add(self, property_or_state: Union[PropertyBase, State, Iterable[PropertyBase], Iterable[State]]):
         try:

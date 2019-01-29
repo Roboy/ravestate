@@ -110,6 +110,9 @@ class Signal(Constraint):
     def __hash__(self):
         return hash(self.name)
 
+    def __repr__(self):
+        return f"Signal({self.name}, {self.min_age}, {self.max_age}, {self.detached})"
+
     def signals(self) -> Generator['Signal', None, None]:
         yield self
 
