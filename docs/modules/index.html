@@ -123,15 +123,23 @@
 
 <h2 id="ravestate.module.Module">Module</h2>
 
-<pre><code class="python">Module(self, *, name: str, props: Tuple[ravestate.property.PropertyBase] = (), states: Tuple[ravestate.state.State] = (), config: Dict[str, Any] = None)
+<pre><code class="python">Module(self, *, name: str, config: Dict[str, Any] = None)
 </code></pre>
 
 <p>Atomic class, which encapsulates a named set of states, properties and config entries,
 which form a coherent bundle.</p>
-<h1 id="ravestate.registry">ravestate.registry</h1>
+<h3 id="ravestate.module.Module.registered_modules">registered_modules</h3>
 
-<h2 id="ravestate.registry.import_module">import_module</h2>
-
+<p>dict() -&gt; new empty dictionary
+dict(mapping) -&gt; new dictionary initialized from a mapping object's
+    (key, value) pairs
+dict(iterable) -&gt; new dictionary initialized as if via:
+    d = {}
+    for k, v in iterable:
+        d[k] = v
+dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
+    in the keyword argument list.  For example:  dict(one=1, two=2)
+<h2 id="ravestate.module.import_module">import_module</h2></p>
 <pre><code class="python">import_module(*, module_name: str, callback)
 </code></pre>
 
@@ -144,31 +152,7 @@ which form a coherent bundle.</p>
 <p><code>callback</code>: A callback which should be called when a module calls register() while it is being imported.</p>
 </li>
 </ul>
-<h2 id="ravestate.registry.register">register</h2>
-
-<pre><code class="python">register(*, name: str = '', props=(), states=(), config=None)
-</code></pre>
-
-<p>May be called to register a named set of states, properties and config entries,
-which form a coherent bundle.</p>
-<ul>
-<li>
-<p><code>name</code>: The name of the module. Will be prefixed to property and signal names like
- <module name>:<property/signal-name>.</p>
-</li>
-<li>
-<p><code>props</code>: The properties that should be registered.</p>
-</li>
-<li>
-<p><code>states</code>: The states that should be registered.</p>
-</li>
-<li>
-<p><code>config</code>: A dictionary of config entries and their default values, which should be read
- from the default/user config files.
-:return:</p>
-</li>
-</ul>
-<h2 id="ravestate.registry.has_module">has_module</h2>
+<h2 id="ravestate.module.has_module">has_module</h2>
 
 <pre><code class="python">has_module(module_name: str)
 </code></pre>
@@ -178,7 +162,7 @@ which form a coherent bundle.</p>
 <li><code>module_name</code>: The name which should be checked for beign registered.</li>
 </ul>
 <p><strong>Returns:</strong> True if a module with the given name has been registered, false otherwise.</p>
-<h2 id="ravestate.registry.get_module">get_module</h2>
+<h2 id="ravestate.module.get_module">get_module</h2>
 
 <pre><code class="python">get_module(module_name: str)
 </code></pre>

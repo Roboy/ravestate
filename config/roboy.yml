@@ -25,6 +25,10 @@ config:
     - ravestate_hibye
     - ravestate_roboyqa
     - ravestate_genqa
+    - ravestate_idle
+    - ravestate_akinator
+    # TODO: Fillers sometimes overwrite good responses by race condition.
+    # - ravestate_fillers
 
 ---
 module: genqa
@@ -36,3 +40,8 @@ config:
 module: roboyqa
 config:
   roboy_node_id: 356
+
+---
+module: akinator
+config:
+  certainty_percentage: 90

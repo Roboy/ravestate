@@ -1,7 +1,7 @@
 # Ravestate State-related definitions
 
-from typing import Callable, Optional, Any, Tuple, Union
-
+from typing import Optional, Tuple, Union
+from ravestate.threadlocal import ravestate_thread_local
 from ravestate.constraint import Conjunct, Disjunct, Signal, s, Constraint
 from ravestate.consumable import Consumable
 
@@ -9,14 +9,14 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-class StateActivationResult:
+class _StateActivationResult:
     """
     Base class for return values of state activation functions.
     """
     pass
 
 
-class Delete(StateActivationResult):
+class Delete(_StateActivationResult):
     """
     Return an instance of this class, if the invoked state should be deleted.
 
@@ -29,7 +29,7 @@ class Delete(StateActivationResult):
         self.resign = resign
 
 
-class Wipe(StateActivationResult):
+class Wipe(_StateActivationResult):
     """
     Return an instance of this class, if context.wipe(signal) should be called,
      to ensure that there are no more active spikes for the state's signal.
@@ -37,7 +37,7 @@ class Wipe(StateActivationResult):
     pass
 
 
-class Emit(StateActivationResult):
+class Emit(_StateActivationResult):
     """
     Return an instance of this class, if the invoked state's signal should be emitted.
 
@@ -48,7 +48,7 @@ class Emit(StateActivationResult):
         self.wipe = wipe
 
 
-class Resign(StateActivationResult):
+class Resign(_StateActivationResult):
     """
     Return an instance of this class, if the state invocation should be regarded unsuccessful.
      This means, that the state's signal will not be emitted, and the spikes
@@ -66,6 +66,7 @@ class State:
     constraint: Constraint
     constraint_: Constraint  # Updated by context, to add constraint causes to constraint
     module_name: str
+    emit_detached: bool
 
     # Dummy resource which allows CausalGroups to track acquisitions
     #  for states that don't have any write-props.
@@ -77,11 +78,12 @@ class State:
                  read: Union[str, Tuple[str]],
                  cond: Constraint,
                  action,
-                 is_receptor: Optional[bool]=False):
+                 is_receptor: bool=False,
+                 emit_detached: bool=False):
 
         assert(callable(action))
         self.name = action.__name__
-        self.consumable = Consumable(f"@{action.__module__}:{action.__name__}")
+        self.consumable = Consumable(f"@{action.__name__}")
 
         # check to recognize states using old signal implementation
         if isinstance(cond, str):
@@ -113,8 +115,14 @@ class State:
         self.action = action
         self.module_name = ""
         self._signal = None
+        self.emit_detached = emit_detached
 
-    def __call__(self, context, *args, **kwargs) -> Optional[StateActivationResult]:
+        # add state to module in current `with Module(...)` clause
+        module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
+        if module_under_construction:
+            module_under_construction.add(self)
+
+    def __call__(self, context, *args, **kwargs) -> Optional[_StateActivationResult]:
         args = (context,) + args
         return self.action(*args, **kwargs)
 
@@ -125,7 +133,7 @@ class State:
         return self._signal
 
 
-def state(*, signal_name: Optional[str]="", write: tuple=(), read: tuple=(), cond: Constraint=None):
+def state(*, signal_name: Optional[str]="", write: tuple=(), read: tuple=(), cond: Constraint=None, emit_detached=False):
     """
     Decorator to declare a new state, which may emit a certain signal,
     write to a certain set of properties (calling write, push, pop),
@@ -133,5 +141,5 @@ def state(*, signal_name: Optional[str]="", write: tuple=(), read: tuple=(), con
     """
     def state_decorator(action):
         nonlocal signal_name, write, read, cond
-        return State(signal_name=signal_name, write=write, read=read, cond=cond, action=action)
+        return State(signal_name=signal_name, write=write, read=read, cond=cond, action=action, emit_detached=emit_detached)
     return state_decorator

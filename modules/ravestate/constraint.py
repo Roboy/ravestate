@@ -1,20 +1,31 @@
-from typing import List, Set, Generator, Optional, Tuple
+from typing import List, Set, Generator, Optional, Tuple, Union, Callable, Any
 from ravestate.spike import Spike
-from ravestate.iactivation import IActivation
+from ravestate.iactivation import IActivation, ICausalGroup
 
 from reggol import get_logger
 logger = get_logger(__name__)
 
 
-def s(signal_name: str, *, min_age=0, max_age=5., detached=False):
+class ConfigurableAge:
+    """
+    Class for having min/max_age parameters for Constraints configurable with a config key
+    """
+    key = ""
+
+    def __init__(self, key: str):
+        self.key = key
+
+
+def s(signal_name: str, *, min_age: Union[float, ConfigurableAge] = 0., max_age: Union[float, ConfigurableAge] = 5.,
+      detached: bool = False) -> 'Signal':
     """
     Alias to call Signal-constructor
 
     * `signal_name`: Name of the Signal
 
-    * `min_age`: Minimum age for the signal, in seconds.
+    * `min_age`: Minimum age for the signal, in seconds. Can also be ConfigurableAge that gets the age from the config.
 
-    * `max_age`: Maximum age for the signal, in seconds.
+    * `max_age`: Maximum age for the signal, in seconds. Can also be ConfigurableAge that gets the age from the config.
      Set to less-than zero for unrestricted age.
 
     * `detached`: Flag which indicates, whether spikes that fulfill this signal
@@ -33,7 +44,7 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         yield None
 
-    def conjunctions(self) -> Generator['Conjunct', None, None]:
+    def conjunctions(self, filter_detached=False) -> Generator['Conjunct', None, None]:
         logger.error("Don't call this method on the super class Constraint")
         yield None
 
@@ -45,7 +56,9 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         return False
 
-    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
+    def dereference(self, *,
+                    spike: Optional[Spike]=None,
+                    causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
         logger.error("Don't call this method on the super class Constraint")
         yield None, None
 
@@ -65,7 +78,7 @@ class Signal(Constraint):
     detached: bool
     _min_age_ticks: int  # written on acquire, when act.secs_to_ticks is available
 
-    def __init__(self, name: str, *, min_age=0., max_age=1., detached=False):
+    def __init__(self, name: str, *, min_age=0., max_age=5., detached=False):
         self.name = name
         # TODO: Convert seconds for min_age/max_age to ticks
         self.min_age = min_age
@@ -99,26 +112,37 @@ class Signal(Constraint):
     def __hash__(self):
         return hash(self.name)
 
+    def __repr__(self):
+        return f"Signal({self.name}, {self.min_age}, {self.max_age}, {self.detached})"
+
     def signals(self) -> Generator['Signal', None, None]:
         yield self
 
-    def conjunctions(self) -> Generator['Conjunct', None, None]:
-        yield Conjunct(self)
+    def conjunctions(self, filter_detached=False) -> Generator['Conjunct', None, None]:
+        if not filter_detached or not self.detached:
+            yield Conjunct(self)
 
     def acquire(self, spike: Spike, act: IActivation):
         if not self.spike and self.name == spike.name() and (self.max_age < 0 or spike.age() <= act.secs_to_ticks(self.max_age)):
+            assert not spike.is_wiped()
             self._min_age_ticks = act.secs_to_ticks(self.min_age)
             self.spike = spike
             with spike.causal_group() as cg:
-                cg.acquired(spike, act)
+                cg.acquired(spike, act, self.detached)
             return True
         return False
 
     def evaluate(self) -> bool:
         return self.spike and self._min_age_ticks <= self.spike.age()
 
-    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
+    def dereference(self, *,
+                    spike: Optional[Spike]=None,
+                    causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
         if (not spike and self.spike) or (spike and self.spike is spike):
+            if causal_groups:
+                with self.spike.causal_group() as cg:
+                    if cg not in list(causal_groups):
+                        return
             former_signal_instance = self.spike
             self.spike = None
             yield self, former_signal_instance
@@ -126,10 +150,10 @@ class Signal(Constraint):
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
         # Reject spike, once it has become too old
         if self.spike and self.max_age >= 0 and self.spike.age() > act.secs_to_ticks(self.max_age):
-            with self.spike.causal_group() as cg:
-                cg.rejected(self.spike, act, reason=1)
-                self.spike = None
-                yield self
+                with self.spike.causal_group() as cg:
+                    cg.rejected(self.spike, act, reason=1)
+                    self.spike = None
+                    yield self
 
     def __str__(self):
         return self.name
@@ -185,8 +209,12 @@ class Conjunct(Constraint):
     def signals(self) -> Generator['Signal', None, None]:
         return (sig for sig in self._signals)
 
-    def conjunctions(self) -> Generator['Conjunct', None, None]:
-        yield self
+    def conjunctions(self, filter_detached=False) -> Generator['Conjunct', None, None]:
+        result = self
+        if filter_detached:
+            result = Conjunct(*(sig for sig in self._signals if not sig.detached))
+        if result._signals:
+            yield result
 
     def acquire(self, spike: Spike, act: IActivation):
         result = False
@@ -197,8 +225,13 @@ class Conjunct(Constraint):
     def evaluate(self) -> bool:
         return all(map(lambda si: si.evaluate(), self._signals))
 
-    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
-        return (result for child in self._signals for result in child.dereference(spike))
+    def dereference(self, *,
+                    spike: Optional[Spike]=None,
+                    causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
+        return (
+            result
+            for child in self._signals
+            for result in child.dereference(spike=spike, causal_groups=causal_groups))
 
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
         return (result for child in self._signals for result in child.update(act))
@@ -250,8 +283,9 @@ class Disjunct(Constraint):
     def signals(self) -> Generator['Signal', None, None]:
         return (signal for conjunct in self._conjunctions for signal in conjunct._signals)
 
-    def conjunctions(self) -> Generator['Conjunct', None, None]:
-        return (conj for conj in self._conjunctions)
+    def conjunctions(self, filter_detached=False) -> Generator['Conjunct', None, None]:
+        for conj in self._conjunctions:
+            yield from conj.conjunctions(filter_detached=filter_detached)
 
     def acquire(self, spike: Spike, act: IActivation):
         result = False
@@ -262,11 +296,16 @@ class Disjunct(Constraint):
     def evaluate(self) -> bool:
         return any(map(lambda si: si.evaluate(), self._conjunctions))
 
-    def dereference(self, spike: Optional[Spike]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
-        return (result for child in self._conjunctions for result in child.dereference(spike))
+    def dereference(self, *,
+                    spike: Optional[Spike]=None,
+                    causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
+        return (result for child in self._conjunctions for result in child.dereference(spike=spike, causal_groups=causal_groups))
 
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
-        return (result for child in self._conjunctions for result in child.update(act))
+        return (
+            result
+            for child in self._conjunctions
+            for result in child.update(act))
 
     def __str__(self):
         return " | ".join(map(lambda conjunct: conjunct.__str__(), self._conjunctions))

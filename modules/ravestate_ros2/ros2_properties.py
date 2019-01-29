@@ -77,7 +77,7 @@ def sync_ros_properties(ctx: ContextWrapper):
             # register subscribers in ROS
             if isinstance(prop, Ros2SubProperty):
                 # register in context
-                @receptor(ctx_wrap=ctx, write=prop.fullname())
+                @receptor(ctx_wrap=ctx, write=prop.id())
                 def ros_to_ctx_callback(ctx, msg, prop_name: str):
                     ctx[prop_name] = msg
 
@@ -146,8 +146,8 @@ class Ros2SubProperty(PropertyBase):
         * `msg`: ROS2-Message that should be written into the property
         """
         if self.ros_to_ctx_callback:
-            logger.debug(f"{self.fullname()} received message {str(msg)} from topic {self.topic}")
-            self.ros_to_ctx_callback(msg=msg, prop_name=self.fullname())
+            logger.debug(f"{self.id()} received message {str(msg)} from topic {self.topic}")
+            self.ros_to_ctx_callback(msg=msg, prop_name=self.id())
 
 
 class Ros2PubProperty(PropertyBase):
@@ -187,7 +187,7 @@ class Ros2PubProperty(PropertyBase):
         """
         if super().write(value):
             if self.publisher:
-                logger.debug(f"{self.fullname()} is publishing message {str(value)} on topic {self.topic}")
+                logger.debug(f"{self.id()} is publishing message {str(value)} on topic {self.topic}")
                 self.publisher.publish(value)
             elif ROS2_AVAILABLE:
                 logger.error(f"Message {str(value)} on topic {self.topic} "
@@ -248,7 +248,7 @@ class Ros2CallProperty(PropertyBase):
                     # value is dict {"param1": value1, "param2": value2}
                     req = self.service_type.Request(**value)
 
-                logger.debug(f"{self.fullname()} is sending request {str(req)} to service {self.service_name}")
+                logger.debug(f"{self.id()} is sending request {str(req)} to service {self.service_name}")
                 result = self.client.call(req)
                 super().write(result)
 

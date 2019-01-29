@@ -50,7 +50,7 @@ class PropertyWrapper:
         * `child`: top-down list of child ancestry of the child to get the value from
         """
         if not self.allow_read:
-            logger.error(f"Unauthorized read access in property-wrapper for {self.prop.fullname()}!")
+            logger.error(f"Unauthorized read access in property-wrapper for {self.prop.id()}!")
             return None
         elif self.allow_write:
             return self.prop.read()
@@ -65,9 +65,19 @@ class PropertyWrapper:
         **Returns:** True if the value has changed and :changed should be signaled, false otherwise.
         """
         if not self.allow_write:
-            logger.error(f"Unauthorized write access in property-wrapper {self.prop.fullname()}!")
+            logger.error(f"Unauthorized write access in property-wrapper {self.prop.id()}!")
             return False
         if self.prop.write(value):
+            # emit flag signals if it is a flag property
+            if self.prop.is_flag_property and value is True:
+                # wipe false signal, emit true signal
+                self.ctx.wipe(self.prop.flag_false_signal())
+                self.ctx.emit(self.prop.flag_true_signal(), parents=self.spike_parents, wipe=True)
+            if self.prop.is_flag_property and value is False:
+                # wipe true signal, emit false signal
+                self.ctx.wipe(self.prop.flag_true_signal())
+                self.ctx.emit(self.prop.flag_false_signal(), parents=self.spike_parents, wipe=True)
+
             self.ctx.emit(self.prop.changed_signal(), parents=self.spike_parents, wipe=True)
             return True
         return False
@@ -82,7 +92,7 @@ class PropertyWrapper:
         **Returns:** True if the push was successful, False otherwise
         """
         if not self.allow_write:
-            logger.error(f"Unauthorized push access in property-wrapper {self.prop.fullname()}!")
+            logger.error(f"Unauthorized push access in property-wrapper {self.prop.id()}!")
             return False
         if self.prop.push(child):
             self.ctx.emit(self.prop.pushed_signal(), parents=self.spike_parents, wipe=True)
@@ -98,7 +108,7 @@ class PropertyWrapper:
         **Returns:** True if the pop was successful, False otherwise
         """
         if not self.allow_write:
-            logger.error(f"Unauthorized pop access in property-wrapper {self.prop.fullname()}!")
+            logger.error(f"Unauthorized pop access in property-wrapper {self.prop.id()}!")
             return False
         if self.prop.pop(childname):
             self.ctx.emit(self.prop.popped_signal(), parents=self.spike_parents, wipe=True)
@@ -110,9 +120,9 @@ class PropertyWrapper:
         Get the full paths of each of this property's children.
         """
         if not self.allow_read:
-            logger.error(f"Unauthorized read access in property-wrapper for {self.prop.fullname()}!")
+            logger.error(f"Unauthorized read access in property-wrapper for {self.prop.id()}!")
             return (_ for _ in ())
-        return (child.fullname() for _, child in self.prop.children.items())
+        return (child.id() for _, child in self.prop.children.items())
 
 
 class ContextWrapper:
@@ -133,8 +143,8 @@ class ContextWrapper:
                 prop_and_children = ctx[propname].gather_children()
                 for prop in prop_and_children:
                     # Child may have been covered by a parent before
-                    if prop.fullname() not in self.properties:
-                        self.properties[prop.fullname()] = PropertyWrapper(
+                    if prop.id() not in self.properties:
+                        self.properties[prop.id()] = PropertyWrapper(
                             prop=prop, ctx=ctx,
                             spike_parents=self.spike_parents,
                             allow_read=propname in st.read_props,
@@ -183,7 +193,7 @@ class ContextWrapper:
             return False
         if parentpath in self.properties:
             if self.properties[parentpath].push(child):
-                self.properties[child.fullname()] = PropertyWrapper(
+                self.properties[child.id()] = PropertyWrapper(
                     prop=child, ctx=self.ctx,
                     spike_parents=self.spike_parents,
                     allow_read=self.properties[parentpath].allow_read,
