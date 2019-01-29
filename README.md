@@ -1,10 +1,10 @@
 ```
-                                 _ __    _ __     
-    _ ___ ____  __  ______  ______/ /_____/ /___     
- _ _ /  \/ __ \/ / / / __ \/ ___\, / __ \, /__  \  
-_ _ / /\/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /     
-  _ \/ _\__/\/ _\__/ ,___/\____/\/\__/\/\/ ,___/
- _____          _ _\____/             _ _\____/                    
+                                                 _ __    _ __     
+                    _ ___ ____  __  ______  ______/ /_____/ /___     
+                 _ _ /  \/ __ \/ / / / __ \/ ___\, / __ \, /__  \  
+                _ _ / /\/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /     
+                  _ \/ _\__/\/ _\__/ ,___/\____/\/\__/\/\/ ,___/
+ _____                          _ _\____/             _ _\____/                    
 /_   _\
  0>  0> 
 \__⊽__/  (C) Roboy 2019
@@ -54,7 +54,7 @@ by listing them as arguments to the `rasta` command, which is installed
 with ravestate:
 
 ```bash
-rasta ravestate_conio ravestate_hello_world
+ravestate_wildtalk ravestate_conio ravestate_hibye ravestate_akinator ravestate_fillers
 ```
 
 Run `rasta -h` to see more options!
