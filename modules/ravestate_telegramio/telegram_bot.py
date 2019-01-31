@@ -1,4 +1,6 @@
 from typing import Set
+from tempfile import mkstemp
+import requests
 
 from ravestate.constraint import s
 from ravestate.property import PropertyBase
@@ -21,6 +23,7 @@ import ravestate_ontology
 
 
 TOKEN_CONFIG_KEY: str = "telegram-token"
+
 active_chats: Set[int] = set()
 active_users: Set[int] = set()
 
@@ -32,11 +35,18 @@ def telegram_run(ctx: ContextWrapper):
     """
 
     @receptor(ctx_wrap=ctx, write="rawio:in")
-    def telegram_callback(ctx: ContextWrapper, message_text: str):
+    def text_receptor(ctx: ContextWrapper, message_text: str):
         """
         Writes the message_text to rawio:in
         """
         ctx["rawio:in"] = message_text
+
+    @receptor(ctx_wrap=ctx, write="rawio:pic_in")
+    def photo_receptor(ctx: ContextWrapper, photo_path):
+        """
+        Handles photo messages, write to rawio:pic_in
+        """
+        ctx["rawio:pic_in"] = photo_path
 
     @receptor(ctx_wrap=ctx, write="interloc:all")
     def push_telegram_interloc(ctx: ContextWrapper, telegram_node: Node, name: str):
@@ -46,17 +56,7 @@ def telegram_run(ctx: ContextWrapper):
         if ctx.push(parentpath="interloc:all", child=PropertyBase(name=name, default_value=telegram_node)):
             logger.debug(f"Pushed {telegram_node} to interloc:all")
 
-    def handle_input(bot: Bot, update: Update):
-        """
-        Handler for incoming messages
-        Adds the chat/user of the incoming message to the set of active_chats/active_users
-        Calls the telegram_callback receptor to process the incoming message
-        Retrieves scientio Node of User if it exists, otherwise creates it in the scientio session
-        Calls the push_telegram_interloc receptor to push the scientio node into interloc:all
-        """
-        telegram_callback(update.effective_message.text)
-        active_chats.add(update.effective_chat.id)
-
+    def make_sure_effective_user_exists(update: Update):
         if update.effective_user not in active_users:
             # set up scientio
             sess: Session = ravestate_ontology.get_session()
@@ -86,6 +86,36 @@ def telegram_run(ctx: ContextWrapper):
             push_telegram_interloc(telegram_node, update.effective_chat.id)
             active_users.add(update.effective_user)
 
+    def handle_text_input(bot: Bot, update: Update):
+        """
+        Handler for incoming messages
+        Adds the chat/user of the incoming message to the set of active_chats/active_users
+        Calls the telegram_callback receptor to process the incoming message
+        Retrieves scientio Node of User if it exists, otherwise creates it in the scientio session
+        Calls the push_telegram_interloc receptor to push the scientio node into interloc:all
+        """
+        text_receptor(update.effective_message.text)
+        active_chats.add(update.effective_chat.id)
+        make_sure_effective_user_exists(update)
+
+    def handle_photo(bot: Bot, update: Update):
+        """
+        Handler for photo messages.
+        """
+        make_sure_effective_user_exists(update)
+        photo_index = 2  # Seems like a good size index. TODO: Make configurable
+        while photo_index >= len(update.effective_message.photo):
+            photo_index -= 1
+            if photo_index < 0:
+                logger.error("Telegram photo handler was called, but no photo received!")
+                return
+        file_descr = bot.get_file(update.effective_message.photo[photo_index].file_id)
+        photo = requests.get(file_descr.file_path)
+        file_path = mkstemp()[1]
+        with open(file_path, 'wb') as file:
+            file.write(photo.content)
+        photo_receptor(file_path)
+
     def error(bot: Bot, update: Update, error: TelegramError):
         """
         Log Errors caused by Updates.
@@ -103,7 +133,8 @@ def telegram_run(ctx: ContextWrapper):
     # Get the dispatcher to register handlers
     dp: Dispatcher = updater.dispatcher
     # handle noncommand-messages with handle_input
-    dp.add_handler(MessageHandler(Filters.text, handle_input))
+    dp.add_handler(MessageHandler(Filters.text, handle_text_input))
+    dp.add_handler(MessageHandler(Filters.photo, handle_photo))
     # log all errors
     dp.add_error_handler(error)
     # Start the Bot
