@@ -1,6 +1,6 @@
 # Ravestate class which encapsulates a single spike
 
-from typing import Set, Generator, Dict
+from typing import Set, Generator, Dict, Any
 from collections import defaultdict
 from ravestate.iactivation import ISpike
 from ravestate.causal import CausalGroup
@@ -44,7 +44,10 @@ class Spike(ISpike):
     # Parent instances, which are notified when this spike is wiped
     _parents: Set['Spike']
 
-    def __init__(self, *, sig: str, parents: Set['Spike']=None, consumable_resources: Set[str]=None):
+    # Spike payload passed through emit
+    _payload: Any
+
+    def __init__(self, *, sig: str, parents: Set['Spike']=None, consumable_resources: Set[str]=None, payload: Any=None):
         """
         Construct a spike from a signal name and a list of causing parent signals.
 
@@ -57,6 +60,8 @@ class Spike(ISpike):
 
         * `consumable_resources`: The set of property names from context,
          which are available for consumption.
+
+        * `payload`: Value passed to the spike in emit.
         """
         if parents is None:
             parents = set()
@@ -72,6 +77,7 @@ class Spike(ISpike):
         self._parents = parents.copy() if parents else set()
         self._causal_group = next(iter(parents)).causal_group() if parents else CausalGroup(consumable_resources)
         self._suitors_per_property = {prop: set() for prop in consumable_resources}
+        self._payload = payload
         for parent in parents:
             parent.adopt(self)
         with self._causal_group as cg:
@@ -180,3 +186,9 @@ class Spike(ISpike):
         Check, whether this spike has been wiped, and should therefore not be acquired anymore.
         """
         return self._wiped
+
+    def payload(self) -> Any:
+        """
+        Get payload for this spike. The payload is an arbitrary value passed in #Context.emit().
+        """
+        return self._payload

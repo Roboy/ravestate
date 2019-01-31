@@ -154,4 +154,4 @@ def telegram_output(ctx: ContextWrapper):
 
     updater: Updater = Updater(token)
     for chat_id in active_chats:
-        updater.bot.send_message(chat_id=chat_id, text=ctx["rawio:out"])
+        updater.bot.send_message(chat_id=chat_id, text=ctx["rawio:out:changed"])

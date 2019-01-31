@@ -1,5 +1,5 @@
 # Ravestate context class
-from threading import Thread, Lock, Event
+from threading import Thread, RLock, Event
 from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
 from collections import defaultdict
 from math import ceil
@@ -69,7 +69,7 @@ class Context(IContext):
     _import_modules_config = "import"
     _tick_rate_config = "tickrate"
 
-    _lock: Lock
+    _lock: RLock
 
     _properties: Dict[str, PropertyBase]
     _spikes: Set[Spike]
@@ -117,7 +117,7 @@ class Context(IContext):
             self._tick_rate_config: 20
         }
         self._config.add_conf(Module(name=self._core_module_name, config=self._core_config))
-        self._lock = Lock()
+        self._lock = RLock()
         self._shutdown_flag = Event()
         self._properties = dict()
         self._spikes = set()
@@ -145,7 +145,7 @@ class Context(IContext):
         for module_name in self._core_config[self._import_modules_config]+modules:
             self.add_module(module_name)
 
-    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False) -> None:
+    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> None:
         """
         Emit a signal to the signal processing loop. _Note:_
          The signal will only be processed if #run() has been called!
@@ -156,11 +156,17 @@ class Context(IContext):
 
         * `wipe`: Boolean to control, whether #wipe(signal) should be called
          before the new spike is created.
+
+        * `payload`: Value that should be embedded in the new spike.
         """
         if wipe:
             self.wipe(signal)
         with self._lock:
-            new_spike = Spike(sig=signal.name, parents=parents, consumable_resources=set(self._properties.keys()))
+            new_spike = Spike(
+                sig=signal.name,
+                parents=parents,
+                consumable_resources=set(self._properties.keys()),
+                payload=payload)
             logger.debug(f"Emitting {new_spike}")
             self._spikes.add(new_spike)
 
@@ -592,26 +598,29 @@ class Context(IContext):
 
         return result if len(result) else None
 
-    def _update_core_properties(self):
+    def _update_core_properties(self, debug=False):
         with self._lock:
-            pressured_acts = False
+            pressured_acts = list()
             partially_fulfilled_acts = 0
             for act in self._state_activations():
                 if self[":activity"].changed_signal() not in set(act.constraint.signals()):
-                    pressured_acts |= act.is_pressured()
+                    if act.is_pressured():
+                        pressured_acts += [act.name]
                     partially_fulfilled_acts += act.spiky()
         PropertyWrapper(
             prop=self[":pressure"],
             ctx=self,
             allow_write=True,
             allow_read=True
-        ).set(pressured_acts)
+        ).set(len(pressured_acts) > 0)
         PropertyWrapper(
             prop=self[":activity"],
             ctx=self,
             allow_write=True,
             allow_read=True
         ).set(partially_fulfilled_acts)
+        if debug:
+            logger.info(pressured_acts)
 
     def _run_private(self):
 
