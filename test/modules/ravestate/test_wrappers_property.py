@@ -102,7 +102,8 @@ def test_property_write(under_test_read_write: PropertyWrapper, default_property
     context_mock.emit.assert_called_once_with(
         s(f"{under_test_read_write.prop.id()}:changed"),
         parents=None,
-        wipe=True)
+        wipe=True,
+        payload=NEW_PROPERTY_VALUE)
 
 
 def test_flag_property(context_mock):
@@ -116,7 +117,8 @@ def test_flag_property(context_mock):
     context_mock.emit.assert_any_call(
         s(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
-        wipe=True)
+        wipe=True,
+        payload=True)
     context_mock.emit.assert_any_call(
         s(f"{prop_wrapper.prop.id()}:true"),
         parents=None,
@@ -128,7 +130,8 @@ def test_flag_property(context_mock):
     context_mock.emit.assert_any_call(
         s(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
-        wipe=True)
+        wipe=True,
+        payload=False)
     context_mock.emit.assert_any_call(
         s(f"{prop_wrapper.prop.id()}:false"),
         parents=None,
@@ -140,7 +143,8 @@ def test_flag_property(context_mock):
     context_mock.emit.assert_called_once_with(
         s(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
-        wipe=True)
+        wipe=True,
+        payload=None)
 
 
 def test_property_child(under_test_read_write: PropertyWrapper, default_property_base, context_mock):
