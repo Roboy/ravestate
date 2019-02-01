@@ -91,8 +91,13 @@ with Module(name="sendpics", config=CONFIG):
         logger.info(f"Node ID for {name} in picture is {node.get_id()}!")
 
         # Store face vector with node id in redis
-        redis_conn = redis.Redis(
-            host=ctx.conf(key=REDIS_HOST_CONF),
-            port=ctx.conf(key=REDIS_PORT_CONF),
-            password=ctx.conf(key=REDIS_PASS_CONF))
-        redis_conn.set(ctx["sendpics:face_vec"], node.get_id())
+        try:
+            redis_conn = redis.Redis(
+                host=ctx.conf(key=REDIS_HOST_CONF),
+                port=ctx.conf(key=REDIS_PORT_CONF),
+                password=ctx.conf(key=REDIS_PASS_CONF))
+            redis_conn.set(ctx["sendpics:face_vec"], node.get_id())
+        except redis.exceptions.ConnectionError as e:
+            err_msg = "Looks like the redis connection is unavailable :-("
+            logger.error(err_msg)
+            ctx['rawio:out'] = err_msg
