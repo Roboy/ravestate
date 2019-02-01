@@ -4,7 +4,7 @@
 
 from ravestate import property
 from ravestate import state
-from typing import Set
+from typing import Set, Any
 from ravestate.constraint import Signal
 from ravestate.spike import Spike
 from ravestate.iactivation import IActivation
@@ -48,17 +48,19 @@ class IContext:
         """
         pass
 
-    def emit(self, signal: Signal, parents: Set['Spike']=None, wipe: bool=False) -> None:
+    def emit(self, signal: Signal, parents: Set[Spike] = None, wipe: bool = False, payload: Any = None) -> None:
         """
-        Emit a signal to the signal processing loop. Note:
-         The signal will only be processed if run() has been called!
+        Emit a signal to the signal processing loop. _Note:_
+         The signal will only be processed if #run() has been called!
 
         * `signal`: The signal to be emitted.
 
         * `parents`: The signal's parents, if it is supposed to be integrated into a causal group.
 
-        * `wipe`: Boolean to control, whether wipe(signal) should be called
+        * `wipe`: Boolean to control, whether #wipe(signal) should be called
          before the new spike is created.
+
+        * `payload`: Value that should be embedded in the new spike.
         """
         pass
 

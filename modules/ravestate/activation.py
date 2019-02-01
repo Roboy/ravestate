@@ -2,7 +2,7 @@
 import copy
 
 from threading import Thread
-from typing import Set, Optional, List, Dict
+from typing import Set, Optional, List, Dict, Any
 from collections import defaultdict
 
 from ravestate.icontext import IContext
@@ -34,6 +34,7 @@ class Activation(IActivation):
     ctx: IContext
     args: List
     kwargs: Dict
+    spike_payloads: Dict[str, Any]
     parent_spikes: Set[Spike]
     consenting_causal_groups: Set[CausalGroup]
     pressuring_causal_groups: Set[ICausalGroup]
@@ -51,6 +52,7 @@ class Activation(IActivation):
         self.consenting_causal_groups = set()
         self.death_clock = None
         self.pressuring_causal_groups = set()
+        self.spike_payloads = dict()
 
     def __del__(self):
         logger.debug(f"Deleted {self}")
@@ -200,6 +202,9 @@ class Activation(IActivation):
             if not all_consented:
                 continue
 
+            # Gather payloads for all spikes
+            self.spike_payloads = {spike.name(): spike.payload() for spike, _ in spikes_for_conjunct if spike.payload()}
+
             # Notify all consenting causal groups that activation is going forward
             for cg in consenting_causal_groups:
                 with cg:
@@ -258,7 +263,10 @@ class Activation(IActivation):
         return {group for group in self.consenting_causal_groups}
 
     def _run_private(self):
-        context_wrapper = ContextWrapper(ctx=self.ctx, st=self.state_to_activate, spike_parents=self.parent_spikes)
+        context_wrapper = ContextWrapper(ctx=self.ctx,
+                                         st=self.state_to_activate,
+                                         spike_parents=self.parent_spikes,
+                                         spike_payloads=self.spike_payloads)
 
         # Run state function
         try:
