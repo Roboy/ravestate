@@ -49,20 +49,20 @@ with Module(name="persqa"):
         """
         reacts to interloc:pushed and creates persqa:ask_name state
         """
-        Emit()
+        return Emit()
 
-        @state(cond=s("idle:bored") | s("perqa:new-interloc", detached=True),
-               write=("rawio:out", "persqa:subject", "persqa:predicate"),
-               read="interloc:all")
-        def ask_name(ctx):
-            """
-            reacts to idle:bored & persqa:new-interloc
-            asks for interlocutors name
-            """
-            ctx["persqa:predicate"] = "NAME"
-            ctx["rawio:out"] = verbaliser.get_random_question("NAME")
-            ctx["persqa:subject"] = ctx["interloc:all"]
-            return Delete()
+    @state(cond=s("idle:bored") | s("persqa:new-interloc", max_age=-1, detached=True),
+           write=("rawio:out", "persqa:subject", "persqa:predicate"),
+           read="interloc:all")
+    def ask_name(ctx):
+        """
+        reacts to idle:bored & persqa:new-interloc
+        asks for interlocutors name
+        """
+        ctx["persqa:predicate"] = "NAME"
+        ctx["rawio:out"] = verbaliser.get_random_question("NAME")
+        ctx["persqa:subject"] = ctx["interloc:all"]
+        return Delete()
 
     @state(cond=s("nlp:triples:changed"),
            write="persqa:answer",
@@ -77,4 +77,4 @@ with Module(name="persqa"):
            write="rawio:out",
            read=("persqa:predicate", "persqa:subject", "persqa:answer"))
     def react(ctx):
-        ctx["rawio:out"] = verbaliser.get_random_successful_answer(ctx["persqa:predicate"])
+        ctx["rawio:out"] = verbaliser.get_random_successful_answer(ctx["persqa:predicate"]) % str(ctx["persqa:answer"])
