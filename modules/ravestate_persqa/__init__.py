@@ -48,17 +48,16 @@ with Module(name="persqa"):
     def new_interloc(ctx):
         """
         reacts to interloc:pushed and creates persqa:ask_name state
-        reagiert auf interloc pushed
         """
         Emit()
 
-        @state(cond=s("idle:bored") | s("persqa:new-inrerloc"),
+        @state(cond=s("idle:bored") | s("perqa:new-interloc", detached=True),
                write=("rawio:out", "persqa:subject", "persqa:predicate"),
                read="interloc:all")
         def ask_name(ctx):
             """
             reacts to idle:bored & persqa:new-interloc
-            aks for interlocutors name
+            asks for interlocutors name
             """
             ctx["persqa:predicate"] = "NAME"
             ctx["rawio:out"] = verbaliser.get_random_question("NAME")
@@ -69,9 +68,6 @@ with Module(name="persqa"):
            write="persqa:answer",
            read=("persqa:predicate", "nlp:triples"))
     def inference(ctx):
-        """
-
-        """
         triple = ctx["nlp:triples"][0]
         if ctx["persqa:predicate"] == "NAME":
                 ctx["persqa:answer"] = triple.get_object() if triple.get_object() else None
@@ -81,8 +77,4 @@ with Module(name="persqa"):
            write="rawio:out",
            read=("persqa:predicate", "persqa:subject", "persqa:answer"))
     def react(ctx):
-        """
-        generiert antwort aus qalist
-        speichert antwort in node unter pfad unter persqa:subject
-        """
         ctx["rawio:out"] = verbaliser.get_random_successful_answer(ctx["persqa:predicate"])
