@@ -89,6 +89,10 @@ with Module(name="persqa"):
            write="rawio:out",
            read=("persqa:predicate", "persqa:subject", "persqa:answer"))
     def react(ctx):
+        """
+        retrieves memory node with the name or creates a new one
+        outputs a polite response
+        """
         name = str(ctx["persqa:answer"])
         ctx["rawio:out"] = verbaliser.get_random_successful_answer(ctx["persqa:predicate"]) % name
         sess: Session = ravestate_ontology.get_session()
