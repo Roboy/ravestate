@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="static/graph.css">
     <script src="https://d3js.org/d3.v3.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script><script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
 </head>
 <body>
 
@@ -12,11 +12,24 @@
     <h1>ROBOY MIND READING</h1>
 </div>
 
-<script>
+<script type="text/javascript" charset="utf-8">
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    var data;
+    socket.on('newdata', function(newdata) {
+        data = newdata
+        console.log("Hello");
+    });
+
     $(function () {
         $.getJSON("/data", function (data) {
 
-            //var links = [{source: "propery1", target: "state1", type: "licensing"},]
+            // Expected input data format:
+            //     [{source: "property", target: "state", type: "notifies"},]
+            // Types of links:
+            //     - notifies: signal -> state
+            //     - changes: state -> signal
+            //     - creates: property -> signal
+
             var links = data;
             var nodes = {};
             var signals = {};
@@ -25,15 +38,20 @@
 
             // Compute the distinct nodes from the links.
             links.forEach(function (link) {
-                if (link.type === 'notifies') { // Relationship signal -> state
+                if (link.type === 'notifies') {
+                    console.log("Notifies: " + link)
                     link.source = signals[link.source] || (signals[link.source] = {name: link.source});
                     link.target = states[link.target] || (states[link.target] = {name: link.target});
-                } else if (link.type === 'creates') { // Relationship property -> signal
+                } else if (link.type === 'creates') {
+                    console.log("Creates: " + link)
                     link.source = properties[link.source] || (properties[link.source] = {name: link.source});
                     link.target = signals[link.target] || (signals[link.target] = {name: link.target});
                 } else if (link.type === 'changes') {
+                    console.log("Changes: " + link)
                     link.source = states[link.source] || (states[link.source] = {name: link.source});
                     link.target = properties[link.target] || (properties[link.target] = {name: link.target});
+                } else {
+                    console.log("Other: " + link)
                 }
             });
 
@@ -137,6 +155,22 @@
         })
     })
 </script>
+
+<script type=text/javascript>
+        $(function() {
+          $('a#test').bind('click', function() {
+            $.getJSON('/background_process_test',
+                function(data) {
+                    socket.emit("update")
+                    console.log("works");
+            });
+            return false;
+          });
+        });
+</script>
+
+<a href=# id=test><button class='btn btn-default'>Test</button></a>
+
 <div id="chart"></div>
 <div class="w3-bottom w3-card-4 w3-teal flex-container bars">
     <div>
