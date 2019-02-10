@@ -23,7 +23,7 @@ NEW_PROPERTY_VALUE = 'Dorfmeister'
 def state_fixture(mocker):
     @state(write=(DEFAULT_PROPERTY_ID,), read=(DEFAULT_PROPERTY_ID,))
     def state_mock_fn(ctx):
-        pass
+        ctx[DEFAULT_PROPERTY_ID] = "test"
     state_mock_fn.module_name = DEFAULT_MODULE_NAME
     return state_mock_fn
 
