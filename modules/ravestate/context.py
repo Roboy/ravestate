@@ -41,6 +41,14 @@ def shutdown(**kwargs) -> Signal:
     return s(":shutdown", **kwargs)
 
 
+def create_and_run_context(*args, runtime_overrides=None):
+    """
+    Creates a new Context with the given parameters and runs it
+    """
+    context = Context(*args, runtime_overrides=runtime_overrides)
+    context.run()
+
+
 class Context(IContext):
     _default_signals: Tuple[Signal] = (startup(), shutdown())
     _default_properties: Tuple[PropertyBase] = (
@@ -65,9 +73,9 @@ class Context(IContext):
         )
     )
 
-    _core_module_name = "core"
-    _import_modules_config = "import"
-    _tick_rate_config = "tickrate"
+    core_module_name = "core"
+    import_modules_config = "import"
+    tick_rate_config = "tickrate"
 
     _lock: RLock
 
@@ -103,20 +111,24 @@ class Context(IContext):
     _run_task: Thread
     _shutdown_flag: Event
 
-    def __init__(self, *arguments):
+    def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None):
         """
         Construct a context from command line arguments.
 
         * `arguments`: A series of command line arguments which can be parsed
          by the ravestate command line parser (see argparse.py).
+        * `runtime_overrides`: A list of config overrides in the form of (modulename, key, value).
+         Can be used to set config entries to values other than strings or lists like in command line arguments.
+         An example use-case is a module that starts a new context (in separate process) and can set
+         config entries to Connection Objects to enable communication between old and new context.
         """
         modules, overrides, config_files = argparse.handle_args(*arguments)
         self._config = Configuration(config_files)
         self._core_config = {
-            self._import_modules_config: [],
-            self._tick_rate_config: 20
+            self.import_modules_config: [],
+            self.tick_rate_config: 20
         }
-        self._config.add_conf(Module(name=self._core_module_name, config=self._core_config))
+        self._config.add_conf(Module(name=self.core_module_name, config=self._core_config))
         self._lock = RLock()
         self._shutdown_flag = Event()
         self._properties = dict()
@@ -134,16 +146,21 @@ class Context(IContext):
         for prop in self._default_properties:
             self.add_prop(prop=prop)
 
+        # Load required modules
+        for module_name in self._core_config[self.import_modules_config] + modules:
+            self.add_module(module_name)
+
         # Set required config overrides
         for module_name, key, value in overrides:
             self._config.set(module_name, key, value)
-        if self._core_config[self._tick_rate_config] < 1:
-            logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
-            self._core_config[self._tick_rate_config] = 1
+        # Set additional config runtime overrides
+        if runtime_overrides:
+            for module_name, key, value in runtime_overrides:
+                self._config.set(module_name, key, value)
 
-        # Load required modules
-        for module_name in self._core_config[self._import_modules_config]+modules:
-            self.add_module(module_name)
+        if self._core_config[self.tick_rate_config] < 1:
+            logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
+            self._core_config[self.tick_rate_config] = 1
 
     def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> None:
         """
@@ -478,7 +495,7 @@ class Context(IContext):
 
         **Returns:** An integer tick count.
         """
-        return ceil(seconds * float(self._core_config[self._tick_rate_config]))
+        return ceil(seconds * float(self._core_config[self.tick_rate_config]))
 
     def _add_sig(self, sig: Signal):
         if sig in self._act_per_state_per_signal_age:
@@ -624,7 +641,7 @@ class Context(IContext):
 
     def _run_private(self):
 
-        tick_interval = 1. / self._core_config[self._tick_rate_config]
+        tick_interval = 1. / self._core_config[self.tick_rate_config]
 
         ctx_loop_count = 0
         while not self._shutdown_flag.wait(tick_interval):
