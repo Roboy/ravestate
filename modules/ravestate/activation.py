@@ -275,6 +275,9 @@ class Activation(IActivation):
             logger.error(f"An exception occurred while activating {self}: {e}")
             result = Resign()
 
+        # Release the semaphore that counts completed activations.
+        self.state_to_activate.activated.release()
+
         # Process state function result
         if isinstance(result, Emit):
             if self.state_to_activate.signal():

@@ -1,36 +1,46 @@
 from ravestate.constraint import Signal, ConfigurableAge
 from ravestate.spike import Spike
+from ravestate.state import s, Emit
+from ravestate.context import startup
 from ravestate.module import Module
 from ravestate.testfixtures import *
 from threading import Lock
 
 
-def test_run(
-        context_with_property_fixture: Context,
-        state_signal_a_fixture: State,
-        state_signal_b_fixture: State,
-        state_signal_c_fixture: State,
-        state_signal_d_fixture: State):
+def test_run_with_pressure():
 
-    waiter = Lock()
-    waiter.acquire()
+    with Module(name=DEFAULT_MODULE_NAME):
 
-    @state(write=(DEFAULT_PROPERTY_ID,), read=(DEFAULT_PROPERTY_ID,))
-    def state_mock_fn(ctx):
-        waiter.release()
-    state_mock_fn.module_name = "test"
+        PropertyBase(name=DEFAULT_PROPERTY_NAME)
 
-    context_with_property_fixture.add_state(st=state_mock_fn)
-    context_with_property_fixture._run_once()
+        @state(cond=startup(), signal_name="a")
+        def signal_a(ctx):
+            return Emit()
 
-    # Create a property wrapper to trigger a changed signal
-    wrap = PropertyWrapper(
-        prop=context_with_property_fixture[DEFAULT_PROPERTY_ID],
-        ctx=context_with_property_fixture,
-        allow_read=False,
-        allow_write=True)
-    wrap.set("test")
-    del wrap  # delete to release lock on property
+        @state(cond=s(f"{DEFAULT_MODULE_NAME}:a"), signal_name="b")
+        def signal_b(ctx):
+            return Emit()
 
-    context_with_property_fixture._run_once()
-    assert waiter.acquire(blocking=True, timeout=3.)
+        @state(cond=s(f"{DEFAULT_MODULE_NAME}:a"), write=DEFAULT_PROPERTY_ID)
+        def pressuring_state(ctx):
+            pass
+
+        @state(cond=s(f"{DEFAULT_MODULE_NAME}:a") & s(f"{DEFAULT_MODULE_NAME}:b"), write=DEFAULT_PROPERTY_ID)
+        def specific_state(ctx):
+            pass
+
+    ctx = Context(DEFAULT_MODULE_NAME)
+    ctx.emit(startup())
+
+    ctx._run_once()
+    assert signal_a.wait()
+
+    ctx._run_once()
+    assert signal_b.wait()
+
+    # make sure that pressuring_state is pressuring specific_state
+    acts = ctx._state_activations(st=specific_state)
+    assert any(act.is_pressured() for act in acts)
+
+    ctx._run_once()
+    assert specific_state.wait()
