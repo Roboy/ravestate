@@ -275,9 +275,6 @@ class Activation(IActivation):
             logger.error(f"An exception occurred while activating {self}: {e}")
             result = Resign()
 
-        # Release the semaphore that counts completed activations.
-        self.state_to_activate.activated.release()
-
         # Process state function result
         if isinstance(result, Emit):
             if self.state_to_activate.signal():
@@ -300,15 +297,18 @@ class Activation(IActivation):
                 for cg in self._unique_consenting_causal_groups():
                     with cg:
                         cg.resigned(self)
+                self.state_to_activate.activated.release()
                 return
 
         elif isinstance(result, Resign):
             for cg in self._unique_consenting_causal_groups():
                 with cg:
                     cg.resigned(self)
+            self.state_to_activate.activated.release()
             return
 
         # Let participating causal groups know about consumed properties
         for cg in self._unique_consenting_causal_groups():
             with cg:
                 cg.consumed(self.resources())
+        self.state_to_activate.activated.release()
