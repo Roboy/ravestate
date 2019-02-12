@@ -6,3 +6,7 @@ config:
     - ravestate_conio
     - ravestate_wildtalk
     - ravestate_nlp
+---
+module: telegramio
+config:
+  all_in_one_context: True
