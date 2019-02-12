@@ -34,7 +34,7 @@ CHILD_FILES_CONFIG_KEY: str = "child_config_files"
 ALL_IN_ONE_CONTEXT_CONFIG_KEY: str = 'all_in_one_context'
 
 # contains only keys if all chats run in one process, else maps chat_id to Pipe
-active_chats: Dict[int, Union[mp.connection.Connection, None]] = dict()
+active_chats: Dict[int, Optional[mp.connection.Connection]] = dict()
 active_users: Set[int] = set()
 
 
