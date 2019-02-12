@@ -224,7 +224,7 @@ def telegram_run(ctx: ContextWrapper):
                 elif update.effective_message.text:
                     handle_text(bot, update)
                 else:
-                    logger.error(f"{MODULE_NAME} recieved an update it cannot handle.")
+                    logger.error(f"{MODULE_NAME} received an update it cannot handle.")
         except EOFError:
             # Pipe was closed -> Parent was killed
             logger.info("Parent process was killed, therefore the telegram-child will shut down.")
