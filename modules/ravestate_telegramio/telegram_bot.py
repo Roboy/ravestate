@@ -2,7 +2,7 @@ import os
 import multiprocessing as mp
 from multiprocessing.connection import Connection
 import time
-from typing import Set, Dict, Union
+from typing import Set, Dict, Optional, Tuple
 from tempfile import mkstemp
 import requests
 
@@ -32,10 +32,16 @@ TOKEN_CONFIG_KEY: str = "telegram-token"
 CHILD_CONN_CONFIG_KEY: str = "child_conn"
 CHILD_FILES_CONFIG_KEY: str = "child_config_files"
 ALL_IN_ONE_CONTEXT_CONFIG_KEY: str = 'all_in_one_context'
+CHAT_LIFETIME: str = 'chat_lifetime'
 
-# contains only keys if all chats run in one process, else maps chat_id to Pipe
-active_chats: Dict[int, Optional[mp.connection.Connection]] = dict()
-active_users: Set[int] = set()
+# active_chats contains all active "Chats".
+# Maps chat_id to a tuple consisting of the timestamp of the last message in this chat and a Pipe.
+# If all chats run in one process, the pipe-field is set to None
+active_chats: Dict[int, Tuple[float, Optional[mp.connection.Connection]]] = dict()
+# active_users contains user_ids of all Users that currently engage with the bot.
+# At the same time a User can talk to the bot in personal and group chats but only is in active_users once.
+# A user_id is mapped to a set containing the chat_id of every Chat that the User is involved in
+active_users: Dict[int, Set[int]] = dict()
 
 
 @state(cond=s(":startup"))
@@ -70,49 +76,46 @@ def telegram_run(ctx: ContextWrapper):
         """
         Retrieves scientio Node of User if it exists, otherwise creates it in the scientio session
         Calls the push_telegram_interloc receptor to push the scientio node into interloc:all
-        Adds the User to the set of active_users
+        Adds the User to the set of active_users and the chat to the set of active_chats
         """
-        if update.effective_user not in active_users:
+        active_chats[update.effective_chat.id] = (time.time(), None)
+        if update.effective_user.id in active_users:
+            active_users[update.effective_user.id].add(update.effective_chat.id)
+        else:
             # set up scientio
-            sess: Session = ravestate_ontology.get_session()
-            onto: Ontology = ravestate_ontology.get_ontology()
-
-            tick_interval = 1. / ctx.conf(mod=Context.core_module_name, key=Context.tick_rate_config)
-            while not sess or not onto:
-                time.sleep(tick_interval)
+            if ravestate_ontology.initialized.wait():
                 sess: Session = ravestate_ontology.get_session()
                 onto: Ontology = ravestate_ontology.get_ontology()
 
-            # create scientio Node of type TelegramPerson
-            query = Node(metatype=onto.get_type("TelegramPerson"))
-            prop_dict = {'telegram_id': update.effective_user.id}
-            if update.effective_user.username:
-                prop_dict['name'] = update.effective_user.username
-            if update.effective_user.full_name:
-                prop_dict['full_name'] = update.effective_user.full_name
-            query.set_properties(prop_dict)
+                # create scientio Node of type TelegramPerson
+                query = Node(metatype=onto.get_type("TelegramPerson"))
+                prop_dict = {'telegram_id': update.effective_user.id}
+                if update.effective_user.username:
+                    prop_dict['name'] = update.effective_user.username
+                if update.effective_user.full_name:
+                    prop_dict['full_name'] = update.effective_user.full_name
+                query.set_properties(prop_dict)
 
-            node_list = sess.retrieve(query)
-            if not node_list:
-                telegram_node = sess.create(query)
-                logger.info(f"Created new Node in scientio session: {telegram_node}")
-            elif len(node_list) == 1:
-                telegram_node = node_list[0]
-            else:
-                logger.error(f'Found multiple TelegramPersons that matched query: {update.message.chat_id} '
-                             f'in scientio session. Cannot push node to interloc:all!')
-                return
+                node_list = sess.retrieve(query)
+                if not node_list:
+                    telegram_node = sess.create(query)
+                    logger.info(f"Created new Node in scientio session: {telegram_node}")
+                elif len(node_list) == 1:
+                    telegram_node = node_list[0]
+                else:
+                    logger.error(f'Found multiple TelegramPersons that matched query: {update.message.chat_id} '
+                                 f'in scientio session. Cannot push node to interloc:all!')
+                    return
 
-            # push chat-Node
-            push_telegram_interloc(telegram_node, update.effective_chat.id)
-            active_users.add(update.effective_user)
+                # push chat-Node
+                push_telegram_interloc(telegram_node, update.effective_chat.id)
+                active_users[update.effective_user.id] = {update.effective_chat.id}
 
     def handle_text(bot: Bot, update: Update):
         """
         Handle incoming text messages
         """
         make_sure_effective_user_exists(update)
-        active_chats[update.effective_chat.id] = None
         text_receptor(update.effective_message.text)
 
     def handle_photo(bot: Bot, update: Update):
@@ -120,7 +123,6 @@ def telegram_run(ctx: ContextWrapper):
         Handle incoming photo messages.
         """
         make_sure_effective_user_exists(update)
-        active_chats[update.effective_chat.id] = None
         photo_index = 2  # Seems like a good size index. TODO: Make configurable
         while photo_index >= len(update.effective_message.photo):
             photo_index -= 1
@@ -141,7 +143,7 @@ def telegram_run(ctx: ContextWrapper):
         if update.effective_chat.id not in active_chats:
             add_new_child_process(update.effective_chat.id)
         # write (bot, update) to Pipe
-        active_chats[update.effective_chat.id].send((bot, update))
+        active_chats[update.effective_chat.id][1].send((bot, update))
 
     def add_new_child_process(chat_id):
         """
@@ -155,6 +157,7 @@ def telegram_run(ctx: ContextWrapper):
         parent_conn, child_conn = mp.Pipe()
         # create commandline args for child config file
         args = []
+        child_config_paths_list = ctx.conf(key=CHILD_FILES_CONFIG_KEY)
         for child_config_path in child_config_paths_list:
             args += ['-f', child_config_path]
         # set up new Process and override child_conn with the Pipe-Connection
@@ -162,7 +165,7 @@ def telegram_run(ctx: ContextWrapper):
                                args=(*args,),
                                kwargs={'runtime_overrides': [(MODULE_NAME, CHILD_CONN_CONFIG_KEY, child_conn)]})
         p.start()
-        active_chats[chat_id] = parent_conn
+        active_chats[chat_id] = (time.time(), parent_conn)
 
     def error(bot: Bot, update: Update, error: TelegramError):
         """
@@ -170,11 +173,47 @@ def telegram_run(ctx: ContextWrapper):
         """
         logger.warning('Update "%s" caused error "%s"', update, error)
 
-    child_conn = ctx.conf(key=CHILD_CONN_CONFIG_KEY)
-    is_master_process = child_conn is None
-    if is_master_process:
-        # Master Process -> Start the bot
-        # Create the EventHandler and pass it your bots token.
+    def _manage_children(updater):
+        """
+        Receive messages from children via Pipe and then send them to corresponding Telegram Chat.
+        Remove chats when they get older than the chat lifetime.
+        :param updater: The Updater of the telegram-Bot
+        """
+        chat_lifetime = ctx.conf(key=CHAT_LIFETIME) * 60  # conversion from minutes to seconds
+        while not ctx.shutting_down():
+            removable_chats = set()
+            removable_users = set()
+            # wait for children to write to Pipe and then send message to chat
+            tick_interval = 1. / ctx.conf(mod=Context.core_module_name, key=Context.tick_rate_config)
+            time.sleep(tick_interval)
+            for chat_id, (last_msg_timestamp, parent_pipe) in active_chats.items():
+                if parent_pipe.poll():
+                    msg = parent_pipe.recv()
+                    if isinstance(msg, str):
+                        updater.bot.send_message(chat_id=chat_id, text=msg)
+                    else:
+                        logger.error(f'Tried sending non-str object as telegram message: {str(msg)}')
+                # remove chat from active_chats if inactive for too long
+                if time.time() - last_msg_timestamp > chat_lifetime:
+                    parent_pipe.close()
+                    removable_chats.add(chat_id)
+
+            for chat_id in removable_chats:
+                active_chats.pop(chat_id)
+                for user_id, chat_ids in active_users.items():
+                    # remove chat from chats that the user is part of
+                    chat_ids.discard(chat_id)
+                    if len(chat_ids) == 0:
+                        # user is no longer part of any active chats
+                        removable_users.add(user_id)
+            for user_id in removable_users:
+                active_users.pop(user_id)
+
+    def _bootstrap_telegram_master():
+        """
+        Handle TelegramIO as the Master Process.
+        Start the bot, and handle incoming telegram messages.
+        """
         token = ctx.conf(key=TOKEN_CONFIG_KEY)
         if not token:
             logger.error(f'{TOKEN_CONFIG_KEY} is not set. Shutting down telegramio')
@@ -188,33 +227,26 @@ def telegram_run(ctx: ContextWrapper):
 
         updater: Updater = Updater(token)
         # Get the dispatcher to register handlers
-        dp: Dispatcher = updater.dispatcher
+        dispatcher: Dispatcher = updater.dispatcher
         if ctx.conf(key=ALL_IN_ONE_CONTEXT_CONFIG_KEY):
             # handle noncommand-messages with the matching handler
-            dp.add_handler(MessageHandler(Filters.text, handle_text))
-            dp.add_handler(MessageHandler(Filters.photo, handle_photo))
+            dispatcher.add_handler(MessageHandler(Filters.text, handle_text))
+            dispatcher.add_handler(MessageHandler(Filters.photo, handle_photo))
         else:
-            dp.add_handler(MessageHandler(Filters.text | Filters.photo, handle_input_multiprocess))
+            dispatcher.add_handler(MessageHandler(Filters.text | Filters.photo, handle_input_multiprocess))
         # log all errors
-        dp.add_error_handler(error)
+        dispatcher.add_error_handler(error)
         # Start the Bot
         updater.start_polling()  # non blocking
 
         if not ctx.conf(key=ALL_IN_ONE_CONTEXT_CONFIG_KEY):
-            while not ctx.shutting_down():
-                # wait for children to write to Pipe and then send message to chat
-                tick_interval = 1. / ctx.conf(mod=Context.core_module_name, key=Context.tick_rate_config)
-                time.sleep(tick_interval)
-                for chat_id, parent_pipe in active_chats.items():
-                    if parent_pipe.poll():
-                        msg = parent_pipe.recv()
-                        if isinstance(msg, str):
-                            updater.bot.send_message(chat_id=chat_id, text=msg)
-                        else:
-                            logger.error(f'Tried sending non-str object as telegram message: {str(msg)}')
+            _manage_children(updater)
 
-    else:
-        # Child Process -> check pipe
+    def _bootstrap_telegram_child():
+        """
+        Handle TelegramIO as a Child Process.
+        Listen to Pipe and handle incoming texts and photos.
+        """
         try:
             while not ctx.shutting_down():
                 # receive Bot,Update for telegram chat
@@ -226,9 +258,16 @@ def telegram_run(ctx: ContextWrapper):
                 else:
                     logger.error(f"{MODULE_NAME} received an update it cannot handle.")
         except EOFError:
-            # Pipe was closed -> Parent was killed
-            logger.info("Parent process was killed, therefore the telegram-child will shut down.")
+            # Pipe was closed -> Parent was killed or parent has closed the pipe
+            logger.info("Pipe was closed, therefore the telegram-child will shut down.")
             ctx.shutdown()
+
+    child_conn = ctx.conf(key=CHILD_CONN_CONFIG_KEY)
+    is_master_process = child_conn is None
+    if is_master_process:
+        _bootstrap_telegram_master()
+    else:
+        _bootstrap_telegram_child()
 
 
 @state(read="rawio:out")

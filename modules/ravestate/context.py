@@ -117,6 +117,10 @@ class Context(IContext):
 
         * `arguments`: A series of command line arguments which can be parsed
          by the ravestate command line parser (see argparse.py).
+        * `runtime_overrides`: A list of config overrides in the form of (modulename, key, value).
+         Can be used to set config entries to values other than strings or lists like in command line arguments.
+         An example use-case is a module that starts a new context (in separate process) and can set
+         config entries to Connection Objects to enable communication between old and new context.
         """
         modules, overrides, config_files = argparse.handle_args(*arguments)
         self._config = Configuration(config_files)

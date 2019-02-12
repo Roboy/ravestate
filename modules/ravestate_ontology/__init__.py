@@ -6,6 +6,7 @@ from scientio.ontology.ontology import Ontology
 from scientio.session import Session
 
 from os.path import realpath, dirname, join
+from threading import Event
 
 from ravestate_ontology.dummy_session import DummySession
 
@@ -14,6 +15,7 @@ logger = get_logger(__name__)
 
 onto = None
 sess = None
+initialized: Event = Event()
 NEO4J_ADDRESS_KEY: str = "neo4j_address"
 NEO4J_USERNAME_KEY: str = "neo4j_username"
 NEO4J_PASSWORD_KEY: str = "neo4j_pw"
@@ -34,9 +36,10 @@ with Module(name="ontology", config=CONFIG):
         (the ontology description is a collection of named entity types,
         their properties and relationships)
         then the session is created - it can be accessed with a getter
+        Using ravestate_ontology.initialized.wait() it can be made sure that the session was created before accessing it
         """
         # TODO: Make sess and onto context properties?
-        global onto, sess
+        global onto, sess, initialized
         onto = Ontology(path_to_yaml=join(dirname(realpath(__file__)), "ravestate_ontology.yml"))
         # Create a session (with default Neo4j backend)
         try:
@@ -52,6 +55,7 @@ with Module(name="ontology", config=CONFIG):
                 "\nFor more info on how to set up a server, see https://pypi.org/project/scientio."
                 "\n--------")
             sess = DummySession()
+        initialized.set()
 
 
 def get_session():
