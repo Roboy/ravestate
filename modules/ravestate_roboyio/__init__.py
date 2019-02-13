@@ -25,11 +25,13 @@ try:
     PYROBOY_AVAILABLE = True
 except ImportError as e:
     logger.error(f"""
+--------
 An exception occured during `import pyroboy`: {e}
 Please make sure to have the following items installed & sourced:
 1. ROS2 bouncy
 2. roboy_communication
 3. pyroboy
+--------
     """)
 
 
