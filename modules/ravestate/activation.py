@@ -297,15 +297,18 @@ class Activation(IActivation):
                 for cg in self._unique_consenting_causal_groups():
                     with cg:
                         cg.resigned(self)
+                self.state_to_activate.activated.release()
                 return
 
         elif isinstance(result, Resign):
             for cg in self._unique_consenting_causal_groups():
                 with cg:
                     cg.resigned(self)
+            self.state_to_activate.activated.release()
             return
 
         # Let participating causal groups know about consumed properties
         for cg in self._unique_consenting_causal_groups():
             with cg:
                 cg.consumed(self.resources())
+        self.state_to_activate.activated.release()
