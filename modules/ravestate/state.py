@@ -137,7 +137,7 @@ class State:
 
     def wait(self, timeout=5.):
         """
-        For for the state's activation function to be run at least once.
+        Wait for the state's activation function to be run at least once.
 
         * `timeout`: Timeout after which this function should return False,
          if the activation is not occurring.
