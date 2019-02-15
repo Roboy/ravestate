@@ -19,7 +19,7 @@ import ravestate_rawio
 
 verbaliser.add_folder(join(dirname(realpath(__file__)), "persqa_phrases"))
 
-with Module(name="persqa"):
+with Module(name="persqa") as mod:
 
     subject = PropertyBase(
         name="subject",
@@ -53,11 +53,10 @@ with Module(name="persqa"):
         """
         reacts to interloc:pushed and creates persqa:ask_name state
         """
-        Emit()
+        interloc = ctx["interloc:all:pushed"]
 
-        @state(cond=s("idle:bored") | s("persqa:new-interloc", max_age=-1, detached=True),
-               write=("rawio:out", "persqa:subject", "persqa:predicate"),
-               read="interloc:all")
+        @state(cond=s("persqa:new-interloc", max_age=-1, detached=True),
+               write=("rawio:out", "persqa:subject", "persqa:predicate"))
         def ask_name(ctx):
             """
             reacts to idle:bored & persqa:new-interloc
@@ -65,9 +64,10 @@ with Module(name="persqa"):
             """
             ctx["persqa:predicate"] = "NAME"
             ctx["rawio:out"] = verbaliser.get_random_question("NAME")
-            ctx["persqa:subject"] = ctx["interloc:all"]
-            return Delete()
+            ctx["persqa:subject"] = interloc
+        mod.add(ask_name)
         ctx.add_state(ask_name)
+        return Emit()
 
 
     @state(cond=s("nlp:triples:changed"),
@@ -88,7 +88,7 @@ with Module(name="persqa"):
 
 
     @state(cond=s("persqa:answer:changed"),
-           write="rawio:out",
+           write=("rawio:out", "interloc:all"),
            read=("persqa:predicate", "persqa:subject", "persqa:answer"))
     def react(ctx):
         """
@@ -103,11 +103,12 @@ with Module(name="persqa"):
         query.set_properties({"name": name})
         node_list = sess.retrieve(query)
         if not node_list:
-            node = sess.create(query)
+            interloc_node = sess.create(query)
         elif len(node_list) == 1:
-            node = node_list[0]
+            interloc_node = node_list[0]
         else:
             logger.error("Failed to create node!")
             return
-        logger.info(f"Interlocutor: Name = {name}; Node ID = {node.get_id()} ")
+        logger.info(f"Interlocutor: Name = {name}; Node ID = {interloc_node.get_id()} ")
+
 
