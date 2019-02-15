@@ -33,7 +33,7 @@ if ROBOY_COGNITION_AVAILABLE:
         FACE_CONFIDENCE_THRESHOLD: 90
     }
 
-    with Module(name="stalker", config=CONFIG):
+    with Module(name="stalker", config=CONFIG) as mod:
 
         # Create a dummy parent, under which we can push the actual recognized faces topic,
         #  once a context with a configuration is available.
@@ -64,3 +64,6 @@ if ROBOY_COGNITION_AVAILABLE:
 
                 if best_name_and_confidence[1] >= ctx.conf(key=FACE_CONFIDENCE_THRESHOLD):
                     ctx[raw_out.id()] = f"Hey, aren't you {best_name_and_confidence[0]}?!"
+
+            mod.add(react_to_recognized_face)
+            ctx.add_state(react_to_recognized_face)
