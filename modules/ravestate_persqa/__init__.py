@@ -85,30 +85,34 @@ with Module(name="persqa") as mod:
             ctx["persqa:answer"] = triple.get_object()
             if len(ctx["nlp:tokens"]):
                 ctx["persqa:answer"] = ctx["nlp:tokens"][0]
+        # TODO when inference detects answer, reset predicate 
 
 
     @state(cond=s("persqa:answer:changed"),
            write=("rawio:out", "interloc:all"),
-           read=("persqa:predicate", "persqa:subject", "persqa:answer"))
+           read=("persqa:predicate", "persqa:subject", "persqa:answer", "interloc:all"))
     def react(ctx):
         """
         retrieves memory node with the name or creates a new one
         outputs a polite response
         """
         name = str(ctx["persqa:answer"])
-        ctx["rawio:out"] = verbaliser.get_random_successful_answer(ctx["persqa:predicate"]) % name
         sess: Session = ravestate_ontology.get_session()
         onto: Ontology = ravestate_ontology.get_ontology()
-        query = Node(metatype=onto.get_type("Person"))
-        query.set_properties({"name": name})
-        node_list = sess.retrieve(query)
-        if not node_list:
-            interloc_node = sess.create(query)
+        subject_node = Node(node=ctx[ctx["persqa:subject"]])
+        subject_node.set_properties({"name": name})
+        node_list = sess.retrieve(subject_node)
+        if not node_list and subject_node.get_type().entity == onto.get_type("Person").entity:
+            interloc_node = sess.update(subject_node)
+            output = verbaliser.get_random_successful_answer(ctx["persqa:predicate"]) % name
         elif len(node_list) == 1:
             interloc_node = node_list[0]
+            output = verbaliser.get_random_followup_answer(ctx["persqa:predicate"]) % name
         else:
             logger.error("Failed to create node!")
-            return
+            interloc_node = None
+            output = verbaliser.get_random_failure_answer(ctx["persqa:predicate"])
         logger.info(f"Interlocutor: Name = {name}; Node ID = {interloc_node.get_id()} ")
+        ctx["rawio:out"] = output
 
 
