@@ -1,6 +1,7 @@
 # Ravestate State-related definitions
 
 from typing import Optional, Tuple, Union
+from threading import Semaphore
 from ravestate.threadlocal import ravestate_thread_local
 from ravestate.constraint import Conjunct, Disjunct, Signal, s, Constraint
 from ravestate.consumable import Consumable
@@ -67,6 +68,7 @@ class State:
     constraint_: Constraint  # Updated by context, to add constraint causes to constraint
     module_name: str
     emit_detached: bool
+    activated: Semaphore  # Semaphore which counts finished activations
 
     # Dummy resource which allows CausalGroups to track acquisitions
     #  for states that don't have any write-props.
@@ -116,6 +118,7 @@ class State:
         self.module_name = ""
         self._signal = None
         self.emit_detached = emit_detached
+        self.activated = Semaphore(0)
 
         # add state to module in current `with Module(...)` clause
         module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
@@ -131,6 +134,19 @@ class State:
         if not self._signal and self.signal_name:
             self._signal = s(f"{self.module_name}:{self.signal_name}")
         return self._signal
+
+    def wait(self, timeout=5.):
+        """
+        Wait for the state's activation function to be run at least once.
+
+        * `timeout`: Timeout after which this function should return False,
+         if the activation is not occurring.
+
+        __Return:__ True if the activation has been invoked at least once
+         since the last call to this function, false if invocation does not
+         occur after #timeout seconds.
+        """
+        return self.activated.acquire(timeout=timeout)
 
 
 def state(*, signal_name: Optional[str]="", write: tuple=(), read: tuple=(), cond: Constraint=None, emit_detached=False):

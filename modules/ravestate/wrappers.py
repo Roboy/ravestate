@@ -4,7 +4,7 @@ from ravestate.property import PropertyBase
 from ravestate import state
 from ravestate import icontext
 from ravestate.spike import Spike
-from typing import Any, Generator, Set
+from typing import Any, Generator, Set, Dict
 
 from ravestate.constraint import s
 
@@ -72,13 +72,23 @@ class PropertyWrapper:
             if self.prop.is_flag_property and value is True:
                 # wipe false signal, emit true signal
                 self.ctx.wipe(self.prop.flag_false_signal())
-                self.ctx.emit(self.prop.flag_true_signal(), parents=self.spike_parents, wipe=True)
+                self.ctx.emit(
+                    self.prop.flag_true_signal(),
+                    parents=self.spike_parents,
+                    wipe=self.prop.wipe_on_changed)
             if self.prop.is_flag_property and value is False:
                 # wipe true signal, emit false signal
                 self.ctx.wipe(self.prop.flag_true_signal())
-                self.ctx.emit(self.prop.flag_false_signal(), parents=self.spike_parents, wipe=True)
+                self.ctx.emit(
+                    self.prop.flag_false_signal(),
+                    parents=self.spike_parents,
+                    wipe=self.prop.wipe_on_changed)
 
-            self.ctx.emit(self.prop.changed_signal(), parents=self.spike_parents, wipe=True)
+            self.ctx.emit(
+                self.prop.changed_signal(),
+                parents=self.spike_parents,
+                wipe=self.prop.wipe_on_changed,
+                payload=value)
             return True
         return False
 
@@ -95,7 +105,11 @@ class PropertyWrapper:
             logger.error(f"Unauthorized push access in property-wrapper {self.prop.id()}!")
             return False
         if self.prop.push(child):
-            self.ctx.emit(self.prop.pushed_signal(), parents=self.spike_parents, wipe=True)
+            self.ctx.emit(
+                self.prop.pushed_signal(),
+                parents=self.spike_parents,
+                wipe=False,
+                payload=child.id())
             return True
         return False
 
@@ -111,7 +125,11 @@ class PropertyWrapper:
             logger.error(f"Unauthorized pop access in property-wrapper {self.prop.id()}!")
             return False
         if self.prop.pop(childname):
-            self.ctx.emit(self.prop.popped_signal(), parents=self.spike_parents, wipe=True)
+            self.ctx.emit(
+                self.prop.popped_signal(),
+                parents=self.spike_parents,
+                wipe=False,
+                payload=f"{self.prop.id()}:{childname}")
             return True
         return False
 
@@ -131,11 +149,12 @@ class ContextWrapper:
     as declared by the state beforehand.
     """
 
-    def __init__(self, *, ctx: icontext.IContext, st: state.State, spike_parents: Set[Spike]=None):
+    def __init__(self, *, ctx: icontext.IContext, st: state.State, spike_parents: Set[Spike]=None, spike_payloads: Dict[str, Any]=None):
         self.st = st
         self.ctx = ctx
         self.properties = dict()
         self.spike_parents = spike_parents
+        self.spike_payloads = spike_payloads
         # Recursively complete properties dict with children:
         for propname in st.write_props + st.read_props:
             # May have been covered by a parent before
@@ -159,6 +178,8 @@ class ContextWrapper:
     def __getitem__(self, key) -> Any:
         if key in self.properties:
             return self.properties[key].get()
+        elif key in self.spike_payloads:
+            return self.spike_payloads[key]
         else:
             logger.error(f"State {self.st.name} attempted to access property {key} without permission!")
 

@@ -9,3 +9,5 @@ spacy
 flask
 requests
 scientio
+redis
+face_recognition

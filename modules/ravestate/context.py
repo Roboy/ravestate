@@ -1,5 +1,5 @@
 # Ravestate context class
-from threading import Thread, Lock, Event
+from threading import Thread, RLock, Event
 from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
 from collections import defaultdict
 from math import ceil
@@ -41,6 +41,14 @@ def shutdown(**kwargs) -> Signal:
     return s(":shutdown", **kwargs)
 
 
+def create_and_run_context(*args, runtime_overrides=None):
+    """
+    Creates a new Context with the given parameters and runs it
+    """
+    context = Context(*args, runtime_overrides=runtime_overrides)
+    context.run()
+
+
 class Context(IContext):
     _default_signals: Tuple[Signal] = (startup(), shutdown())
     _default_properties: Tuple[PropertyBase] = (
@@ -65,11 +73,11 @@ class Context(IContext):
         )
     )
 
-    _core_module_name = "core"
-    _import_modules_config = "import"
-    _tick_rate_config = "tickrate"
+    core_module_name = "core"
+    import_modules_config = "import"
+    tick_rate_config = "tickrate"
 
-    _lock: Lock
+    _lock: RLock
 
     _properties: Dict[str, PropertyBase]
     _spikes: Set[Spike]
@@ -103,21 +111,25 @@ class Context(IContext):
     _run_task: Thread
     _shutdown_flag: Event
 
-    def __init__(self, *arguments):
+    def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None):
         """
         Construct a context from command line arguments.
 
         * `arguments`: A series of command line arguments which can be parsed
          by the ravestate command line parser (see argparse.py).
+        * `runtime_overrides`: A list of config overrides in the form of (modulename, key, value).
+         Can be used to set config entries to values other than strings or lists like in command line arguments.
+         An example use-case is a module that starts a new context (in separate process) and can set
+         config entries to Connection Objects to enable communication between old and new context.
         """
         modules, overrides, config_files = argparse.handle_args(*arguments)
         self._config = Configuration(config_files)
         self._core_config = {
-            self._import_modules_config: [],
-            self._tick_rate_config: 20
+            self.import_modules_config: [],
+            self.tick_rate_config: 20
         }
-        self._config.add_conf(Module(name=self._core_module_name, config=self._core_config))
-        self._lock = Lock()
+        self._config.add_conf(Module(name=self.core_module_name, config=self._core_config))
+        self._lock = RLock()
         self._shutdown_flag = Event()
         self._properties = dict()
         self._spikes = set()
@@ -134,18 +146,23 @@ class Context(IContext):
         for prop in self._default_properties:
             self.add_prop(prop=prop)
 
+        # Load required modules
+        for module_name in self._core_config[self.import_modules_config] + modules:
+            self.add_module(module_name)
+
         # Set required config overrides
         for module_name, key, value in overrides:
             self._config.set(module_name, key, value)
-        if self._core_config[self._tick_rate_config] < 1:
+        # Set additional config runtime overrides
+        if runtime_overrides:
+            for module_name, key, value in runtime_overrides:
+                self._config.set(module_name, key, value)
+
+        if self._core_config[self.tick_rate_config] < 1:
             logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
-            self._core_config[self._tick_rate_config] = 1
+            self._core_config[self.tick_rate_config] = 1
 
-        # Load required modules
-        for module_name in self._core_config[self._import_modules_config]+modules:
-            self.add_module(module_name)
-
-    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False) -> None:
+    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> None:
         """
         Emit a signal to the signal processing loop. _Note:_
          The signal will only be processed if #run() has been called!
@@ -156,11 +173,17 @@ class Context(IContext):
 
         * `wipe`: Boolean to control, whether #wipe(signal) should be called
          before the new spike is created.
+
+        * `payload`: Value that should be embedded in the new spike.
         """
         if wipe:
             self.wipe(signal)
         with self._lock:
-            new_spike = Spike(sig=signal.name, parents=parents, consumable_resources=set(self._properties.keys()))
+            new_spike = Spike(
+                sig=signal.name,
+                parents=parents,
+                consumable_resources=set(self._properties.keys()),
+                payload=payload)
             logger.debug(f"Emitting {new_spike}")
             self._spikes.add(new_spike)
 
@@ -189,7 +212,7 @@ class Context(IContext):
         if self._run_task:
             logger.error("Attempt to start context twice!")
             return
-        self._run_task = Thread(target=self._run_private)
+        self._run_task = Thread(target=self._run_loop)
         self._run_task.start()
         self.emit(s(":startup"))
 
@@ -472,7 +495,7 @@ class Context(IContext):
 
         **Returns:** An integer tick count.
         """
-        return ceil(seconds * float(self._core_config[self._tick_rate_config]))
+        return ceil(seconds * float(self._core_config[self.tick_rate_config]))
 
     def _add_sig(self, sig: Signal):
         if sig in self._act_per_state_per_signal_age:
@@ -592,95 +615,96 @@ class Context(IContext):
 
         return result if len(result) else None
 
-    def _update_core_properties(self):
+    def _update_core_properties(self, debug=False):
         with self._lock:
-            pressured_acts = False
+            pressured_acts = list()
             partially_fulfilled_acts = 0
             for act in self._state_activations():
                 if self[":activity"].changed_signal() not in set(act.constraint.signals()):
-                    pressured_acts |= act.is_pressured()
+                    if act.is_pressured():
+                        pressured_acts += [act.name]
                     partially_fulfilled_acts += act.spiky()
         PropertyWrapper(
             prop=self[":pressure"],
             ctx=self,
             allow_write=True,
             allow_read=True
-        ).set(pressured_acts)
+        ).set(len(pressured_acts) > 0)
         PropertyWrapper(
             prop=self[":activity"],
             ctx=self,
             allow_write=True,
             allow_read=True
         ).set(partially_fulfilled_acts)
+        if debug:
+            logger.info(pressured_acts)
 
-    def _run_private(self):
-
-        tick_interval = 1. / self._core_config[self._tick_rate_config]
-
-        ctx_loop_count = 0
+    def _run_loop(self):
+        tick_interval = 1. / self._core_config[self.tick_rate_config]
         while not self._shutdown_flag.wait(tick_interval):
+            self._run_once()
 
-            with self._lock:
-                # For every state, compress it's activations
-                for st, acts in self._activations_per_state.items():
-                    assert len(acts) > 0
-                    if len(acts) > 1:
-                        # We could do some fancy merge of partially fulfilled activations,
-                        #  but for now let's just remove all completely unfulfilled
-                        #  ones apart from one.
-                        allowed_unfulfilled: Activation = None
-                        for act in acts.copy():
-                            if not act.spiky():
-                                if allowed_unfulfilled:
-                                    for signal in act.constraint.signals():
-                                        if signal in self._act_per_state_per_signal_age and \
-                                           act in self._act_per_state_per_signal_age[signal][0][act.state_to_activate]:
-                                            self._act_per_state_per_signal_age[
-                                                signal][0][act.state_to_activate].remove(act)
-                                    acts.remove(act)
-                                else:
-                                    allowed_unfulfilled = act
-
-                # Acquire new state activations for every spike
-                for spike in self._spikes:
-                    if spike.is_wiped():
-                        continue
-                    for state, acts in self._act_per_state_per_signal_age[s(spike.name())][spike.age()].items():
-                        old_acts = acts.copy()
-                        for act in old_acts:
-                            if act.acquire(spike):
-                                # Remove the Activation instance from _act_per_state_per_signal_age
-                                #  for the Spike with a certain minimum age. In place of the removed
-                                #  activation, if no activation with the same target state is left,
-                                #  a new Activation will be created.
+    def _run_once(self):
+        with self._lock:
+            # For every state, compress it's activations
+            for st, acts in self._activations_per_state.items():
+                assert len(acts) > 0
+                if len(acts) > 1:
+                    # We could do some fancy merge of partially fulfilled activations,
+                    #  but for now let's just remove all completely unfulfilled
+                    #  ones apart from one.
+                    allowed_unfulfilled: Activation = None
+                    for act in acts.copy():
+                        if not act.spiky():
+                            if allowed_unfulfilled:
+                                for signal in act.constraint.signals():
+                                    if signal in self._act_per_state_per_signal_age and \
+                                            act in self._act_per_state_per_signal_age[signal][0][act.state_to_activate]:
+                                        self._act_per_state_per_signal_age[
+                                            signal][0][act.state_to_activate].remove(act)
                                 acts.remove(act)
-                                if len(acts) == 0:
-                                    self._new_state_activation(state)
                             else:
-                                logger.error(
-                                    "An activation rejected a spike it was registered to be interested in.")
+                                allowed_unfulfilled = act
 
-                # Update all state activations.
-                for act in self._state_activations():
-                    if act.update():
-                        self._activations_per_state[act.state_to_activate].discard(act)
+            # Acquire new state activations for every spike
+            for spike in self._spikes:
+                if spike.is_wiped():
+                    continue
+                for state, acts in self._act_per_state_per_signal_age[s(spike.name())][spike.age()].items():
+                    old_acts = acts.copy()
+                    for act in old_acts:
+                        if act.acquire(spike):
+                            # Remove the Activation instance from _act_per_state_per_signal_age
+                            #  for the Spike with a certain minimum age. In place of the removed
+                            #  activation, if no activation with the same target state is left,
+                            #  a new Activation will be created.
+                            acts.remove(act)
+                            if len(acts) == 0:
+                                self._new_state_activation(state)
+                        else:
+                            logger.error(
+                                "An activation rejected a spike it was registered to be interested in.")
 
-                # Forget fully unreferenced spikes
-                old_spike_set = self._spikes.copy()
-                for spike in old_spike_set:
-                    with spike.causal_group() as cg:
-                        if cg.stale(spike):
-                            # This should lead to the deletion of the spike
-                            self._spikes.remove(spike)
-                            spike.wipe(already_wiped_in_causal_group=True)
-                            logger.debug(f"{cg}.stale({spike})->Y")
+            # Update all state activations.
+            for act in self._state_activations():
+                if act.update():
+                    self._activations_per_state[act.state_to_activate].discard(act)
 
-                # Increment age on active spikes
-                for spike in self._spikes:
-                    spike.tick()
+            # Forget fully unreferenced spikes
+            old_spike_set = self._spikes.copy()
+            for spike in old_spike_set:
+                with spike.causal_group() as cg:
+                    if cg.stale(spike):
+                        # This should lead to the deletion of the spike
+                        self._spikes.remove(spike)
+                        spike.wipe(already_wiped_in_causal_group=True)
+                        logger.debug(f"{cg}.stale({spike})->Y")
 
-                # Force garbage collect
-                gc.collect()
-                ctx_loop_count += 1
+            # Increment age on active spikes
+            for spike in self._spikes:
+                spike.tick()
 
-            self._update_core_properties()
+            # Force garbage collect
+            gc.collect()
+
+        self._update_core_properties()

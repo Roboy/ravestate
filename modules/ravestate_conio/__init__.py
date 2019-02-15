@@ -73,4 +73,4 @@ with Module(name="consoleio"):
 
     @state(read="rawio:out")
     def console_output(ctx):
-        print(ctx["rawio:out"])
+        print(ctx["rawio:out:changed"])
