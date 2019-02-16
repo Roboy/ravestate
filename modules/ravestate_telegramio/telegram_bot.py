@@ -34,10 +34,24 @@ CHILD_FILES_CONFIG_KEY: str = "child_config_files"
 ALL_IN_ONE_CONTEXT_CONFIG_KEY: str = 'all_in_one_context'
 CHAT_LIFETIME: str = 'chat_lifetime'
 
+
+class Timestamp:
+    value: float
+
+    def __init__(self):
+        self.value = time.time()
+
+    def update(self):
+        self.value = time.time()
+
+    def age(self):
+        return time.time() - self.value
+
+
 # active_chats contains all active "Chats".
 # Maps chat_id to a tuple consisting of the timestamp of the last message in this chat and a Pipe.
 # If all chats run in one process, the pipe-field is set to None
-active_chats: Dict[int, Tuple[float, Optional[mp.connection.Connection]]] = dict()
+active_chats: Dict[int, Tuple[Timestamp, Optional[mp.connection.Connection]]] = dict()
 # active_users contains user_ids of all Users that currently engage with the bot.
 # At the same time a User can talk to the bot in personal and group chats but only is in active_users once.
 # A user_id is mapped to a set containing the chat_id of every Chat that the User is involved in
@@ -78,7 +92,7 @@ def telegram_run(ctx: ContextWrapper):
         Calls the push_telegram_interloc receptor to push the scientio node into interloc:all
         Adds the User to the set of active_users and the chat to the set of active_chats
         """
-        active_chats[update.effective_chat.id] = (time.time(), None)
+        active_chats[update.effective_chat.id] = (Timestamp(), None)
         if update.effective_user.id in active_users:
             active_users[update.effective_user.id].add(update.effective_chat.id)
         else:
@@ -143,6 +157,7 @@ def telegram_run(ctx: ContextWrapper):
         if update.effective_chat.id not in active_chats:
             add_new_child_process(update.effective_chat.id)
         # write (bot, update) to Pipe
+        active_chats[update.effective_chat.id][0].update()
         active_chats[update.effective_chat.id][1].send((bot, update))
 
     def add_new_child_process(chat_id):
@@ -165,7 +180,7 @@ def telegram_run(ctx: ContextWrapper):
                                args=(*args,),
                                kwargs={'runtime_overrides': [(MODULE_NAME, CHILD_CONN_CONFIG_KEY, child_conn)]})
         p.start()
-        active_chats[chat_id] = (time.time(), parent_conn)
+        active_chats[chat_id] = (Timestamp(), parent_conn)
 
     def error(bot: Bot, update: Update, error: TelegramError):
         """
@@ -194,7 +209,7 @@ def telegram_run(ctx: ContextWrapper):
                     else:
                         logger.error(f'Tried sending non-str object as telegram message: {str(msg)}')
                 # remove chat from active_chats if inactive for too long
-                if time.time() - last_msg_timestamp > chat_lifetime:
+                if last_msg_timestamp.age() > chat_lifetime:
                     parent_pipe.close()
                     removable_chats.add(chat_id)
 
