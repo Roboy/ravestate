@@ -3,7 +3,6 @@ from ravestate.state import s, state, Emit
 from ravestate.property import PropertyBase
 from ravestate.wrappers import ContextWrapper
 import ravestate_ontology
-import face_recognition as fr
 import pickle
 import redis
 
@@ -14,6 +13,8 @@ import ravestate_idle
 from scientio.ontology.node import Node
 from scientio.session import Session
 from scientio.ontology.ontology import Ontology
+
+from ravestate_sendpics.face_recognition import recognize_face_from_image_file
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -42,15 +43,11 @@ with Module(name="sendpics", config=CONFIG):
         emit_detached=True)
     def prompt_name(ctx):
         # Get face ancoding
-        image = fr.load_image_file(ctx["rawio:pic_in"])
-        faces = fr.face_encodings(image)
+        face = recognize_face_from_image_file(ctx["rawio:pic_in"])
         # Prompt name
-        if len(faces) > 0:
-            if len(faces) > 1:
-                ctx["rawio:out"] = f"Nice! I am seeing {len(faces)} people in that picture. Who is the first one?"
-            else:
-                ctx["rawio:out"] = "Nice picture! Who is that person?"
-            ctx["sendpics:face_vec"] = pickle.dumps(faces[0])
+        if face is not None:
+            ctx["rawio:out"] = "Nice picture! Who is that person?"
+            ctx["sendpics:face_vec"] = pickle.dumps(face)
         else:
             ctx["rawio:out"] = f"Huh, looks interesting. But maybe send me a cute face!"
 
