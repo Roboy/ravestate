@@ -11,6 +11,37 @@
 
 Ravestate is a reactive library for real-time natural language dialog systems.
 
+### Reactive Hello World
+
+```python
+from ravestate.context import startup, Context
+from ravestate.state import state
+from ravestate.module import Module
+
+# We want to write some text output, so we
+# need the raw:out context property from ravestate_rawio.
+from ravestate_rawio import output as raw_out
+
+# Make sure that we use some i/o implementation,
+# so we can actually see stuff that is written to rawio:out.
+import ravestate_conio
+
+# Ravestate applications should always be wrapped in a Module.
+# This allows easier scoping, and enables separation of concerns
+# beyond states.
+with Module(name="hi!"):
+
+    # Create an application state which reacts to the `:startup` signal,
+    # and writes a string to raw:out. Note: State functions are
+    # always run asynchronously!
+    @state(cond=startup(min_age=3.), write=raw_out.id())
+    def hello_world(context):
+        context[raw_out.id()] = "Waddup waddup waddup!"
+
+# Run context with console input/output and our 'hi!' module.
+Context("conio", "hi!").run()
+```
+
 ## Installation
 
 ### Via PIP
@@ -20,6 +51,14 @@ The easiest way to install ravestate is through pip:
 ``
 pip install ravestate
 ``
+
+__Note:__ Ravestate requires Python 3.6 or higher. It is tested
+on Ubuntu 16.04 and 18.04, as well as macOS > High Sierra.
+It is currently not tested on Windows.
+
+For reliability, we recommend using an environment virtualization tool,
+like [virtualenv](https://virtualenv.pypa.io/en/latest/)
+or [conda](https://conda.io/en/latest/).
 
 ### For developers
 
@@ -33,7 +72,10 @@ pip install -r requirements-dev.txt
 ```
 
 Then, you may open the repository in any IDE, and mark the
-`modules` folder as a sources root. 
+`modules` folder as a sources root. Alternatively for development
+purposes, call `export PYTHONPATH=$PYTHONPATH:$(pwd)/modules` from
+your ravestate clone, to tell python that there are modules
+to be loaded in the `modules` directory (the IDE does this for you).
 
 ## Running Hello World
 
@@ -50,10 +92,14 @@ by listing them as arguments to the `rasta` command, which is installed
 with ravestate:
 
 ```bash
-rasta ravestate_wildtalk ravestate_conio ravestate_hibye ravestate_akinator ravestate_fillers
+python3 -m ravestate \
+    ravestate_wildtalk \
+    ravestate_conio \
+    ravestate_hibye \
+    ravestate_akinator \
+    ravestate_fillers
 ```
-
-Run `rasta -h` to see more options!
+Run `python3 -m ravestate -h` to see more options!
 
 ### Running with config file(s) 
 
@@ -68,11 +114,21 @@ config:
     - ravestate_conio
     - ravestate_hello_world
 ```
-Then, run `rasta` with this config file:
+Then, run `ravestate` with this config file:
 
 ```bash
-rasta -f hello_world.yml
+python3 -m ravestate -f hello_world.yml
 ```
+
+## Module overview
+
+Ravestate offers a landscape of fine-grained modules
+for different aspects of dialog application tasks, which
+may be seen in the following dependency diagram. Broadly,
+the modules are categorized into Core (Blue), I/O (Yellow),
+External (Red) and Skills (Green):
+
+![resources/docs/modules.png]
 
 ## Running tests
 
