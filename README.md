@@ -131,7 +131,7 @@ may be seen in the following dependency diagram. Broadly,
 the modules are categorized into Core (Blue), I/O (Yellow),
 External (Red) and Skills (Green):
 
-![resources/docs/modules.png](Ravestate Modules Overview)
+![Ravestate Modules Overview](resources/docs/modules.png)
 
 ## Running tests
 
