@@ -16,7 +16,7 @@ It consists of a wrapper for the API calls to the  [Akinator](https://en.akinato
 
 ### Architecture
 This is an overview of the dialog flow for the 20 questions game. 
-<img src="../../resources/docs/Akinator.png" width="800" align="middle">
+<img src="../../resources/docs/Akinator.png" width="1000" align="middle">
 
 ### Starting the Game
 There are two possibilities to trigger the game:
