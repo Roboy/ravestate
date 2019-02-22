@@ -16,9 +16,9 @@ It consists of a wrapper for the API calls to the  [Akinator](https://en.akinato
 
 ### Architecture
 This is an overview of the dialog flow for the 20 questions game. 
-<img src="../resources/docs/Akinator.png" width="480" align="middle">
+<img src="../../resources/docs/Akinator.png" width="800" align="middle">
 
-## Starting the Game
+### Starting the Game
 There are two possibilities to trigger the game:
 1. Interlocutor inputs something like: "I want to play", "I like games" or something similar
 2. Ravestate starts it automatically: When the system gets bored (no dialog states are active but an interlocutor is present) then Akinator is one of the possible modules that can be triggered. 
