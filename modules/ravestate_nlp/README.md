@@ -18,22 +18,23 @@ We use a free, open-source NLP library for advanced NLP in Python: [spaCy](https
 
 ### Extracted Features
 
-| Feature                           | Ravestate Property/Signal     | Description                                                                               | Example Sentence: 'Revolutions need six fancy chickens!'|
+| Feature                           | Ravestate Properties/Signals  | Description                                                                               | Example Sentence: 'Revolutions need six fancy chickens!'|
 | -------------                     | --------------------          |-------------------------------                                                            | ------------------------------|
-| Tokenization                      | "nlp:tokens"                  | Segmenting text into words, punctuation marks etc.                                        | 'Revolutions', 'need', 'six', 'fancy', 'chickens', '!'|
-| Part-of-Speech (POS) Tagging      | "nlp:postags"                 | Assigning word types to tokens                                                            | 'NOUN', 'VERB', 'NUM', 'ADJ', 'NOUN', 'PUNCT' |
-| Detailed POS Tag                  | "nlp:tags"                    | Fine-grained part-of-speech                                                               | 'Revolutions' has the tag: 'NNS', which stand for: noun, plural <br> 'need' has the tag: 'VBP', which stands for: verb, non-3rd person singular present <br> [List](https://spacy.io/api/annotation#pos-tagging)  of POS tags|
-| Lemmatization                     | "nlp:lemmas"                  | Assigning the base forms of words                                                         | 'Revolutions' has the lemma: 'revolution' <br>  'was' would have the lemma: 'be'|
-| Named Entity Recognition (NER)    | "nlp:ner"                     | Labelling "real-world" objects                                                            | 'six' has the NER: 'CARDINAL', which are numerals that do not fall under another type <br>  [List](https://spacy.io/api/annotation#named-entities)  of NERs|
+| Tokenization                      | "nlp:tokens" (property)       | Segmenting text into words, punctuation marks etc.                                        | 'Revolutions', 'need', 'six', 'fancy', 'chickens', '!'|
+| Part-of-Speech (POS) Tagging      | "nlp:postags" (property)      | Assigning word types to tokens                                                            | 'NOUN', 'VERB', 'NUM', 'ADJ', 'NOUN', 'PUNCT' |
+| Detailed POS Tag                  | "nlp:tags" (property)         | Fine-grained part-of-speech                                                               | 'Revolutions' has the tag: 'NNS', which stand for: noun, plural <br> 'need' has the tag: 'VBP', which stands for: verb, non-3rd person singular present <br> [List](https://spacy.io/api/annotation#pos-tagging)  of POS tags|
+| Lemmatization                     | "nlp:lemmas" (property)       | Assigning the base forms of words                                                         | 'Revolutions' has the lemma: 'revolution' <br>  'was' would have the lemma: 'be'|
+| Named Entity Recognition (NER)    | "nlp:ner" (property)          | Labelling "real-world" objects                                                            | 'six' has the NER: 'CARDINAL', which are numerals that do not fall under another type <br>  [List](https://spacy.io/api/annotation#named-entities)  of NERs|
 | Dependency Parsing                |                               | Assigning syntactic dependency labels, describing the relations between individual tokens | 'six' is a 'nummod' (numeric modifier) for 'chickens' <br> [List](https://spacy.io/api/annotation#dependency-parsing)  of dependencies <br> [displaCy](https://explosion.ai/demos/displacy) Dependency Visualizer|
-| Triple Extraction                 | "nlp:triples"                 | A triple consists of subject, predicate, object of sentence                               | Triple: subject: 'Revolutions', predicate: 'need', object: 'chickens' |
-| About Roboy                       | "nlp:roboy"                   | Detecting whether sentence is about Roboy                                                 | 'you', 'roboy', 'robot', 'roboboy', ... |
-| Yes-No                            | "nlp:yesno"                   | Detecting answers to yes-no questions                                                     | Checking for 'yes', 'no', 'i don't know', 'probably', 'probably not' and synonyms of these                           |
+| Triple Extraction                 | "nlp:triples" (property)      | A triple consists of subject, predicate, object of sentence                               | Triple: subject: 'Revolutions', predicate: 'need', object: 'chickens' |
+| About Roboy                       | "nlp:roboy"  (property)       | Detecting whether sentence is about Roboy                                                 | 'you', 'roboy', 'robot', 'roboboy', ... |
+| Yes-No                            | "nlp:yesno" (property)        | Detecting answers to yes-no questions                                                     | Checking for 'yes', 'no', 'i don't know', 'probably', 'probably not' and synonyms of these                           |
 | Sentence Type: Question           | "nlp:is-question" (signal)    | Detecting whether sentence is a question |                                                |
-
+| Play Game                         | "nlp:intent-play" (signal)    | Detecting whether sentence is a question |                                                |
 
 ### Using the Features
 
+#### React to Property Change
 Each feature is stored in a ravestate property. 
 A state which wants to access a property needs to read permission fot that property.
 
@@ -50,6 +51,7 @@ def postive_chicken(ctx: ContextWrapper):
 
 ```
 
+#### React to Signal Emission
 For 'Sentence Type: Question' a signal is emitted. 
 A state that reacts to a signal can look something like this: 
 

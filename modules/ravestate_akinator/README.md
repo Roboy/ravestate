@@ -9,17 +9,12 @@
                                                                        
 ```
 
-## About
+## 20 Questions with Akinator
 
-Ravestate is a reactive library for real-time natural language dialog systems.
+The Ravestate Akinator module is now offering the 20 questions game.
+It consists of a wrapper for the API calls to the  [Akinator](https://en.akinator.com/)  web game and several states to handle the game flow with the interlocutor.
 
-## Installation
+### Architecture
 
-### Via PIP
 
-The easiest way to install ravestate is through pip:
-
-``
-pip install ravestate
-``
-
+### Starting the Game
