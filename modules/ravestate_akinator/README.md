@@ -20,5 +20,12 @@ This is an overview of the dialog flow for the 20 questions game.
 
 ### Starting the Game
 There are two possibilities to trigger the game:
-1. Interlocutor inputs something like: "I want to play", "I like games" or something similar
-2. Ravestate starts it automatically: When the system gets bored (no dialog states are active but an interlocutor is present) then Akinator is one of the possible modules that can be triggered. 
+1. Interlocutor input: "I want to play", "I like games" or something similar
+2. Automatically through Ravestate: When the system gets bored (no dialog states are active but an interlocutor is present) then Akinator is one of the possible modules that can be triggered. 
+
+### The API Wrapper
+api.py handles the requests to the online Akinator game.
+There are three different types of get requests to handle the game: 
+* Question asking phase: get request to post the answer to the previous question and retrieve the next question
+* Guessing phase: get request to retrieve the guess
+* Game finishing phase: get request that gives Akinator feedback on his guess

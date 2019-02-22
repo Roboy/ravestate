@@ -14,6 +14,8 @@ import ravestate_rawio
 akinator_api: Api
 CERTAINTY = "certainty_percentage"
 
+# TODO max 20 question
+
 with Module(name="akinator", config={CERTAINTY: 90}):
 
     initiate_play_again = PropertyBase(
