@@ -1,6 +1,9 @@
 [![Release](https://img.shields.io/github/release/Roboy/ravestate.svg)](https://github.com/ro-boy/ravestate)
 [![Build Status](https://travis-ci.org/Roboy/ravestate.svg?branch=master)](https://travis-ci.org/Roboy/ravestate)
 [![codecov](https://codecov.io/gh/Roboy/ravestate/branch/master/graph/badge.svg)](https://codecov.io/gh/Roboy/ravestate)
+
+## About
+
 ```
 (C) Roboy 2019                               _ __    _ __   
    _____        _ ___ ____  __  ______  ______/ /_____/ /___ 
@@ -10,9 +13,7 @@
      ⋂                      _ _\____/             _ _\____/  
 ```
 
-## About
-
-Ravestate is a reactive library for real-time natural language dialog systems.
+Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events.
 
 ### Reactive Hello World
 
