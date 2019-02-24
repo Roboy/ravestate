@@ -16,17 +16,17 @@
 ---
 module: core
 config:
-  tickrate: 10
+  tickrate: 1
   import:
+    #- ravestate_telegramio
     - ravestate_conio
-    - ravestate_roboyio
     - ravestate_fillers
     - ravestate_wildtalk
     - ravestate_hibye
     - ravestate_roboyqa
     - ravestate_genqa
-    - ravestate_stalker
     - ravestate_akinator
+    - ravestate_sendpics
 
 ---
 module: genqa

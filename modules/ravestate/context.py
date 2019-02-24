@@ -531,7 +531,7 @@ class Context(IContext):
     def _new_state_activation(self, st: State) -> None:
         activation = Activation(st, self)
         self._activations_per_state[st].add(activation)
-        for signal in st.constraint_.signals():
+        for signal in st.completed_constraint.signals():
             if signal in self._act_per_state_per_signal_age:
                 # TODO: (Here and below) Determine, whether indexing by min age is actually necessary
                 #  -> may not, because immediate acquisition is necessary -> otherwise, the
@@ -547,7 +547,7 @@ class Context(IContext):
         # delete activation from gaybar
         if st not in self._activations_per_state:
             return
-        for signal in st.constraint_.signals():
+        for signal in st.completed_constraint.signals():
             if signal in self._act_per_state_per_signal_age:
                 if st in self._act_per_state_per_signal_age[signal][0]:
                     del self._act_per_state_per_signal_age[signal][0][st]  # signal.min_age
@@ -574,7 +574,7 @@ class Context(IContext):
                 Conjunct(*conj_signals)
                 for conj_signals in self._complete_conjunction(conj, known_signals))
             assert len(known_signals) == 0
-        st.constraint_ = Disjunct(*{conj for conj in new_conjuncts})
+        st.completed_constraint = Disjunct(*{conj for conj in new_conjuncts})
 
     def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
         result = [set(deepcopy(sig) for sig in conj.signals())]
@@ -617,13 +617,14 @@ class Context(IContext):
 
     def _update_core_properties(self, debug=False):
         with self._lock:
-            pressured_acts = list()
-            partially_fulfilled_acts = 0
+            pressured_acts = []
+            partially_fulfilled_acts = []
             for act in self._state_activations():
                 if self[":activity"].changed_signal() not in set(act.constraint.signals()):
                     if act.is_pressured():
-                        pressured_acts += [act.name]
-                    partially_fulfilled_acts += act.spiky()
+                        pressured_acts.append(act.id)
+                    if act.spiky():
+                        partially_fulfilled_acts.append(act)
         PropertyWrapper(
             prop=self[":pressure"],
             ctx=self,
@@ -635,18 +636,29 @@ class Context(IContext):
             ctx=self,
             allow_write=True,
             allow_read=True
-        ).set(partially_fulfilled_acts)
+        ).set(len(partially_fulfilled_acts) > 0)
         if debug:
-            logger.info(pressured_acts)
+            partially_fulfilled_info = "; ".join(
+                f"{act} -> {', '.join(repr(spike) for spike in act.spikes())}"
+                for act in partially_fulfilled_acts)
+            if partially_fulfilled_info:
+                logger.info(partially_fulfilled_info)
 
     def _run_loop(self):
         tick_interval = 1. / self._core_config[self.tick_rate_config]
         while not self._shutdown_flag.wait(tick_interval):
-            self._run_once()
+            self._run_once(tick_interval)
 
-    def _run_once(self):
+    def _run_once(self, seconds_passed=1.):
         with self._lock:
-            # For every state, compress it's activations
+
+            # ---------- Update weights wrt/ cooldown for all states -----------
+
+            for state in self._activations_per_state:
+                state.update_weight(seconds_passed)
+
+            # ----------- For every state, compress it's activations -----------
+
             for st, acts in self._activations_per_state.items():
                 assert len(acts) > 0
                 if len(acts) > 1:
@@ -666,7 +678,8 @@ class Context(IContext):
                             else:
                                 allowed_unfulfilled = act
 
-            # Acquire new state activations for every spike
+            # --------- Acquire new state activations for every spike ----------
+
             for spike in self._spikes:
                 if spike.is_wiped():
                     continue
@@ -685,12 +698,14 @@ class Context(IContext):
                             logger.error(
                                 "An activation rejected a spike it was registered to be interested in.")
 
-            # Update all state activations.
+            # ------------------ Update all state activations. -----------------
+
             for act in self._state_activations():
                 if act.update():
                     self._activations_per_state[act.state_to_activate].discard(act)
 
-            # Forget fully unreferenced spikes
+            # ----------------- Forget fully unreferenced spikes ---------------
+
             old_spike_set = self._spikes.copy()
             for spike in old_spike_set:
                 with spike.causal_group() as cg:
@@ -700,11 +715,13 @@ class Context(IContext):
                         spike.wipe(already_wiped_in_causal_group=True)
                         logger.debug(f"{cg}.stale({spike})->Y")
 
-            # Increment age on active spikes
+            # ----------------- Increment age on active spikes -----------------
+
             for spike in self._spikes:
                 spike.tick()
 
-            # Force garbage collect
+            # -------------------- Force garbage collect -----------------------
+
             gc.collect()
 
-        self._update_core_properties()
+        self._update_core_properties(True)
