@@ -93,7 +93,7 @@ with Module(name="sendpics", config=CONFIG):
                 host=ctx.conf(key=REDIS_HOST_CONF),
                 port=ctx.conf(key=REDIS_PORT_CONF),
                 password=ctx.conf(key=REDIS_PASS_CONF))
-            redis_conn.set(ctx["sendpics:face_vec"], node.get_id())
+            redis_conn.set(node.get_id(), ctx["sendpics:face_vec"])
         except redis.exceptions.ConnectionError as e:
             err_msg = "Looks like the redis connection is unavailable :-("
             logger.error(err_msg)
