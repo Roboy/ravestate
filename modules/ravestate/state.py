@@ -1,7 +1,7 @@
 # Ravestate State-related definitions
 
 from typing import Optional, Tuple, Union
-from threading import Semaphore
+from threading import Semaphore, Lock
 from ravestate.threadlocal import ravestate_thread_local
 from ravestate.constraint import Conjunct, Disjunct, Signal, s, Constraint
 from ravestate.consumable import Consumable
@@ -59,18 +59,27 @@ class Resign(_StateActivationResult):
 
 
 class State:
+    """
+    Class which encapsulates a single application state function.
+    Do not use this class - instead use the `@state` decorator.
+    """
 
-    _signal: Signal
     signal_name: str
     write_props: Tuple
     read_props: Tuple
     constraint: Constraint
-    constraint_: Constraint  # Updated by context, to add constraint causes to constraint
-    module_name: str
     emit_detached: bool
-    activated: Semaphore  # Semaphore which counts finished activations
+    cooldown: float
+    weight: float
 
-    # Dummy resource which allows CausalGroups to track acquisitions
+    module_name: str                  # The module which this state belongs to
+    signal_object: Signal             # Created on the fly during runtime from signal_name
+    completed_constraint: Constraint  # Updated by context, to add constraint causes to constraint
+    activated: Semaphore              # Semaphore which counts finished activations
+    lock: Lock                        # Mutex to lock access to the current weight/cooldown state
+    current_weight: float             # Current weight, as affected by cooldown
+
+    # Dummy resource which allows CausalGroups to track spike acquisitions
     #  for states that don't have any write-props.
     consumable: Consumable
 
@@ -81,7 +90,9 @@ class State:
                  cond: Constraint,
                  action,
                  is_receptor: bool=False,
-                 emit_detached: bool=False):
+                 emit_detached: bool=False,
+                 weight: float=1.,
+                 cooldown: float=0.):
 
         assert(callable(action))
         self.name = action.__name__
@@ -113,12 +124,15 @@ class State:
         self.write_props = write
         self.read_props = read
         self.constraint = cond
-        self.constraint_ = cond
+        self.completed_constraint = cond
         self.action = action
         self.module_name = ""
-        self._signal = None
+        self.signal_object = None
         self.emit_detached = emit_detached
         self.activated = Semaphore(0)
+        self.weight = self.current_weight = weight
+        self.cooldown = cooldown
+        self.lock = Lock()
 
         # add state to module in current `with Module(...)` clause
         module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
@@ -129,11 +143,45 @@ class State:
         args = (context,) + args
         return self.action(*args, **kwargs)
 
+    def update_weight(self, seconds_passed: float):
+        """
+        Called once per tick by context, where #seconds_passed is
+         one over the context's tick rate. The state will use this
+         function, to update it's actual weight, given it's cooldown
+         period and last activation
+        """
+        if self.cooldown <= .0 or self.current_weight >= self.weight:
+            return
+        with self.lock:
+            self.current_weight += seconds_passed/self.cooldown * self.weight
+            if self.current_weight > self.weight:
+                self.current_weight = self.weight
+
+    def get_current_weight(self):
+        """
+        Called by activation to obtain the weight factor for this
+         state's constraint's specificity.
+        """
+        with self.lock:
+            return self.current_weight
+
+    def activation_finished(self):
+        """
+        Called by a running activation for this state, once it is about to
+         exit it's dedicated thread.
+        """
+        with self.lock:
+            self.activated.release()
+            if self.cooldown > .0:
+                # Reset weight, it will be raised to it's original level
+                # over the course of repeated update_weight() calls.
+                self.current_weight = .0
+
     def signal(self) -> Optional[Signal]:
         assert self.module_name
-        if not self._signal and self.signal_name:
-            self._signal = s(f"{self.module_name}:{self.signal_name}")
-        return self._signal
+        if not self.signal_object and self.signal_name:
+            self.signal_object = s(f"{self.module_name}:{self.signal_name}")
+        return self.signal_object
 
     def wait(self, timeout=5.):
         """
@@ -149,7 +197,15 @@ class State:
         return self.activated.acquire(timeout=timeout)
 
 
-def state(*, signal_name: Optional[str]="", write: tuple=(), read: tuple=(), cond: Constraint=None, emit_detached=False):
+def state(*,
+    signal_name: Optional[str]="",
+    write: tuple=(),
+    read: tuple=(),
+    cond: Constraint=None,
+    emit_detached=False,
+    weight: float=1.,
+    cooldown: float=0.):
+
     """
     Decorator to declare a new state, which may emit a certain signal,
     write to a certain set of properties (calling write, push, pop),
@@ -157,5 +213,13 @@ def state(*, signal_name: Optional[str]="", write: tuple=(), read: tuple=(), con
     """
     def state_decorator(action):
         nonlocal signal_name, write, read, cond
-        return State(signal_name=signal_name, write=write, read=read, cond=cond, action=action, emit_detached=emit_detached)
+        return State(
+            signal_name=signal_name,
+            write=write,
+            read=read,
+            cond=cond,
+            action=action,
+            emit_detached=emit_detached,
+            weight=weight,
+            cooldown=cooldown)
     return state_decorator

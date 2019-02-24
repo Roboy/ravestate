@@ -33,7 +33,7 @@ with Module(name="sendpics", config=CONFIG):
 
     face_vec = PropertyBase(name="face_vec", always_signal_changed=True)
 
-    @state(cond=s("idle:bored"), write="rawio:out")
+    @state(cond=s("idle:bored"), write="rawio:out", weight=1.2, cooldown=30.)
     def prompt_send(ctx):
         ctx["rawio:out"] = "Why don't you send me a picture? I'm really good at recognizing faces!"
 

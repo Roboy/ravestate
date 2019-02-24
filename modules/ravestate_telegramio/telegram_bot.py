@@ -309,4 +309,4 @@ def telegram_output(ctx: ContextWrapper):
             child_conn.send(ctx["rawio:out:changed"])
         else:
             # Master Process -> State not needed
-            return Delete
+            return Delete()
