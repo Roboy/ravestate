@@ -582,13 +582,20 @@ class Context(IContext):
             # TODO: Figure out through eta system
             sig.max_age = 4.
 
+        def copy_conjunct_set_with_completion(original_conj: Set[Signal], completion_conj: Set[Signal]):
+            original_conj = deepcopy(original_conj)
+            for sig in original_conj:
+                sig.has_completion = True
+            original_conj |= deepcopy(completion_conj)
+            return original_conj
+
         for conj_sig in conj.signals():
             completion = self._complete_signal(conj_sig, known_signals)
             if completion is not None and len(completion) > 0:
                 # the signal is non-cyclic, and has at least one cause (secondary signal).
                 #  permute existing disjunct conjunctions with new conjunction(s)
                 result = [
-                    deepcopy(result_conj) | deepcopy(completion_conj)
+                    copy_conjunct_set_with_completion(result_conj, completion_conj)
                     for result_conj in result for completion_conj in completion]
 
         return result
@@ -610,6 +617,7 @@ class Context(IContext):
         for conj in self._signal_causes[sig]:
             completion = self._complete_conjunction(conj, known_signals)
             if completion:
+
                 result += [conj | {sig} for conj in completion]
         known_signals.discard(sig)
 

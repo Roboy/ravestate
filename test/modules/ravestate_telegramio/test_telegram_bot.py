@@ -20,6 +20,6 @@ def test_telegram_run(context_wrapper_fixture: Context):
 
 def test_telegram_output(context_wrapper_fixture: ContextWrapper):
     # Master Process should return delete for telegram output
-    assert telegram_output(context_wrapper_fixture) == Delete
+    assert isinstance(telegram_output(context_wrapper_fixture), Delete)
     # TODO: Write test for token present
 

@@ -251,7 +251,7 @@ class CausalGroup(ICausalGroup):
                 _decrement_refcount(self._ref_index[prop])
                 if len(self._ref_index[prop][spike]) == 0:
                     del self._ref_index[prop][spike]
-        logger.debug(f"{self}.rejected({spike} by {rejected_by})")
+        logger.debug(f"{self}.rejected({spike} by {rejected_by}): ")
 
     def consent(self, ready_suitor: IActivation) -> bool:
         """
