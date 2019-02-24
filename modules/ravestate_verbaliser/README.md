@@ -80,7 +80,7 @@ To understand how to analyse the question have a look at the nlp readme. (LINK)
 if input_had_something_to_do_with_dinos and was_a_question:
     ctx["rawio:out"] = verbaliser.get_random_successful_answer("DINO")
 else:
-    ctx["rawio:out"] = verbaliser.get_random_failure_answer(ctx["persqa:predicate"])
+    ctx["rawio:out"] = verbaliser.get_random_failure_answer("DINO")
 ```
 
 * Possible conversation flow
