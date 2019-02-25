@@ -33,7 +33,7 @@ if ROBOY_COGNITION_AVAILABLE:
 
     CONFIG = {
         ROS2_FACE_TOPIC_CONFIG: "/roboy/cognition/vision/visible_face_names",
-        FACE_CONFIDENCE_THRESHOLD: 0.7
+        FACE_CONFIDENCE_THRESHOLD: 0.85
     }
 
     with Module(name="stalker", config=CONFIG) as mod:
@@ -42,7 +42,7 @@ if ROBOY_COGNITION_AVAILABLE:
         #  once a context with a configuration is available.
         subscriber_parent = PropertyBase(name="face_names_parent")
 
-        @state(cond=startup(), write=subscriber_parent.id())
+        @state(cond=startup(),  write=subscriber_parent.id())
         def create_subscriber(ctx: ContextWrapper):
             
             face_names = Ros2SubProperty(
@@ -50,17 +50,17 @@ if ROBOY_COGNITION_AVAILABLE:
                 topic=ctx.conf(key=ROS2_FACE_TOPIC_CONFIG),
                 msg_type=RecognizedFaces,
                 always_signal_changed=False)
-
+            logger.info("creating subscriber")
             rec_faces = PropertyBase(name="rec_faces",
                                      default_value={},
                                      always_signal_changed=False,
                                      allow_pop=True,
                                      allow_push=True)
-
+            logger.info("got faces")
             ctx.push(subscriber_parent.id(), face_names)
             ctx.push(subscriber_parent.id(), rec_faces)
 
-            @state(read=(face_names.id(), rec_faces.id()), write=(rec_faces.id(), raw_out.id()))
+            @state(read=(face_names.id(), rec_faces.id()),  write=(rec_faces.id(), raw_out.id()))
             def react_to_recognized_face(ctx: ContextWrapper):
                 nonlocal face_names
                 faces: RecognizedFaces = ctx[face_names.id()]
@@ -83,7 +83,8 @@ if ROBOY_COGNITION_AVAILABLE:
 
                 best_name_and_confidence = "", 0
                 for name_and_confidence in zip(faces.names, faces.confidence):
-                    # logger.info(name_and_confidence[0], str(name_and_confidence[1]))
+
+                    logger.info(str(name_and_confidence[0]))
                     if name_and_confidence[1] > best_name_and_confidence[1]:
                         best_name_and_confidence = name_and_confidence
 

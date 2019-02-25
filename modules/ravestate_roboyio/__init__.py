@@ -43,4 +43,7 @@ if PYROBOY_AVAILABLE:
 
         @state(read="rawio:out")
         def roboy_output(ctx):
-            say(ctx["rawio:out:changed"])
+            # tmp = ctx
+            # print(ctx["rawio:out:changed"])
+            ret = say(ctx["rawio:out:changed"])
+            logger.info(str(ret))
