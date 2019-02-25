@@ -724,4 +724,4 @@ class Context(IContext):
 
             gc.collect()
 
-        self._update_core_properties(True)
+        self._update_core_properties(False)
