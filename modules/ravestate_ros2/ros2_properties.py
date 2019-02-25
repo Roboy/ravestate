@@ -50,7 +50,8 @@ def sync_ros_properties(ctx: ContextWrapper):
         spin_sleep_time = 1 / spin_frequency
 
     # init ROS
-    rclpy.init()
+    if not rclpy.ok():
+        rclpy.init()
     node = rclpy.create_node(node_name)
 
     global global_prop_set

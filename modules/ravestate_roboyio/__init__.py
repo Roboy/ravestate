@@ -31,10 +31,15 @@ if PYROBOY_AVAILABLE:
 
         @state(cond=s(":startup"), read="interloc:all")
         def roboy_input(ctx: ContextWrapper):
+
+            # while not ctx.shutting_down():
+            #     input_value = listen()
+            #     if input_value and input_value.strip():
+            #         handle_single_interlocutor_input(ctx, input_value)
+
             while not ctx.shutting_down():
-                input_value = listen()
-                if input_value and input_value.strip():
-                    handle_single_interlocutor_input(ctx, input_value)
+                input_value = input("> ")
+                handle_single_interlocutor_input(ctx, input_value)
 
         @state(read="rawio:out")
         def roboy_output(ctx):
