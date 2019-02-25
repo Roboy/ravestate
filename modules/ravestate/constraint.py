@@ -80,12 +80,14 @@ class Signal(Constraint):
 
     def __init__(self, name: str, *, min_age=0., max_age=5., detached=False):
         self.name = name
-        # TODO: Convert seconds for min_age/max_age to ticks
         self.min_age = min_age
         self.max_age = max_age
         self.spike = None
         self.detached = detached
         self._min_age_ticks = 0
+        # TODO: Deal with ConfigurableAge
+        # if min_age > max_age and max_age > .0:
+        #     logger.warning(f"{self}: max_age={max_age} < min_age={min_age}!")
 
     def __or__(self, other):
         if isinstance(other, Signal):

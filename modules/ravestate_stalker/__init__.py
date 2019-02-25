@@ -44,8 +44,7 @@ if ROBOY_COGNITION_AVAILABLE:
 
         @state(cond=startup(), write=subscriber_parent.id())
         def create_subscriber(ctx: ContextWrapper):
-            global face_names
-
+            
             face_names = Ros2SubProperty(
                 "face_names",
                 topic=ctx.conf(key=ROS2_FACE_TOPIC_CONFIG),
@@ -63,7 +62,7 @@ if ROBOY_COGNITION_AVAILABLE:
 
             @state(read=(face_names.id(), rec_faces.id()), write=(rec_faces.id(), raw_out.id()))
             def react_to_recognized_face(ctx: ContextWrapper):
-
+                nonlocal face_names
                 faces: RecognizedFaces = ctx[face_names.id()]
                 rec_faces_dict: Dict = ctx[rec_faces.id()]
 
