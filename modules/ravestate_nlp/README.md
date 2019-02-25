@@ -32,7 +32,7 @@ We use a free, open-source NLP library for advanced NLP in Python: [spaCy](https
 | Sentence Type: Question           | "nlp:is-question" (signal)    | Detecting whether sentence is a question                                                  |                                                |
 | Play Game                         | "nlp:intent-play" (signal)    | Interlocutor wants to play a game                                                         | input: "I want to play", "I like games" or something similar    |
 
-Additional features can be added and published to the system. All existing features can be found [here](__init__.py)
+Additional features can be added and published to the system. All existing features can be found [here](__init__.py).
 
 ### Using the Features
 
