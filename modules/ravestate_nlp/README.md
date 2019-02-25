@@ -29,8 +29,8 @@ We use a free, open-source NLP library for advanced NLP in Python: [spaCy](https
 | Triple Extraction                 | "nlp:triples" (property)      | A triple consists of subject, predicate, object of sentence                               | Triple: subject: 'Revolutions', predicate: 'need', object: 'chickens' |
 | About Roboy                       | "nlp:roboy"  (property)       | Detecting whether sentence is about Roboy                                                 | 'you', 'roboy', 'robot', 'roboboy', ... |
 | Yes-No                            | "nlp:yesno" (property)        | Detecting answers to yes-no questions                                                     | Checking for 'yes', 'no', 'i don't know', 'probably', 'probably not' and synonyms of these                           |
-| Sentence Type: Question           | "nlp:is-question" (signal)    | Detecting whether sentence is a question |                                                |
-| Play Game                         | "nlp:intent-play" (signal)    | Detecting whether sentence is a question |                                                |
+| Sentence Type: Question           | "nlp:is-question" (signal)    | Detecting whether sentence is a question                                                  |                                                |
+| Play Game                         | "nlp:intent-play" (signal)    | Interlocutor wants to play a game                                                         | input: "I want to play", "I like games" or something similar    |
 
 ### Using the Features
 

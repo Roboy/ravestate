@@ -26,6 +26,6 @@ There are two possibilities to trigger the game:
 ### The API Wrapper
 api.py handles the requests to the online Akinator game.
 There are three different types of get requests to handle the game: 
-* Question asking phase: get request to post the answer to the previous question and retrieve the next question
-* Guessing phase: get request to retrieve the guess
-* Game finishing phase: get request that gives Akinator feedback on his guess
+1. Question asking phase: post the answer to the previous question and retrieve the next question
+2. Guessing phase: retrieve the guess
+3. Game finishing phase: give Akinator feedback on his guess
