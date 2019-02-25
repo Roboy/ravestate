@@ -20,7 +20,7 @@ YAML files are used to define the actual utterances.
 In other words: they store everything Roboy can vocalise. 
 To diversify his remarks the Verbaliser randomises similar outputs.
 
-The class QAPhrases retrieves the values from a YAML file and parses the containing phrases. 
+The class [QAPhrases](qa_phrases.py) retrieves the values from a YAML file and parses the containing phrases. 
 Here is a template for such a YAML file:
 
 ```
@@ -43,10 +43,11 @@ FUP:                                        # follow up questions (for interlocu
   - "Possible follow up answer"
 ```
 
-See more examples in the resources folder under sentences.
+See more examples [here](../../resources/sentences).
 
 #### Example for Answering the Question: What happened to the Dinosaurs?
-* Create the YAML file:
+* Creating the YAML file:
+
 Fill in all the possible answers.  
 ```
 type: qa
@@ -61,7 +62,8 @@ A:
   - "I have no idea what you just saig."
   - "Sorry, I am only interested in dinosaurs."
 ```
-* Add this file to the Verbaliser
+* Adding this file to the Verbaliser:
+
 In this case the file is going to be located in a folder of important facts.
 However, the single file can similarly be added by itself.
 The folder is in the same path as the python file adding it.
@@ -72,7 +74,8 @@ from os.path import realpath, dirname, join
 verbaliser.add_folder(join(dirname(realpath(__file__)), "important_facts_folder"))
 ```
 
-* Use the Verbaliser for fancy outputs
+* Using the Verbaliser for fancy outputs:
+
 This outputs an answer to the question.
 To understand how to analyse the context of the question have a look at the [Natural Language Processing README](../ravestate_nlp/README.md)
 ```python
@@ -82,7 +85,7 @@ else:
     ctx["rawio:out"] = verbaliser.get_random_failure_answer("DINO")
 ```
 
-* Possible conversation flow
+* Possible conversation flow:
 ```
 Interlocutor: "What happend to the Dinosaurs?"
 Roboy: "The chicken were stronger."

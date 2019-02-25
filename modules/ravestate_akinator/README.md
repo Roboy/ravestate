@@ -12,19 +12,22 @@
 ## 20 Questions with Akinator
 
 The Ravestate Akinator module is now offering the 20 questions game.
-It consists of a wrapper for the API calls to the  [Akinator](https://en.akinator.com/)  web game and several states to handle the game flow with the interlocutor.
+It consists of a wrapper for the [API calls](api.py) to the  [Akinator](https://en.akinator.com/) web game and 
+several states[states](__init__.py) to handle the game flow with the interlocutor.
 
 ### Architecture
 This is an overview of the dialog flow for the 20 questions game. 
+
 <img src="../../resources/docs/Akinator.png" width="1000" align="middle">
 
 ### Starting the Game
 There are two possibilities to trigger the game:
 1. Interlocutor input: "I want to play", "I like games" or something similar
-2. Automatically through Ravestate: When the system gets bored (no dialog states are active but an interlocutor is present) then Akinator is one of the possible modules that can be triggered. 
+2. Automatically through Ravestate: When the system gets bored (no dialog states are active but an interlocutor is present) 
+then Akinator is one of the possible modules that will be triggered. 
 
 ### The API Wrapper
-api.py handles the requests to the online Akinator game.
+[api.py](api.py) handles the requests to the online Akinator game.
 There are three different types of get requests to handle the game: 
 1. Question asking phase: post the answer to the previous question and retrieve the next question
 2. Guessing phase: retrieve the guess

@@ -32,13 +32,15 @@ We use a free, open-source NLP library for advanced NLP in Python: [spaCy](https
 | Sentence Type: Question           | "nlp:is-question" (signal)    | Detecting whether sentence is a question                                                  |                                                |
 | Play Game                         | "nlp:intent-play" (signal)    | Interlocutor wants to play a game                                                         | input: "I want to play", "I like games" or something similar    |
 
+Additional features can be added and published to the system. All existing features can be found [here](__init__.py)
+
 ### Using the Features
 
 #### React to Property Change
 Each feature is stored in a ravestate property. 
 A state which wants to access a property needs to read permission fot that property.
 
-Example:
+Example: State that reads the "yesno" property
 
 ```python
 @state(
@@ -52,8 +54,9 @@ def postive_chicken(ctx: ContextWrapper):
 ```
 
 #### React to Signal Emission
-For 'Sentence Type: Question' a signal is emitted. 
-A state that reacts to a signal can look something like this: 
+For 'Sentence Type: Question' a signal is emitted.
+
+Example: State that reacts to the "is-question" signal 
 
 
 ```python
@@ -66,7 +69,7 @@ def curious_chicken(ctx: ContextWrapper):
 ```
 
 ### Using the Triples for Sentence Analysis
-The triple extraction is done in extract_triples.py by using the dependency tree of the sentence. 
+The triple extraction is done in [extract_triples.py](extract_triples.py) by using the dependency tree of the sentence. 
 A dependency tree shows the relation between the words of a sentence.
 The finite verb (predicate) is the structural center of the sentence and therefor of the tree.
 So starting with the predicate the algorithm searches through the dependency tree to find subject and object.
