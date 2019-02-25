@@ -10,9 +10,8 @@
 ```
 
 ## Verbaliser
-The Verbaliser produces Roboy's utterances. It diversifies the interactions with Roboy.
-The Verbaliser gives an random output given an certain intent. 
-intent -> specific theme of what you want roboy to answer
+The Verbaliser produces Roboy's utterances. 
+It diversifies the interactions with Roboy by randomizing the output given a specific intent.  
 
 ### Using the Verbaliser 
 
@@ -44,7 +43,7 @@ FUP:                                        # follow up questions (for interlocu
   - "Possible follow up answer"
 ```
 
-See more examples in resources / sentences
+See more examples in the resources folder under sentences.
 
 #### Example for Answering the Question: What happened to the Dinosaurs?
 * Create the YAML file:
@@ -75,7 +74,7 @@ verbaliser.add_folder(join(dirname(realpath(__file__)), "important_facts_folder"
 
 * Use the Verbaliser for fancy outputs
 This outputs an answer to the question.
-To understand how to analyse the question have a look at the nlp readme. (LINK)
+To understand how to analyse the context of the question have a look at the [Natural Language Processing README](../ravestate_nlp/README.md)
 ```python
 if input_had_something_to_do_with_dinos and was_a_question:
     ctx["rawio:out"] = verbaliser.get_random_successful_answer("DINO")
