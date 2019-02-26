@@ -62,7 +62,7 @@ Example: State that reacts to the "is-question" signal
 ```python
 @state(
     cond=s("nlp:is-question"),  # state reacts to the is-question signal
-    write="rawio:out")  # state is allowed to write to the output chanel 
+    write="rawio:out")  # state is allowed to write to the output property 
 def curious_chicken(ctx: ContextWrapper):
     ctx["rawio:out"] = "You seem to ask a lot of question, chicken!"
 
