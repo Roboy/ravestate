@@ -130,16 +130,15 @@ Given a specific intent the Verbaliser can be used to return a list of phrases.
 
 ```python
 import ravestate_verbaliser
-ravestate_verbaliser.verbaliser.get_phrase_list('dino')
+dino_list = ravestate_verbaliser.verbaliser.get_phrase_list('dino')
 ```
-This will return a list of phrases for the given intent. 
 
-#### The "verbaliser:intent" Property
-The ["verbaliser:react_to_intent"](__init__.py) state produces a random phrase output for a given intent. 
+#### The verbaliser:intent Property
+The [verbaliser:react_to_intent](__init__.py) state produces a random phrase output for a given intent. 
 All the possible intents are specified in YAML files that are located in the 
 [ravestate_phrases_basic_en folder](../ravestate_phrases_basic_en). 
 
-The state reads the "verbaliser:intent" property and outputs one random phrase in the list with that specific intent. 
+The state reads the verbaliser:intent property and outputs one random phrase in the list with that specific intent. 
 It can therefor be triggered as follows:
 
 Let's assume that phrases.yml is now located in avestate_phrases_basic_en.
