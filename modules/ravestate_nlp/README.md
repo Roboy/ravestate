@@ -46,7 +46,7 @@ Example: State that reads the "yesno" property
 @state(
     cond=s("nlp:yesno:changed"),  # state reacts to a change in the 'yesno' property
     read="nlp:yesno",  # state is allowed to read the 'yesno' property
-    write="rawio:out")  # state is allowed to write to the output chanel 
+    write="rawio:out")  # state is allowed to write to the output property
 def postive_chicken(ctx: ContextWrapper):
     if ctx["nlp:yesno"] == "yes":
         ctx["rawio:out"] = "You seem to be a positive chicken!"
