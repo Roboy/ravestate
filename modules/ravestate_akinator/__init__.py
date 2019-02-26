@@ -14,6 +14,8 @@ import ravestate_rawio
 akinator_api: Api
 CERTAINTY = "certainty_percentage"
 
+# TODO max 20 question
+
 with Module(name="akinator", config={CERTAINTY: 90}):
 
     initiate_play_again = PropertyBase(
@@ -52,7 +54,7 @@ with Module(name="akinator", config={CERTAINTY: 90}):
            write="rawio:out",
            signal_name="initiate-play",
            emit_detached=True)
-    def akinator_play_ask(ctx):
+    def play_ask(ctx):
         """
         Asks if interlocutor wants to play 20 question / akinator
         Triggered when nlp:play property is changed by "i want to play a game" or a similar input
@@ -60,12 +62,12 @@ with Module(name="akinator", config={CERTAINTY: 90}):
         ctx["rawio:out"] = "Do you want to play 20 questions?"
         return Emit()
 
-
+    # TODO react to nlp:yesno:changed, remove nlo:yes-no signal
     @state(cond=s("nlp:yes-no") & (s("akinator:initiate-play", max_age=-1) | s("akinator:initiate_play_again:changed", max_age=-1)),
            read="nlp:yesno",
            write=("rawio:out", "akinator:question"),
            emit_detached=True)
-    def akinator_start(ctx):
+    def start(ctx):
         """
         Starts akinator session
         Triggered by signal from akinator_play_ask state and nlp:yes-no signal given by the input
@@ -89,7 +91,7 @@ with Module(name="akinator", config={CERTAINTY: 90}):
            read="nlp:yesno",
            write=("rawio:out", "akinator:is_it", "akinator:question", "akinator:wrong_input"),
            emit_detached=True)
-    def akinator_question_answered(ctx):
+    def question_answered(ctx):
         """
         Reads the answer to a question and outputs the next question
         Gets triggered by akinator:question which is always updated by a new question and nlp:yes-no signal
@@ -111,11 +113,10 @@ with Module(name="akinator", config={CERTAINTY: 90}):
 
 
     @state(cond=s("akinator:is_it:changed"),
-           read="akinator:question",
            write="rawio:out",
            signal_name="is-it",
            emit_detached=True)
-    def akinator_is_it(ctx):
+    def is_it(ctx):
         """
         Outputs the solution guess of akinator: "Is this your character? ..."
         Triggers the is_it_answer state
@@ -126,12 +127,12 @@ with Module(name="akinator", config={CERTAINTY: 90}):
                            + "\nPlease answer with 'yes' or 'no'."
         return Emit()
 
-
+    # TODO remove property initiate_play_again and emit signal instead
     @state(cond=s("nlp:yes-no") & s("akinator:is-it", max_age=-1),
            read="nlp:yesno",
            write=("rawio:out", "akinator:initiate_play_again"),
            emit_detached=True)
-    def akinator_is_it_answered(ctx):
+    def is_it_answered(ctx):
         """
         Gets input from interlocutor on the "is it" question and posts the result
         Asks if the interlocutor wants to play again.
@@ -152,7 +153,7 @@ with Module(name="akinator", config={CERTAINTY: 90}):
     @state(cond=s("akinator:wrong_input:changed"),
            write=("rawio:out", "akinator:question"),
            emit_detached=True)
-    def akinator_wrong_input(ctx):
+    def wrong_input(ctx):
         """
         Catches wrong inputs from the interlocutor during questions answering and loops back to the question state
         """
