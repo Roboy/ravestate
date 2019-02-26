@@ -59,7 +59,7 @@ A:
   - "A vulcano had flatulences."
   - "The chicken were stronger."
   FAILURE:
-  - "I have no idea what you just saig."
+  - "I have no idea what you just said."
   - "Sorry, I am only interested in dinosaurs."
 ```
 * Adding this file to the Verbaliser:
