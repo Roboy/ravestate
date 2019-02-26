@@ -89,3 +89,63 @@ else:
 Interlocutor: "What happend to the Dinosaurs?"
 Roboy: "The chicken were stronger."
 ```
+
+#### Example for Extracting Phrase Lists
+The Verbaliser can also be used to get all the imported phrases for a specific intent as a list. 
+
+* Creating the phrases.yml:
+
+```
+type: phrases
+name: "dino"
+opts:
+- "Dinos can not scratch their backs."
+- "Once upon a time these mind-bogglingly huge creatures wandered the earth."
+- "The longest Dinosaur was the Argentiosaurus."
+---
+type: phrases
+name: "chicken"
+opts:
+- " Chickens are not completely flightless."
+- " There are more chickens out there than programmers."
+- " If I were a chicken for one day I would say: 'Puk Puk Pukaaak'. 
+
+```
+
+* Adding the file to the Verbaliser:
+
+The YAML file is assumed to be located in the important_phrases folder. 
+The folder is again in the same path as this python script: 
+
+```python
+from ravestate_verbaliser import verbaliser
+from os.path import realpath, dirname, join
+
+verbaliser.add_file(join(dirname(realpath(__file__)), "important_phrases", "phrases.yml"))
+```
+
+* Using the Verbaliser to get a list of phrases:
+
+Given a specific intent the Verbaliser can be used to return a list of phrases.
+
+```python
+import ravestate_verbaliser
+ravestate_verbaliser.verbaliser.get_phrase_list('dino')
+```
+This will return a list of phrases for the given intent. 
+
+#### The "verbaliser:intent" Property
+The ["verbaliser:react_to_intent"](__init__.py) state produces a random phrase output for a given intent. 
+All the possible intents are specified in YAML files that are located in the 
+[ravestate_phrases_basic_en folder](../ravestate_phrases_basic_en). 
+
+The state reads the "verbaliser:intent" property and outputs one random phrase in the list with that specific intent. 
+It can therefor be triggered as follows:
+
+Let's assume that phrases.yml is now located in avestate_phrases_basic_en.
+
+```python
+@state(cond=s("triggered_by_some_signal"), write="verbaliser:intent")
+def say_some_nice_chicken_suff(ctx: ContextWrapper):
+    ctx["verbaliser:intent"] = "chicken"
+```
