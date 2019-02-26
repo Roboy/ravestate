@@ -50,13 +50,13 @@ if ROBOY_COGNITION_AVAILABLE:
                 topic=ctx.conf(key=ROS2_FACE_TOPIC_CONFIG),
                 msg_type=RecognizedFaces,
                 always_signal_changed=False)
-            logger.info("creating subscriber")
+
             rec_faces = PropertyBase(name="rec_faces",
-                                     default_value={},
-                                     always_signal_changed=False,
-                                     allow_pop=True,
-                                     allow_push=True)
-            logger.info("got faces")
+                 default_value={},
+                 always_signal_changed=False,
+                 allow_pop=True,
+                 allow_push=True)
+
             ctx.push(subscriber_parent.id(), face_names)
             ctx.push(subscriber_parent.id(), rec_faces)
 
