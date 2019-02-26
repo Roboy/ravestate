@@ -14,7 +14,7 @@ It diversifies the interactions with Roboy by randomizing the output given a spe
 
 ### Using the Verbaliser 
 
-#### YAML File with Desired Utterances
+#### Question-Answer Lists
 YAML files are used to define the actual utterances. 
 In other words: they store everything Roboy can vocalise. 
 To diversify his remarks the Verbaliser randomises similar outputs.
