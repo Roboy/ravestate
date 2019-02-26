@@ -11,7 +11,7 @@
 
 ## 20 Questions with Akinator
 
-The Ravestate Akinator module is now offering the 20 questions game.
+The Ravestate Akinator module offers an implementation of the 20 questions game.
 It consists of a wrapper for the [API calls](api.py) to the [Akinator](https://en.akinator.com/) web game and 
 several [states](__init__.py) to handle the game flow with the interlocutor.
 
