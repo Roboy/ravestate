@@ -38,7 +38,7 @@ Additional features can be added and published to the system. All existing featu
 
 #### React to Property Change
 Each feature is stored in a ravestate property. 
-A state which wants to access a property needs to read permission fot that property.
+A state which wants to access a property needs read permissions for that property.
 
 Example: State that reads the "yesno" property
 
