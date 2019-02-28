@@ -5,12 +5,12 @@
 ## About
 
 ```
-                                           __      __              
-  _____       ___ ____  __  ______  ______/ /_____/ /___     _____          
- /_   _\     /  \/ __ \/ / / / __ \/ ___\, / __ \, /__  \   /_   _\         
-  0>  0>    / /\/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /   <0  <0          
- \__⊽__/    \/  \__/\/  \__/ ,___/\____/\/\__/\/\/ ,___/    \__⊽__/         
-    ⋂                      \____/                \____/        ⋂             
+   ____                          __      __        _____       _____   
+  / _  \____  __  ______  ______/ /_____/ /___    /_   _\     /_   _\  
+ / /_/ / __ \/ / / / __ \/ ___\, / __ \, / __ \    0>  0>     <0  <0   
+/ ,\ ,/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /   \__⊽__/     \__⊽__/  
+\/  \/\__/\/  \__/ ,___/\____/\/\__/\/\/ ,___/       ⋂  - Hey!   ⋂     
+                 \____/                \____/             Olà! -       
 ```
 
 Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events.
