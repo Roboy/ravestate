@@ -83,7 +83,6 @@ with Module(name="persqa") as mod:
             relationships = interloc.get_relationships()
             key = find_empty_entry(relationships)
             if key:
-                logger.error(key)
                 ctx["persqa:predicate"] = key
             else:
                 key = random.sample(PREDICATE_SET, 1)
@@ -120,11 +119,14 @@ with Module(name="persqa") as mod:
             ctx["persqa:answer"] = triple.get_object()
             if len(ctx["nlp:tokens"]) == 1:
                 ctx["persqa:answer"] = ctx["nlp:tokens"][0]
+            elif len(ctx["nlp:tokens"]) == 2:
+                ctx["persqa:answer"] = "%s %s" % (ctx["nlp:tokens"][0], ctx["nlp:tokens"][1])
         # TODO when inference detects answer, reset predicate
+        # TODO check if interloc only says no
 
 
     @state(cond=s("persqa:answer:changed"),
-           write=("rawio:out", "interloc:all"),
+           write=("rawio:out", "interloc:all", "persqa:predicate"),
            read=("persqa:predicate", "persqa:subject", "persqa:answer", "interloc:all"),
            signal_name="reacted")
     def react(ctx):
@@ -132,28 +134,53 @@ with Module(name="persqa") as mod:
         retrieves memory node with the name or creates a new one
         outputs a polite response
         """
-        interloc_answer = str(ctx["persqa:answer"])
-        sess: Session = ravestate_ontology.get_session()
         onto: Ontology = ravestate_ontology.get_ontology()
+        interloc_answer = str(ctx["persqa:answer"])
         # subject_node = Node(node=ctx[ctx["persqa:subject"]])
         subject_node: Node = ctx[ctx["persqa:subject"]]
-        if not subject_node.get_name():
-            subject_node.set_properties({"name": interloc_answer})
+        if subject_node.get_name() == "x":
+            subject_node.set_name(interloc_answer)
+            subject_node, output = generate_ouput(subject_node, ctx["persqa:predicate"], interloc_answer)
+            ctx["rawio:out"] = output
         elif ctx["persqa:predicate"] in PREDICATE_SET:
-            pass
-            # TODO see if that is already a node... if not create....
-            # subject_node.add_relationships({ctx["persqa:predicate"]: interloc_answer})
-        node_list = sess.retrieve(subject_node)
-        if not node_list and subject_node.get_type().entity == onto.get_type("Person").entity:
-            interloc_node = sess.update(subject_node)
-            output = verbaliser.get_random_successful_answer(ctx["persqa:predicate"]) % interloc_answer
+            if ctx["persqa:predicate"] == "FROM" or ctx["persqa:predicate"] == "LIVE_IN":
+                relationship_node = Node(metatype=onto.get_type("Location"))  # City, Country
+            elif ctx["persqa:predicate"] == "HAS_HOBBY":
+                relationship_node = Node(metatype=onto.get_type("Hobby"))
+            elif ctx["persqa:predicate"] == "FRIEND_OF":
+                relationship_node = Node(metatype=onto.get_type("Person"))  # Robot
+            elif ctx["persqa:predicate"] == "STUDY_AT":
+                relationship_node = Node(metatype=onto.get_type("University"))
+            elif ctx["persqa:predicate"] == "MEMBER_OF":
+                relationship_node = Node(metatype=onto.get_type("Organization"))
+            elif ctx["persqa:predicate"] == "WORK_FOR":
+                relationship_node = Node(metatype=onto.get_type("Company"))
+            elif ctx["persqa:predicate"] == "OCCUPIED_AS":
+                relationship_node = Node(metatype=onto.get_type("Occupation"))  # Job
+            else:
+                relationship_node = Node()
+            relationship_node.set_name(interloc_answer)
+            relationship_node, output = generate_ouput(relationship_node, ctx["persqa:predicate"], interloc_answer)
+            ctx["rawio:out"] = output
+            if relationship_node is not None:
+                subject_node.add_relationships({ctx["persqa:predicate"]: {relationship_node.get_id()}})
+        ctx["persqa:predicate"] = None
+        return Emit()
+
+
+    def generate_ouput(node: Node, intent: str, interloc_answer: str):
+        sess: Session = ravestate_ontology.get_session()
+        node_list = sess.retrieve(node)
+        if not node_list:
+            node = sess.update(node)
+            output = verbaliser.get_random_successful_answer(intent) % interloc_answer
         elif len(node_list) == 1:
-            interloc_node = node_list[0]
-            output = verbaliser.get_random_followup_answer(ctx["persqa:predicate"]) % interloc_answer
+            node = node_list[0]
+            output = verbaliser.get_random_followup_answer(intent) % interloc_answer
         else:
             logger.error("Found more than one node with that name!")
-            interloc_node = None
-            output = verbaliser.get_random_failure_answer(ctx["persqa:predicate"])
-        logger.info(f"Interlocutor: Answer = {answer}; Node ID = {interloc_node.get_id()} ")
-        ctx["rawio:out"] = output
-        return Emit()
+            node = None
+            output = verbaliser.get_random_failure_answer(intent)
+        if node is not None:
+            logger.info(f"Interlocutor: Answer = {answer}; Node ID = {node.get_id()} ")
+        return node, output
