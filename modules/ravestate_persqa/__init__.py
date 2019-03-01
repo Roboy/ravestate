@@ -106,7 +106,7 @@ with Module(name="persqa") as mod:
 
     @state(cond=s("nlp:triples:changed"),
            write="persqa:answer",
-           read=("persqa:predicate", "nlp:triples", "nlp:tokens"))
+           read=("persqa:predicate", "nlp:triples", "nlp:tokens", "nlp:yesno"))
     def inference(ctx):
         """
         recognizes name in sentences like:
@@ -121,6 +121,8 @@ with Module(name="persqa") as mod:
                 ctx["persqa:answer"] = ctx["nlp:tokens"][0]
             elif len(ctx["nlp:tokens"]) == 2:
                 ctx["persqa:answer"] = "%s %s" % (ctx["nlp:tokens"][0], ctx["nlp:tokens"][1])
+            if ctx["nlp:yesno"] == "no":
+                pass
         # TODO when inference detects answer, reset predicate
         # TODO check if interloc only says no
 
@@ -135,20 +137,22 @@ with Module(name="persqa") as mod:
         outputs a polite response
         """
         onto: Ontology = ravestate_ontology.get_ontology()
+        sess: Session = ravestate_ontology.get_session()
         interloc_answer = str(ctx["persqa:answer"])
         # subject_node = Node(node=ctx[ctx["persqa:subject"]])
         subject_node: Node = ctx[ctx["persqa:subject"]]
         if subject_node.get_name() == "x":
             subject_node.set_name(interloc_answer)
-            subject_node, output = generate_ouput(subject_node, ctx["persqa:predicate"], interloc_answer)
+            subject_node, output = retrieve_node(subject_node, ctx["persqa:predicate"], interloc_answer)
             ctx["rawio:out"] = output
         elif ctx["persqa:predicate"] in PREDICATE_SET:
             if ctx["persqa:predicate"] == "FROM" or ctx["persqa:predicate"] == "LIVE_IN":
-                relationship_node = Node(metatype=onto.get_type("Location"))  # City, Country
+                relationship_node = Node(metatype=onto.get_type("Location"))  #
+                # TODO City, Country -> NLP NER also only recognizes locations...
             elif ctx["persqa:predicate"] == "HAS_HOBBY":
                 relationship_node = Node(metatype=onto.get_type("Hobby"))
             elif ctx["persqa:predicate"] == "FRIEND_OF":
-                relationship_node = Node(metatype=onto.get_type("Person"))  # Robot
+                relationship_node = Node(metatype=onto.get_type("Person"))  # TODO Robot
             elif ctx["persqa:predicate"] == "STUDY_AT":
                 relationship_node = Node(metatype=onto.get_type("University"))
             elif ctx["persqa:predicate"] == "MEMBER_OF":
@@ -156,23 +160,25 @@ with Module(name="persqa") as mod:
             elif ctx["persqa:predicate"] == "WORK_FOR":
                 relationship_node = Node(metatype=onto.get_type("Company"))
             elif ctx["persqa:predicate"] == "OCCUPIED_AS":
-                relationship_node = Node(metatype=onto.get_type("Occupation"))  # Job
+                relationship_node = Node(metatype=onto.get_type("Occupation"))  # TODO Job
             else:
                 relationship_node = Node()
             relationship_node.set_name(interloc_answer)
-            relationship_node, output = generate_ouput(relationship_node, ctx["persqa:predicate"], interloc_answer)
+            relationship_node, output = retrieve_node(relationship_node, ctx["persqa:predicate"], interloc_answer)
             ctx["rawio:out"] = output
             if relationship_node is not None:
                 subject_node.add_relationships({ctx["persqa:predicate"]: {relationship_node.get_id()}})
+                sess.update(subject_node)
         ctx["persqa:predicate"] = None
         return Emit()
 
 
-    def generate_ouput(node: Node, intent: str, interloc_answer: str):
+    def retrieve_node(node: Node, intent: str, interloc_answer: str):
+        # TODO follow uo logic is not right yet; works only for name
         sess: Session = ravestate_ontology.get_session()
         node_list = sess.retrieve(node)
         if not node_list:
-            node = sess.update(node)
+            node = sess.create(node)
             output = verbaliser.get_random_successful_answer(intent) % interloc_answer
         elif len(node_list) == 1:
             node = node_list[0]
