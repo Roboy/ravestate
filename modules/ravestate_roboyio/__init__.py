@@ -11,7 +11,8 @@ logger = get_logger(__name__)
 
 PYROBOY_AVAILABLE = False
 try:
-    from pyroboy import say, listen
+    from pyroboy import say
+    from roboy_cognition_msgs.msg import RecognizedSpeech
     PYROBOY_AVAILABLE = True
 except ImportError as e:
     logger.error(f"""
@@ -29,13 +30,17 @@ if PYROBOY_AVAILABLE:
 
     with Module(name="roboyio"):
 
-        @state(cond=s(":startup"), read="interloc:all")
+        recognized_speech = Ros2SubProperty(
+            name="recognized_speech",
+            topic="/roboy/cognition/speech/recognition",
+            msg_type=RecognizedSpeech,
+            always_signal_changed=True)
+
+        @state(read=recognized_speech.id())
         def roboy_input(ctx: ContextWrapper):
-            while not ctx.shutting_down():
-                input_value = listen()
-                if input_value and input_value.strip():
-                    handle_single_interlocutor_input(ctx, input_value)
+            handle_single_interlocutor_input(ctx, ctx[recognized_speech.id()].text)
 
         @state(read="rawio:out")
         def roboy_output(ctx):
-            say(ctx["rawio:out:changed"])
+            ret = say(ctx["rawio:out:changed"])
+            logger.info(str(ret))

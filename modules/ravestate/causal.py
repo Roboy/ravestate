@@ -251,8 +251,7 @@ class CausalGroup(ICausalGroup):
                 _decrement_refcount(self._ref_index[prop])
                 if len(self._ref_index[prop][spike]) == 0:
                     del self._ref_index[prop][spike]
-        if reason == 1:
-            logger.debug(f"{self}.rejected({spike} by {rejected_by} due to age)")
+        logger.debug(f"{self}.rejected({spike} by {rejected_by})")
 
     def consent(self, ready_suitor: IActivation) -> bool:
         """
@@ -285,8 +284,7 @@ class CausalGroup(ICausalGroup):
                                     highest_higher_specificity_act = candidate
             else:
                 # Easy exit condition: prop not free for writing
-                logger.debug(f"\nForgot to detach?\n{self}.consent({ready_suitor})->N: {prop} unavailable. "
-                               f"Condition is {ready_suitor.constraint}")
+                logger.debug(f"{self}.consent({ready_suitor})->N: {prop} unavailable. Condition is {ready_suitor.constraint}")
                 return False
 
         if higher_specificity_acts:

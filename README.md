@@ -5,12 +5,12 @@
 ## About
 
 ```
-(C) Roboy 2019                               _ __    _ __   
-   _____        _ ___ ____  __  ______  ______/ /_____/ /___ 
-  /_   _\    _ _ /  \/ __ \/ / / / __ \/ ___\, / __ \, /__  \
-   0>  0>   _ _ / /\/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /
-  \__⊽__/     _ \/ _\__/\/ _\__/ ,___/\____/\/\__/\/\/ ,___/ 
-     ⋂                      _ _\____/             _ _\____/  
+   ____                          __      __        _____       _____   
+  / _  \____  __  ______  ______/ /_____/ /___    /_   _\     /_   _\  
+ / /_/ / __ \/ / / / __ \/ ___\, / __ \, / __ \    0>  0>     <0  <0   
+/ ,\ ,/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /   \__⊽__/     \__⊽__/  
+\/  \/\__/\/  \__/ ,___/\____/\/\__/\/\/ ,___/       ⋂  - Hey!   ⋂     
+                 \____/                \____/             Olà! -       
 ```
 
 Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events.
@@ -132,7 +132,7 @@ may be seen in the following dependency diagram. Broadly,
 the modules are categorized into Core (Blue), I/O (Yellow),
 External (Red) and Skills (Green):
 
-<img src="resources/docs/modules_sm.png" width="480" align="middle">
+<img src="resources/docs/modules_sm.png">
 
 ## Running tests
 

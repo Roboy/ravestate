@@ -1,0 +1,22 @@
+# In addition to this file, load a config file `keys.yml`, where
+#  `keys.yml` should contain at least the following content:
+#
+#   module: telegramio
+#   config:
+#     telegram-token: <sexycactus>  # Your telegram token here
+#
+# Then, start `rasta` with `-f config/roboy_telegram_bot_master.yml -f config/keys.yml`
+
+---
+module: core
+config:
+  tickrate: 2
+  import:
+    - ravestate_telegramio
+
+---
+module: telegramio
+config:
+  child_config_files:
+    - /Users/joseph/ravestate/config/roboy_telegram_bot_child.yml
+    - /Users/joseph/ravestate/config/keys.yml

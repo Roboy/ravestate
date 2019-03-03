@@ -10,30 +10,26 @@
 #     neo4j_address: bolt://localhost:7687  # Your neo4j server uri here
 #     neo4j_username: neo4j                 # Your neo4j user here
 #     neo4j_pw: <cornycrab>                 # Your neo4j pw here
-#
-# Then, start `rasta` with `-f config/generic.yml -f config/keys.yml`
 
 ---
 module: core
 config:
   tickrate: 10
   import:
-    - ravestate_rawio
+    - ravestate_telegramio
     - ravestate_conio
-    - ravestate_roboyio
-    # - ravestate_fillers
-#    - ravestate_wildtalk
+    - ravestate_fillers
+    - ravestate_wildtalk
     - ravestate_hibye
-#    - ravestate_roboyqa
-#    - ravestate_genqa
-    - ravestate_stalker
-#    - ravestate_akinator
-    - ravestate_nlp
+    - ravestate_roboyqa
+    - ravestate_genqa
+    - ravestate_akinator
+    - ravestate_sendpics
 
 ---
 module: genqa
 config:
-  drqa_server_address: "http://35.246.158.89:5000/"
+  drqa_server_address: "http://localhost:5000"
   roboy_answer_sanity: 1000
 
 ---

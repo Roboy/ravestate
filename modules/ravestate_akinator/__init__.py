@@ -53,7 +53,9 @@ with Module(name="akinator", config={CERTAINTY: 90}):
     @state(cond=s("nlp:intent-play") | s("idle:bored"),
            write="rawio:out",
            signal_name="initiate-play",
-           emit_detached=True)
+           emit_detached=True,
+           weight=1.,
+           cooldown=30.)
     def play_ask(ctx):
         """
         Asks if interlocutor wants to play 20 question / akinator
@@ -61,6 +63,10 @@ with Module(name="akinator", config={CERTAINTY: 90}):
         """
         ctx["rawio:out"] = "Do you want to play 20 questions?"
         return Emit()
+
+    @state(cond=s("akinator:initiate-play", min_age=7., max_age=10.), write="rawio:out")
+    def akinator_play_question_ignored(ctx):
+        ctx["rawio:out"] = "Oh well, maybe later!"
 
     # TODO react to nlp:yesno:changed, remove nlo:yes-no signal
     @state(cond=s("nlp:yes-no") & (s("akinator:initiate-play", max_age=-1) | s("akinator:initiate_play_again:changed", max_age=-1)),
