@@ -266,7 +266,7 @@ class Activation(IActivation):
     def run(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
-        # logger.info(f"Activating {self}")
+        logger.info(f"Activating {self}")
         Thread(target=self._run_private).start()
 
     def _reset_death_clock(self):
