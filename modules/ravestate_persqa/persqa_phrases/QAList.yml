@@ -103,7 +103,7 @@ FUP:
 type: qa
 name: "FRIEND_OF"
 Q:
-- "Do you have a best friend? Who is he?"
+- "Do you have a best friend? Who is he or she?"
 A:
   SUCCESS:
   - "Oh, I believe I have met %s they're nice."

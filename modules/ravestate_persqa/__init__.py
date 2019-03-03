@@ -1,5 +1,6 @@
 from ravestate.module import Module
 from ravestate.property import PropertyBase
+from ravestate.wrappers import ContextWrapper
 from ravestate.state import state, Emit, Delete
 from ravestate.constraint import s
 from ravestate_verbaliser import verbaliser
@@ -52,19 +53,13 @@ with Module(name="persqa") as mod:
         allow_push=False,
         is_flag_property=True)
 
-    follow_up = PropertyBase(
-        name="follow_up",
-        default_value="",
-        always_signal_changed=True,
-        allow_pop=False,
-        allow_push=False,
-        is_flag_property=True)
-
 
     @state(cond=s("interloc:all:pushed"),
+           write="interloc:all",
+           read="interloc:all",
            signal_name="new-interloc",
            emit_detached=True)
-    def new_interloc(ctx):
+    def new_interloc(ctx: ContextWrapper):
         """
         reacts to interloc:pushed and creates persqa:ask_name state
         """
@@ -81,28 +76,8 @@ with Module(name="persqa") as mod:
             ctx["rawio:out"] = verbaliser.get_random_question("NAME")
             ctx["persqa:subject"] = interloc_path
 
-        # TODO only trigger when also bored?
-        @state(cond=s("persqa:reacted", max_age=-1, detached=True),
-               write=("rawio:out", "persqa:predicate", "persqa:subject"),
-               read="interloc:all")
-        def ask_other_stuff(ctx):
-            # interloc: Node = ctx[ctx["persqa:subject"]]
-            interloc: Node = ctx[interloc_path]
-            relationships = interloc.get_relationships()
-            key = find_empty_entry(relationships)
-            if key:
-                ctx["persqa:predicate"] = key
-            else:
-                key = random.sample(PREDICATE_SET, 1)
-                ctx["persqa:predicate"] = key
-            # TODO different question for FU
-            ctx["rawio:out"] = verbaliser.get_random_question(key)
-            ctx["persqa:subject"] = interloc_path
-
         mod.add(ask_name)
         ctx.add_state(ask_name)
-        mod.add(ask_other_stuff)
-        ctx.add_state(ask_other_stuff)
         return Emit()
 
 
@@ -113,10 +88,45 @@ with Module(name="persqa") as mod:
         return None
 
 
+    def create_small_talk_state(ctx: ContextWrapper, interloc_path: str):
+
+        follow_ups = set()
+
+        # TODO only trigger when also bored?
+        @state(cond=s("idle:bored", max_age=-1, detached=True),
+               write=("rawio:out", "persqa:predicate", "persqa:subject"),
+               read="interloc:all")
+        def small_talk(ctx: ContextWrapper):
+            interloc: Node = ctx[interloc_path]
+            relationships = interloc.get_relationships()
+            key = find_empty_entry(relationships)
+            if key:
+                ctx["persqa:predicate"] = key
+                output = verbaliser.get_random_question(key)
+            else:
+                key = random.sample(PREDICATE_SET.difference(follow_ups), 1)[0]
+                follow_ups.add(key)
+                ctx["persqa:predicate"] = key
+                output = verbaliser.get_random_followup_question(key)
+                logger.error(f"FOLLOW_UP: Intent = {key}")
+            ctx["rawio:out"] = output
+            ctx["persqa:subject"] = interloc_path
+
+        @state(cond=s("nlp:triples:changed"),
+               read=("nlp:triples", "nlp:yesno", "persqa:subject"))
+        def fup_react(ctx: ContextWrapper):
+            logger.error("I am in FU")
+
+        mod.add(small_talk)
+        ctx.add_state(small_talk)
+        mod.add(fup_react)
+        ctx.add_state(fup_react)
+
+
     @state(cond=s("nlp:triples:changed"),
            write="persqa:answer",
            read=("persqa:predicate", "nlp:triples", "nlp:tokens", "nlp:yesno"))
-    def inference(ctx):
+    def inference(ctx: ContextWrapper):
         """
         recognizes name in sentences like:
          - i am jj
@@ -137,9 +147,8 @@ with Module(name="persqa") as mod:
 
     @state(cond=s("persqa:answer:changed"),
            write=("rawio:out", "interloc:all", "persqa:predicate"),
-           read=("persqa:predicate", "persqa:subject", "persqa:answer", "interloc:all"),
-           signal_name="reacted")
-    def react(ctx):
+           read=("persqa:predicate", "persqa:subject", "persqa:answer", "interloc:all"))
+    def react(ctx: ContextWrapper):
         """
         retrieves memory node with the name or creates a new one
         outputs a polite response
@@ -147,38 +156,39 @@ with Module(name="persqa") as mod:
         onto: Ontology = ravestate_ontology.get_ontology()
         sess: Session = ravestate_ontology.get_session()
         interloc_answer = str(ctx["persqa:answer"])
+        pers_info = ctx["persqa:predicate"]
         # subject_node = Node(node=ctx[ctx["persqa:subject"]])
         subject_node: Node = ctx[ctx["persqa:subject"]]
-        if subject_node.get_name() == "x":
+        if pers_info == "NAME":
             subject_node.set_name(interloc_answer)
-            subject_node, output = retrieve_node(subject_node, ctx["persqa:predicate"], interloc_answer)
+            subject_node, output = retrieve_node(subject_node, pers_info, interloc_answer)
             ctx["rawio:out"] = output
-        elif ctx["persqa:predicate"] in PREDICATE_SET:
-            if ctx["persqa:predicate"] == "FROM" or ctx["persqa:predicate"] == "LIVE_IN":
+        elif pers_info in PREDICATE_SET:
+            if pers_info == "FROM" or pers_info == "LIVE_IN":
                 relationship_node = Node(metatype=onto.get_type("Location"))  #
                 # TODO City, Country -> NLP NER also only recognizes locations...
-            elif ctx["persqa:predicate"] == "HAS_HOBBY":
+            elif pers_info == "HAS_HOBBY":
                 relationship_node = Node(metatype=onto.get_type("Hobby"))
-            elif ctx["persqa:predicate"] == "FRIEND_OF":
+            elif pers_info == "FRIEND_OF":
                 relationship_node = Node(metatype=onto.get_type("Person"))  # TODO Robot
-            elif ctx["persqa:predicate"] == "STUDY_AT":
+            elif pers_info == "STUDY_AT":
                 relationship_node = Node(metatype=onto.get_type("University"))
-            elif ctx["persqa:predicate"] == "MEMBER_OF":
+            elif pers_info == "MEMBER_OF":
                 relationship_node = Node(metatype=onto.get_type("Organization"))
-            elif ctx["persqa:predicate"] == "WORK_FOR":
+            elif pers_info == "WORK_FOR":
                 relationship_node = Node(metatype=onto.get_type("Company"))
-            elif ctx["persqa:predicate"] == "OCCUPIED_AS":
+            elif pers_info == "OCCUPIED_AS":
                 relationship_node = Node(metatype=onto.get_type("Occupation"))  # TODO Job
             else:
                 relationship_node = Node()
             relationship_node.set_name(interloc_answer)
-            relationship_node, output = retrieve_node(relationship_node, ctx["persqa:predicate"], interloc_answer)
+            relationship_node, output = retrieve_node(relationship_node, pers_info, interloc_answer)
             ctx["rawio:out"] = output
             if relationship_node is not None:
-                subject_node.add_relationships({ctx["persqa:predicate"]: {relationship_node.get_id()}})
+                subject_node.add_relationships({pers_info: {relationship_node.get_id()}})
                 sess.update(subject_node)
         ctx["persqa:predicate"] = None
-        return Emit()
+        create_small_talk_state(ctx=ctx, interloc_path=ctx["persqa:subject"])
 
 
     def retrieve_node(node: Node, intent: str, interloc_answer: str):
@@ -198,3 +208,4 @@ with Module(name="persqa") as mod:
         if node is not None:
             logger.info(f"Interlocutor: Answer = {answer}; Node ID = {node.get_id()} ")
         return node, output
+
