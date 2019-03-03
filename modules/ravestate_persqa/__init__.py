@@ -52,6 +52,14 @@ with Module(name="persqa") as mod:
         allow_push=False,
         is_flag_property=True)
 
+    follow_up = PropertyBase(
+        name="follow_up",
+        default_value="",
+        always_signal_changed=True,
+        allow_pop=False,
+        allow_push=False,
+        is_flag_property=True)
+
 
     @state(cond=s("interloc:all:pushed"),
            signal_name="new-interloc",
@@ -87,6 +95,7 @@ with Module(name="persqa") as mod:
             else:
                 key = random.sample(PREDICATE_SET, 1)
                 ctx["persqa:predicate"] = key
+            # TODO different question for FU
             ctx["rawio:out"] = verbaliser.get_random_question(key)
             ctx["persqa:subject"] = interloc_path
 
@@ -123,7 +132,6 @@ with Module(name="persqa") as mod:
                 ctx["persqa:answer"] = "%s %s" % (ctx["nlp:tokens"][0], ctx["nlp:tokens"][1])
             if ctx["nlp:yesno"] == "no":
                 pass
-        # TODO when inference detects answer, reset predicate
         # TODO check if interloc only says no
 
 
