@@ -21,13 +21,17 @@ There are two main modes for this module:
 * Multiprocess-Mode: Every chat creates its own context in a separate process
 
 #### Single-Process-Mode
-<img src="../../resources/docs/telegram_singleprocess.png" align="middle">
+<p align="center">
+  <img src="../../resources/docs/telegram_singleprocess.png" height="400">
+</p>
 
 In this mode the module handles incoming text messages and pictures from all chats.
 Outgoing messages are sent to every currently active chat.
 
 #### Multiprocess-Mode
-<img src="../../resources/docs/telegram_multiprocess.png" align="middle">
+<p align="center">
+  <img src="../../resources/docs/telegram_multiprocess.png" height="250">
+</p>
 
 In this mode the "Master" part of the module is running in the main process of ravestate.
 
