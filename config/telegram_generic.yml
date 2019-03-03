@@ -4,8 +4,9 @@ config:
   import:
     - ravestate_telegramio
     - ravestate_conio
-    - ravestate_wildtalk
-    - ravestate_nlp
+    - ravestate_sendpics
+    #- ravestate_wildtalk
+    #- ravestate_nlp
 ---
 module: telegramio
 config:

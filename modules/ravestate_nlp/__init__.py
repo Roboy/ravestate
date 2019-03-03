@@ -37,7 +37,6 @@ with Module(name="nlp"):
                 "nlp:ner",
                 "nlp:triples",
                 "nlp:roboy",
-                "nlp:triples",
                 "nlp:yesno"
         ))
     def nlp_preprocess(ctx):

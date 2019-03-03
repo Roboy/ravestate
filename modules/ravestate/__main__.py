@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from ravestate.context import Context
 import sys
 

@@ -100,7 +100,7 @@ def test_add_state(
     assert len(context_with_property_fixture._activations_per_state) == 5
 
     # Make sure, that d's constraint was completed correctly
-    d_conjunctions = list(state_signal_d_fixture.constraint_.conjunctions())
+    d_conjunctions = list(state_signal_d_fixture.completed_constraint.conjunctions())
     assert len(d_conjunctions) == 4  # 2 completed, 2 uncompleted
     d_conjunctions = [
         conj for conj in d_conjunctions
