@@ -14,6 +14,13 @@ class Module:
     """
     Atomic class, which encapsulates a named set of states, properties and config entries,
     which form a coherent bundle.
+
+    _Example:_
+    ```python
+    with Module(name="my_module", config={"paramA": 42}):
+        # define properties
+        # define states
+    ```
     """
 
     registered_modules: Dict[str, 'Module'] = dict()
