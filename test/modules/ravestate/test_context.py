@@ -2,6 +2,8 @@ from ravestate.constraint import Signal, ConfigurableAge
 from ravestate.spike import Spike
 from ravestate.module import Module
 from ravestate.testfixtures import *
+from ravestate.context import create_and_run_context
+from ravestate.config import Configuration
 
 
 def test_emit(context_fixture, spike_fixture):
@@ -72,6 +74,19 @@ def test_remove_dependent_state(context_fixture: Context, state_fixture: State):
     context_fixture.rm_prop(prop=prop)
     assert state_fixture not in context_fixture._activations_per_state
     assert prop.id() not in context_fixture._properties
+
+
+def test_remove_unknown_state(context_fixture: Context, state_fixture: State):
+    with LogCapture(attributes=strip_prefix) as log_capture:
+        context_fixture.rm_state(st=state_fixture)
+        log_capture.check(f"Attempt to remove unknown state `{state_fixture.name}`!")
+
+
+def test_remove_state_with_signal(context_with_property_fixture: Context, state_signal_a_fixture: State):
+    context_with_property_fixture.add_state(st=state_signal_a_fixture)
+    assert state_signal_a_fixture.signal() in context_with_property_fixture._act_per_state_per_signal_age
+    context_with_property_fixture.rm_state(st=state_signal_a_fixture)
+    assert state_signal_a_fixture.signal() not in context_with_property_fixture._act_per_state_per_signal_age
 
 
 def test_add_state(
@@ -158,3 +173,49 @@ def test_add_state_configurable_age_not_in_config(context_with_property_fixture:
     context_with_property_fixture.add_state(st=conf_st)
     assert my_cond.min_age == 0.
     assert my_cond.max_age == 5.
+
+
+def test_add_state_unknown_property(context_fixture: Context, state_fixture: State):
+    with LogCapture(attributes=strip_prefix) as log_capture:
+        context_fixture.add_state(st=state_fixture)
+        log_capture.check(f"Attempt to add state which depends on unknown property `{DEFAULT_PROPERTY_ID}`!")
+
+
+def test_add_prop_twice(context_fixture: Context):
+    with LogCapture(attributes=strip_prefix) as log_capture:
+        prop = PropertyBase(name=DEFAULT_PROPERTY_NAME)
+        prop.set_parent_path(DEFAULT_MODULE_NAME)
+        context_fixture.add_prop(prop=prop)
+        context_fixture.add_prop(prop=prop)
+        log_capture.check(f"Attempt to add property {DEFAULT_PROPERTY_ID} twice!")
+
+
+def test_get_unknown_property(context_fixture: Context):
+    with LogCapture(attributes=strip_prefix) as log_capture:
+        assert context_fixture[DEFAULT_PROPERTY_ID] is None
+        log_capture.check(f"Attempt to retrieve unknown property by key `{DEFAULT_PROPERTY_ID}`!")
+
+
+def test_create_and_run(mocker):
+    with mocker.patch.object(Context, 'run'):
+        create_and_run_context()
+        Context.run.assert_called_once()
+
+
+def test_overriding_config(mocker):
+    with mocker.patch.object(Configuration, 'set'):
+        ctx = Context("-d", DEFAULT_MODULE_NAME, "key", "new_val")
+        Configuration.set.assert_called_once_with(DEFAULT_MODULE_NAME, "key", "new_val")
+
+
+def test_runtime_overriding_config(mocker):
+    with mocker.patch.object(Configuration, 'set'):
+        ctx = Context(runtime_overrides=[(DEFAULT_MODULE_NAME, "key", "new_runtime_val")])
+        Configuration.set.assert_called_once_with(DEFAULT_MODULE_NAME, "key", "new_runtime_val")
+
+
+def test_invalid_tickrate():
+    with LogCapture(attributes=strip_prefix) as log_capture:
+        ctx = Context(runtime_overrides=[(Context.core_module_name, Context.tick_rate_config, 0)])
+        log_capture.check_present("Attempt to set core config `tickrate` to a value less-than 1!")
+        assert ctx._core_config[Context.tick_rate_config] == 1

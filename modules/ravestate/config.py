@@ -52,7 +52,7 @@ class Configuration:
         * `mod`: A module object with a name and a conf dict.
         """
         if mod.name in self.config_per_module:
-            logger.warning(f"add_conf called repeatedly for module name f{mod.name}!")
+            logger.warning(f"add_conf called repeatedly for module name {mod.name}!")
         self.config_per_module[mod.name] = mod.conf
         self._apply_parsed_config(mod.name)
 
@@ -67,14 +67,14 @@ class Configuration:
         the module configuration dictionary during add_conf, or an empty dictionary
         if the module name is unknown.
         """
-        if module_name not in self.parsed_config_per_module:
+        if module_name not in self.config_per_module:
             logger.error(f"Bad request for unknown module config {module_name}!")
             return {}
         return self.config_per_module[module_name]
 
     def get(self, module_name: str, key: str) -> Any:
         """
-        Gte the current value of a config entry.
+        Get the current value of a config entry.
 
         * `module_name`: The module that provides the config entry.
 
@@ -130,7 +130,7 @@ class Configuration:
         with open(path, mode='w') as file:
             yaml.safe_dump_all((
                 {"module": module_name, "config": config_entries}
-                for module_name, config_entries in self.config_per_module),
+                for module_name, config_entries in self.config_per_module.items()),
                 file,
                 default_flow_style=False)
 
