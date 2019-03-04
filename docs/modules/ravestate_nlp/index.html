@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>NLP - Ravestate</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "NLP";
+    var mkdocs_page_input_path = "modules/ravestate_nlp/README.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Ravestate</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Modules</span>
+    <ul class="subnav">
+                <li class=" current">
+                    
+    <a class="current" href="./">NLP</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#nlp">NLP</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#extracted-features">Extracted Features</a></li>
+        
+            <li><a class="toctree-l4" href="#using-the-features">Using the Features</a></li>
+        
+            <li><a class="toctree-l4" href="#using-the-triples-for-sentence-analysis">Using the Triples for Sentence Analysis</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../ravestate_verbaliser/">Verbaliser</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../ravestate_telegramio/">TelegramIO</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../ravestate_akinator/">Akinator</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">API</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../">Modules</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../states/">States</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../properties/">Properties</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../context/">Context</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../config/">Configuration</a>
+                </li>
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Ravestate</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Modules &raquo;</li>
+        
+      
+    
+    <li>NLP</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <pre><code>       _        
+      | |       
+ ____ | | ____  
+|  _ \| ||  _ \ 
+| | | | || |_| |
+|_| |_|\_)  __/ 
+         |_|                                                                 
+</code></pre>
+
+<h2 id="nlp">NLP</h2>
+<p>The natural language processing (NLP) module enables Roboy to process and understand the human language. 
+That way he can interpret the meaning of the detected sentences.<br />
+We use a free, open-source NLP library for advanced NLP in Python: <a href="https://spacy.io/">spaCy</a> </p>
+<h3 id="extracted-features">Extracted Features</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Ravestate Properties/Signals</th>
+<th>Description</th>
+<th>Example Sentence: 'Revolutions need six fancy chickens!'</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tokenization</td>
+<td>"nlp:tokens" (property)</td>
+<td>Segmenting text into words, punctuation marks etc.</td>
+<td>'Revolutions', 'need', 'six', 'fancy', 'chickens', '!'</td>
+</tr>
+<tr>
+<td>Part-of-Speech (POS) Tagging</td>
+<td>"nlp:postags" (property)</td>
+<td>Assigning word types to tokens</td>
+<td>'NOUN', 'VERB', 'NUM', 'ADJ', 'NOUN', 'PUNCT'</td>
+</tr>
+<tr>
+<td>Detailed POS Tag</td>
+<td>"nlp:tags" (property)</td>
+<td>Fine-grained part-of-speech</td>
+<td>'Revolutions' has the tag: 'NNS', which stand for: noun, plural <br> 'need' has the tag: 'VBP', which stands for: verb, non-3rd person singular present <br> <a href="https://spacy.io/api/annotation#pos-tagging">List</a>  of POS tags</td>
+</tr>
+<tr>
+<td>Lemmatization</td>
+<td>"nlp:lemmas" (property)</td>
+<td>Assigning the base forms of words</td>
+<td>'Revolutions' has the lemma: 'revolution' <br>  'was' would have the lemma: 'be'</td>
+</tr>
+<tr>
+<td>Named Entity Recognition (NER)</td>
+<td>"nlp:ner" (property)</td>
+<td>Labelling "real-world" objects</td>
+<td>'six' has the NER: 'CARDINAL', which are numerals that do not fall under another type <br>  <a href="https://spacy.io/api/annotation#named-entities">List</a>  of NERs</td>
+</tr>
+<tr>
+<td>Dependency Parsing</td>
+<td></td>
+<td>Assigning syntactic dependency labels, describing the relations between individual tokens</td>
+<td>'six' is a 'nummod' (numeric modifier) for 'chickens' <br> <a href="https://spacy.io/api/annotation#dependency-parsing">List</a>  of dependencies <br> <a href="https://explosion.ai/demos/displacy">displaCy</a> Dependency Visualizer</td>
+</tr>
+<tr>
+<td>Triple Extraction</td>
+<td>"nlp:triples" (property)</td>
+<td>A triple consists of subject, predicate, object of sentence</td>
+<td>Triple: subject: 'Revolutions', predicate: 'need', object: 'chickens'</td>
+</tr>
+<tr>
+<td>About Roboy</td>
+<td>"nlp:roboy"  (property)</td>
+<td>Detecting whether sentence is about Roboy</td>
+<td>'you', 'roboy', 'robot', 'roboboy', ...</td>
+</tr>
+<tr>
+<td>Yes-No</td>
+<td>"nlp:yesno" (property)</td>
+<td>Detecting answers to yes-no questions</td>
+<td>Checking for 'yes', 'no', 'i don't know', 'probably', 'probably not' and synonyms of these</td>
+</tr>
+<tr>
+<td>Sentence Type: Question</td>
+<td>"nlp:is-question" (signal)</td>
+<td>Detecting whether sentence is a question</td>
+<td></td>
+</tr>
+<tr>
+<td>Play Game</td>
+<td>"nlp:intent-play" (signal)</td>
+<td>Interlocutor wants to play a game</td>
+<td>input: "I want to play", "I like games" or something similar</td>
+</tr>
+</tbody>
+</table>
+<p>Additional features can be added and published to the system. All existing features can be found <a href="__init__.py">here</a>.</p>
+<h3 id="using-the-features">Using the Features</h3>
+<h4 id="react-to-property-change">React to Property Change</h4>
+<p>Each feature is stored in a ravestate property. 
+A state which wants to access a property needs read permissions for that property.</p>
+<p>Example: State that reads the "yesno" property</p>
+<pre><code class="python">@state(
+    cond=s(&quot;nlp:yesno:changed&quot;),  # state reacts to a change in the 'yesno' property
+    read=&quot;nlp:yesno&quot;,  # state is allowed to read the 'yesno' property
+    write=&quot;rawio:out&quot;)  # state is allowed to write to the output property
+def postive_chicken(ctx: ContextWrapper):
+    if ctx[&quot;nlp:yesno&quot;] == &quot;yes&quot;:
+        ctx[&quot;rawio:out&quot;] = &quot;You seem to be a positive chicken!&quot;
+
+</code></pre>
+
+<h4 id="react-to-signal-emission">React to Signal Emission</h4>
+<p>For 'Sentence Type: Question' a signal is emitted.</p>
+<p>Example: State that reacts to the "is-question" signal </p>
+<pre><code class="python">@state(
+    cond=s(&quot;nlp:is-question&quot;),  # state reacts to the is-question signal
+    write=&quot;rawio:out&quot;)  # state is allowed to write to the output property 
+def curious_chicken(ctx: ContextWrapper):
+    ctx[&quot;rawio:out&quot;] = &quot;You seem to ask a lot of question, chicken!&quot;
+
+</code></pre>
+
+<h3 id="using-the-triples-for-sentence-analysis">Using the Triples for Sentence Analysis</h3>
+<p>The triple extraction is done in <a href="extract_triples.py">extract_triples.py</a> by using the dependency tree of the sentence. 
+A dependency tree shows the relation between the words of a sentence.
+The finite verb (predicate) is the structural center of the sentence and therefor of the tree.
+So starting with the predicate the algorithm searches through the dependency tree to find subject and object.</p>
+<h4 id="analyzing-a-sentence">Analyzing a Sentence</h4>
+<p>Example: 'Chickens like revolutions' reaction state
+Triple: subject: 'Chickens', predicate: 'like', object: 'revolutions'</p>
+<pre><code class="python">@state(
+    cond=s(&quot;nlp:triples:changed&quot;),  # state reacts to a change in the 'triples' property
+    read=&quot;nlp:triples&quot;,  # state is allowed to read the 'triples' property
+    write=&quot;rawio:out&quot;)  # state is allowed to write to the output chanel 
+def postive_chicken(ctx: ContextWrapper):
+    triple = ctx[&quot;nlp:triples&quot;][0]  # gives you a Triple object
+    if triple.match_either_lemma(subj={&quot;chicken&quot;, &quot;dinosaur&quot;}):  
+        # match_either_lemma() is a method in the Triple class 
+        # returns true when subj, pred or obj have the desired value
+        ctx[&quot;rawio:out&quot;] = &quot;You said something about a chicken, i like chickens!&quot;
+    # check predicate and object correspondingly
+
+</code></pre>
+
+<h4 id="happy-language-processing-to-all-chickens-out-there">Happy language processing to all chickens out there!</h4>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../ravestate_verbaliser/" class="btn btn-neutral float-right" title="Verbaliser">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../.." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../.." style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../ravestate_verbaliser/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>
