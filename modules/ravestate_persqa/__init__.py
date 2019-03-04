@@ -7,7 +7,7 @@ from ravestate_verbaliser import verbaliser
 import ravestate_ontology
 
 from os.path import realpath, dirname, join
-from typing import Dict
+from typing import Dict, Set
 import random
 
 from scientio.ontology.ontology import Ontology
@@ -53,6 +53,13 @@ with Module(name="persqa") as mod:
         allow_push=False,
         is_flag_property=True)
 
+    follow_up = PropertyBase(
+        name="follow_up",
+        default_value="",
+        always_signal_changed=True,
+        allow_pop=False,
+        allow_push=False)
+
 
     @state(cond=s("interloc:all:pushed"),
            write="interloc:all",
@@ -95,27 +102,50 @@ with Module(name="persqa") as mod:
         # TODO only trigger when also bored?
         @state(cond=s("idle:bored", max_age=-1, detached=True),
                write=("rawio:out", "persqa:predicate", "persqa:subject"),
-               read="interloc:all")
+               read="interloc:all",
+               weight=2,
+               cooldown=30.,
+               signal_name="follow-up"
+               )
         def small_talk(ctx: ContextWrapper):
+            sess: Session = ravestate_ontology.get_session()
             interloc: Node = ctx[interloc_path]
             relationships = interloc.get_relationships()
             key = find_empty_entry(relationships)
+            ctx["persqa:subject"] = interloc_path
             if key:
                 ctx["persqa:predicate"] = key
-                output = verbaliser.get_random_question(key)
+                ctx["rawio:out"] = verbaliser.get_random_question(key)
             else:
                 key = random.sample(PREDICATE_SET.difference(follow_ups), 1)[0]
                 follow_ups.add(key)
                 ctx["persqa:predicate"] = key
-                output = verbaliser.get_random_followup_question(key)
+                subject_node: Node = ctx[interloc_path]
+                relationship_ids: Set[int] = subject_node.get_relationships(key)
+                relationship_node = Node()
+                relationship_node.set_id(id=relationship_ids[0])
+                node_list = sess.retrieve(relationship_node)
+                ctx["rawio:out"] = verbaliser.get_random_followup_question(key) % node_list[0].get_name()
                 logger.error(f"FOLLOW_UP: Intent = {key}")
-            ctx["rawio:out"] = output
-            ctx["persqa:subject"] = interloc_path
+                return Emit()
 
-        @state(cond=s("nlp:triples:changed"),
-               read=("nlp:triples", "nlp:yesno", "persqa:subject"))
+        @state(cond=s("nlp:triples:changed") & s("persqa:follow-up"),
+               write=("rawio:out", "persqa:predicate"),
+               read=("nlp:yesno", "persqa:predicate"))
         def fup_react(ctx: ContextWrapper):
-            logger.error("I am in FU")
+            sess: Session = ravestate_ontology.get_session()
+            subject_node: Node = ctx[interloc_path]
+            key = ctx["persqa:predicate"]
+            relationship_ids: Set[int] = subject_node.get_relationships(key)
+            relationship_node = Node()
+            relationship_node.set_id(id=relationship_ids[0])
+            node_list = sess.retrieve(relationship_node)
+            if ctx["nlp:yesno"] == "no":
+                node_list[0].set_name("")
+                ctx["rawio:out"] = "Oh, I see!"
+            elif ctx["nlp:yesno"] == "yes":
+                ctx["rawio:out"] = verbaliser.get_random_followup_answer(key) % node_list[0].get_name()
+                ctx["persqa:predicate"] = None
 
         mod.add(small_talk)
         ctx.add_state(small_talk)
@@ -140,9 +170,6 @@ with Module(name="persqa") as mod:
                 ctx["persqa:answer"] = ctx["nlp:tokens"][0]
             elif len(ctx["nlp:tokens"]) == 2:
                 ctx["persqa:answer"] = "%s %s" % (ctx["nlp:tokens"][0], ctx["nlp:tokens"][1])
-            if ctx["nlp:yesno"] == "no":
-                pass
-        # TODO check if interloc only says no
 
 
     @state(cond=s("persqa:answer:changed"),
