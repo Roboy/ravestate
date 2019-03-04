@@ -55,6 +55,29 @@
           
             <li class="toctree-l1">
 		
+    <span class="caption-text">Modules</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_nlp/">NLP</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_verbaliser/">Verbaliser</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_telegramio/">TelegramIO</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_akinator/">Akinator</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
     <span class="caption-text">API</span>
     <ul class="subnav">
                 <li class="">
@@ -156,11 +179,16 @@ This signal is emitted, when the Property is written to,
  (<code>min_age</code>, <code>max_age</code>, <code>detached</code>) are supported.</p>
 <h2 id="ravestate.property.PropertyBase">PropertyBase</h2>
 
-<pre><code class="python">PropertyBase(self, *, name='', allow_read=True, allow_write=True, allow_push=True, allow_pop=True, default_value=None, always_signal_changed=False, is_flag_property=False)
+<pre><code class="python">PropertyBase(self, *, name='', allow_read=True, allow_write=True, allow_push=True, allow_pop=True, default_value=None, always_signal_changed=False, is_flag_property=False, wipe_on_changed=True)
 </code></pre>
 
 <p>Base class for context properties. Controls read/write/push/pop/delete permissions,
 property name basic impls. for the property value, parent/child mechanism.</p>
+<p><em>Example (Creating a module containing a property named my_property):</em></p>
+<pre><code class="python">with Module(name=&quot;my_module&quot;):
+    my_property = PropertyBase(name=&quot;my_property&quot;)
+</code></pre>
+
 <h3 id="ravestate.property.PropertyBase.set_parent_path">set_parent_path</h3>
 
 <pre><code class="python">PropertyBase.set_parent_path(self, path)

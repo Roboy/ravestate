@@ -28,6 +28,11 @@ generate:
 # in the documentation. The path must be relative to current working directory.
 pages:
 - Home: index.md << README.md
+- Modules:
+  - NLP: modules/ravestate_nlp/README.md << modules/ravestate_nlp/README.md
+  - Verbaliser: modules/ravestate_verbaliser/README.md << modules/ravestate_verbaliser/README.md
+  - TelegramIO: modules/ravestate_telegramio/README.md << modules/ravestate_telegramio/README.md
+  - Akinator: modules/ravestate_akinator/README.md << modules/ravestate_akinator/README.md
 - API:
   - Modules: modules.md
   - States: states.md

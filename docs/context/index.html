@@ -55,6 +55,29 @@
           
             <li class="toctree-l1">
 		
+    <span class="caption-text">Modules</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_nlp/">NLP</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_verbaliser/">Verbaliser</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_telegramio/">TelegramIO</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_akinator/">Akinator</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
     <span class="caption-text">API</span>
     <ul class="subnav">
                 <li class="">
@@ -137,14 +160,50 @@
 <p>Obtain the shutdown signal, which is fired once when <code>Context.shutdown()</code> is called.<br>
 <strong>Hint:</strong> All key-word arguments of <code>constraint.s</code>(...)
  (<code>min_age</code>, <code>max_age</code>, <code>detached</code>) are supported.</p>
-<h2 id="ravestate.context.Context">Context</h2>
+<h2 id="ravestate.context.create_and_run_context">create_and_run_context</h2>
 
-<pre><code class="python">Context(self, *arguments)
+<pre><code class="python">create_and_run_context(*args, runtime_overrides=None)
 </code></pre>
 
-<h3 id="ravestate.context.Context.emit">emit</h3>
+<p>Creates a new Context with the given parameters and runs it</p>
+<h2 id="ravestate.context.Context">Context</h2>
 
-<pre><code class="python">Context.emit(self, signal: ravestate.constraint.Signal, parents: Set[ravestate.spike.Spike] = None, wipe: bool = False) -&gt; None
+<pre><code class="python">Context(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None)
+</code></pre>
+
+<h3 id="ravestate.context.Context.core_module_name">core_module_name</h3>
+
+<p>str(object='') -&gt; str
+str(bytes_or_buffer[, encoding[, errors]]) -&gt; str</p>
+<p>Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.<strong>str</strong>() (if defined)
+or repr(object).
+encoding defaults to sys.getdefaultencoding().
+errors defaults to 'strict'.
+<h3 id="ravestate.context.Context.import_modules_config">import_modules_config</h3></p>
+<p>str(object='') -&gt; str
+str(bytes_or_buffer[, encoding[, errors]]) -&gt; str</p>
+<p>Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.<strong>str</strong>() (if defined)
+or repr(object).
+encoding defaults to sys.getdefaultencoding().
+errors defaults to 'strict'.
+<h3 id="ravestate.context.Context.tick_rate_config">tick_rate_config</h3></p>
+<p>str(object='') -&gt; str
+str(bytes_or_buffer[, encoding[, errors]]) -&gt; str</p>
+<p>Create a new string object from the given object. If encoding or
+errors is specified, then the object must expose a data buffer
+that will be decoded using the given encoding and error handler.
+Otherwise, returns the result of object.<strong>str</strong>() (if defined)
+or repr(object).
+encoding defaults to sys.getdefaultencoding().
+errors defaults to 'strict'.
+<h3 id="ravestate.context.Context.emit">emit</h3></p>
+<pre><code class="python">Context.emit(self, signal: ravestate.constraint.Signal, parents: Set[ravestate.spike.Spike] = None, wipe: bool = False, payload: Any = None) -&gt; None
 </code></pre>
 
 <p>Emit a signal to the signal processing loop. <em>Note:</em>
@@ -159,6 +218,9 @@
 <li>
 <p><code>wipe</code>: Boolean to control, whether <code>wipe</code>(signal) should be called
  before the new spike is created.</p>
+</li>
+<li>
+<p><code>payload</code>: Value that should be embedded in the new spike.</p>
 </li>
 </ul>
 <h3 id="ravestate.context.Context.wipe">wipe</h3>
@@ -338,7 +400,7 @@ Note: Not thread-safe, sync must be guaranteed by caller.</p>
 
 <h2 id="ravestate.spike.Spike">Spike</h2>
 
-<pre><code class="python">Spike(self, *, sig: str, parents: Set[ForwardRef('Spike')] = None, consumable_resources: Set[str] = None)
+<pre><code class="python">Spike(self, *, sig: str, parents: Set[ForwardRef('Spike')] = None, consumable_resources: Set[str] = None, payload: Any = None)
 </code></pre>
 
 <p>This class encapsulates a single spike, to track ... <br>
@@ -417,6 +479,12 @@ After this function is called, the spike should be cleaned up by GC.</p>
 </code></pre>
 
 <p>Check, whether this spike has been wiped, and should therefore not be acquired anymore.</p>
+<h3 id="ravestate.spike.Spike.payload">payload</h3>
+
+<pre><code class="python">Spike.payload(self) -&gt; Any
+</code></pre>
+
+<p>Get payload for this spike. The payload is an arbitrary value passed in <code>Context.emit()</code>.</p>
 <h1 id="ravestate.activation">ravestate.activation</h1>
 
 <h2 id="ravestate.activation.Activation">Activation</h2>
@@ -506,6 +574,13 @@ This is called by ... <br>
 <ul>
 <li><code>give_me_up</code>: Causal group that wishes to be de-referenced by this activation.</li>
 </ul>
+<h3 id="ravestate.activation.Activation.is_pressured">is_pressured</h3>
+
+<pre><code class="python">Activation.is_pressured(self)
+</code></pre>
+
+<p>Called by context, to figure out whether the activation is pressured,
+ and therefore the idle:bored signal should be emitted.</p>
 <h3 id="ravestate.activation.Activation.spiky">spiky</h3>
 
 <pre><code class="python">Activation.spiky(self) -&gt; bool
@@ -514,6 +589,12 @@ This is called by ... <br>
 <p>Returns true, if the activation has acquired any spikes at all.</p>
 <p><strong>Returns:</strong> True, if any of this activation's constraint's
  signal is referencing a spike.</p>
+<h3 id="ravestate.activation.Activation.spikes">spikes</h3>
+
+<pre><code class="python">Activation.spikes(self) -&gt; Generator[ravestate.spike.Spike, NoneType, NoneType]
+</code></pre>
+
+<p>Returns iterable for all the spikes currently acquired by the activation.</p>
 <h3 id="ravestate.activation.Activation.update">update</h3>
 
 <pre><code class="python">Activation.update(self) -&gt; bool

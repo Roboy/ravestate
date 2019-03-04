@@ -18,22 +18,22 @@ module: core
 config:
   tickrate: 10
   import:
-    - ravestate_interloc
+    - ravestate_rawio
     - ravestate_conio
-    - ravestate_wildtalk
-    - ravestate_nlp
-    - ravestate_hibye
-    - ravestate_roboyqa
-    - ravestate_genqa
-    - ravestate_idle
-    - ravestate_akinator
-    # TODO: Fillers sometimes overwrite good responses by race condition.
+    - ravestate_roboyio
     # - ravestate_fillers
+#    - ravestate_wildtalk
+    - ravestate_hibye
+#    - ravestate_roboyqa
+#    - ravestate_genqa
+    - ravestate_stalker
+#    - ravestate_akinator
+    - ravestate_nlp
 
 ---
 module: genqa
 config:
-  drqa_server_address: "http://localhost:5000"
+  drqa_server_address: "http://35.246.158.89:5000/"
   roboy_answer_sanity: 1000
 
 ---

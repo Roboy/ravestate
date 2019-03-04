@@ -10,7 +10,7 @@ def test_console_input(context_wrapper_fixture: Context):
 
 def test_console_output(capsys):
     expected = 'test'
-    test_input = {"rawio:out": expected}
+    test_input = {"rawio:out:changed": expected}
     console_output(test_input)
     captured = capsys.readouterr()
     assert captured.out == f"{expected}\n"

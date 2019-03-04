@@ -19,9 +19,7 @@ def test_telegram_run(context_wrapper_fixture: Context):
 
 
 def test_telegram_output(context_wrapper_fixture: ContextWrapper):
-    with LogCapture() as capture:
-        telegram_output(context_wrapper_fixture)
-        expected = 'telegram-token is not set. Shutting down telegramio'
-        capture.check_present((f"{FILE_NAME}", '\x1b[1;31mERROR\x1b[0m', f"{PREFIX} {expected}"))
-        # TODO: Write test for token present
+    # Master Process should return delete for telegram output
+    assert isinstance(telegram_output(context_wrapper_fixture), Delete)
+    # TODO: Write test for token present
 

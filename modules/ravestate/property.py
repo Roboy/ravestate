@@ -49,6 +49,12 @@ class PropertyBase:
     """
     Base class for context properties. Controls read/write/push/pop/delete permissions,
     property name basic impls. for the property value, parent/child mechanism.
+
+    _Example (Creating a module containing a property named my_property):_
+    ```python
+    with Module(name="my_module"):
+        my_property = PropertyBase(name="my_property")
+    ```
     """
 
     def __init__(
@@ -60,7 +66,8 @@ class PropertyBase:
             allow_pop=True,
             default_value=None,
             always_signal_changed=False,
-            is_flag_property=False):
+            is_flag_property=False,
+            wipe_on_changed=True):
 
         self.name = name
         self.allow_read = allow_read
@@ -73,6 +80,7 @@ class PropertyBase:
         self.parent_path: str = ""
         self.always_signal_changed = always_signal_changed
         self.is_flag_property = is_flag_property
+        self.wipe_on_changed = wipe_on_changed
 
         # add property to module in current `with Module(...)` clause
         module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)

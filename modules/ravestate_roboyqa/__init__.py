@@ -21,7 +21,7 @@ ROBOY_NODE_CONF_KEY = "roboy_node_id"
 
 with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
 
-    @state(cond=s("idle:bored"), write="rawio:out")
+    @state(cond=s("idle:bored"), write="rawio:out", weight=1.1, cooldown=30.)
     def hello_world_roboyqa(ctx):
         ctx["rawio:out"] = "Ask me something about myself!"
 
