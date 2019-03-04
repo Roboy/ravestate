@@ -74,8 +74,7 @@ with Module(name="nlp"):
         logger.info(f"[NLP:roboy]: {nlp_roboy}")
 
         nlp_yesno = nlp_doc._.yesno
-        if nlp_yesno != "_":
-            ctx["nlp:yesno"] = nlp_yesno
+        ctx["nlp:yesno"] = nlp_yesno
         logger.info(f"[NLP:yesno]: {nlp_yesno}")
 
 
@@ -89,12 +88,6 @@ with Module(name="nlp"):
     @state(signal_name="is-question", read="nlp:triples")
     def nlp_is_question_signal(ctx):
         if ctx["nlp:triples"][0].is_question():
-            return Emit()
-        return False
-
-    @state(signal_name="yes-no", read="nlp:yesno")
-    def nlp_yes_no_signal(ctx):
-        if ctx["nlp:yesno"] != "_":
             return Emit()
         return False
 
