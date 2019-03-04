@@ -14,7 +14,7 @@ from ravestate.state import State
 from ravestate.property import PropertyBase
 from ravestate.iactivation import IActivation
 from ravestate.activation import Activation
-from ravestate import argparse
+from ravestate import argparser
 from ravestate.config import Configuration
 from ravestate.constraint import s, Signal, Conjunct, Disjunct, ConfigurableAge
 from ravestate.spike import Spike
@@ -116,13 +116,13 @@ class Context(IContext):
         Construct a context from command line arguments.
 
         * `arguments`: A series of command line arguments which can be parsed
-         by the ravestate command line parser (see argparse.py).
+         by the ravestate command line parser (see argparser.py).
         * `runtime_overrides`: A list of config overrides in the form of (modulename, key, value).
          Can be used to set config entries to values other than strings or lists like in command line arguments.
          An example use-case is a module that starts a new context (in separate process) and can set
          config entries to Connection Objects to enable communication between old and new context.
         """
-        modules, overrides, config_files = argparse.handle_args(*arguments)
+        modules, overrides, config_files = argparser.handle_args(*arguments)
         self._config = Configuration(config_files)
         self._core_config = {
             self.import_modules_config: [],
