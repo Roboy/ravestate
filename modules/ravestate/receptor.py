@@ -16,19 +16,20 @@ def receptor(*, ctx_wrap: ContextWrapper, write: Union[str, Tuple[str]]):
 
     * `write`: The property, or tuple of properties, which are going to be written.
 
-    Example:
-        # Module that outputs "Don't Panic" one minute after startup
-        # Because a receptor is used, the OUTPUT_PROPERTY is not blocked the whole time
-        with Module(name="my_module"):
-            @state(cond=startup())
-            def after_startup(context):
-                @receptor(ctx_wrap=context, write=OUTPUT_PROPERTY)
-                def dont_panic(ctx_write):
-                    ctx_write[OUTPUT_PROPERTY] = "Don't Panic"
+    _Example:_
+    ```python
+    # Module that outputs "Don't Panic" one minute after startup
+    # Because a receptor is used, the OUTPUT_PROPERTY is not blocked the whole time
+    with Module(name="my_module"):
+        @state(cond=startup())
+        def after_startup(context):
+            @receptor(ctx_wrap=context, write=OUTPUT_PROPERTY)
+            def dont_panic(ctx_write):
+                ctx_write[OUTPUT_PROPERTY] = "Don't Panic"
 
-                sleep(60)
-                dont_panic()
-
+            sleep(60)
+            dont_panic()
+    ```
     """
 
     def receptor_decorator(action):

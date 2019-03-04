@@ -211,11 +211,13 @@ def state(*,
     write to a certain set of properties (calling write, push, pop),
     and read from certain properties (calling read).
 
-    Example (Module that outputs "Don't Panic" after startup):
-        with Module(name="my_module"):
-            @state(cond=startup())
-            def after_startup(context, write=OUTPUT_PROPERTY):
-                context[OUTPUT_PROPERTY] = "Don't Panic"
+    _Example (Module that outputs "Don't Panic" after startup):_
+    ```python
+    with Module(name="my_module"):
+        @state(cond=startup())
+        def after_startup(context, write=OUTPUT_PROPERTY):
+            context[OUTPUT_PROPERTY] = "Don't Panic"
+    ```
     """
     def state_decorator(action):
         nonlocal signal_name, write, read, cond
