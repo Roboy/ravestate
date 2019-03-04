@@ -49,6 +49,10 @@ class PropertyBase:
     """
     Base class for context properties. Controls read/write/push/pop/delete permissions,
     property name basic impls. for the property value, parent/child mechanism.
+
+    Example (Creating a module containing a property named my_property):
+        with Module(name="my_module", config={"paramA": 42}):
+            my_property = PropertyBase(name="my_property")
     """
 
     def __init__(

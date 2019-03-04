@@ -163,7 +163,11 @@ class Signal(Constraint):
 
 class Conjunct(Constraint):
     """
-    Class that represents a Conjunction of Signals
+    Class that represents a Conjunction of Signals.
+    Can be constructed using an overloaded & operator.
+
+    Example:
+        signal_A & signal_B
     """
     _signals: Set[Signal]
     _hash: Tuple[str]
@@ -245,6 +249,13 @@ class Conjunct(Constraint):
 class Disjunct(Constraint):
     """
     Class that represents a Disjunction of Conjunctions
+    Can be constructed using an overloaded | operator.
+
+    Examples:
+        conjunction_A | conjunction_B
+
+        (signal_A & signal_B) | (signal_C & signal_D)
+
     """
     _conjunctions: Set[Conjunct]
 
