@@ -113,21 +113,24 @@ with Module(name="persqa") as mod:
             relationships = interloc.get_relationships()
             key = find_empty_entry(relationships)
             ctx["persqa:subject"] = interloc_path
-            if key:
-                ctx["persqa:predicate"] = key
-                ctx["rawio:out"] = verbaliser.get_random_question(key)
+            if not ctx["persqa:predicate"]:
+                if key:
+                    ctx["persqa:predicate"] = key
+                    ctx["rawio:out"] = verbaliser.get_random_question(key)
+                else:
+                    key = random.sample(PREDICATE_SET.difference(follow_ups), 1)[0]
+                    follow_ups.add(key)
+                    ctx["persqa:predicate"] = key
+                    subject_node: Node = ctx[interloc_path]
+                    relationship_ids: Set[int] = subject_node.get_relationships(key)
+                    relationship_node = Node()
+                    relationship_node.set_id(id=list(relationship_ids)[0])
+                    node_list = sess.retrieve(relationship_node)
+                    ctx["rawio:out"] = verbaliser.get_random_followup_question(key) % node_list[0].get_name()
+                    logger.error(f"FOLLOW_UP: Intent = {key}")
+                    return Emit()
             else:
-                key = random.sample(PREDICATE_SET.difference(follow_ups), 1)[0]
-                follow_ups.add(key)
-                ctx["persqa:predicate"] = key
-                subject_node: Node = ctx[interloc_path]
-                relationship_ids: Set[int] = subject_node.get_relationships(key)
-                relationship_node = Node()
-                relationship_node.set_id(id=relationship_ids[0])
-                node_list = sess.retrieve(relationship_node)
-                ctx["rawio:out"] = verbaliser.get_random_followup_question(key) % node_list[0].get_name()
-                logger.error(f"FOLLOW_UP: Intent = {key}")
-                return Emit()
+                ctx["rawio:out"] = verbaliser.get_random_question(ctx["persqa:predicate"])
 
         @state(cond=s("nlp:triples:changed") & s("persqa:follow-up"),
                write=("rawio:out", "persqa:predicate"),
@@ -138,7 +141,7 @@ with Module(name="persqa") as mod:
             key = ctx["persqa:predicate"]
             relationship_ids: Set[int] = subject_node.get_relationships(key)
             relationship_node = Node()
-            relationship_node.set_id(id=relationship_ids[0])
+            relationship_node.set_id(id=list(relationship_ids)[0])
             node_list = sess.retrieve(relationship_node)
             if ctx["nlp:yesno"] == "no":
                 node_list[0].set_name("")
