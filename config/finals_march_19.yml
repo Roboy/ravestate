@@ -16,6 +16,7 @@ module: core
 config:
   tickrate: 10
   import:
+    - ravestate_rawio
     - ravestate_akinator
     - ravestate_conio
     # - ravestate_fillers
@@ -26,7 +27,6 @@ config:
     - ravestate_nlp
     - ravestate_ontology
     - ravestate_roboyqa
-    - ravestate_rawio
     - ravestate_roboy_ad_demo
     - ravestate_roboyio
     - ravestate_ros2
