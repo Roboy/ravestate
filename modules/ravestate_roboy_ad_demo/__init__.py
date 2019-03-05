@@ -2,7 +2,7 @@ from ravestate.context import startup
 from ravestate.module import Module
 from ravestate.property import PropertyBase
 from ravestate.wrappers import ContextWrapper
-from ravestate.state import state
+from ravestate.state import state, Resign
 from ravestate.constraint import s
 from ravestate_nlp.triple import Triple
 
@@ -40,6 +40,8 @@ with Module(name="ad_demo", config=CONFIG) as mod:
             triples = ctx["nlp:triples"]
             if triples[0].match_either_lemma(pred={"pick"}):
                 ctx[publish_pickup_requested.id()] = String(data="Pick me up!")
+            else:
+                return Resign()
 
 
         @state()
@@ -48,6 +50,16 @@ with Module(name="ad_demo", config=CONFIG) as mod:
             # voices: "Hop on!"
             pass
 
+        @state(cond=s("nlp:triples:changed"),
+               read="nlp:triples")
+        def start_driving(ctx: ContextWrapper):
+            # Trigger phrase: "Start driving." or "Go."
+            triples = ctx["nlp:triples"]
+            if triples[0].match_either_lemma(pred={"drive", "start", "go"}):
+                # Msg lets go
+                pass
+            else:
+                return Resign()
 
         @state()
         def arrived_at_drop_off_point(ctx: ContextWrapper):
