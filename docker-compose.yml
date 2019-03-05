@@ -12,9 +12,9 @@ services:
     environment:
       - PYTHONPATH=$PYTHONPATH:/ravestate/modules
       - PYTHONUNBUFFERED=1
-    #entrypoint: /ros2_source_entrypoint.sh
+    #entrypoint: /entrypoint.sh
     # for development use "command: bash" and type in the rasta command in an attached console.
     # This enables "hot reload" when restarting rasta in the running container because the source directory is mounted
-    command: bash #python3 /ravestate/rasta ravestate_conio ravestate_hello_world
+    command: bash  # python3 -m ravestate -f /ravestate/config/finals_march_19.yml
     tty: true
     stdin_open: true
