@@ -4,6 +4,7 @@ from ravestate.property import PropertyBase
 from ravestate.wrappers import ContextWrapper
 from ravestate.state import state
 from ravestate.constraint import s
+from ravestate_nlp.triple import Triple
 
 from ravestate_ros2.ros2_properties import Ros2PubProperty, Ros2SubProperty
 
@@ -35,9 +36,10 @@ with Module(name="ad_demo", config=CONFIG) as mod:
         @state(cond=s("nlp:triples:changed"),
                read="nlp:triples", write=publish_pickup_requested.id())
         def pickup_requested(ctx: ContextWrapper):
-            # recognise trigger phrase
-            # signals go to AD
-            ctx[publish_pickup_requested.id()] = String(data="Pick me up!")
+            # Trigger phrase: "Pick me up."
+            triples = ctx["nlp:triples"]
+            if triples[0].match_either_lemma(pred={"pick"}):
+                ctx[publish_pickup_requested.id()] = String(data="Pick me up!")
 
 
         @state()
