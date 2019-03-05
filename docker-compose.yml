@@ -1,0 +1,20 @@
+version: '2.1'
+
+services:
+  ravestate:
+    image: ravestate-leia-ros2-image
+    container_name: ravestate-ros2-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/ravestate
+    environment:
+      - PYTHONPATH=$PYTHONPATH:/ravestate/modules
+      - PYTHONUNBUFFERED=1
+    #entrypoint: /ros2_source_entrypoint.sh
+    # for development use "command: bash" and type in the rasta command in an attached console.
+    # This enables "hot reload" when restarting rasta in the running container because the source directory is mounted
+    command: bash #python3 /ravestate/rasta ravestate_conio ravestate_hello_world
+    tty: true
+    stdin_open: true
