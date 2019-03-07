@@ -39,10 +39,6 @@ config:
 ---
 module: ad_demo
 config:
-  ros2-pickup-requested-topic: "/ros2_pickup_requested"
-  ros2-start-driving-topic: "/ros2_start_driving"
-  ros2-arrived-at-pickup-topic: "/ros2_arrived_at_pickup"
-  ros2-arrived-at-dropoff-topic: "/ros2_arrived_at_dropoff"
   ros2-handshake-motion-topic: "/roboy_plexus/ReplayTrajectory"
   handshake-motion-name: "HandshakeMotion"
 ---
