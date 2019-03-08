@@ -1,0 +1,12 @@
+#!python3
+
+import sys
+
+from ravestate.context import Context
+from ravestate_ui.service import advertise
+
+ctx = Context(*sys.argv[1:])
+ctx.run()
+
+# TODO: Make sure that UI is cleanly integrated as a ravestate module.
+advertise(ctx=ctx)

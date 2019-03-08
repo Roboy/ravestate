@@ -1,5 +1,6 @@
 argparse
 pyyaml<4.0
+watson-developer-cloud>=2.2.6
 python-telegram-bot
 pyyaml-include
 roboy_parlai>=0.1.post3
