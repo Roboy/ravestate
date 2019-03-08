@@ -102,9 +102,9 @@ with Module(name="ad_demo", config=CONFIG) as mod:
             if msg:
                 ctx[raw_out.id()] = "Ah. I see you are very good at handshaking."
             else:
-                return Resign
+                return Resign()
 
-        @state(cond=raw_out.changed_signal(), write=publish_handshake_motion.id())
+        @state(cond=s("stalker:lennart"), write=publish_handshake_motion.id())
         def lennart_recognized(ctx: ContextWrapper):
             # check if it is lennart, greets lennart (this is done in stalker) -> TODO signal lennarts-here?
             # triggers handshake: topic ReplayTrajectory which takes a string as a name
