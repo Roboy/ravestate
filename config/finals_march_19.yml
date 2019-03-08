@@ -31,7 +31,7 @@ config:
     - ravestate_roboyio
     - ravestate_ros2
     # - ravestate_sendpics
-    # - ravestate_stalker
+    - ravestate_stalker
     - ravestate_telegramio
     - ravestate_verbaliser
     - ravestate_wildtalk
