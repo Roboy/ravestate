@@ -2,7 +2,7 @@ version: '2.1'
 
 services:
   ravestate:
-    image: ravestate-leia-ros2-image
+    image: bridge_ravestate # ravestate-leia-ros2-image
     container_name: ravestate-ros2-container
     build:
       context: .
