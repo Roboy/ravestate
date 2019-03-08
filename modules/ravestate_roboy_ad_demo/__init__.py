@@ -9,7 +9,7 @@ from ravestate_nlp.triple import Triple
 from ravestate_rawio import output as raw_out
 from ravestate_ros2.ros2_properties import Ros2PubProperty, Ros2SubProperty
 
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -17,6 +17,7 @@ logger = get_logger(__name__)
 
 DR_TO_AD_TOPIC = "/dr_to_ad"
 AD_TO_DR_TOPIC = "/ad_to_dr"
+SKIN_TO_DR_TOPIC = "/skin_trigger"
 
 PICKUP_REQUESTED_MSG = "pick_up_requested"
 START_DRIVING_MSG = "start_driving"
@@ -51,10 +52,15 @@ with Module(name="ad_demo", config=CONFIG) as mod:
         publish_handshake_motion = Ros2PubProperty(name="publish_handshake_motion",
                                                    topic=ctx.conf(key=ROS2_HANDSHAKE_MOTION_TOPIC_CONFIG),
                                                    msg_type=String)
+        subscribe_skin_to_dr = Ros2PubProperty(name="subscribe_skin_to_dr",
+                                               topic=SKIN_TO_DR_TOPIC,
+                                               msg_type=Bool)
+
         # add the ros2 properties to context
         ctx.push(ros2_properties_parent.id(), publish_dr_to_ad)
         ctx.push(ros2_properties_parent.id(), subscribe_ad_to_dr)
         ctx.push(ros2_properties_parent.id(), publish_handshake_motion)
+        ctx.push(ros2_properties_parent.id(), subscribe_skin_to_dr)
 
         @state(cond=s("nlp:triples:changed"),
                read="nlp:triples", write=(publish_dr_to_ad.id(), raw_out.id()))
@@ -90,12 +96,20 @@ with Module(name="ad_demo", config=CONFIG) as mod:
             else:
                 return Resign()
 
+        @state(read=subscribe_skin_to_dr.id(), write=raw_out.id())
+        def handshake_detected(ctx: ContextWrapper):
+            msg = ctx[subscribe_skin_to_dr.id()].data
+            if msg:
+                ctx[raw_out.id()] = "Ah. I see you are very good at handshaking."
+            else:
+                return Resign
+
         @state(cond=raw_out.changed_signal(), write=publish_handshake_motion.id())
         def lennart_recognized(ctx: ContextWrapper):
             # check if it is lennart, greets lennart (this is done in stalker) -> TODO signal lennarts-here?
             # triggers handshake: topic ReplayTrajectory which takes a string as a name
             ctx[publish_handshake_motion.id()] = String(data=ctx.conf(key=HANDSHAKE_MOTION_NAME_CONFIG))
 
-        for st in [pickup_requested, start_driving, arrived_somewhere, lennart_recognized]:
+        for st in [pickup_requested, start_driving, arrived_somewhere, lennart_recognized, handshake_detected]:
             mod.add(st)
             ctx.add_state(st)
