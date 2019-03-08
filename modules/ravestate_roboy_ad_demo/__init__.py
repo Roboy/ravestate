@@ -78,7 +78,7 @@ with Module(name="ad_demo", config=CONFIG) as mod:
             # processes message from AD
             msg = ctx[subscribe_ad_to_dr.id()].data
             if msg == ARRIVED_AT_PICKUP_POINT_MSG:
-                ctx[raw_out.id()] = "Hop on!"
+                ctx[raw_out.id()] = "Hey dad! Hop on!"
             elif msg == ARRIVED_AT_DROPOFF_POINT_MSG:
                 ctx[raw_out.id()] = "We have arrived."
             else:

@@ -1,6 +1,6 @@
 from ravestate.module import Module
 from ravestate.state import state, Resign
-from ravestate.constraint import s
+from ravestate.constraint import s, ConfigurableAge
 from ravestate_nlp.question_word import QuestionWord
 import ravestate_ontology
 from ravestate_verbaliser import verbaliser
@@ -21,9 +21,9 @@ ROBOY_NODE_CONF_KEY = "roboy_node_id"
 
 with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
 
-    @state(cond=s("idle:bored"), write="rawio:out", weight=1.1, cooldown=30.)
-    def hello_world_roboyqa(ctx):
-        ctx["rawio:out"] = "Ask me something about myself!"
+    # @state(cond=s("idle:bored"), write="rawio:out", weight=.0, cooldown=30.)
+    # def hello_world_roboyqa(ctx):
+    #    ctx["rawio:out"] = "Ask me something about myself!"
 
     @state(cond=s("nlp:contains-roboy") & s("nlp:is-question"), read="nlp:triples", write="rawio:out")
     def roboyqa(ctx):
