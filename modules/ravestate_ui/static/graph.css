@@ -8,6 +8,14 @@
   stroke-dasharray: 0,2 1;
 }
 
+.link.triggers {
+  stroke-dasharray: 0,2 1;
+}
+
+.link.sets {
+  stroke-dasharray: 0,2 1;
+}
+
 .signal {
   fill: #ffb3b3;
   stroke: #333;
@@ -20,6 +28,12 @@
   stroke-width: 1.5px;
 }
 
+.activestate {
+    fill: #ffffff;
+    stroke: #333;
+    stroke-width: 16px;
+}
+
 .prop {
 fill: #b3ecff;
 stroke: #333;
@@ -30,6 +44,7 @@ text {
   font: 14px sans-serif;
   pointer-events: none;
   text-shadow: 0 2px 0 #fff, 2px 0 0 #fff, 0 -2px 0 #fff, -2px 0 0 #fff;
+  white-space: pre-line;
 }
 
 .flex-container {
@@ -45,6 +60,8 @@ text {
   width: 100%;
   height: 100%;
   vertical-align: middle;
+  overflow-y: scroll;
+  overflow-x: scroll;
 }
 
 .svg-content-responsive {
