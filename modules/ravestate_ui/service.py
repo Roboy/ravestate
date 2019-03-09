@@ -93,6 +93,10 @@ def activate(stateName):
     socketio.emit("activate", stateName)
     print("Activate called for "+stateName)
 
+def spike(signalName):
+    socketio.emit("spike", signalName)
+    print("Spike called for "+signalName)
+
 def advertise(*, ip="0.0.0.0", port=5000, debug=False):
     app.debug=debug
     appthread = threading.Thread(target=app.run, args=(ip, port))

@@ -81,7 +81,7 @@
 
             // Per-type markers, as they don't inherit styles.
             svg.append("defs").selectAll("marker")
-                .data(["notifies", "changes", "triggers", "emits", "sets"])
+                .data(["triggers"])
                 .enter().append("marker")
                 .attr("id", function (d) {
                     return d;
@@ -92,6 +92,7 @@
                 .attr("markerWidth", 10)
                 .attr("markerHeight", 10)
                 .attr("orient", "auto")
+                .attr("fill", "#ffffff")
                 .append("path")
                 .attr("d", "M0,-5L10,0L0,5");
 
@@ -109,6 +110,8 @@
                 .data(force.nodes())
                 .enter().append("circle")
                 .attr("r", 50)
+                .attr("r", function (d) {
+                    return (d.name in states) ? 50 : 30})
                 .attr("class", function (d) {
                     return (d.name in signals) ? "signal" :
                         ((d.name in states) ? "state" : "prop")})
@@ -145,57 +148,20 @@
             }
 
             socket.on('activate', function(stateName){
-//                console.log("Received activate " + stateName)
-                d3.selectAll("circle").style("stroke-width", 1.5);
-                d3.select("[nodeName=" + stateName + "]").style("stroke-width", 6);
-//                d3.select("#chart")
-//                          .selectAll("circle")
-//                          .data(nodes)
-//                          .select("#" + stateName)
-//                          .style("stroke-width", 6);
-                //    .style("stroke-width", function(d){
-                 //   return  6;//d + "px";
-                //});
-                //circle.style("stroke-width", 6)
-                    //.style('height', (d) => this.height - this.y(+d.total) )
-                    //.style('y', (d) => this.y(+d.total));
-                //}, 2000);
+                if(activeNode) {
+                    activeNode.attr("democolor", "off");
+                }
+                var activaaate =d3.select("[nodeName=\"" + stateName + "\"]");
+                activaaate.attr("democolor", "on");
+                activeNode = activaaate;
             });
-//                var text = d3.selectAll("text");
-//                console.log(text)
-//                if (text.classed("state")) {
-//                    text.classed("active", true);
-//                //Adds class selectedNode
-//                }
-//                d3.selectAll("text").remove();
-//                text = svg.append("g").selectAll("circle")
-//                   .data(force.nodes())
-//                   .enter().append("text")
-//                   .attr("x", -45)
-//                   .attr("y", -5)
-//                   .text(function (d) {
-//                        return "did you miss me";
-//                    });
 
-//                var labels = g.selectAll("text").data(data)
-//   .enter().append("path")
-//   .attr("d", d3.svg.arc().innerRadius(ir).outerRadius(or).startAngle(sa).endAngle(ea))
-//;
-//                d3.select("circle")
-//                .classed("svg-container", true)
-//                nodes.forEach( function(n) {
-//                    if (n.name === stateName) {
-//                        n.attr("class", "active");
-//                    }
-//                });
-//                ("[name=" + stateName + "]").attr("class", "active");
-    //            d3.selectAll("node").on('mouseover', function(stateName) {
-    //                 nodes
-    //                    .filter(function (d) { return d.pathNumber === stateName; })
-    //                    .attr('fill', 'black');
-    //});
-    //            d3.select("[class=active]").attr("class", "state");
-    //            d3.select("[name=" + stateName + "]").attr("class", "active");
+
+            socket.on('spike', function(stateName){
+                d3.selectAll("circle").attr("spiking", "off");
+                d3.select("[nodeName=\"" + stateName + "\"]").attr("spiking", "on");
             });
+
+        });
 
     })
