@@ -2,7 +2,7 @@
 import copy
 
 from threading import Thread
-from typing import Set, Optional, List, Dict, Any
+from typing import Set, Optional, List, Dict, Any, Generator
 from collections import defaultdict
 
 from ravestate.icontext import IContext
@@ -46,7 +46,7 @@ class Activation(IActivation):
         Activation._count_for_state[st] += 1
         self.name = st.name
         self.state_to_activate = st
-        self.constraint = copy.deepcopy(st.constraint_)
+        self.constraint = copy.deepcopy(st.completed_constraint)
         self.ctx = ctx
         self.args = []
         self.kwargs = {}
@@ -85,7 +85,7 @@ class Activation(IActivation):
         """
         return min(
             sum(self.ctx.signal_specificity(sig) for sig in conj.signals())
-            for conj in self.constraint.conjunctions())
+            for conj in self.constraint.conjunctions()) * self.state_to_activate.get_current_weight()
 
     def dereference(self, *, spike: Optional[ISpike]=None, reacquire: bool=False, reject: bool=False, pressured: bool=False) -> None:
         """
@@ -111,12 +111,16 @@ class Activation(IActivation):
          for spikes of causal groups in the pressuring_causal_groups set.
         """
         unreferenced = self.constraint.dereference(spike=spike, causal_groups=self.pressuring_causal_groups)
-        for sig_to_reacquire, dereferenced_instance in unreferenced:
+        message = ""
+        for sig_to_reacquire, dereferenced_spike in unreferenced:
+            message += " " + repr(dereferenced_spike)
             if reacquire:
                 self.ctx.reacquire(self, sig_to_reacquire)
-            if reject and dereferenced_instance:
-                with dereferenced_instance.causal_group() as cg:
-                    cg.rejected(dereferenced_instance, self, reason=0)
+            if reject and dereferenced_spike:
+                with dereferenced_spike.causal_group() as cg:
+                    cg.rejected(dereferenced_spike, self, reason=0)
+        if message:
+            logger.debug(f"Dereferenced {self} from" + message)
 
     def acquire(self, spike: Spike) -> bool:
         """
@@ -156,6 +160,10 @@ class Activation(IActivation):
         self.pressuring_causal_groups = {causal for causal in self.pressuring_causal_groups} | {give_me_up}
 
     def is_pressured(self):
+        """
+        Called by context, to figure out whether the activation is pressured,
+         and therefore the idle:bored signal should be emitted.
+        """
         return self.death_clock is not None
 
     def spiky(self) -> bool:
@@ -165,7 +173,13 @@ class Activation(IActivation):
         **Returns:** True, if any of this activation's constraint's
          signal is referencing a spike.
         """
-        return sum(1 for sig in self.constraint.signals() if sig.spike) > 0
+        return any(self.spikes())
+
+    def spikes(self) -> Generator[Spike, None, None]:
+        """
+        Returns iterable for all the spikes currently acquired by the activation.
+        """
+        return (sig.spike for sig in self.constraint.signals() if sig.spike)
 
     def update(self) -> bool:
         """
@@ -206,7 +220,9 @@ class Activation(IActivation):
                 continue
 
             # Gather payloads for all spikes
-            self.spike_payloads = {spike.name(): spike.payload() for spike, _ in spikes_for_conjunct if spike.payload()}
+            self.spike_payloads = {
+                spike.name(): spike.payload()
+                for spike, _ in spikes_for_conjunct if spike.payload()}
 
             # Notify all consenting causal groups that activation is going forward
             for cg in consenting_causal_groups:
@@ -314,4 +330,5 @@ class Activation(IActivation):
         for cg in self._unique_consenting_causal_groups():
             with cg:
                 cg.consumed(self.resources())
-        self.state_to_activate.activated.release()
+
+        self.state_to_activate.activation_finished()

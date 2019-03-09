@@ -1,8 +1,10 @@
 :root {
     --link-color: #fff;
     --link-width: 1.5px;
-    --circle-stroke-width: 0px;
-    --state-color: #2797c4;
+    --circle-stroke-width: 1.5px;
+    --state-color: #39c3f9;
+    --state-edge: #a4e3fc;
+    --dark-background: #24292e;
 }
 
 .link {
@@ -11,11 +13,11 @@
   stroke-width: var(--link-width);
 }
 
-.link.notifies {
+.link.changes {
   stroke-dasharray: 0,2 1;
 }
 
-.link.triggers {
+.link.emits {
   stroke-dasharray: 0,2 1;
 }
 
@@ -32,24 +34,24 @@
 .prop {
   fill: #bbff99;
   stroke:  #ffffff;
-stroke-width: var(--circle-stroke-width);
+  stroke-width: var(--circle-stroke-width);
 }
 
 .state {
     fill: var(--state-color);
-    stroke:  #ffffff;
-  stroke-width: var(--circle-stroke-width);
+    stroke:  var(--state-edge);
+    stroke-width: var(--circle-stroke-width);
 }
 
 @-webkit-keyframes stateactive {
     0% {
-        stroke-width: 1;
+        stroke-width: var(--circle-stroke-width:);
     }
     50% {
         stroke-width: 6px;
     }
     100% {
-        stroke-width: 1;
+        stroke-width: var(--circle-stroke-width);
     }
 }
 
@@ -58,10 +60,14 @@ stroke-width: var(--circle-stroke-width);
         fill: var(--state-color);
     }
     40% {
-        fill:  #a4e3fc;
+        fill:  var(--state-edge);
+        stroke: #0349c1;
+        stroke-width: 6px;
     }
     60% {
-        fill:  #a4e3fc;
+        fill: var(--state-edge);
+        stroke: #0349c1;
+        stroke-width: 6px;
     }
     100% {
         fill: var(--state-color);
@@ -90,23 +96,24 @@ circle[democolor="off"] {
 
 @-webkit-keyframes spike {
     0% {
-        stroke-width: 1;
-        fill: ##c64545;
+        stroke-width: var(--circle-stroke-width);
+        fill: #ffb3b3;
     }
     50% {
-        stroke-width: 20px;
-        fill:  #ffb3b3;
+        stroke-width: 15px;
+        fill:  #c64545;
+        stroke: #ffb3b3;
     }
     100% {
-        stroke-width: 1;
-        fill: #c64545;
+        stroke-width: var(--circle-stroke-width);
+        fill: #ffb3b3;
     }
 }
 
 circle[spiking="on"] {
     -webkit-animation-name: spike;
     -webkit-animation-duration: 1500ms;
-    -webkit-animation-iteration-count: 1;
+    -webkit-animation-iteration-count: 3;
 }
 
 text {
@@ -151,7 +158,7 @@ body, html {
 body {
   display: flex;
   flex-direction: column;
-  background: #000;
+  background: var(--dark-background);
 }
 
 h1 {

@@ -1,12 +1,7 @@
-#!python3
-
-import sys
+#!/usr/bin/env python
 
 from ravestate.context import Context
-from ravestate_ui.service import advertise
+import sys
 
 ctx = Context(*sys.argv[1:])
 ctx.run()
-
-# TODO: Make sure that UI is cleanly integrated as a ravestate module.
-advertise()

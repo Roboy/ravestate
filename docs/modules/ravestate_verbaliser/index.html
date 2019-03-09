@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Verbaliser - Ravestate</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Verbaliser";
+    var mkdocs_page_input_path = "modules/ravestate_verbaliser/README.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Ravestate</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Modules</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../ravestate_nlp/">NLP</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="./">Verbaliser</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#verbaliser">Verbaliser</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l4" href="#using-the-verbaliser">Using the Verbaliser</a></li>
+        
+        </ul>
+    
+
+    </ul>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../ravestate_telegramio/">TelegramIO</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../ravestate_akinator/">Akinator</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">API</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../">Modules</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../states/">States</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../properties/">Properties</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../context/">Context</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../../config/">Configuration</a>
+                </li>
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Ravestate</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Modules &raquo;</li>
+        
+      
+    
+    <li>Verbaliser</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <pre><code>                   _           _  _                  
+                  | |         | |(_)                 
+ _   _ _____  ____| |__  _____| | _  ___ _____  ____ 
+| | | | ___ |/ ___)  _ \(____ | || |/___) ___ |/ ___)
+ \ V /| ____| |   | |_) ) ___ | || |___ | ____| |    
+  \_/ |_____)_|   |____/\_____|\_)_(___/|_____)_|    
+
+</code></pre>
+
+<h2 id="verbaliser">Verbaliser</h2>
+<p>The Verbaliser produces Roboy's utterances. 
+It diversifies the interactions with Roboy by randomizing the output given a specific intent.  </p>
+<h3 id="using-the-verbaliser">Using the Verbaliser</h3>
+<h4 id="question-answer-lists">Question-Answer Lists</h4>
+<p>YAML files are used to define the actual utterances. 
+In other words: they store everything Roboy can vocalise. 
+To diversify his remarks the Verbaliser randomises similar outputs.</p>
+<p>The class <a href="qa_phrases.py">QAPhrases</a> retrieves the values from a YAML file and parses the containing phrases. 
+Here is a template for such a YAML file:</p>
+<pre><code>type: qa                                    # remark types: question answering (qa), phrases
+name: &quot;INTENT&quot;                              # intent or topic
+Q:                                          # possible questions
+- &quot;Question phrasing 1&quot;
+- &quot;Question phrasing 2&quot;
+- &quot;Question phrasing 3&quot;
+A:                                          # answers 
+  SUCCESS:
+  - &quot;Possible answer on success 1&quot;
+  - &quot;Possible answer on success 2&quot;
+  FAILURE:
+  - &quot;Possible answer on failure&quot;
+FUP:                                        # follow up questions (for interlocutors that are already known to Roboy)
+  Q:
+  - &quot;Possible follow up question&quot;
+  A:
+  - &quot;Possible follow up answer&quot;
+</code></pre>
+
+<p>See more examples <a href="../../resources/sentences">here</a>.</p>
+<h4 id="example-for-answering-the-question-what-happened-to-the-dinosaurs">Example for Answering the Question: What happened to the Dinosaurs?</h4>
+<ul>
+<li>Creating the YAML file:</li>
+</ul>
+<p>Fill in all the possible answers.  </p>
+<pre><code>type: qa
+name: &quot;DINO&quot;
+A:
+  SUCCESS:
+  - &quot;I am sure it was a mind-boggingly huge meteorite!&quot;
+  - &quot;They smoked too much ash!&quot;
+  - &quot;A vulcano had flatulences.&quot;
+  - &quot;The chicken were stronger.&quot;
+  FAILURE:
+  - &quot;I have no idea what you just said.&quot;
+  - &quot;Sorry, I am only interested in dinosaurs.&quot;
+</code></pre>
+
+<ul>
+<li>Adding this file to the Verbaliser:</li>
+</ul>
+<p>In this case the file is going to be located in a folder of important facts.
+However, the single file can similarly be added by itself.
+The folder is in the same path as the python file adding it.</p>
+<pre><code class="python">from ravestate_verbaliser import verbaliser
+from os.path import realpath, dirname, join
+
+verbaliser.add_folder(join(dirname(realpath(__file__)), &quot;important_facts_folder&quot;))
+</code></pre>
+
+<ul>
+<li>Using the Verbaliser for fancy outputs:</li>
+</ul>
+<p>This outputs an answer to the question.
+To understand how to analyse the context of the question have a look at the <a href="../ravestate_nlp/">Natural Language Processing README</a></p>
+<pre><code class="python">if input_had_something_to_do_with_dinos and was_a_question:
+    ctx[&quot;rawio:out&quot;] = verbaliser.get_random_successful_answer(&quot;DINO&quot;)
+else:
+    ctx[&quot;rawio:out&quot;] = verbaliser.get_random_failure_answer(&quot;DINO&quot;)
+</code></pre>
+
+<ul>
+<li>Possible conversation flow:</li>
+</ul>
+<pre><code>Interlocutor: &quot;What happend to the Dinosaurs?&quot;
+Roboy: &quot;The chicken were stronger.&quot;
+</code></pre>
+
+<h4 id="example-for-extracting-phrase-lists">Example for Extracting Phrase Lists</h4>
+<p>The Verbaliser can also be used to get all the imported phrases for a specific intent as a list. </p>
+<ul>
+<li>Creating the phrases.yml:</li>
+</ul>
+<pre><code>type: phrases
+name: &quot;dino&quot;
+opts:
+- &quot;Dinos can not scratch their backs.&quot;
+- &quot;Once upon a time these mind-bogglingly huge creatures wandered the earth.&quot;
+- &quot;The longest Dinosaur was the Argentiosaurus.&quot;
+---
+type: phrases
+name: &quot;chicken&quot;
+opts:
+- &quot; Chickens are not completely flightless.&quot;
+- &quot; There are more chickens out there than programmers.&quot;
+- &quot; If I were a chicken for one day I would say: 'Puk Puk Pukaaak'. 
+
+</code></pre>
+
+<ul>
+<li>Adding the file to the Verbaliser:</li>
+</ul>
+<p>The YAML file is assumed to be located in the important_phrases folder. 
+The folder is again in the same path as this python script: </p>
+<pre><code class="python">from ravestate_verbaliser import verbaliser
+from os.path import realpath, dirname, join
+
+verbaliser.add_file(join(dirname(realpath(__file__)), &quot;important_phrases&quot;, &quot;phrases.yml&quot;))
+</code></pre>
+
+<ul>
+<li>Using the Verbaliser to get a list of phrases:</li>
+</ul>
+<p>Given a specific intent the Verbaliser can be used to return a list of phrases.</p>
+<pre><code class="python">import ravestate_verbaliser
+dino_list = ravestate_verbaliser.verbaliser.get_phrase_list('dino')
+</code></pre>
+
+<h4 id="the-verbaliserintent-property">The verbaliser:intent Property</h4>
+<p>The <a href="__init__.py">verbaliser:react_to_intent</a> state produces a random phrase output for a given intent. 
+All the possible intents are specified in YAML files that are located in the 
+<a href="../ravestate_phrases_basic_en">ravestate_phrases_basic_en folder</a>. </p>
+<p>The state reads the verbaliser:intent property and outputs one random phrase in the list with that specific intent. 
+It can therefor be triggered as follows:</p>
+<p>Let's assume that phrases.yml is now located in avestate_phrases_basic_en.</p>
+<pre><code class="python">@state(cond=s(&quot;triggered_by_some_signal&quot;), write=&quot;verbaliser:intent&quot;)
+def say_some_nice_chicken_suff(ctx: ContextWrapper):
+    ctx[&quot;verbaliser:intent&quot;] = &quot;chicken&quot;
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../ravestate_telegramio/" class="btn btn-neutral float-right" title="TelegramIO">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../ravestate_nlp/" class="btn btn-neutral" title="NLP"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../ravestate_nlp/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../ravestate_telegramio/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

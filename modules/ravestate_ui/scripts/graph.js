@@ -52,9 +52,9 @@
                 .nodes(d3.values(nodes))
                 .links(links)
                 .size([width, height])
-                .linkDistance(height/5)
-                .charge(-200)
-                .gravity(0.02)
+                .linkDistance(height/4.5)
+                .charge(-300)
+                .gravity(0.035)
                 .on("tick", tick)
                 .start();
 
@@ -123,8 +123,8 @@
             var text = svg.append("g").selectAll("text")
                 .data(force.nodes())
                 .enter().append("text")
-                .attr("x", -45)
-                .attr("y", -5)
+                .attr("x", -43)
+                .attr("y", 0)
                 .text(function (d) {
                     return d.name;
                 });
