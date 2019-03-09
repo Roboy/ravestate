@@ -22,22 +22,47 @@
   stroke-width: 1.5px;
 }
 
-.state {
-  fill: #bbff99;
-  stroke: #333;
-  stroke-width: 1.5px;
-}
-
-.activestate {
-    fill: #ffffff;
-    stroke: #333;
-    stroke-width: 16px;
-}
-
 .prop {
 fill: #b3ecff;
 stroke: #333;
 stroke-width: 1.5px;
+}
+
+.state {
+  fill: #bbff99;
+  stroke: #333;
+  stroke-width: 1.5px;
+  -webkit-transition: stroke-width 2s; /* Safari */
+  transition: stroke-width 2s;
+}
+
+.activestate {
+    stroke-width: 6px;
+  -webkit-transition: stroke-width 2s; /* Safari */
+  transition: stroke-width 2s;
+}
+
+@-webkit-keyframes stateactive {
+    0% {
+        left: 10px;
+    }
+    22% {
+        opacity: 1;
+    }
+    77% {
+        left: 30px;
+    }
+    100% {
+        left: 50px;
+        opacity: 0;
+    }
+}
+
+.demo {
+    -webkit-animation-name: demo;
+    -webkit-animation-duration: 900ms;
+    -webkit-animation-iteration-count: 1;
+    -webkit-animation-timing-function: ease-in-out;
 }
 
 text {

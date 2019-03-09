@@ -19,6 +19,8 @@ from ravestate.config import Configuration
 from ravestate.constraint import s, Signal, Conjunct, Disjunct, ConfigurableAge
 from ravestate.spike import Spike
 
+from ravestate_ui import service
+
 from reggol import get_logger
 logger = get_logger(__name__)
 
@@ -161,6 +163,10 @@ class Context(IContext):
         if self._core_config[self.tick_rate_config] < 1:
             logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
             self._core_config[self.tick_rate_config] = 1
+
+        service.fillme(self._activations_per_state, self._properties)
+
+
 
     def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> None:
         """

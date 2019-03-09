@@ -5,6 +5,9 @@
         console.log("Hello");
     });
 
+    var nodes;
+    var activeNode;
+
     $(function () {
         $.getJSON("/data", function (data) {
 
@@ -42,10 +45,7 @@
                 }
             });
 
-            console.log(links)
-
-            var nodes = Object.assign({}, signals, states, properties);
-            console.log(links);
+            nodes = Object.assign({}, signals, states, properties);
             var width = window.innerWidth,
                 height = window.innerHeight;
             var force = d3.layout.force()
@@ -111,7 +111,9 @@
                 .attr("r", 50)
                 .attr("class", function (d) {
                     return (d.name in signals) ? "signal" :
-                        ((d.name in states) ? "state" : "prop")
+                        ((d.name in states) ? "state" : "prop")})
+                .attr("nodeName", function (d) {
+                    return d.name
                 })
                 .call(force.drag);
 
@@ -142,5 +144,58 @@
                 return "translate(" + d.x + "," + d.y + ")";
             }
 
-        })
+            socket.on('activate', function(stateName){
+//                console.log("Received activate " + stateName)
+                d3.selectAll("circle").style("stroke-width", 1.5);
+                d3.select("[nodeName=" + stateName + "]").style("stroke-width", 6);
+//                d3.select("#chart")
+//                          .selectAll("circle")
+//                          .data(nodes)
+//                          .select("#" + stateName)
+//                          .style("stroke-width", 6);
+                //    .style("stroke-width", function(d){
+                 //   return  6;//d + "px";
+                //});
+                //circle.style("stroke-width", 6)
+                    //.style('height', (d) => this.height - this.y(+d.total) )
+                    //.style('y', (d) => this.y(+d.total));
+                //}, 2000);
+            });
+//                var text = d3.selectAll("text");
+//                console.log(text)
+//                if (text.classed("state")) {
+//                    text.classed("active", true);
+//                //Adds class selectedNode
+//                }
+//                d3.selectAll("text").remove();
+//                text = svg.append("g").selectAll("circle")
+//                   .data(force.nodes())
+//                   .enter().append("text")
+//                   .attr("x", -45)
+//                   .attr("y", -5)
+//                   .text(function (d) {
+//                        return "did you miss me";
+//                    });
+
+//                var labels = g.selectAll("text").data(data)
+//   .enter().append("path")
+//   .attr("d", d3.svg.arc().innerRadius(ir).outerRadius(or).startAngle(sa).endAngle(ea))
+//;
+//                d3.select("circle")
+//                .classed("svg-container", true)
+//                nodes.forEach( function(n) {
+//                    if (n.name === stateName) {
+//                        n.attr("class", "active");
+//                    }
+//                });
+//                ("[name=" + stateName + "]").attr("class", "active");
+    //            d3.selectAll("node").on('mouseover', function(stateName) {
+    //                 nodes
+    //                    .filter(function (d) { return d.pathNumber === stateName; })
+    //                    .attr('fill', 'black');
+    //});
+    //            d3.select("[class=active]").attr("class", "state");
+    //            d3.select("[name=" + stateName + "]").attr("class", "active");
+            });
+
     })

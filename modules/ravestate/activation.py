@@ -13,6 +13,8 @@ from ravestate.causal import CausalGroup
 from ravestate.state import State, Emit, Delete, Resign, Wipe
 from ravestate.wrappers import ContextWrapper
 
+from ravestate_ui import service
+
 from reggol import get_logger
 logger = get_logger(__name__)
 
@@ -53,6 +55,7 @@ class Activation(IActivation):
         self.death_clock = None
         self.pressuring_causal_groups = set()
         self.spike_payloads = dict()
+        service.activate(st.name)
 
     def __del__(self):
         logger.debug(f"Deleted {self}")

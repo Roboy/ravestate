@@ -1,11 +1,11 @@
 from flask import Flask, render_template, send_from_directory
 from flask import jsonify
 from flask_socketio import SocketIO, emit
-from ravestate.context import Context
+import threading
 
 app = Flask(__name__, static_url_path='')
 
-context: Context = None
+global socketio, activations_per_state, properties
 socketio = SocketIO(app)
 
 @app.route('/scripts/<path:path>')
@@ -18,13 +18,11 @@ def send_css(path):
 
 @app.route('/')
 def index():
-    global context
     return render_template('index.html')
 
 
 @app.route('/data')
 def get_data():
-    global context
     sets = parse_data()
     return jsonify(sets)
 
@@ -42,11 +40,16 @@ def format_whitespace(s, sub, nth):
         i += 1
     return s
 
+def fillme(a, p):
+    global socketio, activations_per_state, properties
+    activations_per_state = a
+    properties = p
+
 def parse_data():
-    global context
+    global socketio, activations_per_state, properties
     sets = []
 
-    for state in context._activations_per_state:
+    for state in activations_per_state:
         for target in state.write_props:
             set = {}
             # set['source'] = format_whitespace(state.name, "_", 2).replace("_", " ")
@@ -70,7 +73,7 @@ def parse_data():
             set['type'] = 'emits'
             sets.append(set)
 
-    for property_name, property in context._properties.items():
+    for property_name, property in properties.items():
         for signal in property.signals():
             set = {}
             set['source'] = str(property.id())
@@ -86,9 +89,15 @@ def update():
     sets = parse_data()
     emit('newdata', jsonify(sets))
 
-def advertise(*, ctx, ip="0.0.0.0", port=5000, debug=False):
-    global context
-    context = ctx
+def activate(stateName):
+    socketio.emit("activate", stateName)
+    print("Activate called for "+stateName)
+
+def advertise(*, ip="0.0.0.0", port=5000, debug=False):
     app.debug=debug
-    app.run(ip, port)
-    socketio.run(app)
+    appthread = threading.Thread(target=app.run, args=(ip, port))
+    appthread.start()
+    socketthread = threading.Thread(target=socketio.run, args=(app,))
+    socketthread.start()
+    activate(":pressure")
+    print("activated")
