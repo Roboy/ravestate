@@ -17,6 +17,7 @@ config:
   tickrate: 10
   import:
     - ravestate_rawio
+    - ravestate_nlp
     - ravestate_telegramio
     - ravestate_conio
     - ravestate_roboyio
@@ -24,7 +25,6 @@ config:
     - ravestate_hibye
     - ravestate_idle
     - ravestate_interloc
-    - ravestate_nlp
     - ravestate_ontology
     - ravestate_roboyqa
     - ravestate_roboy_ad_demo

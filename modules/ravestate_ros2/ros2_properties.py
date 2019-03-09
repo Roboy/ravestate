@@ -14,6 +14,7 @@ logger = get_logger(__name__)
 ROS2_AVAILABLE = True
 try:
     import rclpy
+    import pyroboy
 except ImportError:
     logger.error("Could not import rclpy. Please make sure to have ROS2 installed.")
     ROS2_AVAILABLE = False
@@ -52,7 +53,7 @@ def sync_ros_properties(ctx: ContextWrapper):
     # init ROS
     if not rclpy.ok():
         rclpy.init()
-    node = rclpy.create_node(node_name)
+    node = pyroboy.node # rclpy.create_node(node_name)
 
     global global_prop_set
     # current_props: hash -> subscription/publisher
@@ -99,11 +100,11 @@ def sync_ros_properties(ctx: ContextWrapper):
             global_prop_set.add(prop.__hash__())
 
         # spin once
-        rclpy.spin_once(node, timeout_sec=0)
+        #rclpy.spin_once(node, timeout_sec=0)
         time.sleep(spin_sleep_time)
 
-    node.destroy_node()
-    rclpy.shutdown()
+    #node.destroy_node()
+    #rclpy.shutdown()
 
 
 class Ros2SubProperty(PropertyBase):
@@ -169,7 +170,7 @@ class Ros2PubProperty(PropertyBase):
             allow_push=False,
             allow_pop=False,
             default_value=None,
-            always_signal_changed=False)
+            always_signal_changed=True)
         self.topic = topic
         self.msg_type = msg_type
         self.publisher = None
