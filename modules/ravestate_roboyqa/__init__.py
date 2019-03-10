@@ -55,16 +55,13 @@ with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
         - what are your abilities?
         """
         sess = ravestate_ontology.get_session()
-        # TODO check if this ID really exists - return Resign() if it doesn't
         node_list = sess.retrieve(node_id=ctx.conf(key=ROBOY_NODE_CONF_KEY))
-        if not node_list:
-            logger.error("Seems like you do not have my memory running. Personal questions cannot be answered.")
-            return Resign()
-        elif len(node_list) == 1:
-            roboy = sess.retrieve(node_id=ctx.conf(key=ROBOY_NODE_CONF_KEY))[0]
+        if node_list:
+            roboy = node_list[0]
         else:
-            logger.error("Retrieving the node failed!")
+            logger.error(f"Seems like you do not have my memory running, or no node with ID {ctx.conf(key=ROBOY_NODE_CONF_KEY)} exists!")
             return Resign()
+        
         triple = ctx["nlp:triples"][0]
 
         category = None
