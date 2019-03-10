@@ -52,9 +52,9 @@
                 .nodes(d3.values(nodes))
                 .links(links)
                 .size([width, height])
-                .linkDistance(height/4.5)
-                .charge(-300)
-                .gravity(0.035)
+                .linkDistance(height/6)
+                .charge(-250)
+                .gravity(0.042)
                 .on("tick", tick)
                 .start();
 
@@ -66,6 +66,9 @@
                 .attr("preserveAspectRatio", "xMinYMin meet")
                 .attr("viewBox", "0 0 " + width + " " + height)
                 .classed("svg-content-responsive", true);
+                // add to css:
+                // overflow-y: scroll;
+            // overhiflow-x: scroll;
 
 // Remove resizing for scrollbars
 //            const resizeHandler = () => {
@@ -158,7 +161,10 @@
 
 
             socket.on('spike', function(stateName){
-                d3.selectAll("circle").attr("spiking", "off");
+                $("circle").one('animationiteration webkitAnimationIteration', function() {
+                     $(this).removeClass("spiking");
+                });
+                // d3.selectAll("circle").attr("spiking", "off");
                 d3.select("[nodeName=\"" + stateName + "\"]").attr("spiking", "on");
             });
 
