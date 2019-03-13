@@ -2,7 +2,7 @@ version: '2.1'
 
 services:
   ravestate:
-    image: bridge_ravestate # ravestate-leia-ros2-image
+    image: ravestate-ros2-image
     container_name: ravestate-ros2-container
     build:
       context: .
@@ -13,9 +13,8 @@ services:
     environment:
       - PYTHONPATH=$PYTHONPATH:/ravestate/modules
       - PYTHONUNBUFFERED=1
-    #entrypoint: /entrypoint.sh
-    # for development use "command: bash" and type in the rasta command in an attached console.
-    # This enables "hot reload" when restarting rasta in the running container because the source directory is mounted
-    command: bash  # python3 -m ravestate -f /ravestate/config/finals_march_19.yml
+    # After starting container, attach console and enter python3 -m ravestate [...]
+    # This enables "hot reload" in the running container because the source directory is mounted
+    command: bash
     tty: true
     stdin_open: true
