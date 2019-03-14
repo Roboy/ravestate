@@ -78,9 +78,9 @@ with Module(name="akinator", config={CERTAINTY: 90}):
             akinator_api = Api()
             ctx["akinator:question"] = True
             ctx["rawio:out"] = "You can answer the questions with:" \
-                               + '\n"yes", "no", "i do not know", "probably", "probably not"' \
-                               + "\nQuestion " + str(int(akinator_api.get_parameter('step')) + 1) \
-                               + ":\n" + akinator_api.get_parameter('question')
+                               + ' "yes", "no", "i do not know", "probably", "probably not"' \
+                               + " Question " + str(int(akinator_api.get_parameter('step')) + 1) \
+                               + ": " + akinator_api.get_parameter('question')
         else:
             return Resign()
 
@@ -104,7 +104,7 @@ with Module(name="akinator", config={CERTAINTY: 90}):
             if float(akinator_api.get_parameter('progression')) <= ctx.conf(key=CERTAINTY) and int(akinator_api.get_parameter('step')) <= 20:
                 ctx["akinator:question"] = True
                 ctx["rawio:out"] = "Question " + str(int(akinator_api.get_parameter('step')) + 1) \
-                                   + ":\n" + akinator_api.get_parameter('question')
+                                   + ": " + akinator_api.get_parameter('question')
             else:
                 ctx["akinator:is_it"] = True
         else:
@@ -122,8 +122,8 @@ with Module(name="akinator", config={CERTAINTY: 90}):
         """
         global akinator_api
         guess = akinator_api.guess_get_request()
-        ctx["rawio:out"] = "Is this your character? \n" + guess['name'] + "\n" + guess['desc'] \
-                           + "\nPlease answer with 'yes' or 'no'."
+        ctx["rawio:out"] = "Is this your character? " + guess['name'] + " " + guess['desc'] + "." \
+                           + " Please answer with 'yes' or 'no'."
         return Emit()
 
 
@@ -138,7 +138,7 @@ with Module(name="akinator", config={CERTAINTY: 90}):
         """
         if ctx["nlp:yesno"] == "yes":
             akinator_api.choice_get_request()
-            out = "Yeah! I guessed right! Thanks for playing with me! \nDo you want to play again?"
+            out = "Yeah! I guessed right! Thanks for playing with me! Do you want to play again?"
         elif ctx["nlp:yesno"] == "no":
             akinator_api.exclusion_get_request()
             out = "Oh no! I guessed wrong but do you want to play again?"
@@ -170,5 +170,5 @@ with Module(name="akinator", config={CERTAINTY: 90}):
             return Resign()
         else:
             ctx["rawio:out"] = "Yeah! Let's keep playing! Remember that you have these five answering choices:" \
-                           "\n'yes', 'no', 'i do not know', 'probably', 'probably not'"
+                           " 'yes', 'no', 'i do not know', 'probably', 'probably not'"
             ctx["akinator:question"] = True
