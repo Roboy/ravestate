@@ -1,5 +1,5 @@
 from ravestate.testfixtures import *
-from ravestate.argparse import handle_args
+from ravestate.argparser import handle_args
 
 
 def test_argparse_empty():
