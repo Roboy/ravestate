@@ -181,6 +181,43 @@ may run the ravestate test suite as follows:
 ./run_tests.sh
 ``
 
+## Docker for ROS and ROS2
+
+There is a Dockerfile for ROS and ROS2 support which can be built with
+```bash
+docker build -t ravestate-ros2-image .
+```
+The image contains ROS, ROS2 and a ROS Bridge to connect ROS with ROS2.
+Furthermore the roboy_communication message and service types are installed.
+
+A container can then be created with the docker-compose.yml:
+```bash
+docker-compose up --detach ravestate
+```
+The container is now running and a connection into the container can be
+established with:
+```bash
+docker exec -it ravestate-ros2-container bash
+```
+Inside the container, first source the ROS2 setups and then 
+ravestate can be run with ROS2 and rclpy available.
+```bash
+source /opt/ros/bouncy/setup.sh
+source ~/ros2_ws/install/setup.sh
+python3 -m ravestate [...]
+```
+
+### Start ROS Bridge
+In order to start ROS Bridge, the image and container have to be set up
+as above. After connecting into the container run from inside the container:
+```bash
+source ~/melodic_ws/devel/setup.sh
+source /opt/ros/bouncy/setup.sh
+source ~/ros2_ws/install/setup.sh
+source ~/ros1_bridge_ws/install/setup.sh
+ros2 run ros1_bridge dynamic_bridge
+```
+
 ## Building/maintaining the docs
 
 If you have installed the dependencies from ``requirements-dev.txt``,
