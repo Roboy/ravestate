@@ -64,6 +64,7 @@ class Module:
         try:
             for obj_to_add in property_or_state:
                 self.add(obj_to_add)
+            return
         except TypeError:
             pass
         if isinstance(property_or_state, PropertyBase):
