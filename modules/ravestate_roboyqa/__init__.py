@@ -1,6 +1,6 @@
 from ravestate.module import Module
 from ravestate.state import state, Resign
-from ravestate.constraint import s
+from ravestate.constraint import s, ConfigurableAge
 from ravestate_nlp.question_word import QuestionWord
 import ravestate_ontology
 from ravestate_verbaliser import verbaliser
@@ -23,7 +23,7 @@ with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
 
     @state(cond=s("idle:bored"), write="rawio:out", weight=1.1, cooldown=30.)
     def hello_world_roboyqa(ctx):
-        ctx["rawio:out"] = "Ask me something about myself!"
+       ctx["rawio:out"] = "Ask me something about myself!"
 
     @state(cond=s("nlp:contains-roboy") & s("nlp:is-question"), read="nlp:triples", write="rawio:out")
     def roboyqa(ctx):
@@ -55,7 +55,13 @@ with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
         - what are your abilities?
         """
         sess = ravestate_ontology.get_session()
-        roboy = sess.retrieve(node_id=ctx.conf(key=ROBOY_NODE_CONF_KEY))[0]
+        node_list = sess.retrieve(node_id=ctx.conf(key=ROBOY_NODE_CONF_KEY))
+        if node_list:
+            roboy = node_list[0]
+        else:
+            logger.error(f"Seems like you do not have my memory running, or no node with ID {ctx.conf(key=ROBOY_NODE_CONF_KEY)} exists!")
+            return Resign()
+        
         triple = ctx["nlp:triples"][0]
 
         category = None

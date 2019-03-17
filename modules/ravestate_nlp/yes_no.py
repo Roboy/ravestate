@@ -1,8 +1,8 @@
 NEGATION_TUPLE = ["neg", "not"]
-YES_SYNONYMS = {"yes", "y", "yeah", "sure", "definitely", "	certainly"}
+YES_SYNONYMS = {"yes", "y", "yeah", "sure", "definitely", "certainly"}
 NO_SYNONYMS = {"no", "n", "nope", "negative", "never", "nay"}
 PROBABLY_SYNONYMS = {"probably", "likely", "possibly", "perhaps", "maybe"}
-DON_NOT_KNOW_SET = {"know", "understand", "idea"}
+DON_NOT_KNOW_SET = {"know", "understand", "clue"}
 
 
 def yes_no(doc):

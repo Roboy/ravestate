@@ -214,7 +214,7 @@ class Context(IContext):
             return
         self._run_task = Thread(target=self._run_loop)
         self._run_task.start()
-        self.emit(s(":startup"))
+        self.emit(startup())
 
     def shutting_down(self) -> bool:
         """
@@ -227,7 +227,7 @@ class Context(IContext):
         Sets the shutdown flag and waits for the signal processing thread to join.
         """
         self._shutdown_flag.set()
-        self.emit(s(":shutdown"))
+        self.emit(shutdown())
         self._run_task.join()
 
     def add_module(self, module_name: str) -> None:
@@ -732,4 +732,4 @@ class Context(IContext):
 
             gc.collect()
 
-        self._update_core_properties(True)
+        self._update_core_properties(False)

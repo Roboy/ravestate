@@ -10,15 +10,13 @@
 #     neo4j_address: bolt://localhost:7687  # Your neo4j server uri here
 #     neo4j_username: neo4j                 # Your neo4j user here
 #     neo4j_pw: <cornycrab>                 # Your neo4j pw here
-#
-# Then, start `rasta` with `-f config/generic.yml -f config/keys.yml`
 
 ---
 module: core
 config:
-  tickrate: 1
+  tickrate: 10
   import:
-    #- ravestate_telegramio
+    - ravestate_telegramio
     - ravestate_conio
     - ravestate_fillers
     - ravestate_wildtalk
