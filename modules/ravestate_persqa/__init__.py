@@ -79,6 +79,7 @@ with Module(name="persqa") as mod:
             reacts to idle:bored & persqa:new-interloc
             asks for interlocutors name
             """
+            # TODO check if name already there (telegram intlerloc), call create_small_talk_state()
             ctx["persqa:predicate"] = "NAME"
             ctx["rawio:out"] = verbaliser.get_random_question("NAME")
             ctx["persqa:subject"] = interloc_path
@@ -100,9 +101,9 @@ with Module(name="persqa") as mod:
         follow_ups = set()
 
         # TODO only trigger when also bored?
-        @state(cond=s("idle:bored", max_age=-1, detached=True),
+        @state(cond=s("idle:bored", max_age=-1),
                write=("rawio:out", "persqa:predicate", "persqa:subject"),
-               read="interloc:all",
+               read=("interloc:all", "persqa:predicate"),
                weight=2,
                cooldown=30.,
                signal_name="follow-up"
@@ -156,8 +157,8 @@ with Module(name="persqa") as mod:
         ctx.add_state(fup_react)
 
 
-    @state(cond=s("nlp:triples:changed"),
-           write="persqa:answer",
+    @state(cond=s("nlp:triples:changed") & s("persqa:predicate:changed", detached=True),
+           write=("persqa:answer", "persqa:predicate"),
            read=("persqa:predicate", "nlp:triples", "nlp:tokens", "nlp:yesno"))
     def inference(ctx: ContextWrapper):
         """
@@ -168,11 +169,15 @@ with Module(name="persqa") as mod:
         """
         triple = ctx["nlp:triples"][0]
         if ctx["persqa:predicate"] == "NAME" or ctx["persqa:predicate"] in PREDICATE_SET:
-            ctx["persqa:answer"] = triple.get_object()
-            if len(ctx["nlp:tokens"]) == 1:
+            if triple.get_object():
+                ctx["persqa:answer"] = triple.get_object()
+            elif len(ctx["nlp:tokens"]) == 1:
                 ctx["persqa:answer"] = ctx["nlp:tokens"][0]
             elif len(ctx["nlp:tokens"]) == 2:
                 ctx["persqa:answer"] = "%s %s" % (ctx["nlp:tokens"][0], ctx["nlp:tokens"][1])
+            else:
+                # Re-emit predicate if inference fails
+                ctx["persqa:predicate"] = ctx["persqa:predicate"]
 
 
     @state(cond=s("persqa:answer:changed"),
@@ -193,6 +198,7 @@ with Module(name="persqa") as mod:
             subject_node.set_name(interloc_answer)
             subject_node, output = retrieve_node(subject_node, pers_info, interloc_answer)
             ctx["rawio:out"] = output
+            create_small_talk_state(ctx=ctx, interloc_path=ctx["persqa:subject"])
         elif pers_info in PREDICATE_SET:
             if pers_info == "FROM" or pers_info == "LIVE_IN":
                 relationship_node = Node(metatype=onto.get_type("Location"))  #
@@ -218,7 +224,6 @@ with Module(name="persqa") as mod:
                 subject_node.add_relationships({pers_info: {relationship_node.get_id()}})
                 sess.update(subject_node)
         ctx["persqa:predicate"] = None
-        create_small_talk_state(ctx=ctx, interloc_path=ctx["persqa:subject"])
 
 
     def retrieve_node(node: Node, intent: str, interloc_answer: str):
