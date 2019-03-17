@@ -15,7 +15,6 @@ logger = get_logger(__name__)
 ROS2_AVAILABLE = True
 try:
     import rclpy
-    import pyroboy
 except ImportError:
     logger.error("Could not import rclpy. Please make sure to have ROS2 installed.")
     ROS2_AVAILABLE = False
