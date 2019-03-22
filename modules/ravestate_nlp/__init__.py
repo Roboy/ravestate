@@ -40,7 +40,7 @@ with Module(name="nlp"):
                 "nlp:yesno"
         ))
     def nlp_preprocess(ctx):
-        text = ctx["rawio:in"]
+        text = str(ctx["rawio:in"]).lower()
         if not text:
             return False
         nlp_doc = nlp(text)
