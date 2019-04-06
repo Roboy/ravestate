@@ -1,5 +1,6 @@
 # Ravestate class which encapsulates the activation of a single state
 import copy
+import traceback
 
 from threading import Thread
 from typing import Set, Optional, List, Dict, Any, Generator
@@ -291,7 +292,7 @@ class Activation(IActivation):
         try:
             result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
         except Exception as e:
-            logger.error(f"An exception occurred while activating {self}: {e}")
+            logger.error(f"An exception occurred while activating {self}: {traceback.format_exc()}")
             result = Resign()
 
         # Process state function result

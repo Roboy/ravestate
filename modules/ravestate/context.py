@@ -666,6 +666,8 @@ class Context(IContext):
     def _run_once(self, seconds_passed=1.):
         with self._lock:
 
+            #print(r"================ Context._run_once() ================")
+
             # ---------- Update weights wrt/ cooldown for all states -----------
 
             for state in self._activations_per_state:
@@ -708,9 +710,11 @@ class Context(IContext):
                             acts.remove(act)
                             if len(acts) == 0:
                                 self._new_state_activation(state)
-                        else:
-                            logger.error(
-                                "An activation rejected a spike it was registered to be interested in.")
+                        # This case is alright - a spike may be rejected because it doesn't originate from
+                        #  the same causal chain as the other spikes in a conjunction.
+                        # else:
+                        #     logger.error(
+                        #         "An activation rejected a spike it was registered to be interested in.")
 
             # ------------------ Update all state activations. -----------------
 
@@ -738,4 +742,4 @@ class Context(IContext):
 
             gc.collect()
 
-        self._update_core_properties(False)
+        self._update_core_properties(debug=True)
