@@ -215,7 +215,7 @@ with Module(name="persqa") as mod:
             relationship_node, output = retrieve_node(relationship_node, pers_info, interloc_answer)
             ctx["rawio:out"] = output
             if relationship_node is not None:
-                subject_node.add_relationships({pers_info: {relationship_node.get_id()}})
+                subject_node.add_relationships({pers_info: relationship_node.get_id()})
                 sess.update(subject_node)
         ctx["persqa:predicate"] = None
         create_small_talk_state(ctx=ctx, interloc_path=ctx["persqa:subject"])

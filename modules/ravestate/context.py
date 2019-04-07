@@ -503,6 +503,99 @@ class Context(IContext):
         """
         return ceil(seconds * float(self._core_config[self.tick_rate_config]))
 
+    def run_once(self, seconds_passed=1.) -> None:
+        """
+        Run a single update for this context, which will ...<br>
+        (0) progress cooled down state weights.<br>
+        (1) reduce redundant candidate activations.<br>
+        (2) associate new spikes with state activations.<br>
+        (3) update state activations.<br>
+        (4) forget spikes which have no suitors in their causal groups.<br>
+        (5) age spikes.<br>
+        (6) invoke garbage collection.<br>
+        (7) update the core `:activity` and `:pressure` variables.
+
+        * `seconds_passed`: Seconds, as floatiing point, since the last update. Will be used
+         to determine the number of ticks to add/subtract to/from spike/activation age/cooldown/deathclock.
+        """
+        with self._lock:
+
+            # ---------- Update weights wrt/ cooldown for all states -----------
+
+            for state in self._activations_per_state:
+                state.update_weight(seconds_passed)
+
+            # ----------- For every state, compress it's activations -----------
+
+            for st, acts in self._activations_per_state.items():
+                assert len(acts) > 0
+                if len(acts) > 1:
+                    # We could do some fancy merge of partially fulfilled activations,
+                    #  but for now let's just remove all completely unfulfilled
+                    #  ones apart from one.
+                    allowed_unfulfilled: Activation = None
+                    for act in acts.copy():
+                        if not act.spiky():
+                            if allowed_unfulfilled:
+                                for signal in act.constraint.signals():
+                                    if signal in self._act_per_state_per_signal_age and \
+                                            act in self._act_per_state_per_signal_age[signal][0][act.state_to_activate]:
+                                        self._act_per_state_per_signal_age[
+                                            signal][0][act.state_to_activate].remove(act)
+                                acts.remove(act)
+                            else:
+                                allowed_unfulfilled = act
+
+            # --------- Acquire new state activations for every spike ----------
+
+            for spike in self._spikes:
+                if spike.is_wiped():
+                    continue
+                for state, acts in self._act_per_state_per_signal_age[s(spike.name())][spike.age()].items():
+                    old_acts = acts.copy()
+                    for act in old_acts:
+                        if act.acquire(spike):
+                            # Remove the Activation instance from _act_per_state_per_signal_age
+                            #  for the Spike with a certain minimum age. In place of the removed
+                            #  activation, if no activation with the same target state is left,
+                            #  a new Activation will be created.
+                            acts.remove(act)
+                            if len(acts) == 0:
+                                self._new_state_activation(state)
+                        # This case is alright - a spike may be rejected because it doesn't originate from
+                        #  the same causal chain as the other spikes in a conjunction.
+                        # else:
+                        #     logger.error(
+                        #         "An activation rejected a spike it was registered to be interested in.")
+
+            # ------------------ Update all state activations. -----------------
+
+            for act in self._state_activations():
+                if act.update():
+                    self._activations_per_state[act.state_to_activate].discard(act)
+
+            # ----------------- Forget fully unreferenced spikes ---------------
+
+            old_spike_set = self._spikes.copy()
+            for spike in old_spike_set:
+                with spike.causal_group() as cg:
+                    if cg.stale(spike):
+                        # This should lead to the deletion of the spike
+                        self._spikes.remove(spike)
+                        spike.wipe(already_wiped_in_causal_group=True)
+                        logger.debug(f"{cg}.stale({spike})->Y")
+
+            # ----------------- Increment age on active spikes -----------------
+
+            for spike in self._spikes:
+                spike.tick()
+
+            # -------------------- Force garbage collect -----------------------
+
+            gc.collect()
+
+        self._update_core_properties(debug=True)
+
     def _add_sig(self, sig: Signal):
         if sig in self._act_per_state_per_signal_age:
             logger.error(f"Attempt to add signal f{sig.name} twice!")
@@ -661,85 +754,4 @@ class Context(IContext):
     def _run_loop(self):
         tick_interval = 1. / self._core_config[self.tick_rate_config]
         while not self._shutdown_flag.wait(tick_interval):
-            self._run_once(tick_interval)
-
-    def _run_once(self, seconds_passed=1.):
-        with self._lock:
-
-            #print(r"================ Context._run_once() ================")
-
-            # ---------- Update weights wrt/ cooldown for all states -----------
-
-            for state in self._activations_per_state:
-                state.update_weight(seconds_passed)
-
-            # ----------- For every state, compress it's activations -----------
-
-            for st, acts in self._activations_per_state.items():
-                assert len(acts) > 0
-                if len(acts) > 1:
-                    # We could do some fancy merge of partially fulfilled activations,
-                    #  but for now let's just remove all completely unfulfilled
-                    #  ones apart from one.
-                    allowed_unfulfilled: Activation = None
-                    for act in acts.copy():
-                        if not act.spiky():
-                            if allowed_unfulfilled:
-                                for signal in act.constraint.signals():
-                                    if signal in self._act_per_state_per_signal_age and \
-                                            act in self._act_per_state_per_signal_age[signal][0][act.state_to_activate]:
-                                        self._act_per_state_per_signal_age[
-                                            signal][0][act.state_to_activate].remove(act)
-                                acts.remove(act)
-                            else:
-                                allowed_unfulfilled = act
-
-            # --------- Acquire new state activations for every spike ----------
-
-            for spike in self._spikes:
-                if spike.is_wiped():
-                    continue
-                for state, acts in self._act_per_state_per_signal_age[s(spike.name())][spike.age()].items():
-                    old_acts = acts.copy()
-                    for act in old_acts:
-                        if act.acquire(spike):
-                            # Remove the Activation instance from _act_per_state_per_signal_age
-                            #  for the Spike with a certain minimum age. In place of the removed
-                            #  activation, if no activation with the same target state is left,
-                            #  a new Activation will be created.
-                            acts.remove(act)
-                            if len(acts) == 0:
-                                self._new_state_activation(state)
-                        # This case is alright - a spike may be rejected because it doesn't originate from
-                        #  the same causal chain as the other spikes in a conjunction.
-                        # else:
-                        #     logger.error(
-                        #         "An activation rejected a spike it was registered to be interested in.")
-
-            # ------------------ Update all state activations. -----------------
-
-            for act in self._state_activations():
-                if act.update():
-                    self._activations_per_state[act.state_to_activate].discard(act)
-
-            # ----------------- Forget fully unreferenced spikes ---------------
-
-            old_spike_set = self._spikes.copy()
-            for spike in old_spike_set:
-                with spike.causal_group() as cg:
-                    if cg.stale(spike):
-                        # This should lead to the deletion of the spike
-                        self._spikes.remove(spike)
-                        spike.wipe(already_wiped_in_causal_group=True)
-                        logger.debug(f"{cg}.stale({spike})->Y")
-
-            # ----------------- Increment age on active spikes -----------------
-
-            for spike in self._spikes:
-                spike.tick()
-
-            # -------------------- Force garbage collect -----------------------
-
-            gc.collect()
-
-        self._update_core_properties(debug=True)
+            self.run_once(tick_interval)
