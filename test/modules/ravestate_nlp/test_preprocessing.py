@@ -43,13 +43,13 @@ def test_tags(capture, basic_input):
     capture.check_present((f"{FILE_NAME}", '\x1b[1;32mINFO\x1b[0m', f"{PREFIX} [NLP:tags]: {expected}"))
 
 
-# TODO: Spacy NER is too unreliable for testing
-# @log_capture()
-# def test_ner(capture, basic_input):
-#     nlp_preprocess(basic_input)
-#     expected = (('Roboy', 'ORG'),)
-#     assert basic_input["nlp:ner"] == expected
-#     capture.check_present((f"{FILE_NAME}", '\x1b[1;32mINFO\x1b[0m', f"{PREFIX} [NLP:ner]: {expected}"))
+@pytest.mark.skip(reason="Spacy NER is too unreliable for testing")
+@log_capture()
+def test_ner(capture, basic_input):
+    nlp_preprocess(basic_input)
+    expected = (('Roboy', 'ORG'),)
+    assert basic_input["nlp:ner"] == expected
+    capture.check_present((f"{FILE_NAME}", '\x1b[1;32mINFO\x1b[0m', f"{PREFIX} [NLP:ner]: {expected}"))
 
 
 @log_capture()
