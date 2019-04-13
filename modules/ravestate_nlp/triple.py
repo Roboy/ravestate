@@ -40,6 +40,18 @@ class Triple:
     def get_object(self) -> Union[Token, QuestionWord]:
         return self._object
 
+    def has_subject(self) -> bool:
+        return self._subject and len(self._subject.text.strip()) > 0
+
+    def has_predicate(self) -> bool:
+        return self._predicate and len(self._predicate.text.strip()) > 0
+
+    def has_predicate_aux(self) -> bool:
+        return self._predicate_aux and len(self._predicate_aux.text.strip()) > 0
+
+    def has_object(self) -> bool:
+        return self._object and len(self._object.text.strip()) > 0
+
     def to_tuple(self) -> Tuple[str, str, str]:
         sub = ""
         pre = ""

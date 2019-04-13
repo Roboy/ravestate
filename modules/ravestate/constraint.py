@@ -132,10 +132,12 @@ class Signal(Constraint):
     def acquire(self, spike: Spike, act: IActivation):
         if not self.spike and self.name == spike.name() and (self.max_age < 0 or spike.age() <= act.secs_to_ticks(self.max_age)):
             assert not spike.is_wiped()
+            with spike.causal_group() as cg:
+                # Causal group might refuse acquisition, if one of act's state's write-props is unavailable.
+                if not cg.acquired(spike, act, self.detached):
+                    return False
             self._min_age_ticks = act.secs_to_ticks(self.min_age)
             self.spike = spike
-            with spike.causal_group() as cg:
-                cg.acquired(spike, act, self.detached)
             return True
         return False
 

@@ -68,7 +68,7 @@ with Module(name="persqa") as mod:
         allow_push=False)
 
 
-    @state(cond=s("interloc:all:pushed"),
+    @state(cond=s("interloc:all:pushed") & s("rawio:in:changed"),
            write=inference_mutex.id(),
            read="interloc:all",
            signal_name="new-interloc",
@@ -172,17 +172,22 @@ with Module(name="persqa") as mod:
          - dino
         """
         triple = ctx["nlp:triples"][0]
-        if ctx["persqa:predicate"] == "NAME" or ctx["persqa:predicate"] in PREDICATE_SET:
-            if triple.get_object():
-                ctx["persqa:answer"] = triple.get_object()
+        pred = ctx["persqa:predicate"]
+        answer_str = None
+        if pred == "NAME" or pred in PREDICATE_SET:
+            if triple.has_object():
+                answer_str = triple.get_object().text
             elif len(ctx["nlp:tokens"]) == 1:
-                ctx["persqa:answer"] = ctx["nlp:tokens"][0]
+                answer_str = ctx["nlp:tokens"][0]
             elif len(ctx["nlp:tokens"]) == 2:
-                ctx["persqa:answer"] = "%s %s" % (ctx["nlp:tokens"][0], ctx["nlp:tokens"][1])
+                answer_str = "%s %s" % (ctx["nlp:tokens"][0], ctx["nlp:tokens"][1])
+        if answer_str:
+            logger.debug(f"Inference: extracted answer '{answer_str}' for predicate {pred}")
+            ctx["persqa:answer"] = answer_str
 
 
-    @state(cond=s("persqa:answer:changed"),
-           write=("rawio:out", "interloc:all", "persqa:predicate"),
+    @state(cond=answer.changed_signal(),
+           write=("rawio:out", "persqa:predicate"),
            read=("persqa:predicate", "persqa:subject", "persqa:answer", "interloc:all"))
     def react(ctx: ContextWrapper):
         """

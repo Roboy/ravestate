@@ -130,11 +130,19 @@ class Activation(IActivation):
         * `spike`: The signal which should fulfill at least one of this activation's
          signal constraints.
 
-        **Returns:** Should return True.
+        **Returns:** True if the spike was acquired by at least one signal,
+         false if acquisition failed: This may happen for multiple reasons:
+           (1) Acquisition failed, because the spike is too old
+           (2) Acquisition failed, because the spike's causal group does not
+            match it's completions.
+           (3) Acquisition failed, bacause the spike's causal group does not
+            offer all of this activation's state's write-props.
         """
-        if self.death_clock is not None:
-            self._reset_death_clock()
-        return self.constraint.acquire(spike, self)
+        if self.constraint.acquire(spike, self):
+            if self.death_clock is not None:
+                self._reset_death_clock()
+            return True
+        return False
 
     def secs_to_ticks(self, seconds: float) -> int:
         """
