@@ -40,7 +40,7 @@ with Module(name="genqa", config=CONFIG):
         server = ctx.conf(key=DRQA_SERVER_ADDRESS)
         if not server_up(server):
             return Delete(resign=True)
-        params = {'question': ctx["rawio:in"]}
+        params = {'question': str(ctx["rawio:in"]).lower()}
         response = requests.get(server, params=params)
         response_json = response.json()
         certainty = response_json["answers"][0]["span_score"]
