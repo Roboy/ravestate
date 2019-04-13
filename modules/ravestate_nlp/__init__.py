@@ -43,6 +43,7 @@ with Module(name="nlp"):
         text = ctx["rawio:in"]
         if not text:
             return False
+        text = text.lower()
         nlp_doc = nlp(text)
 
         nlp_tokens = tuple(str(token) for token in nlp_doc)
