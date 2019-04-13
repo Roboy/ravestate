@@ -1,5 +1,6 @@
 # Ravestate class which encapsulates the activation of a single state
 import copy
+import traceback
 
 from threading import Thread
 from typing import Set, Optional, List, Dict, Any, Generator
@@ -12,6 +13,8 @@ from ravestate.spike import Spike
 from ravestate.causal import CausalGroup
 from ravestate.state import State, Emit, Delete, Resign, Wipe
 from ravestate.wrappers import ContextWrapper
+
+from ravestate_ui import service
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -53,6 +56,7 @@ class Activation(IActivation):
         self.death_clock = None
         self.pressuring_causal_groups = set()
         self.spike_payloads = dict()
+        service.activate(st.name)
 
     def __del__(self):
         logger.debug(f"Deleted {self}")
@@ -280,7 +284,7 @@ class Activation(IActivation):
 
     def _run_private(self):
         context_wrapper = ContextWrapper(ctx=self.ctx,
-                                         st=self.state_to_activate,
+                                         state=self.state_to_activate,
                                          spike_parents=self.parent_spikes,
                                          spike_payloads=self.spike_payloads)
 
@@ -288,7 +292,7 @@ class Activation(IActivation):
         try:
             result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
         except Exception as e:
-            logger.error(f"An exception occurred while activating {self}: {e}")
+            logger.error(f"An exception occurred while activating {self}: {traceback.format_exc()}")
             result = Resign()
 
         # Process state function result

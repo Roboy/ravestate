@@ -55,6 +55,12 @@
             
     <li class="toctree-l2"><a href="#about">About</a></li>
     
+        <ul>
+        
+            <li><a class="toctree-l3" href="#reactive-hello-world">Reactive Hello World</a></li>
+        
+        </ul>
+    
 
     <li class="toctree-l2"><a href="#installation">Installation</a></li>
     
@@ -78,12 +84,48 @@
         </ul>
     
 
+    <li class="toctree-l2"><a href="#module-overview">Module overview</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#core-modules">Core Modules</a></li>
+        
+            <li><a class="toctree-l3" href="#io-modules">IO Modules</a></li>
+        
+            <li><a class="toctree-l3" href="#skill-modules">Skill Modules</a></li>
+        
+        </ul>
+    
+
     <li class="toctree-l2"><a href="#running-tests">Running tests</a></li>
     
 
     <li class="toctree-l2"><a href="#buildingmaintaining-the-docs">Building/maintaining the docs</a></li>
     
 
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Modules</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="modules/ravestate_nlp/">NLP</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="modules/ravestate_verbaliser/">Verbaliser</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="modules/ravestate_telegramio/">TelegramIO</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="modules/ravestate_akinator/">Akinator</a>
+                </li>
     </ul>
 	    </li>
           
@@ -146,24 +188,58 @@
           <div role="main">
             <div class="section">
               
-                <pre><code>                                 _ __    _ __     
-    _ ___ ____  __  ______  ______/ /_____/ /___     
- _ _ /  \/ __ \/ / / / __ \/ ___\, / __ \, /__  \  
-_ _ / /\/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /     
-  _ \/ _\__/\/ _\__/ ,___/\____/\/\__/\/\/ ,___/
- _____          _ _\____/             _ _\____/                    
-/_   _\
- 0&gt;  0&gt; 
-\__⊽__/  (C) Roboy 2019
-   ⋂                                           
+                <p><a href="https://github.com/ro-boy/ravestate"><img alt="Release" src="https://img.shields.io/github/release/Roboy/ravestate.svg" /></a>
+<a href="https://travis-ci.org/Roboy/ravestate"><img alt="Build Status" src="https://travis-ci.org/Roboy/ravestate.svg?branch=master" /></a>
+<a href="https://codecov.io/gh/Roboy/ravestate"><img alt="codecov" src="https://codecov.io/gh/Roboy/ravestate/branch/master/graph/badge.svg" /></a></p>
+<h2 id="about">About</h2>
+<pre><code>   ____                          __      __        _____       _____   
+  / _  \____  __  ______  ______/ /_____/ /___    /_   _\     /_   _\  
+ / /_/ / __ \/ / / / __ \/ ___\, / __ \, / __ \    0&gt;  0&gt;     &lt;0  &lt;0   
+/ ,\ ,/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /   \__⊽__/     \__⊽__/  
+\/  \/\__/\/  \__/ ,___/\____/\/\__/\/\/ ,___/       ⋂  - Hey!   ⋂     
+                 \____/                \____/             Olà! -       
 </code></pre>
 
-<h2 id="about">About</h2>
-<p>Ravestate is a reactive library for real-time natural language dialog systems.</p>
+<p>Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events.</p>
+<h3 id="reactive-hello-world">Reactive Hello World</h3>
+<pre><code class="python">from ravestate.context import startup, Context
+from ravestate.state import state
+from ravestate.module import Module
+
+# We want to write some text output, so we
+# need the raw:out context property from ravestate_rawio.
+from ravestate_rawio import output as raw_out
+
+# Make sure that we use some i/o implementation,
+# so we can actually see stuff that is written to rawio:out.
+import ravestate_conio
+
+# Ravestate applications should always be wrapped in a Module.
+# This allows easier scoping, and enables separation of concerns
+# beyond states.
+with Module(name=&quot;hi!&quot;):
+
+    # Create an application state which reacts to the `:startup` signal,
+    # and writes a string to raw:out. Note: State functions are
+    # always run asynchronously!
+    @state(cond=startup(min_age=3.), write=raw_out.id())
+    def hello_world(context):
+        context[raw_out.id()] = &quot;Waddup waddup waddup!&quot;
+
+# Run context with console input/output and our 'hi!' module.
+Context(&quot;conio&quot;, &quot;hi!&quot;).run()
+</code></pre>
+
 <h2 id="installation">Installation</h2>
 <h3 id="via-pip">Via PIP</h3>
 <p>The easiest way to install ravestate is through pip:</p>
 <p><code>pip install ravestate</code></p>
+<p><strong>Note:</strong> Ravestate requires Python 3.6 or higher. It is tested
+on Ubuntu 16.04 and 18.04, as well as macOS &gt; High Sierra.
+It is currently not tested on Windows.</p>
+<p>For reliability, we recommend using an environment virtualization tool,
+like <a href="https://virtualenv.pypa.io/en/latest/">virtualenv</a>
+or <a href="https://conda.io/en/latest/">conda</a>.</p>
 <h3 id="for-developers">For developers</h3>
 <p>First, install dependencies:</p>
 <pre><code class="bash">pip install -r requirements.txt
@@ -173,7 +249,10 @@ pip install -r requirements-dev.txt
 </code></pre>
 
 <p>Then, you may open the repository in any IDE, and mark the
-<code>modules</code> folder as a sources root. </p>
+<code>modules</code> folder as a sources root. Alternatively for development
+purposes, call <code>export PYTHONPATH=$PYTHONPATH:$(pwd)/modules</code> from
+your ravestate clone, to tell python that there are modules
+to be loaded in the <code>modules</code> directory (the IDE does this for you).</p>
 <h2 id="running-hello-world">Running Hello World</h2>
 <p>Ravestate applications are defined by a configuration,
 which specifies the ravestate modules that should be loaded.</p>
@@ -183,10 +262,14 @@ with a config file or command line arguments:</p>
 <p>You can easily run a combination of ravestate modules in a shared context,
 by listing them as arguments to the <code>rasta</code> command, which is installed
 with ravestate:</p>
-<pre><code class="bash">rasta ravestate_conio ravestate_hello_world
+<pre><code class="bash">python3 -m ravestate \
+    ravestate_wildtalk \
+    ravestate_conio \
+    ravestate_hibye \
+    ravestate_akinator
 </code></pre>
 
-<p>Run <code>rasta -h</code> to see more options!</p>
+<p>Run <code>python3 -m ravestate -h</code> to see more options!</p>
 <h3 id="running-with-config-files">Running with config file(s)</h3>
 <p>You may specify a series of config files to configure ravestate context,
 when specifying everything through the command line becomes too laborious:</p>
@@ -194,14 +277,128 @@ when specifying everything through the command line becomes too laborious:</p>
 module: core
 config:
   import:
+    - ravestate_wildtalk
     - ravestate_conio
-    - ravestate_hello_world
+    - ravestate_hibye
+    - ravestate_akinator
 </code></pre>
 
-<p>Then, run <code>rasta</code> with this config file:</p>
-<pre><code class="bash">rasta -f hello_world.yml
+<p>Then, run <code>ravestate</code> with this config file:</p>
+<pre><code class="bash">python3 -m ravestate -f hello_world.yml
 </code></pre>
 
+<h2 id="module-overview">Module overview</h2>
+<p>Ravestate offers a landscape of fine-grained modules
+for different aspects of dialog application tasks, which
+may be seen in the following dependency diagram. Broadly,
+the modules are categorized into Core (Blue), I/O (Yellow),
+External (Red) and Skills (Green):</p>
+<p><img src="resources/docs/modules_sm.png"></p>
+<h4 id="core-modules">Core Modules</h4>
+<table>
+<thead>
+<tr>
+<th>Module name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ravestate</td>
+<td>Core ravestate library.</td>
+</tr>
+<tr>
+<td>ravestate_rawio</td>
+<td>Provides <code>raw_in</code>, <code>raw_out</code>, <code>pic_in</code> properties, which are served by the IO modules.</td>
+</tr>
+<tr>
+<td>ravestate_ontology</td>
+<td>Connects to <a href="https://github.com/roboy/scientio">scientio</a> to serve a built-in ontology.</td>
+</tr>
+<tr>
+<td>ravestate_interloc</td>
+<td>Provides the <code>all_interlocutors</code> property, where present interlocutors are registered by the IO modules.</td>
+</tr>
+<tr>
+<td>ravestate_idle</td>
+<td>Provides <code>bored</code> and <code>impatient</code> signals, as specified <a href="https://github.com/Roboy/ravestate/issues/12_">here</a>.</td>
+</tr>
+<tr>
+<td>ravestate_verbaliser</td>
+<td>Utilities for easy management of conversational text, documented <a href="modules/ravestate_verbaliser/">here</a>.</td>
+</tr>
+<tr>
+<td>ravestate_nlp</td>
+<td>Spacy-based NLP properties and signals, documented <a href="modules/ravestate_nlp/">here</a>.</td>
+</tr>
+<tr>
+<td>ravestate_ros2</td>
+<td>Provides specific <code>Ros2PubProperty</code>, <code>Ros2SubProperty</code> and <code>Ros2CallProperty</code> context props., which greatly simplify working with ROS2 in ravestate.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="io-modules">IO Modules</h4>
+<table>
+<thead>
+<tr>
+<th>Module name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ravestate_conio</td>
+<td>Simple command-line based IO for development purposes.</td>
+</tr>
+<tr>
+<td>ravestate_telegramio</td>
+<td>Single- or Multi-process Telegram server module, documented <a href="modules/ravestate_telegramio/">here</a>.</td>
+</tr>
+<tr>
+<td>ravestate_roboyio</td>
+<td><a href="https://github.com/roboy/pyroboy">PyroBoy</a> -based STT/TTS with ROS2.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="skill-modules">Skill Modules</h4>
+<table>
+<thead>
+<tr>
+<th>Module name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ravestate_wildtalk</td>
+<td><a href="https://github.com/roboy/parlai">ParlAI</a> -based generative conversational module.</td>
+</tr>
+<tr>
+<td>ravestate_hibye</td>
+<td>Simply voices <strong>Hi!</strong> (or the likes thereof) when an interlocutor is added, and <strong>Bye</strong> when one is removed.</td>
+</tr>
+<tr>
+<td>ravestate_genqa</td>
+<td><a href="https://github.com/roboy/drqa">DrQA</a> -based general question answering module.</td>
+</tr>
+<tr>
+<td>ravestate_roboyqa</td>
+<td>QA module which provides answers to questions about Roboy, such as <strong>Who is your dad?</strong></td>
+</tr>
+<tr>
+<td>ravestate_akinator</td>
+<td>Enables dialog-based play of <a href="modules/ravestate_akinator/">Akinator!</a></td>
+</tr>
+<tr>
+<td>ravestate_sendpics</td>
+<td>Uses face recognition to extract facial features and an assiciated Person with <code>pic_in</code> and ontology, which are then persisted in Redis and Scientio.</td>
+</tr>
+<tr>
+<td>ravestate_stalker</td>
+<td>Uses <code>facial feature &lt;-&gt; person</code> tuples generated by sendpics, to surprise people in front of a camera with knowledge of their names.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="running-tests">Running tests</h2>
 <p>If you have installed the dependencies from <code>requirements-dev.txt</code> you
 may run the ravestate test suite as follows:</p>
@@ -209,9 +406,13 @@ may run the ravestate test suite as follows:</p>
 <h2 id="buildingmaintaining-the-docs">Building/maintaining the docs</h2>
 <p>If you have installed the dependencies from <code>requirements-dev.txt</code>,
 generate the docs by running this command at project root:</p>
-<pre><code class="bash">git rm -rf docs
+<pre><code class="bash">export PYTHONPATH=$PYTHONPATH:$(pwd)/modules
+git rm -rf docs
 rm -rf _build docs
 pydocmd build
+mkdir -p docs/resources/docs &amp;&amp; cp resources/docs/*.png docs/resources/docs
+git add docs/*
+# For inspection: python3 -m http.server --directory docs
 </code></pre>
 
 <p>The structure and content of the docs are defined in the file <code>pydocmd.yml</code>.</p>
@@ -222,7 +423,7 @@ pydocmd build
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="modules/" class="btn btn-neutral float-right" title="Modules">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="modules/ravestate_nlp/" class="btn btn-neutral float-right" title="NLP">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
     </div>
@@ -250,7 +451,7 @@ pydocmd build
       
       
       
-        <span style="margin-left: 15px"><a href="modules/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="modules/ravestate_nlp/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
@@ -263,5 +464,5 @@ pydocmd build
 
 <!--
 MkDocs version : 1.0.4
-Build Date UTC : 2019-01-29 13:58:53
+Build Date UTC : 2019-03-04 14:26:33
 -->

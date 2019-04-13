@@ -76,6 +76,10 @@ class Signal(Constraint):
     min_age: float
     max_age: float
     detached: bool
+
+    # tells whether this signal has been completed, and may therefore
+    #  not introduce a new causal group into the parent conjunct
+    has_completion: bool
     _min_age_ticks: int  # written on acquire, when act.secs_to_ticks is available
 
     def __init__(self, name: str, *, min_age=0., max_age=5., detached=False):
@@ -84,6 +88,7 @@ class Signal(Constraint):
         self.max_age = max_age
         self.spike = None
         self.detached = detached
+        self.has_completion = False
         self._min_age_ticks = 0
         # TODO: Deal with ConfigurableAge
         # if min_age > max_age and max_age > .0:
@@ -163,10 +168,17 @@ class Signal(Constraint):
 
 class Conjunct(Constraint):
     """
-    Class that represents a Conjunction of Signals
+    Class that represents a Conjunction of Signals.
+    Can be constructed using an overloaded & operator.
+
+    _Example:_
+    ```python
+    signal_A & signal_B
+    ```
     """
     _signals: Set[Signal]
     _hash: Tuple[str]
+    _allowed_causal_groups: Set[ICausalGroup]
 
     def __init__(self, *args):
         for arg in args:
@@ -175,6 +187,7 @@ class Conjunct(Constraint):
                 raise ValueError
         self._signals = set(args)
         self._hash = hash(tuple(sorted(sig.name for sig in self._signals)))
+        self._allowed_causal_groups = set()
 
     def __iter__(self):
         for signal in self._signals:
@@ -220,20 +233,29 @@ class Conjunct(Constraint):
 
     def acquire(self, spike: Spike, act: IActivation):
         result = False
+        # update causal group set to account for merges
+        self._allowed_causal_groups = set(cg for cg in self._allowed_causal_groups)
         for si in self._signals:
-            result |= si.acquire(spike, act)
+            if spike.causal_group() in self._allowed_causal_groups:
+                # the causal group is already allowed
+                result |= si.acquire(spike, act)
+            elif not si.has_completion:
+                if si.acquire(spike, act):
+                    # add causal group to allowed, since the spike is a root cause
+                    self._allowed_causal_groups.add(spike.causal_group())
+                    result = True
         return result
 
     def evaluate(self) -> bool:
-        return all(map(lambda si: si.evaluate(), self._signals))
+        return all(si.evaluate() for si in self._signals)
 
     def dereference(self, *,
                     spike: Optional[Spike]=None,
                     causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
-        return (
-            result
-            for child in self._signals
-            for result in child.dereference(spike=spike, causal_groups=causal_groups))
+        for child in self._signals:
+            for result in child.dereference(spike=spike, causal_groups=causal_groups):
+                self._allowed_causal_groups = {sig.spike.causal_group() for sig in self._signals if sig.spike}
+                yield result
 
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
         return (result for child in self._signals for result in child.update(act))
@@ -245,6 +267,14 @@ class Conjunct(Constraint):
 class Disjunct(Constraint):
     """
     Class that represents a Disjunction of Conjunctions
+    Can be constructed using an overloaded | operator.
+
+    _Examples:_
+    ```python
+    conjunction_A | conjunction_B
+
+    (signal_A & signal_B) | (signal_C & signal_D)
+    ```
     """
     _conjunctions: Set[Conjunct]
 

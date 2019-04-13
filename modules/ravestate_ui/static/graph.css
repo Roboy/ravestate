@@ -1,35 +1,108 @@
-.link {
-  fill: none;
-  stroke: #666;
-  stroke-width: 1.5px;
+:root {
+    --link-color: #fff;
+    --link-width: 1.5px;
+    --circle-stroke-width: 1.5px;
+    --state-edge: #80d1f2;
+    --state-edge-anim: #04a0dd;
+    --state-color: #04a0dd;
+    --dark-background: #24292e;
 }
 
-.link.notifies {
+.link {
+  fill: none;
+  stroke:  var(--link-color);
+  stroke-width: var(--link-width);
+}
+
+.link.changes {
+  stroke-dasharray: 0,2 1;
+}
+
+.link.emits {
+  stroke-dasharray: 0,2 1;
+}
+
+.link.sets {
   stroke-dasharray: 0,2 1;
 }
 
 .signal {
   fill: #ffb3b3;
-  stroke: #333;
-  stroke-width: 1.5px;
-}
-
-.state {
-  fill: #bbff99;
-  stroke: #333;
-  stroke-width: 1.5px;
+  stroke: #ffffff;
+  stroke-width: var(--circle-stroke-width);
 }
 
 .prop {
-fill: #b3ecff;
-stroke: #333;
-stroke-width: 1.5px;
+  fill: #bbff99;
+  stroke:  #ffffff;
+  stroke-width: var(--circle-stroke-width);
+}
+
+.state {
+    fill: var(--state-color);
+    stroke:  var(--state-edge);
+    stroke-width: var(--circle-stroke-width);
+}
+
+@-webkit-keyframes stateactivecolor {
+    0% {
+        fill: var(--state-color)
+    }
+    30% {
+        stroke: var(--state-edge-anim);
+        fill: #b3e7fc;
+        stroke-width: 6px;
+    }
+    70% {
+        stroke: var(--state-edge-anim);
+        fill: #b3e7fc;
+        stroke-width: 6px;
+    }
+    100% {
+        fill: var(--state-color)
+    }
+}
+
+circle[democolor="on"] {
+    -webkit-animation-name: stateactivecolor;
+    -webkit-animation-duration: 5s;
+    -webkit-animation-iteration-count: infinite;
+}
+
+circle[democolor="off"] {
+    -webkit-animation-name: stateactivecolor;
+    -webkit-animation-duration: 3s;
+    -webkit-animation-iteration-count: 1;
+}
+
+
+@-webkit-keyframes spike {
+    0% {
+        stroke-width: var(--circle-stroke-width);
+        fill: #ffb3b3;
+    }
+    50% {
+        stroke-width: 15px;
+        fill:  #c64545;
+        stroke: #ffb3b3;
+    }
+    100% {
+        stroke-width: var(--circle-stroke-width);
+        fill: #ffb3b3;
+    }
+}
+
+circle[spiking="on"] {
+    -webkit-animation-name: spike;
+    -webkit-animation-duration: 1500ms;
+    -webkit-animation-iteration-count: 2;
 }
 
 text {
   font: 14px sans-serif;
   pointer-events: none;
-  text-shadow: 0 2px 0 #fff, 2px 0 0 #fff, 0 -2px 0 #fff, -2px 0 0 #fff;
+  text-shadow: 0px 0px 8px #ffffff, 0px 0px 8px #ffffff, 0px 0px 8px #ffffff, 0px 0px 8px #ffffff, 0px 0px 8px #ffffff, 0px 0px 8px #ffffff;
+  white-space: pre-line;
 }
 
 .flex-container {
@@ -45,6 +118,7 @@ text {
   width: 100%;
   height: 100%;
   vertical-align: middle;
+    overflow: visible;
 }
 
 .svg-content-responsive {
@@ -65,6 +139,7 @@ body, html {
 body {
   display: flex;
   flex-direction: column;
+  background: var(--dark-background);
 }
 
 h1 {

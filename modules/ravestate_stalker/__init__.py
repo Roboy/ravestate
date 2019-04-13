@@ -96,5 +96,4 @@ if ROBOY_COGNITION_AVAILABLE:
 
                     ctx[rec_faces.id()] = rec_faces_dict
 
-            mod.add(react_to_recognized_face)
             ctx.add_state(react_to_recognized_face)

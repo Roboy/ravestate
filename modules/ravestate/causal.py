@@ -159,6 +159,8 @@ class CausalGroup(ICausalGroup):
          all properties that are consumed by other, but not this.
         Afterwards, other's member objects will be set to this's.
         """
+        logger.debug(f"=======> CausalGroup.merge({self} | {other})")
+
         # Intersect _available_resources
         self._available_resources = self._available_resources & other._available_resources
 
@@ -251,7 +253,7 @@ class CausalGroup(ICausalGroup):
                 _decrement_refcount(self._ref_index[prop])
                 if len(self._ref_index[prop][spike]) == 0:
                     del self._ref_index[prop][spike]
-        logger.debug(f"{self}.rejected({spike} by {rejected_by})")
+        logger.debug(f"{self}.rejected({spike} by {rejected_by}): ")
 
     def consent(self, ready_suitor: IActivation) -> bool:
         """

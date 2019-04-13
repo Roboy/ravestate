@@ -1,5 +1,5 @@
 from ravestate.module import Module
-from ravestate_ros2.ros2_properties import sync_ros_properties
+from ravestate_ros2.ros2_properties import sync_ros_properties, set_node_once
 
 CONFIG = {
     # name of the ROS2-Node that is created by ravestate_ros2
@@ -9,4 +9,5 @@ CONFIG = {
 }
 
 with Module(name="ros2", config=CONFIG) as mod:
+
     mod.add(sync_ros_properties)

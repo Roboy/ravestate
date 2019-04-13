@@ -1,11 +1,11 @@
 argparse
 pyyaml<4.0
-flask
 python-telegram-bot
 pyyaml-include
 roboy_parlai>=0.1.post3
 spacy
 flask
+flask_socketio
 requests
 scientio
 redis

@@ -1,0 +1,20 @@
+version: '2.1'
+
+services:
+  ravestate:
+    image: ravestate-ros2-image
+    container_name: ravestate-ros2-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
+    volumes:
+      - .:/ravestate
+    environment:
+      - PYTHONPATH=$PYTHONPATH:/ravestate/modules
+      - PYTHONUNBUFFERED=1
+    # After starting container, attach console and enter python3 -m ravestate [...]
+    # This enables "hot reload" in the running container because the source directory is mounted
+    command: bash
+    tty: true
+    stdin_open: true

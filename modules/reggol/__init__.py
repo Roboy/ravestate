@@ -88,6 +88,7 @@ def strip_prefix(lr: logging.LogRecord) -> str:
     """
     return "".join(lr.msg.split("] ")[2:])
 
+
 args, unknown_args = argparser.parse_known_args()
 sys.argv[1:] = unknown_args
 set_default_loglevel(args.loglevel)

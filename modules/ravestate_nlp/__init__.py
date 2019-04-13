@@ -14,6 +14,35 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
+def init_spacy():
+    # TODO: Create nlp instance in :startup state, save in context instead of global var
+    global empty_token
+    try:
+        import en_core_web_sm as spacy_en
+    except ImportError:
+        from spacy.cli import download as spacy_download
+        spacy_download("en_core_web_sm")
+        import en_core_web_sm as spacy_en
+    spacy_nlp_en = spacy_en.load()
+    empty_token = spacy_nlp_en(u" ")[0]
+
+    # TODO: Make agent id configurable, rename nlp:contains-roboy to nlp:agent-mentioned
+    about_roboy = ('you', 'roboy', 'robot', 'roboboy', 'your')
+
+    def roboy_getter(doc) -> bool:
+        return any(roboy in doc.text.lower() for roboy in about_roboy)
+
+    from spacy.tokens import Doc
+    Doc.set_extension('about_roboy', getter=roboy_getter)
+    Doc.set_extension('empty_token', getter=lambda doc: empty_token)
+    Doc.set_extension('triples', getter=extract_triples)
+    Doc.set_extension('yesno', getter=yes_no)
+    return spacy_nlp_en
+
+
+spacy_nlp_en = init_spacy()
+
+
 with Module(name="nlp"):
 
     tokens = PropertyBase(name="tokens", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
@@ -43,7 +72,8 @@ with Module(name="nlp"):
         text = ctx["rawio:in"]
         if not text:
             return False
-        nlp_doc = nlp(text)
+        text = text.lower()
+        nlp_doc = spacy_nlp_en(text)
 
         nlp_tokens = tuple(str(token) for token in nlp_doc)
         ctx["nlp:tokens"] = nlp_tokens
@@ -74,8 +104,7 @@ with Module(name="nlp"):
         logger.info(f"[NLP:roboy]: {nlp_roboy}")
 
         nlp_yesno = nlp_doc._.yesno
-        if nlp_yesno != "_":
-            ctx["nlp:yesno"] = nlp_yesno
+        ctx["nlp:yesno"] = nlp_yesno
         logger.info(f"[NLP:yesno]: {nlp_yesno}")
 
 
@@ -92,12 +121,6 @@ with Module(name="nlp"):
             return Emit()
         return False
 
-    @state(signal_name="yes-no", read="nlp:yesno")
-    def nlp_yes_no_signal(ctx):
-        if ctx["nlp:yesno"] != "_":
-            return Emit()
-        return False
-
     @state(signal_name="intent-play", read="nlp:triples")
     def nlp_intent_play_signal(ctx):
         nlp_triples = ctx["nlp:triples"]
@@ -105,30 +128,3 @@ with Module(name="nlp"):
             return Emit()
         return False
 
-
-def init_spacy():
-    # TODO: Create nlp instance in :startup state, save in context instead of global var
-    global nlp, empty_token
-    try:
-        import en_core_web_sm as spacy_en
-    except ImportError:
-        from spacy.cli import download as spacy_download
-        spacy_download("en_core_web_sm")
-        import en_core_web_sm as spacy_en
-    nlp = spacy_en.load()
-    empty_token = nlp(u" ")[0]
-
-    # TODO: Make agent id configurable, rename nlp:contains-roboy to nlp:agent-mentioned
-    about_roboy = ('you', 'roboy', 'robot', 'roboboy', 'your')
-
-    def roboy_getter(doc) -> bool:
-        return any(roboy in doc.text.lower() for roboy in about_roboy)
-
-    from spacy.tokens import Doc
-    Doc.set_extension('about_roboy', getter=roboy_getter)
-    Doc.set_extension('empty_token', getter=lambda doc: empty_token)
-    Doc.set_extension('triples', getter=extract_triples)
-    Doc.set_extension('yesno', getter=yes_no)
-
-
-init_spacy()

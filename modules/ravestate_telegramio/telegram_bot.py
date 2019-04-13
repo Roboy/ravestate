@@ -280,7 +280,7 @@ def telegram_run(ctx: ContextWrapper):
     child_conn = ctx.conf(key=CHILD_CONN_CONFIG_KEY)
     is_master_process = child_conn is None
     if is_master_process:
-        _bootstrap_telegram_master()
+        return _bootstrap_telegram_master()
     else:
         _bootstrap_telegram_child()
 

@@ -20,14 +20,19 @@ config:
   import:
     - ravestate_interloc
     - ravestate_conio
-    - ravestate_wildtalk
-    - ravestate_nlp
-    - ravestate_hibye
+    - ravestate_roboyio
     - ravestate_roboyqa
     - ravestate_genqa
-    - ravestate_idle
     - ravestate_akinator
-    - ravestate_persqa
+    - ravestate_idle
+    - ravestate_fillers
+#    - ravestate_wildtalk
+    - ravestate_hibye
+#    - ravestate_roboyqa
+#    - ravestate_genqa
+    - ravestate_stalker
+#    - ravestate_akinator
+    - ravestate_nlp
     # TODO: Fillers sometimes overwrite good responses by race condition.
     # - ravestate_fillers
 

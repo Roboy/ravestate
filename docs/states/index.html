@@ -55,6 +55,29 @@
           
             <li class="toctree-l1">
 		
+    <span class="caption-text">Modules</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_nlp/">NLP</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_verbaliser/">Verbaliser</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_telegramio/">TelegramIO</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="../modules/ravestate_akinator/">Akinator</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
     <span class="caption-text">API</span>
     <ul class="subnav">
                 <li class="">
@@ -158,14 +181,64 @@
 <p>Return an instance of this class, if the state invocation should be regarded unsuccessful.
  This means, that the state's signal will not be emitted, and the spikes
  that were allocated for it's activation may be re-used by another state.</p>
+<h2 id="ravestate.state.State">State</h2>
+
+<pre><code class="python">State(self, *, signal_name: Union[str, NoneType], write: Union[str, Tuple[str]], read: Union[str, Tuple[str]], cond: ravestate.constraint.Constraint, action, is_receptor: bool = False, emit_detached: bool = False, weight: float = 1.0, cooldown: float = 0.0)
+</code></pre>
+
+<p>Class which encapsulates a single application state function.
+Do not use this class - instead use the <code>@state</code> decorator.</p>
+<h3 id="ravestate.state.State.update_weight">update_weight</h3>
+
+<pre><code class="python">State.update_weight(self, seconds_passed: float)
+</code></pre>
+
+<p>Called once per tick by context, where <code>seconds_passed</code> is
+ one over the context's tick rate. The state will use this
+ function, to update it's actual weight, given it's cooldown
+ period and last activation</p>
+<h3 id="ravestate.state.State.get_current_weight">get_current_weight</h3>
+
+<pre><code class="python">State.get_current_weight(self)
+</code></pre>
+
+<p>Called by activation to obtain the weight factor for this
+ state's constraint's specificity.</p>
+<h3 id="ravestate.state.State.activation_finished">activation_finished</h3>
+
+<pre><code class="python">State.activation_finished(self)
+</code></pre>
+
+<p>Called by a running activation for this state, once it is about to
+ exit it's dedicated thread.</p>
+<h3 id="ravestate.state.State.wait">wait</h3>
+
+<pre><code class="python">State.wait(self, timeout=5.0)
+</code></pre>
+
+<p>Wait for the state's activation function to be run at least once.</p>
+<ul>
+<li><code>timeout</code>: Timeout after which this function should return False,
+ if the activation is not occurring.</li>
+</ul>
+<p><strong>Return:</strong> True if the activation has been invoked at least once
+ since the last call to this function, false if invocation does not
+ occur after <code>timeout</code> seconds.</p>
 <h2 id="ravestate.state.state">state</h2>
 
-<pre><code class="python">state(*, signal_name: Union[str, NoneType] = '', write: tuple = (), read: tuple = (), cond: ravestate.constraint.Constraint = None, emit_detached=False)
+<pre><code class="python">state(*, signal_name: Union[str, NoneType] = '', write: tuple = (), read: tuple = (), cond: ravestate.constraint.Constraint = None, emit_detached=False, weight: float = 1.0, cooldown: float = 0.0)
 </code></pre>
 
 <p>Decorator to declare a new state, which may emit a certain signal,
 write to a certain set of properties (calling write, push, pop),
 and read from certain properties (calling read).</p>
+<p><em>Example (Module that outputs "Don't Panic" after startup):</em></p>
+<pre><code class="python">with Module(name=&quot;my_module&quot;):
+    @state(cond=startup())
+    def after_startup(context, write=OUTPUT_PROPERTY):
+        context[OUTPUT_PROPERTY] = &quot;Don't Panic&quot;
+</code></pre>
+
 <h1 id="ravestate.constraint">ravestate.constraint</h1>
 
 <h2 id="ravestate.constraint.ConfigurableAge">ConfigurableAge</h2>
@@ -224,13 +297,25 @@ errors defaults to 'strict'.
 <pre><code class="python">Conjunct(self, *args)
 </code></pre>
 
-<p>Class that represents a Conjunction of Signals</p>
+<p>Class that represents a Conjunction of Signals.
+Can be constructed using an overloaded &amp; operator.</p>
+<p><em>Example:</em></p>
+<pre><code class="python">signal_A &amp; signal_B
+</code></pre>
+
 <h2 id="ravestate.constraint.Disjunct">Disjunct</h2>
 
 <pre><code class="python">Disjunct(self, *args)
 </code></pre>
 
-<p>Class that represents a Disjunction of Conjunctions</p>
+<p>Class that represents a Disjunction of Conjunctions
+Can be constructed using an overloaded | operator.</p>
+<p><em>Examples:</em></p>
+<pre><code class="python">conjunction_A | conjunction_B
+
+(signal_A &amp; signal_B) | (signal_C &amp; signal_D)
+</code></pre>
+
 <h1 id="ravestate.receptor">ravestate.receptor</h1>
 
 <h2 id="ravestate.receptor.receptor">receptor</h2>
@@ -249,6 +334,19 @@ errors defaults to 'strict'.
 <p><code>write</code>: The property, or tuple of properties, which are going to be written.</p>
 </li>
 </ul>
+<p><em>Example:</em></p>
+<pre><code class="python"># Module that outputs &quot;Don't Panic&quot; one minute after startup
+# Because a receptor is used, the OUTPUT_PROPERTY is not blocked the whole time
+with Module(name=&quot;my_module&quot;):
+    @state(cond=startup())
+    def after_startup(context):
+        @receptor(ctx_wrap=context, write=OUTPUT_PROPERTY)
+        def dont_panic(ctx_write):
+            ctx_write[OUTPUT_PROPERTY] = &quot;Don't Panic&quot;
+
+        sleep(60)
+        dont_panic()
+</code></pre>
               
             </div>
           </div>
