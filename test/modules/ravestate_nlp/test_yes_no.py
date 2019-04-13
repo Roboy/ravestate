@@ -1,15 +1,12 @@
 import pytest
-import spacy
 
-from ravestate_nlp import yes_no
-
-nlp = spacy.load('en_core_web_sm')
+from ravestate_nlp import yes_no, spacy_nlp_en
 
 
 def create_doc(text: str):
     if not text:
         return None
-    return nlp(text)
+    return spacy_nlp_en(text)
 
 
 @pytest.mark.parametrize("test_input, expected",

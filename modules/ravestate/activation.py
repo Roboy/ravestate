@@ -284,7 +284,7 @@ class Activation(IActivation):
 
     def _run_private(self):
         context_wrapper = ContextWrapper(ctx=self.ctx,
-                                         st=self.state_to_activate,
+                                         state=self.state_to_activate,
                                          spike_parents=self.parent_spikes,
                                          spike_payloads=self.spike_payloads)
 

@@ -29,6 +29,13 @@ PREDICATE_SET = {"FROM", "HAS_HOBBY", "LIVE_IN", "FRIEND_OF", "STUDY_AT", "MEMBE
 
 with Module(name="persqa") as mod:
 
+    # This is a nice demo of using properties as synchronization
+    #  primitives. The problem: inference must only run for inputs
+    #  that did not trigger new_interloc. Therefore, new_interloc and inference
+    #  are mutually exclusive. This is enfored by having both of them
+    #  consume the inference_mutex property.
+    inference_mutex = PropertyBase(name="inference_mutex")
+
     subject = PropertyBase(
         name="subject",
         default_value="",
@@ -62,7 +69,7 @@ with Module(name="persqa") as mod:
 
 
     @state(cond=s("interloc:all:pushed"),
-           write="interloc:all",
+           write=inference_mutex.id(),
            read="interloc:all",
            signal_name="new-interloc",
            emit_detached=True)
@@ -83,7 +90,6 @@ with Module(name="persqa") as mod:
             ctx["rawio:out"] = verbaliser.get_random_question("NAME")
             ctx["persqa:subject"] = interloc_path
 
-        mod.add(ask_name)
         ctx.add_state(ask_name)
         return Emit()
 
@@ -133,7 +139,7 @@ with Module(name="persqa") as mod:
                 ctx["rawio:out"] = verbaliser.get_random_question(ctx["persqa:predicate"])
 
         @state(cond=s("nlp:triples:changed") & s("persqa:follow-up"),
-               write=("rawio:out", "persqa:predicate"),
+               write=("rawio:out", "persqa:predicate", "interloc:all"),
                read=("nlp:yesno", "persqa:predicate"))
         def fup_react(ctx: ContextWrapper):
             sess: Session = ravestate_ontology.get_session()
@@ -150,14 +156,12 @@ with Module(name="persqa") as mod:
                 ctx["rawio:out"] = verbaliser.get_random_followup_answer(key) % node_list[0].get_name()
                 ctx["persqa:predicate"] = None
 
-        mod.add(small_talk)
         ctx.add_state(small_talk)
-        mod.add(fup_react)
         ctx.add_state(fup_react)
 
 
     @state(cond=s("nlp:triples:changed"),
-           write="persqa:answer",
+           write=("persqa:answer", inference_mutex.id()),
            read=("persqa:predicate", "nlp:triples", "nlp:tokens", "nlp:yesno"))
     def inference(ctx: ContextWrapper):
         """

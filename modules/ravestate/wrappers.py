@@ -1,12 +1,11 @@
 # Ravestate wrapper classes which limit a state's context access
 
 from ravestate.property import PropertyBase
-from ravestate import state
+from ravestate.state import State
+from ravestate.module import get_module
 from ravestate import icontext
 from ravestate.spike import Spike
 from typing import Any, Generator, Set, Dict
-
-from ravestate.constraint import s
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -149,14 +148,14 @@ class ContextWrapper:
     as declared by the state beforehand.
     """
 
-    def __init__(self, *, ctx: icontext.IContext, st: state.State, spike_parents: Set[Spike]=None, spike_payloads: Dict[str, Any]=None):
-        self.st = st
+    def __init__(self, *, ctx: icontext.IContext, state: State, spike_parents: Set[Spike]=None, spike_payloads: Dict[str, Any]=None):
+        self.state = state
         self.ctx = ctx
         self.properties = dict()
         self.spike_parents = spike_parents
         self.spike_payloads = spike_payloads
         # Recursively complete properties dict with children:
-        for propname in st.write_props + st.read_props:
+        for propname in state.write_props + state.read_props:
             # May have been covered by a parent before
             if propname not in self.properties:
                 prop_and_children = ctx[propname].gather_children()
@@ -166,14 +165,14 @@ class ContextWrapper:
                         self.properties[prop.id()] = PropertyWrapper(
                             prop=prop, ctx=ctx,
                             spike_parents=self.spike_parents,
-                            allow_read=propname in st.read_props,
-                            allow_write=propname in st.write_props)
+                            allow_read=propname in state.read_props,
+                            allow_write=propname in state.write_props)
 
     def __setitem__(self, key, value):
         if key in self.properties:
             return self.properties[key].set(value)
         else:
-            logger.error(f"State {self.st.name} attempted to write property {key} without permission!")
+            logger.error(f"State {self.state.name} attempted to write property {key} without permission!")
 
     def __getitem__(self, key) -> Any:
         if key in self.properties:
@@ -181,10 +180,22 @@ class ContextWrapper:
         elif key in self.spike_payloads:
             return self.spike_payloads[key]
         else:
-            logger.error(f"State {self.st.name} attempted to access property {key} without permission!")
+            logger.error(f"State {self.state.name} attempted to access property {key} without permission!")
 
-    def add_state(self, st: state.State):
-        self.ctx.add_state(st=st)
+    def add_state(self, state: State):
+        """
+        Add a state to the context. If it has not been assigned to a module yet,
+         it will ne assigned to the module that ownes that state that owns this
+         context wrapper.
+
+        * `state`: The state which should be added to context, and optionally added
+          to this ContextWrapper's state's module if it does not have a module yet.
+        """
+        if not state.module_name:
+            mod = get_module(self.state.module_name)
+            assert mod
+            mod.add(state)
+        self.ctx.add_state(st=state)
 
     def shutdown(self):
         self.ctx.shutdown()
@@ -194,7 +205,7 @@ class ContextWrapper:
 
     def conf(self, *, mod=None, key=None):
         if not mod:
-            mod = self.st.module_name
+            mod = self.state.module_name
         return self.ctx.conf(mod=mod, key=key)
 
     def push(self, parentpath: str, child: PropertyBase):
@@ -210,7 +221,7 @@ class ContextWrapper:
         **Returns:** True if the push was successful, False otherwise
         """
         if child.parent_path:
-            logger.error(f"State {self.st.name} attempted to push child property {child.name} to parent {parentpath}, but it already has parent {child.parent_path}!")
+            logger.error(f"State {self.state.name} attempted to push child property {child.name} to parent {parentpath}, but it already has parent {child.parent_path}!")
             return False
         if parentpath in self.properties:
             if self.properties[parentpath].push(child):
@@ -222,7 +233,7 @@ class ContextWrapper:
                 self.ctx.add_prop(prop=child)
                 return True
         else:
-            logger.error(f'State {self.st.name} attempted to add child-property {child.name} to non-accessible parent {parentpath}!')
+            logger.error(f'State {self.state.name} attempted to add child-property {child.name} to non-accessible parent {parentpath}!')
             return False
 
     def pop(self, path: str):
@@ -236,7 +247,7 @@ class ContextWrapper:
         """
         path_parts = path.split(":")
         if len(path_parts) < 3:
-            logger.error(f"State {self.st.name}: Path to pop is not a nested property: {path}")
+            logger.error(f"State {self.state.name}: Path to pop is not a nested property: {path}")
             return False
         parentpath = ":".join(path_parts[:-1])
         if parentpath in self.properties:
@@ -251,10 +262,10 @@ class ContextWrapper:
                         del self.properties[childpath]
                 return True
             else:
-                logger.error(f'State {self.st.name} attempted to remove non-existent child-property {path}')
+                logger.error(f'State {self.state.name} attempted to remove non-existent child-property {path}')
                 return False
         else:
-            logger.error(f'State {self.st.name} attempted to remove child-property {path} from non-existent parent-property {parentpath}')
+            logger.error(f'State {self.state.name} attempted to remove child-property {path} from non-existent parent-property {parentpath}')
             return False
 
     def enum(self, path) -> Generator[str, None, None]:
@@ -264,5 +275,5 @@ class ContextWrapper:
         if path in self.properties:
             return self.properties[path].enum()
         else:
-            logger.error(f"State {self.st.name} attempted to enumerate property {path} without permission!")
+            logger.error(f"State {self.state.name} attempted to enumerate property {path} without permission!")
 

@@ -65,7 +65,7 @@ def test_run_qa():
     # Wait for acknowledgement of name
     while not raw_out.wait(.1):
         ctx.run_once()
-    assert "Herbert" in last_output
+    assert "herbert" in last_output.lower()
 
     # Wait for any other question via idle:bored
     while not raw_out.wait(.1):

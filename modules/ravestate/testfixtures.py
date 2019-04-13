@@ -87,7 +87,7 @@ def context_with_property_and_state_fixture(mocker, context_with_property_fixtur
 
 @pytest.fixture
 def context_wrapper_fixture(context_with_property_fixture, state_fixture):
-    return ContextWrapper(ctx=context_with_property_fixture, st=state_fixture)
+    return ContextWrapper(ctx=context_with_property_fixture, state=state_fixture)
 
 
 @pytest.fixture

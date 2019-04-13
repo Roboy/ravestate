@@ -2,10 +2,9 @@ import pytest
 import spacy
 from ravestate_nlp import *
 
-
 @pytest.fixture
 def spacy_model():
-    nlp = spacy.load('en_core_web_sm')
+    nlp = spacy_nlp_en
     from spacy.tokens import Doc
     if not Doc.has_extension('triples'):
         Doc.set_extension('triples', getter=extract_triples)
