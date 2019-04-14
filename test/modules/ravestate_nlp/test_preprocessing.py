@@ -22,7 +22,7 @@ def test_tokenization(capture, basic_input):
 @log_capture()
 def test_postags(capture, basic_input):
     nlp_preprocess(basic_input)
-    expected = ('INTJ', 'NOUN', 'ADJ', 'NOUN', 'VERB', 'NOUN')
+    expected = ('INTJ', 'NOUN', 'DET', 'NOUN', 'VERB', 'ADJ')
     assert basic_input["nlp:postags"] == expected
     capture.check_present((f"{FILE_NAME}", '\x1b[1;32mINFO\x1b[0m', f"{PREFIX} [NLP:postags]: {expected}"))
 
@@ -38,7 +38,7 @@ def test_lemmas(capture, basic_input):
 @log_capture()
 def test_tags(capture, basic_input):
     nlp_preprocess(basic_input)
-    expected = ('UH', 'NN', 'PRP$', 'NN', 'VBZ', 'NN')
+    expected = ('UH', 'NN', 'PRP$', 'NN', 'VBZ', 'JJ')
     assert basic_input["nlp:tags"] == expected
     capture.check_present((f"{FILE_NAME}", '\x1b[1;32mINFO\x1b[0m', f"{PREFIX} [NLP:tags]: {expected}"))
 
@@ -47,7 +47,7 @@ def test_tags(capture, basic_input):
 @log_capture()
 def test_ner(capture, basic_input):
     nlp_preprocess(basic_input)
-    expected = (('Roboy', 'ORG'),)
+    expected = (('roboy', 'ORG'),)
     assert basic_input["nlp:ner"] == expected
     capture.check_present((f"{FILE_NAME}", '\x1b[1;32mINFO\x1b[0m', f"{PREFIX} [NLP:ner]: {expected}"))
 

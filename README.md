@@ -15,6 +15,8 @@
 
 Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events.
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/6GMmY-xvA_Y" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ### Reactive Hello World
 
 ```python
@@ -165,6 +167,7 @@ External (Red) and Skills (Green):
   |----------------------|-------------|
   | ravestate_wildtalk   | [ParlAI](https://github.com/roboy/parlai) -based generative conversational module. 
   | ravestate_hibye      | Simply voices __Hi!__ (or the likes thereof) when an interlocutor is added, and __Bye__ when one is removed.
+  | ravestate_persqa     | Conducts personalized smalltalk with interlocutors, interacts with Scientio to persist trivia.
   | ravestate_genqa      | [DrQA](https://github.com/roboy/drqa) -based general question answering module.
   | ravestate_roboyqa    | QA module which provides answers to questions about Roboy, such as __Who is your dad?__
   | ravestate_akinator   | Enables dialog-based play of [Akinator!](modules/ravestate_akinator/README.md)

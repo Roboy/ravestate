@@ -12,7 +12,7 @@ packages = setuptools.find_packages("modules", exclude=["reggol*"])
 
 setuptools.setup(
     name="ravestate",
-    version="0.5.1post",
+    version="0.6.0",
     url="https://github.com/roboy/ravestate",
     author="Roboy",
     author_email="info@roboy.org",
