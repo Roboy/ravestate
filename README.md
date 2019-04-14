@@ -15,7 +15,7 @@
 
 Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/6GMmY-xvA_Y" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![Ravestate Video Link](http://img.youtube.com/vi/6GMmY-xvA_Y/0.jpg)](http://www.youtube.com/watch?v=6GMmY-xvA_Y "Introduction to Ravestate")
 
 ### Reactive Hello World
 
