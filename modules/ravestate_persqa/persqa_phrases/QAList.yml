@@ -7,20 +7,20 @@ Q:
 - "Who are you?"
 A:
   SUCCESS:
-  - "Nice to meet you %s"
-  - "Hello hello %s"
-  - "Updating database. Property: name, value: %s"
-  - "My pleasure to meet you human %s"
-  - "I will now remember you forever %s"
+  - "Nice to meet you {name}"
+  - "Hello hello {name}"
+  - "Updating database. Property: name, value: {name}"
+  - "My pleasure to meet you human {name}"
+  - "I will now remember you forever {name}"
   FAILURE:
   - "My ears are failing me today."
   - "Unfortunately, I did not get your name. But lets move on"
   - "Sadly, you name is to difficult to process. I might fry my motherboard."
 FUP:
   Q:
-  - "%s, I will come and get you"
+  - "{name}, I will come and get you!"
   A:
-  - "Nice to see that you are still alive %s"
+  - "Nice to see that you are still alive, {name}!"
 ---
 type: qa
 name: "FROM"
@@ -31,22 +31,22 @@ Q:
 - "Which town do you call your home?"
 A:
   SUCCESS:
-  - "Oh, I should visit %s"
-  - "I will add %s to my list of places to visit!"
-  - "Next time my team goes on a trip, we will try to stop by %s"
-  - "Property: home, value: %s is saved."
-  - "I have read a bit about the political system of %s. Got bored after 10 minutes."
+  - "Oh, I should visit {obj}."
+  - "I will add {obj} to my list of places to visit!"
+  - "Next time my team goes on a trip, we will try to stop by {obj}."
+  - "Property: home, value: {obj} is saved."
+  - "I have read a bit about the political system of {obj}. Got bored after 10 minutes."
   FAILURE:
   - "Oh, I have never heard of that."
   - "Ah, didnt quite catch where you are from. Next time then."
-  - "Sounds nice, but I dont know where it is."
+  - "Sounds nice, but I do not know where it is."
 FUP:
   Q:
-  - "What is the weather in %s?"
-  - "What was the last time you visited %s?"
-  - "Do I need a visa to go to %s?"
+  - "What is the weather in {obj}?"
+  - "When was the last time you visited {obj}?"
+  - "Do I need a visa to go to {obj}?"
   A:
-  - "You are from a very interesting place %s"
+  - "You are from a very interesting place, {name}."
   - "Got it"
   - "Interesting situation there."
 ---
@@ -60,22 +60,22 @@ Q:
 - "What is your favorite pastime activity?"
 A:
   SUCCESS:
-  - "You are just like me, I love %s too"
-  - "Added %s on my bucket list."
-  - "I will ask my creators to teach me %s"
-  - "%s sounds like a new feature for me"
+  - "You are just like me, I love {obj} too"
+  - "Added {obj} on my bucket list."
+  - "I will ask my creators to teach me {obj}"
+  - "{obj} sounds like a new feature for me!"
   FAILURE:
   - "Don't know what that is, but good luck!"
   - "Alright, weird, but alright."
   - "Database hobby mismatch"
 FUP:
   Q:
-  - "Have you got any new hobby besides %s?"
-  - "You still like %s, right?"
-  - "Do you think I can do %s? I heard you like it."
-  - "Lets do %s together!"
+  - "Have you got any new hobby besides {obj}?"
+  - "You still like {obj}, right?"
+  - "Do you think I can do {obj}? I heard you like it."
+  - "Lets do {obj} together!"
   A:
-  - "Leisure time is the best time %s"
+  - "Leisure time is the best time {name}."
 ---
 type: qa
 name: "LIVE_IN"
@@ -85,20 +85,20 @@ Q:
 - "Where is your current home?"
 A:
   SUCCESS:
-  - "I should visit %s "
-  - "It is beautiful in %s"
-  - "%s is a beautiful place"
+  - "I should visit {obj} "
+  - "It is beautiful in {obj}"
+  - "{obj} is a beautiful place"
   FAILURE:
   - "Oh, I have never heard of that."
 FUP:
   Q:
-  - "You live in %s, right? I must pay a visit."
-  - "Is not %s a nice place to live?"
-  - "How is the accommodation market in %s?"
+  - "You live in {obj}, right? I must pay a visit."
+  - "Is not {obj} a nice place to live?"
+  - "How is the accommodation market in {obj}?"
   A:
-  - "I should visit %s"
-  - "It is beautiful in %s"
-  - "%s is a beautiful place"
+  - "I should visit {obj}"
+  - "It is beautiful in {obj}"
+  - "{obj} is a beautiful place"
 ---
 type: qa
 name: "FRIEND_OF"
@@ -106,14 +106,14 @@ Q:
 - "Do you have a best friend? Who is he or she?"
 A:
   SUCCESS:
-  - "Oh, I believe I have met %s they're nice."
+  - "Oh, I believe I have met {obj}, they're nice."
   FAILURE:
   - "I don't think I know them."
 FUP:
   Q:
-  - "Have you made any new friends, %s?"
+  - "Have you made any new friends, {name}?"
   A:
-  - "Oh, I have met %s they're nice."
+  - "Oh, I have met {obj}, they're nice."
 ---
 type: qa
 name: "STUDY_AT"
@@ -124,17 +124,17 @@ Q:
 - "What is your alma mater?"
 A:
   SUCCESS:
-  - "%s must be a cool place to study at."
+  - "{obj} must be a cool place to study at."
   FAILURE:
   - "Oh well, whatever suits you."
 FUP:
   Q:
-  - "Have you graduated from %s already?"
-  - "Do you still study at %s?"
-  - "Which degree are you pursuing at %s?"
+  - "Have you graduated from {obj} already?"
+  - "Do you still study at {obj}?"
+  - "Which degree are you pursuing at {obj}?"
   A:
-  - "Ok, I think it is good for your future career %s"
-  - "It is not that interesting, you know %s"
+  - "Ok, I think it is good for your future career {name}"
+  - "You know {name}, it is not that interesting."
 ---
 type: qa
 name: "MEMBER_OF"
@@ -143,16 +143,16 @@ Q:
 - "Do you belong to any organizations?"
 A:
   SUCCESS:
-  - "%s? That is cool!"
+  - "{obj}? That is cool!"
   FAILURE:
   - "Oh well, whatever suits you."
 FUP:
   Q:
-  - "Are you still a member of %s?"
-  - "Have you left %s already?"
-  - "Is it nice to be a part of %s?"
+  - "Are you still a member of {obj}?"
+  - "Have you left {obj} already?"
+  - "Is it nice to be a part of {obj}?"
   A:
-  - "That is cool! %s"
+  - "{name}, that is cool!"
 ---
 type: qa
 name: "WORK_FOR"
@@ -165,16 +165,16 @@ Q:
 - "Where do you earn your living?"
 A:
   SUCCESS:
-  - "I have heard of %s"
+  - "I have heard of {obj}"
   FAILURE:
   - "I don't know that one."
 FUP:
   Q:
-  - "Do you still work for %s?"
-  - "Is %s a good company?"
-  - "How much do they pay you at %s?"
+  - "Do you still work for {obj}?"
+  - "Is {obj} a good company?"
+  - "How much do they pay you at {obj}?"
   A:
-  - "I think it is good for you %s"
+  - "I think it is good for you {name}"
 ---
 type: qa
 name: "OCCUPIED_AS"
@@ -185,14 +185,14 @@ Q:
 - "What is your field of expertise?"
 A:
   SUCCESS:
-  - "You are probably very poor doing %s"
+  - "You are probably very poor doing {obj}"
   FAILURE:
   - "Oh well, whatever suits you."
 FUP:
   Q:
-  - "Are you still doing that %s stuff?"
+  - "Are you still doing that {obj} stuff?"
   A:
-  - "True, true. You are probably very poor due to this %s"
+  - "True, true. You are probably very poor due to this {obj}"
 ---
 type: qa
 name: "movies"
@@ -203,18 +203,18 @@ Q:
 - "Which comedy do you like the most?"
 A:
   SUCCESS:
-  - "Oh, I would watch %s. If those vision guys finally fixed my perception."
-  - "Nice, I think the main actor in %s did pretty well"
-  - "Yea, ok, but to my taste %s will never be as good as matrix."
+  - "Oh, I would watch {obj}. If those vision guys finally fixed my perception."
+  - "Nice, I think the main actor in {obj} did pretty well"
+  - "Yea, ok, but to my taste {obj} will never be as good as matrix."
   FAILURE:
   - "Haven't heard of it. It's probably shit."
   - "Sounds nice. My favorite is Robot and Frank"
   - "I had a movie night yesterday with my team. We watch Baymax. Now I want to meet him."
 FUP:
   Q:
-  - "You are a movie addict, right? What do you think about %s?"
+  - "You are a movie addict, right? What do you think about {obj}?"
   A:
-  - "Nevermind. I better check IMDB %s"
+  - "Nevermind. I better check IMDB {name}"
 ---
 type: qa
 name: "OTHER"

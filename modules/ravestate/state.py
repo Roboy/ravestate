@@ -87,7 +87,7 @@ class State:
                  signal_name: Optional[str],
                  write: Union[str, Tuple[str]],
                  read: Union[str, Tuple[str]],
-                 cond: Constraint,
+                 cond: Optional[Constraint],
                  action,
                  is_receptor: bool=False,
                  emit_detached: bool=False,

@@ -12,7 +12,7 @@ BORED_THRESHOLD_CONFIG_KEY = "bored_threshold"
 CONFIG = {
     # duration in seconds how long ":pressure" should be true before getting impatient
     IMPATIENCE_THRESHOLD_CONFIG_KEY:  1.0,
-    BORED_THRESHOLD_CONFIG_KEY: 5.0
+    BORED_THRESHOLD_CONFIG_KEY: 1.0
 }
 
 with Module(name="idle", config=CONFIG):
