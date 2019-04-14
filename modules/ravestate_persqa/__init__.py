@@ -79,35 +79,31 @@ with Module(name="persqa") as mod:
         allow_pop=False,
         allow_push=False)
 
-
-    @state(cond=s("interloc:all:pushed") & s("rawio:in:changed"),
-           write=inference_mutex.id(),
-           read="interloc:all",
-           emit_detached=True)
-    def new_interloc(ctx: ContextWrapper):
-        """
-        reacts to interloc:pushed and creates persqa:ask_name state
-        """
-        interloc_path = ctx["interloc:all:pushed"]
-        create_small_talk_state(ctx=ctx, interloc_path=interloc_path)
-
     def find_empty_relationship(dictonary: Dict):
         for key in dictonary:
             if not dictonary[key] and key in PREDICATE_SET:
                 return key
         return None
 
-    def create_small_talk_state(ctx: ContextWrapper, interloc_path: str):
+    def retrieve_node(node: Node):
+        sess: Session = ravestate_ontology.get_session()
+        node_list = sess.retrieve(node)
+        if not node_list:
+            node = sess.create(node)
+        elif len(node_list) > 0:
+            node = node_list[0]
+        return node
+
+    def create_small_talk_states(ctx: ContextWrapper, interloc_path: str):
 
         used_follow_up_preds = set()
 
-        @state(cond=s("idle:bored", max_age=-1),
+        @state(cond=s("idle:bored"),
                write=("rawio:out", "persqa:predicate", "persqa:subject"),
-               read=("interloc:all", "persqa:predicate"),
-               weight=2,
+               read=(interloc_path, "persqa:predicate"),
+               weight=5.,
                cooldown=30.,
-               signal_name="follow-up"
-               )
+               signal_name="follow-up")
         def small_talk(ctx: ContextWrapper):
             sess: Session = ravestate_ontology.get_session()
             interloc: Node = ctx[interloc_path]
@@ -130,12 +126,12 @@ with Module(name="persqa") as mod:
                     ctx["persqa:predicate"] = pred
                     relationship_ids: Set[int] = interloc.get_relationships(pred)
                     if len(relationship_ids) > 0:  # Just to be safe ...
-                        node_list = sess.retrieve(node_id=list(relationship_ids)[0])
-                        if len(node_list) > 0:
+                        object_node_list = sess.retrieve(node_id=list(relationship_ids)[0])
+                        if len(object_node_list) > 0:
                             ctx["rawio:out"] = verbaliser.get_random_followup_question(pred).format(
                                 name=interloc.get_name(),
-                                obj=node_list[0].get_name())
-                            logger.error(f"FOLLOW_UP: Intent = {key}")
+                                obj=object_node_list[0].get_name())
+                            logger.error(f"Follow-up: intent={pred}")
                             return Emit()
             else:
                 # While the predicate is set, repeat the question. Once the predicate is answered,
@@ -144,26 +140,36 @@ with Module(name="persqa") as mod:
 
         @state(cond=s("nlp:triples:changed") & s("persqa:follow-up"),
                write=("rawio:out", "persqa:predicate", inference_mutex.id()),
-               read=("nlp:yesno", "persqa:predicate"))
+               read=(interloc_path, "persqa:predicate"))
         def fup_react(ctx: ContextWrapper):
             sess: Session = ravestate_ontology.get_session()
             subject_node: Node = ctx[interloc_path]
             pred = ctx["persqa:predicate"]
-            node_list = []
+            object_node_list = []
             relationship_ids: Set[int] = subject_node.get_relationships(pred)
             if len(relationship_ids) > 0:
-                relationship_node = Node()
-                relationship_node.set_id(id=list(relationship_ids)[0])
-                node_list = sess.retrieve(relationship_node)
-            if ctx["nlp:yesno"] == "no" or len(node_list) == 0:
+                object_node_list = sess.retrieve(node_id=list(relationship_ids)[0])
+            if ctx["nlp:yesno"] == "no" or len(object_node_list) == 0:
                 ctx["rawio:out"] = "Oh, I see!"
             elif ctx["nlp:yesno"] == "yes":
-                ctx["rawio:out"] = verbaliser.get_random_followup_answer(pred) % node_list[0].get_name()
-                ctx["persqa:predicate"] = None
+                ctx["rawio:out"] = verbaliser.get_random_followup_answer(pred).format(
+                    name=subject_node.get_name(),
+                    obj=object_node_list[0].get_name())
+            ctx["persqa:predicate"] = None
 
         ctx.add_state(small_talk)
         ctx.add_state(fup_react)
 
+    @state(cond=s("interloc:all:pushed") & s("rawio:in:changed"),
+           write=inference_mutex.id(),
+           read="interloc:all",
+           emit_detached=True)
+    def new_interloc(ctx: ContextWrapper):
+        """
+        reacts to interloc:pushed and creates persqa:ask_name state
+        """
+        interloc_path = ctx["interloc:all:pushed"]
+        create_small_talk_states(ctx=ctx, interloc_path=interloc_path)
 
     @state(cond=s("nlp:triples:changed"),
            write=("persqa:answer", inference_mutex.id()),
@@ -190,50 +196,35 @@ with Module(name="persqa") as mod:
             logger.debug(f"Inference: extracted answer '{answer_str}' for predicate {pred}")
             ctx["persqa:answer"] = answer_str
 
-
     @state(cond=answer.changed_signal(),
            write=("rawio:out", "persqa:predicate"),
            read=("persqa:predicate", "persqa:subject", "persqa:answer", "interloc:all"))
     def react(ctx: ContextWrapper):
         """
-        retrieves memory node with the name or creates a new one
-        outputs a polite response
+        Retrieves memory node with the name, or creates a new one
+        outputs a polite response.
         """
         onto: Ontology = ravestate_ontology.get_ontology()
         sess: Session = ravestate_ontology.get_session()
-        interloc_answer = str(ctx["persqa:answer"])
+        inferred_answer = ctx["persqa:answer"]
         pred = ctx["persqa:predicate"]
         subject_node: Node = ctx[ctx["persqa:subject"]]
+
         if pred == "NAME":
-            subject_node.set_name(interloc_answer)
-            subject_node, output = retrieve_node(subject_node, pred, interloc_answer)
-            ctx["rawio:out"] = output
+            subject_node.set_name(inferred_answer)
+            subject_node = retrieve_node(subject_node)
         elif pred in PREDICATE_SET:
             relationship_type = onto.get_type(ONTOLOGY_TYPE_FOR_PRED[pred])
             relationship_node = Node(metatype=relationship_type)
-            relationship_node.set_name(interloc_answer)
-            relationship_node, output = retrieve_node(relationship_node, pred, interloc_answer)
-            ctx["rawio:out"] = output
+            relationship_node.set_name(inferred_answer)
+            relationship_node = retrieve_node(relationship_node)
             if relationship_node is not None:
                 subject_node.add_relationships({pred: {relationship_node.get_id()}})
                 sess.update(subject_node)
+
+        ctx["rawio:out"] = verbaliser.get_random_successful_answer(pred).format(
+            name=subject_node.get_name(),
+            obj=inferred_answer)
         ctx["persqa:predicate"] = None
 
-
-    def retrieve_node(node: Node, intent: str, interloc_answer: str):
-        sess: Session = ravestate_ontology.get_session()
-        node_list = sess.retrieve(node)
-        if not node_list:
-            node = sess.create(node)
-            output = verbaliser.get_random_successful_answer(intent) % interloc_answer
-        elif len(node_list) == 1:
-            node = node_list[0]
-            output = verbaliser.get_random_followup_answer(intent) % interloc_answer
-        else:
-            logger.error("Found more than one node with that name!")
-            node = None
-            output = verbaliser.get_random_failure_answer(intent)
-        if node is not None:
-            logger.info(f"Re: Answer = {answer}; Node ID = {node.get_id()} ")
-        return node, output
 
