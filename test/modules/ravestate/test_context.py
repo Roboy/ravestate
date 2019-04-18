@@ -84,9 +84,9 @@ def test_remove_unknown_state(context_fixture: Context, state_fixture: State):
 
 def test_remove_state_with_signal(context_with_property_fixture: Context, state_signal_a_fixture: State):
     context_with_property_fixture.add_state(st=state_signal_a_fixture)
-    assert state_signal_a_fixture.signal() in context_with_property_fixture._act_per_state_per_signal_age
+    assert state_signal_a_fixture.signal() in context_with_property_fixture._needy_acts_per_state_per_signal
     context_with_property_fixture.rm_state(st=state_signal_a_fixture)
-    assert state_signal_a_fixture.signal() not in context_with_property_fixture._act_per_state_per_signal_age
+    assert state_signal_a_fixture.signal() not in context_with_property_fixture._needy_acts_per_state_per_signal
 
 
 def test_add_state(

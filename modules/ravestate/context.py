@@ -92,14 +92,11 @@ class Context(IContext):
 
     # This is the bar part of the gaybar - here, activations
     #  register for certain signal spikes which they still need to fulfill.
-    _act_per_state_per_signal_age: Dict[
+    _needy_acts_per_state_per_signal: Dict[
         Signal,
         Dict[
-            int,
-            Dict[
-                State,
-                Set[Activation]
-            ]
+            State,
+            Set[Activation]
         ]
     ]
 
@@ -135,7 +132,7 @@ class Context(IContext):
         self._shutdown_flag = Event()
         self._properties = dict()
         self._spikes = set()
-        self._act_per_state_per_signal_age = dict()
+        self._needy_acts_per_state_per_signal = dict()
         self._signal_causes = dict()
         self._activations_per_state = dict()
         self._run_task = None
@@ -444,11 +441,9 @@ class Context(IContext):
         **Returns:** The given signal's specificity.
         """
         # Count activations which are interested in the signal
-        if sig not in self._act_per_state_per_signal_age:
+        if sig not in self._needy_acts_per_state_per_signal:
             return .0
-        num_suitors = sum(
-            len(acts_per_state)
-            for acts_per_state in self._act_per_state_per_signal_age[sig].values())
+        num_suitors = len(self._needy_acts_per_state_per_signal[sig])
         if num_suitors > 0:
             return 1./num_suitors
         else:
@@ -465,10 +460,10 @@ class Context(IContext):
         * `sig`: Signal type for which a new spike is needed.
         """
         assert isinstance(act, Activation)  # No way around it to avoid import loop
-        if sig not in self._act_per_state_per_signal_age:
+        if sig not in self._needy_acts_per_state_per_signal:
             logger.error(f"Attempt to reacquire for unknown signal {sig.name}!")
             return
-        interested_acts = self._act_per_state_per_signal_age[sig][0][act.state_to_activate]  # sig.min_age
+        interested_acts = self._needy_acts_per_state_per_signal[sig][act.state_to_activate]
         interested_acts.add(act)
 
     def withdraw(self, act: IActivation, sig: Signal):
@@ -486,10 +481,10 @@ class Context(IContext):
         * `sig`: Signal type for which interest is lost.
         """
         assert isinstance(act, Activation)  # No way around it to avoid import loop
-        if sig not in self._act_per_state_per_signal_age:
+        if sig not in self._needy_acts_per_state_per_signal:
             logger.error(f"Attempt to withdraw for unknown signal {sig.name}!")
             return
-        interested_acts = self._act_per_state_per_signal_age[sig][0][act.state_to_activate]  # sig.min_age
+        interested_acts = self._needy_acts_per_state_per_signal[sig][act.state_to_activate]
         interested_acts.discard(act)
 
     def secs_to_ticks(self, seconds: float) -> int:
@@ -538,10 +533,10 @@ class Context(IContext):
                         if not act.spiky():
                             if allowed_unfulfilled:
                                 for signal in act.constraint.signals():
-                                    if signal in self._act_per_state_per_signal_age and \
-                                            act in self._act_per_state_per_signal_age[signal][0][act.state_to_activate]:
-                                        self._act_per_state_per_signal_age[
-                                            signal][0][act.state_to_activate].remove(act)
+                                    if signal in self._needy_acts_per_state_per_signal and \
+                                            act in self._needy_acts_per_state_per_signal[signal][act.state_to_activate]:
+                                        self._needy_acts_per_state_per_signal[
+                                            signal][act.state_to_activate].remove(act)
                                 acts.remove(act)
                             else:
                                 allowed_unfulfilled = act
@@ -549,9 +544,9 @@ class Context(IContext):
             # --------- Acquire new state activations for every spike ----------
 
             for spike in self._spikes:
-                if spike.is_wiped():
+                if spike.is_wiped() or spike.age() > 0:
                     continue
-                for state, acts in self._act_per_state_per_signal_age[s(spike.name())][spike.age()].items():
+                for state, acts in self._needy_acts_per_state_per_signal[s(spike.name())].items():
                     old_acts = acts.copy()
                     for act in old_acts:
                         if act.acquire(spike):
@@ -589,19 +584,17 @@ class Context(IContext):
 
             gc.collect()
 
-        self._update_core_properties(debug=True)
+        self._update_core_properties(debug=False)
 
     def _add_sig(self, sig: Signal):
-        if sig in self._act_per_state_per_signal_age:
+        if sig in self._needy_acts_per_state_per_signal:
             logger.error(f"Attempt to add signal f{sig.name} twice!")
             return
         self._signal_causes[sig] = []
-        self._act_per_state_per_signal_age[sig] = defaultdict(lambda: defaultdict(set))
+        self._needy_acts_per_state_per_signal[sig] = defaultdict(set)
 
     def _rm_sig(self, sig: Signal) -> None:
-        affected_states: Set[State] = set()
-        for _, acts_per_state in self._act_per_state_per_signal_age[sig].items():
-            affected_states |= set(acts_per_state.keys())
+        affected_states: Set[State] = set(self._needy_acts_per_state_per_signal[sig].keys())
         if affected_states:
             logger.warning(
                 f"Since signal {sig.name} was removed, the following states will have dangling constraints: " +
@@ -612,7 +605,7 @@ class Context(IContext):
             causes.clear()
             causes += [cause for cause in old_causes if sig not in cause]
         del self._signal_causes[sig]
-        self._act_per_state_per_signal_age.pop(sig)
+        self._needy_acts_per_state_per_signal.pop(sig)
 
     def _module_registration_callback(self, mod: Module):
         self._config.add_conf(mod)
@@ -626,13 +619,8 @@ class Context(IContext):
         activation = Activation(st, self)
         self._activations_per_state[st].add(activation)
         for signal in st.completed_constraint.signals():
-            if signal in self._act_per_state_per_signal_age:
-                # TODO: (Here and below) Determine, whether indexing by min age is actually necessary
-                #  -> may not, because immediate acquisition is necessary -> otherwise, the
-                #   signal's causal group will not know about a possibly higher-
-                #   specificity state that runs a bit later.
-                # self._act_per_state_per_signal_age[signal][signal.min_age][st] |= {activation}
-                self._act_per_state_per_signal_age[signal][0][st] |= {activation}
+            if signal in self._needy_acts_per_state_per_signal:
+                self._needy_acts_per_state_per_signal[signal][st] |= {activation}
             else:
                 logger.error(
                     f"Adding state activation for f{st.name} which depends on unknown signal `{signal}`!")
@@ -642,9 +630,9 @@ class Context(IContext):
         if st not in self._activations_per_state:
             return
         for signal in st.completed_constraint.signals():
-            if signal in self._act_per_state_per_signal_age:
-                if st in self._act_per_state_per_signal_age[signal][0]:
-                    del self._act_per_state_per_signal_age[signal][0][st]  # signal.min_age
+            if signal in self._needy_acts_per_state_per_signal:
+                if st in self._needy_acts_per_state_per_signal[signal]:
+                    del self._needy_acts_per_state_per_signal[signal][st]  # signal.min_age
         for act in self._activations_per_state[st].copy():
             act.dereference(spike=None, reacquire=False, reject=True)
             self._activations_per_state[st].remove(act)
@@ -656,9 +644,9 @@ class Context(IContext):
             return {act for acts in self._activations_per_state.values() for act in acts}
 
     def _states_for_signal(self, sig: Signal) -> Iterable[State]:
-        if sig not in self._act_per_state_per_signal_age:
+        if sig not in self._needy_acts_per_state_per_signal:
             return set()
-        return self._act_per_state_per_signal_age[sig][0].keys()  # sig.min_age
+        return self._needy_acts_per_state_per_signal[sig].keys()
 
     def _complete_constraint(self, st: State):
         new_conjuncts: Set[Conjunct] = deepcopy(set(st.constraint.conjunctions()))
