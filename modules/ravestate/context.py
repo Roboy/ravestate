@@ -1,6 +1,6 @@
 # Ravestate context class
 from threading import Thread, RLock, Event
-from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
+from typing import Optional, Any, Tuple, Set, Dict, Iterable, List, Generator
 from collections import defaultdict
 from math import ceil
 from copy import deepcopy
@@ -291,15 +291,11 @@ class Context(IContext):
             states_to_recomplete: Set[State] = {st}
             if not st.emit_detached:
                 for conj in st.constraint.conjunctions(filter_detached=True):
-                    for propname in st.write_props:
-                        if propname in self._properties:
-                            for signal in self._properties[propname].signals():
-                                self._signal_causes[signal].append(conj)
-                                # Since a new cause for the property's signal is added,
-                                #  it must be added to all states depending on that signal.
-                                states_to_recomplete.update(self._states_for_signal(signal))
-                    if st.signal():
-                        self._signal_causes[st.signal()].append(conj)
+                    for signal in self._possible_signals(st):
+                        self._signal_causes[signal].append(conj)
+                        # Since a new cause for the property's signal is added,
+                        #  it must be added to all states depending on that signal.
+                        states_to_recomplete.update(self._states_for_signal(signal))
 
             # add state to state activation map
             self._activations_per_state[st] = set()
@@ -669,6 +665,9 @@ class Context(IContext):
             for sig in original_conj:
                 sig.has_completion = True
             original_conj |= deepcopy(completion_conj)
+            for sig in original_conj:
+                if sig in completion_conj:
+                    sig.is_completion = True
             return original_conj
 
         for conj_sig in conj.signals():
@@ -699,8 +698,7 @@ class Context(IContext):
         for conj in self._signal_causes[sig]:
             completion = self._complete_conjunction(conj, known_signals)
             if completion:
-
-                result += [conj | {sig} for conj in completion]
+                result += completion
         known_signals.discard(sig)
 
         return result if len(result) else None
@@ -738,3 +736,12 @@ class Context(IContext):
         tick_interval = 1. / self._core_config[self.tick_rate_config]
         while not self._shutdown_flag.wait(tick_interval):
             self.run_once(tick_interval)
+
+    def _possible_signals(self, state: State) -> Generator[Signal, None, None]:
+        for propname in state.write_props:
+            if propname in self._properties:
+                for signal in self._properties[propname].signals():
+                    yield signal
+        if state.signal():
+            yield state.signal()
+

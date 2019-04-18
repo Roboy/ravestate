@@ -80,6 +80,12 @@ class Signal(Constraint):
     # tells whether this signal has been completed, and may therefore
     #  not introduce a new causal group into the parent conjunct
     has_completion: bool
+
+    # tells whether this signal is a potential cause for another signal,
+    #  and should therefore not be affected by the activation's auto-elimination
+    #  death clock.
+    is_completion: bool
+
     _min_age_ticks: int  # written on acquire, when act.secs_to_ticks is available
 
     def __init__(self, name: str, *, min_age=0., max_age=5., detached=False):
@@ -89,6 +95,7 @@ class Signal(Constraint):
         self.spike = None
         self.detached = detached
         self.has_completion = False
+        self.is_completion = False
         self._min_age_ticks = 0
         # TODO: Deal with ConfigurableAge
         # if min_age > max_age and max_age > .0:
