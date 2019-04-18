@@ -43,7 +43,7 @@ class Activation(IActivation):
     pressuring_causal_groups: Set[ICausalGroup]
 
     def __init__(self, st: State, ctx: IContext):
-        self.id = f"{st.name}#{Activation._count_for_state[st]}"
+        self.id = f"{st.module_name}:{st.name}#{Activation._count_for_state[st]}"
         Activation._count_for_state[st] += 1
         self.name = st.name
         self.state_to_activate = st

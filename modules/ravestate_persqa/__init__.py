@@ -24,7 +24,7 @@ import ravestate_rawio
 verbaliser.add_folder(join(dirname(realpath(__file__)), "persqa_phrases"))
 
 PREDICATE_SET = {"FROM", "HAS_HOBBY", "LIVE_IN", "FRIEND_OF", "STUDY_AT", "MEMBER_OF", "WORK_FOR", "OCCUPIED_AS"}
-ONTOLOGY_TYPE_FOR_PRED = defaultdict(str).update({
+ONTOLOGY_TYPE_FOR_PRED = defaultdict(str, {
     "FROM": "Location",
     "LIVE_IN": "Location",
     "HAS_HOBBY": "Hobby",
@@ -119,7 +119,7 @@ with Module(name="persqa") as mod:
                 else:
                     pred = random.sample(PREDICATE_SET.difference(used_follow_up_preds), 1)
                     if not pred:
-                        logger.info(f"Out of smalltalk predicates for {interloc_path}, committing suicide...")
+                        logger.info(f"Ran out of smalltalk predicates for {interloc_path}, committing suicide...")
                         return Delete()
                     pred = pred[0]
                     used_follow_up_preds.add(pred)

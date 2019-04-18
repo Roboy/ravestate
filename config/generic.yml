@@ -19,17 +19,22 @@ config:
   tickrate: 10
   import:
     - ravestate_conio
-    - ravestate_fillers
+    - ravestate_idle
+    - ravestate_ontology
+    - ravestate_nlp
+    - ravestate_interloc
+    #- ravestate_fillers
     - ravestate_wildtalk
     - ravestate_hibye
     - ravestate_genqa
+    - ravestate_persqa
     - ravestate_akinator
   ros2-node-name: "ros2-node-name"
 
 ---
 module: genqa
 config:
-  drqa_server_address: "http://localhost:5000"
+  drqa_server_address: http://35.246.158.89:5000
   roboy_answer_sanity: 1000
 
 ---
