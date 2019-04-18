@@ -150,7 +150,7 @@ class Signal(Constraint):
         if (not spike and self.spike) or (spike and self.spike is spike):
             if causal_groups:
                 with self.spike.causal_group() as cg:
-                    if cg not in list(causal_groups):
+                    if cg not in causal_groups:
                         return
             former_signal_instance = self.spike
             self.spike = None
@@ -159,10 +159,10 @@ class Signal(Constraint):
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
         # Reject spike, once it has become too old
         if self.spike and self.max_age >= 0 and self.spike.age() > act.secs_to_ticks(self.max_age):
-                with self.spike.causal_group() as cg:
-                    cg.rejected(self.spike, act, reason=1)
-                    self.spike = None
-                    yield self
+            with self.spike.causal_group() as cg:
+                cg.rejected(self.spike, act, reason=1)
+                self.spike = None
+                yield self
 
     def __str__(self):
         return self.name
@@ -260,7 +260,10 @@ class Conjunct(Constraint):
                 yield result
 
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
-        return (result for child in self._signals for result in child.update(act))
+        for child in self._signals:
+            for result in child.update(act):  # If anything is returned, it means the signal rejected it's spike.
+                self._allowed_causal_groups = {sig.spike.causal_group() for sig in self._signals if sig.spike}
+                yield result
 
     def __str__(self):
         return "(" + " & ".join(map(lambda si: si.__str__(), self._signals)) + ")"

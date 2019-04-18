@@ -111,7 +111,9 @@ class Activation(IActivation):
         * `pressured`: Flag which controls, whether de-referencing should only occur
          for spikes of causal groups in the pressuring_causal_groups set.
         """
-        unreferenced = self.constraint.dereference(spike=spike, causal_groups=self.pressuring_causal_groups)
+        unreferenced = self.constraint.dereference(
+            spike=spike,
+            causal_groups=self.pressuring_causal_groups if pressured else None)
         message = ""
         for sig_to_reacquire, dereferenced_spike in unreferenced:
             message += " " + repr(dereferenced_spike)

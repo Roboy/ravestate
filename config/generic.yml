@@ -23,7 +23,7 @@ config:
     - ravestate_ontology
     - ravestate_nlp
     - ravestate_interloc
-    #- ravestate_fillers
+    - ravestate_fillers
     - ravestate_wildtalk
     - ravestate_hibye
     - ravestate_genqa
