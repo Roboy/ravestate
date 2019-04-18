@@ -1,7 +1,7 @@
 from ravestate.module import Module
 from ravestate.property import PropertyBase
 from ravestate.wrappers import ContextWrapper
-from ravestate.state import state, Emit, Delete
+from ravestate.state import state, Emit, Delete, Resign
 from ravestate.constraint import s
 from ravestate_verbaliser import verbaliser
 import ravestate_ontology
@@ -101,13 +101,14 @@ with Module(name="persqa") as mod:
         @state(cond=s("idle:bored"),
                write=("rawio:out", "persqa:predicate", "persqa:subject"),
                read=(interloc_path, "persqa:predicate"),
-               weight=5.,
+               weight=3.,
                cooldown=30.,
                signal_name="follow-up")
         def small_talk(ctx: ContextWrapper):
             sess: Session = ravestate_ontology.get_session()
             interloc: Node = ctx[interloc_path]
-            if not interloc.get_name():
+            interloc_props = interloc.get_properties()
+            if "familiar" not in interloc_props or not interloc_props["familiar"]:
                 pred = "NAME"
             else:
                 pred = find_empty_relationship(interloc.get_relationships())
@@ -133,12 +134,13 @@ with Module(name="persqa") as mod:
                                 obj=object_node_list[0].get_name())
                             logger.error(f"Follow-up: intent={pred}")
                             return Emit()
+                    return Resign()
             else:
                 # While the predicate is set, repeat the question. Once the predicate is answered,
                 #  it will be set to None, such that a new predicate is entered.
                 ctx["rawio:out"] = verbaliser.get_random_question(ctx["persqa:predicate"])
 
-        @state(cond=s("nlp:triples:changed") & s("persqa:follow-up"),
+        @state(cond=s("persqa:follow-up") & s("nlp:triples:changed"),
                write=("rawio:out", "persqa:predicate", inference_mutex.id()),
                read=(interloc_path, "persqa:predicate"))
         def fup_react(ctx: ContextWrapper):
@@ -160,7 +162,7 @@ with Module(name="persqa") as mod:
         ctx.add_state(small_talk)
         ctx.add_state(fup_react)
 
-    @state(cond=s("interloc:all:pushed") & s("rawio:in:changed"),
+    @state(cond=s("rawio:in:changed") & s("interloc:all:pushed"),
            write=inference_mutex.id(),
            read="interloc:all",
            emit_detached=True)
@@ -213,6 +215,8 @@ with Module(name="persqa") as mod:
         if pred == "NAME":
             subject_node.set_name(inferred_answer)
             subject_node = retrieve_node(subject_node)
+            subject_node.set_properties({"familiar": True})
+            sess.update(subject_node)
         elif pred in PREDICATE_SET:
             relationship_type = onto.get_type(ONTOLOGY_TYPE_FOR_PRED[pred])
             relationship_node = Node(metatype=relationship_type)
