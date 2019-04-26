@@ -137,11 +137,11 @@ class Activation(IActivation):
            (1) Acquisition failed, because the spike is too old
            (2) Acquisition failed, because the spike's causal group does not
             match it's completions.
-           (3) Acquisition failed, bacause the spike's causal group does not
+           (3) Acquisition failed, because the spike's causal group does not
             offer all of this activation's state's write-props.
         """
         if self.constraint.acquire(spike, self):
-            if self.death_clock is not None:
+            if self.death_clock is not None or self._has_pressured_fulfilled_causal_groups():
                 self._reset_death_clock()
             return True
         return False
@@ -166,16 +166,17 @@ class Activation(IActivation):
 
         * `give_me_up`: Causal group that wishes to be de-referenced by this activation.
         """
-        if self.death_clock is None:
-            self._reset_death_clock()
+        # Re-create causal group set to account for merges.
         self.pressuring_causal_groups = {causal for causal in self.pressuring_causal_groups} | {give_me_up}
+        if self.death_clock is None and self._has_pressured_fulfilled_causal_groups():
+            self._reset_death_clock()
 
     def is_pressured(self):
         """
         Called by context, to figure out whether the activation is pressured,
          and therefore the idle:bored signal should be emitted.
         """
-        return self.death_clock is not None
+        return len(self.pressuring_causal_groups) > 0
 
     def spiky(self) -> bool:
         """
@@ -284,13 +285,16 @@ class Activation(IActivation):
         Thread(target=self._run_private).start()
 
     def _reset_death_clock(self):
-        self.death_clock = self.ctx.lowest_upper_bound_eta(set(
-            sig for sig in self.constraint.signals() if not sig.spike))
+        # TODO: Proper impl. w/ user-defined Signal.wait(time)/waitTime()/Constraint.minWaitTime()
+        self.death_clock = self.ctx.secs_to_ticks(1.)
 
     def _unique_consenting_causal_groups(self) -> Set[CausalGroup]:
         # if a signal was emitted by this activation, the consenting
         #  causal groups will be merged. this must be respected -> recreate the set.
         return {group for group in self.consenting_causal_groups}
+
+    def _has_pressured_fulfilled_causal_groups(self) -> bool:
+        return len(set(self.constraint.fulfilled_causal_groups()) & self.pressuring_causal_groups) > 0
 
     def _run_private(self):
         context_wrapper = ContextWrapper(ctx=self.ctx,

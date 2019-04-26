@@ -51,6 +51,31 @@ def create_and_run_context(*args, runtime_overrides=None):
     context.run()
 
 
+class _Grab:
+    """
+    Helper class to grab an equivalent set item, copied from here:<br>
+      http://python.6.x6.nabble.com/Get-item-from-set-td1530758.html
+
+    ```python
+    grab = _Grab("mysig")
+    if grab in myset:
+        print(grab.result)
+    ```
+    """
+    def __init__(self, value):
+        self.search_value = value
+        self.result = None
+
+    def __hash__(self):
+        return hash(self.search_value)
+
+    def __eq__(self, other):
+        if self.search_value == other:
+            self.result = other
+            return True
+        return False
+
+
 class Context(IContext):
     _default_signals: Tuple[Signal] = (startup(), shutdown())
     _default_properties: Tuple[PropertyBase] = (
@@ -412,22 +437,6 @@ class Context(IContext):
             return self._config.get(mod, key)
         return self._config.get_conf(mod)
 
-    def lowest_upper_bound_eta(self, signals: Set[Signal]) -> int:
-        """
-        Called by activation when it is pressured to resign. The activation wants
-         to know the earliest ETA of one of it's remaining required constraints.
-         Also called by constraint completion algorithm, to figure out the maximum
-         age for a completed constraint.
-
-        * `signals`: The signals, whose ETA will be calculated, and among the
-         results the minimum ETA will be returned.
-
-        **Returns:** Lowest upper bound number of ticks it should take for at least one of the required
-         signals to arrive. Fixed value (1) for now.
-        """
-        # TODO: Proper implementation w/ state runtime_upper_bound
-        return self.secs_to_ticks(.5)
-
     def signal_specificity(self, sig: Signal) -> float:
         """
         Called by state activation to determine it's constraint's specificity.
@@ -656,27 +665,26 @@ class Context(IContext):
 
     def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
         result = [set(deepcopy(sig) for sig in conj.signals())]
-        for sig in result[0]:
-            # TODO: Figure out through eta system
-            sig.max_age = 4.
 
-        def copy_conjunct_set_with_completion(original_conj: Set[Signal], completion_conj: Set[Signal]):
+        def copy_conjunct_set_with_completion(original_conj: Set[Signal], completion_conj: Set[Signal], completed_signal: Signal):
             original_conj = deepcopy(original_conj)
+            completion_conj = deepcopy(completion_conj)
+            original_conj |= completion_conj
             for sig in original_conj:
-                sig.has_completion = True
-            original_conj |= deepcopy(completion_conj)
-            for sig in original_conj:
+                if sig is completed_signal:
+                    sig.completed_by = completion_conj
                 if sig in completion_conj:
+                    sig.max_age = -1  # See #52 (§3)
                     sig.is_completion = True
             return original_conj
 
         for conj_sig in conj.signals():
             completion = self._complete_signal(conj_sig, known_signals)
-            if completion is not None and len(completion) > 0:
-                # the signal is non-cyclic, and has at least one cause (secondary signal).
+            if completion:
+                # the signal is non-cyclic, and has at least one cause (it is a secondary signal).
                 #  permute existing disjunct conjunctions with new conjunction(s)
                 result = [
-                    copy_conjunct_set_with_completion(result_conj, completion_conj)
+                    copy_conjunct_set_with_completion(result_conj, completion_conj, conj_sig)
                     for result_conj in result for completion_conj in completion]
 
         return result
@@ -689,7 +697,7 @@ class Context(IContext):
 
         # a signal without cause (a primary signal) needs no further completion
         if not self._signal_causes[sig] or sig.detached:
-            return []
+            return None
 
         # a signal with at least one secondary cause needs at least one non-cyclic
         #  cause to be considered a completion itself

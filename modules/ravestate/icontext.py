@@ -121,19 +121,6 @@ class IContext:
         """
         pass
 
-    def lowest_upper_bound_eta(self, signals: Set[Signal]) -> int:
-        """
-        Called by activation when it is pressured to resign. The activation wants
-         to know the earliest ETA of one of it's remaining required constraints.
-
-        * `signals`: The signals, whose ETA will be calculated, and among the
-         results the minimum ETA will be returned.
-
-        **Returns:** Number of ticks it should take for at least one of the required
-         signals to arrive. Fixed value (1) for now.
-        """
-        pass
-
     def signal_specificity(self, sig: Signal) -> float:
         """
         Called by state activation to determine it's constraint's specificity.

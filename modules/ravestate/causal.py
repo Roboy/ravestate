@@ -272,6 +272,10 @@ class CausalGroup(ICausalGroup):
         higher_specificity_acts = set()
         highest_higher_specificity = .0
         highest_higher_specificity_act = None
+
+        # Go through the ready_suitors write-props. For each property,
+        #  check whether it is still available, and also check whether
+        #  there are other activations for this property that have higher specificity.
         for prop in ready_suitor.resources():
             if prop in self._available_resources:
                 for spike in self._ref_index[prop]:
