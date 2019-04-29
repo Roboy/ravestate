@@ -76,18 +76,21 @@ class Signal(Constraint):
     Class that represents a Signal
     """
     name: str
-    spike: Spike
+    spike: Optional[Spike]
     min_age: float
     max_age: float
     detached: bool
 
     # tells whether this signal has been completed, and may therefore
-    #  not introduce a new causal group into the parent conjunct
+    #  not introduce a new causal group into the parent conjunct.
+    #  the back-references to the completing signals allow it
+    #  to dereference the completing signals when the causal tail
+    #  is dereferences because of death_clock.
     completed_by: Optional[Set['Signal']]
 
     # tells whether this signal is a potential cause for another signal,
-    #  and should therefore not be affected by the activation's auto-elimination
-    #  death clock.
+    #  and should therefore not be (immediately) affected by the activation's
+    #  auto-elimination death clock.
     is_completion: bool
 
     _min_age_ticks: int  # written on acquire, when act.secs_to_ticks is available
@@ -160,10 +163,16 @@ class Signal(Constraint):
                     causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
         if (not spike and self.spike) or (spike and self.spike is spike):
             if causal_groups:
-                # TODO: Only deref, if is_fulfilled_causal_tail(). Then also deref completed_by signals.
-                with self.spike.causal_group() as cg:
-                    if cg not in causal_groups:
-                        return
+                if self.is_fulfilled_causal_tail():
+                    with self.spike.causal_group() as cg:
+                        if cg not in causal_groups:
+                            return
+                    # Also dereference other spikes from this causal chain
+                    if self.completed_by:
+                        for completing_signal in self.completed_by:
+                            yield from completing_signal.dereference()
+                else:
+                    return
             former_signal_instance = self.spike
             self.spike = None
             yield self, former_signal_instance
