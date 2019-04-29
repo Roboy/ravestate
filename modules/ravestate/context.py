@@ -132,7 +132,7 @@ class Context(IContext):
 
     _config: Configuration
     _core_config: Dict[str, Any]
-    _run_task: Thread
+    _run_task: Optional[Thread]
     _shutdown_flag: Event
 
     def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None):
@@ -533,7 +533,7 @@ class Context(IContext):
                     # We could do some fancy merge of partially fulfilled activations,
                     #  but for now let's just remove all completely unfulfilled
                     #  ones apart from one.
-                    allowed_unfulfilled: Activation = None
+                    allowed_unfulfilled: Optional[Activation] = None
                     for act in acts.copy():
                         if not act.spiky():
                             if allowed_unfulfilled:
@@ -671,7 +671,7 @@ class Context(IContext):
             completion_conj = deepcopy(completion_conj)
             original_conj |= completion_conj
             for sig in original_conj:
-                if sig is completed_signal:
+                if sig == completed_signal:
                     sig.completed_by = completion_conj
                 if sig in completion_conj:
                     sig.max_age = -1  # See #52 (§3)
