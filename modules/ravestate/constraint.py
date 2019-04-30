@@ -70,6 +70,10 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         pass
 
+    def effects_not_caused(self, act: IActivation, group: ICausalGroup, effects: Set['Signal']) -> Generator['Signal', None, None]:
+        logger.error("Don't call this method on the super class Constraint")
+        pass
+
 
 class Signal(Constraint):
     """
@@ -192,6 +196,14 @@ class Signal(Constraint):
     def is_fulfilled_causal_tail(self):
         return not self.is_completion and self.evaluate()
 
+    def effects_not_caused(self, act: IActivation, group: ICausalGroup, effects: Set['Signal']) -> Generator['Signal', None, None]:
+        if self.spike:
+            with self.spike.causal_group() as cg:
+                if cg == group:
+                    cg.rejected(self.spike, act, reason=1)
+                    self.spike = None
+                    yield self
+
     def __str__(self):
         return self.name
 
@@ -207,7 +219,7 @@ class Conjunct(Constraint):
     ```
     """
     _signals: Set[Signal]
-    _hash: Tuple[str]
+    _hash: int
     _allowed_causal_groups: Set[ICausalGroup]
 
     def __init__(self, *args):
@@ -297,6 +309,14 @@ class Conjunct(Constraint):
         for child in self._signals:
             yield from child.fulfilled_causal_groups()
 
+    def effects_not_caused(self, act: IActivation, group: ICausalGroup, effects: Set['Signal']) -> Generator['Signal', None, None]:
+        # If the causal group is within the allowed, and one this conjuncts signals
+        #  is within the forgone signals, then it is safe (?) to assume that all
+        #  spikes from `group` from this conjunction must be rejected.
+        if group in self._allowed_causal_groups and len(self._signals & effects) > 0:
+            for child in self._signals:
+                yield from child.effects_not_caused(act, group, effects)
+
     def __str__(self):
         return "(" + " & ".join(map(lambda si: si.__str__(), self._signals)) + ")"
 
@@ -378,6 +398,10 @@ class Disjunct(Constraint):
     def fulfilled_causal_groups(self) -> Generator[ICausalGroup, None, None]:
         for child in self._conjunctions:
             yield from child.fulfilled_causal_groups()
+
+    def effects_not_caused(self, act: IActivation, group: ICausalGroup, effects: Set['Signal']) -> Generator['Signal', None, None]:
+        for child in self._conjunctions:
+            yield from child.effects_not_caused(act, group, effects)
 
     def __str__(self):
         return " | ".join(map(lambda conjunct: conjunct.__str__(), self._conjunctions))

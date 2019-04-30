@@ -1,7 +1,8 @@
 # Ravestate class which encapsulates a graph of signal parent/offspring instances
 
-from typing import Set, Dict, Optional, List
+from typing import Set, Dict, Optional, List, Generator
 from ravestate.iactivation import IActivation, ISpike, ICausalGroup
+from ravestate.constraint import Signal, Conjunct
 from threading import RLock
 from collections import defaultdict
 
@@ -78,10 +79,27 @@ class CausalGroup(ICausalGroup):
     #  The reason is, that the activations with detached signal
     #  constraints do not expect to need any consent for their
     #  write-activities from those signal's causal groups.
-    # They are therefore not rejected upon consumed(), but upon wiped()
+    # They are therefore not de-referenced upon consumed(), but upon wiped()
     #  or rejected().
     _detached_ref_index: Dict[
         ISpike,
+        Dict[
+            IActivation,
+            int
+        ]
+    ]
+
+    # Dictionary, which records activations that may cause particular signal spikes
+    #  for particular reasons (conjuncts). Whenever an activation acquires or dereferences
+    #  a spike from this causal group, the dictionary is updated to add/remove activations
+    #  to/from this dictionary. A special case occurs, when an activation finishes
+    #  without causing some of it's possible effects (spikes): Then, effect_not_caused(effects) will
+    #  be called by the activation with the forgone signals. If for any of the forgone signal spikes
+    #  there are no other registered activations which could cause the same spikes,
+    #  Activation.effect_not_caused(effects, causal_group) will be called on all activations registered
+    #  in this causal group.
+    _activations_per_effect: Dict[
+        Signal,
         Dict[
             IActivation,
             int
@@ -109,6 +127,7 @@ class CausalGroup(ICausalGroup):
             for prop in resources
         }
         self._detached_ref_index = defaultdict(lambda: defaultdict(int))
+        self._activations_per_effect = defaultdict(lambda: defaultdict(int))
 
     def __del__(self):
         with self._lock:
@@ -177,6 +196,12 @@ class CausalGroup(ICausalGroup):
         # Merge _detached_ref_index
         self._detached_ref_index.update(other._detached_ref_index)
 
+        # Merge _activations_per_effect
+        for signal, refc_per_act in other._activations_per_effect.items():
+            my_refc_per_act = self._activations_per_effect[signal]
+            for act, refc in refc_per_act.items():
+                my_refc_per_act[act] += refc
+
         # Merge signal names/merge count
         self.signal_names += other.signal_names
         self.merges[0] += other.merges[0]
@@ -215,6 +240,9 @@ class CausalGroup(ICausalGroup):
                     return False
             for prop in acquired_by.resources():
                 self._ref_index[prop][spike][acquired_by] += 1
+            for sig in acquired_by.possible_signals():
+                self._activations_per_effect[sig][acquired_by] += 1
+
         logger.debug(f"{self}.acquired({spike} by {acquired_by})")
         return True
 
@@ -252,6 +280,11 @@ class CausalGroup(ICausalGroup):
                 _decrement_refcount(self._ref_index[prop])
                 if len(self._ref_index[prop][spike]) == 0:
                     del self._ref_index[prop][spike]
+        for sig in rejected_by.possible_signals():
+            assert sig in self._activations_per_effect and rejected_by in self._activations_per_effect[sig]
+            self._activations_per_effect[sig][rejected_by] -= 1
+            if self._activations_per_effect[sig][rejected_by] <= 0:
+                del self._activations_per_effect[sig][rejected_by]
         logger.debug(f"{self}.rejected({spike} by {rejected_by}): ")
 
     def consent(self, ready_suitor: IActivation) -> bool:
@@ -337,15 +370,37 @@ class CausalGroup(ICausalGroup):
         """
         if not resources:
             return
+        acts_to_forget = set()
         for resource in resources:
             # Notify all concerned activations, that the
             # spikes they are referencing are no longer available
             for sig in self._ref_index[resource]:
                 for act in self._ref_index[resource][sig]:
                     act.dereference(spike=sig, reacquire=True)
+                    acts_to_forget.add(act)
             # Remove the consumed prop from the index
             del self._ref_index[resource]
+        for act in acts_to_forget:
+            for sig in act.possible_signals():
+                if act in self._activations_per_effect[sig]:
+                    del self._activations_per_effect[sig][act]
         logger.debug(f"{self}.consumed({resources})")
+
+    def effects_not_caused(self, effects: Set[Signal]):
+        """
+        Called by Activation, to notify the causal group, that some of it's
+         promised spikes were not created. For each forgone spike signal, if
+         there are no other activations registered in the causal group that
+         could produce the same signals, then all activations registered in
+         this causal group will be informed about the forgone signals.
+
+        * `effects`: The effect signals for which no spikes were created.
+        """
+        # Filter effects and only retain those which have no alternate source
+        effects = {effect for effect in effects if not self._activations_per_effect[effect]}
+        if effects:
+            for act in self._non_detached_activations():
+                act.effects_not_caused(self, effects)
 
     def wiped(self, spike: 'ISpike') -> None:
         """
@@ -386,3 +441,13 @@ class CausalGroup(ICausalGroup):
                 del self._detached_ref_index[spike]
         result = not spike.has_offspring()
         return result
+
+    def _non_detached_activations(self) -> Generator[IActivation, None, None]:
+        yielded_activations = set()
+        for refc_per_act_per_spike in self._ref_index.values():
+            for refc_per_act in refc_per_act_per_spike.values():
+                for act in refc_per_act:
+                    if act not in yielded_activations:
+                        yielded_activations.add(act)
+                        yield act
+

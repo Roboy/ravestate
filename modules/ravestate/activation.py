@@ -193,6 +193,28 @@ class Activation(IActivation):
         """
         return (sig.spike for sig in self.constraint.signals() if sig.spike)
 
+    def possible_signals(self) -> Generator['Signal', None, None]:
+        """
+        Yields all signals, for which spikes may be created if
+         this activation's state is executed.
+        """
+        yield from self.ctx.possible_signals(self.state_to_activate)
+
+    def effects_not_caused(self, group: ICausalGroup, effects: Set['Signal']) -> None:
+        """
+        Notify the activation, that certain follow-up signals will not be produced
+         by the given causal group. The activation will go through it's constraint,
+         and reject all completion spikes for signals in effects, if the completion
+         spikes are from the given causal group.
+
+        * `group`: The causal group which will not contain the mentioned effects.
+        * `effects`: The set of signals for which no spikes will not be produced.
+        """
+        logger.debug(f"{self}.effects_not_caused({group}, {effects})")
+        # Update constraint, reacquire for rejected spikes
+        for signal in self.constraint.effects_not_caused(self, group, effects):
+            self.ctx.reacquire(self, signal)
+
     def update(self) -> bool:
         """
         Called once per tick on this activation, to give it a chance to activate
@@ -202,8 +224,8 @@ class Activation(IActivation):
          false if needs further attention in the form of updates() by context in the future.
         """
         # Update constraint, reacquire for rejected spikes
-        for spike in self.constraint.update(self):
-            self.ctx.reacquire(self, spike)
+        for signal in self.constraint.update(self):
+            self.ctx.reacquire(self, signal)
 
         # Iterate over fulfilled conjunctions and look to activate with one of them
         for conjunction in self.constraint.conjunctions():
@@ -312,7 +334,9 @@ class Activation(IActivation):
         # Process state function result
         if isinstance(result, Emit):
             if self.state_to_activate.signal():
-                self.ctx.emit(
+                # Emit through SignalActionProxy, such that the emitted signal is
+                #  recorded and removed from signal_actions.signals_not_emitted
+                context_wrapper.signal_actions.emit(
                     self.state_to_activate.signal(),
                     parents=self.parent_spikes,
                     wipe=result.wipe)
@@ -341,9 +365,11 @@ class Activation(IActivation):
             self.state_to_activate.activated.release()
             return
 
-        # Let participating causal groups know about consumed properties
+        # Let participating causal groups know about consumed properties and forgone signals.
         for cg in self._unique_consenting_causal_groups():
             with cg:
                 cg.consumed(self.resources())
+                cg.effects_not_caused(context_wrapper.signal_actions.signals_not_emitted)
 
         self.state_to_activate.activation_finished()
+

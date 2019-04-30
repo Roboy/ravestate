@@ -2,13 +2,43 @@
 
 from ravestate.property import PropertyBase
 from ravestate.state import State
+from ravestate.constraint import Signal
 from ravestate.module import get_module
-from ravestate import icontext
+from ravestate.icontext import IContext
 from ravestate.spike import Spike
 from typing import Any, Generator, Set, Dict
 
 from reggol import get_logger
 logger = get_logger(__name__)
+
+
+class SignalActionProxy:
+    """
+    Special context wrapper, which encapsulates only the `wipe()` and `emit()`
+    functions. A shared instance of this class is held both by ContextWrapper
+    and PropertyWrapper. The Activation uses this class through ContextWrapper, to track
+    exactly which property-changed signals were (not) emitted, such that it
+    can create it's CausalGroup.effect_not_caused() report.
+    """
+    signals_not_emitted: Set[Signal]
+    ctx: IContext
+
+    def __init__(self, *, ctx: IContext, potential_signals: Set[Signal]):
+        self.ctx = ctx
+        self.signals_not_emitted = potential_signals
+
+    def emit(self, signal: Signal, parents: Set[Spike] = None, wipe: bool = False, payload: Any = None) -> None:
+        """
+        Call `IContext.emit(...).`.
+        """
+        self.signals_not_emitted.discard(signal)
+        self.ctx.emit(signal=signal, parents=parents, wipe=wipe, payload=payload)
+
+    def wipe(self, signal: Signal):
+        """
+        Call `IContext.wipe(...).`.
+        """
+        self.ctx.wipe(signal=signal)
 
 
 class PropertyWrapper:
@@ -22,11 +52,11 @@ class PropertyWrapper:
     def __init__(self, *,
                  spike_parents: Set[Spike] = None,
                  prop: PropertyBase,
-                 ctx: icontext.IContext,
+                 signal_actions: SignalActionProxy,
                  allow_read: bool,
                  allow_write: bool):
         self.prop = prop
-        self.ctx = ctx
+        self.signal_actions = signal_actions
         self.allow_read = allow_read and prop.allow_read
         self.allow_write = allow_write and (prop.allow_write | prop.allow_push | prop.allow_pop)
         self.frozen_value = None
@@ -70,20 +100,20 @@ class PropertyWrapper:
             # emit flag signals if it is a flag property
             if self.prop.is_flag_property and value is True:
                 # wipe false signal, emit true signal
-                self.ctx.wipe(self.prop.flag_false_signal())
-                self.ctx.emit(
+                self.signal_actions.wipe(self.prop.flag_false_signal())
+                self.signal_actions.emit(
                     self.prop.flag_true_signal(),
                     parents=self.spike_parents,
                     wipe=self.prop.wipe_on_changed)
             if self.prop.is_flag_property and value is False:
                 # wipe true signal, emit false signal
-                self.ctx.wipe(self.prop.flag_true_signal())
-                self.ctx.emit(
+                self.signal_actions.wipe(self.prop.flag_true_signal())
+                self.signal_actions.emit(
                     self.prop.flag_false_signal(),
                     parents=self.spike_parents,
                     wipe=self.prop.wipe_on_changed)
 
-            self.ctx.emit(
+            self.signal_actions.emit(
                 self.prop.changed_signal(),
                 parents=self.spike_parents,
                 wipe=self.prop.wipe_on_changed,
@@ -104,7 +134,7 @@ class PropertyWrapper:
             logger.error(f"Unauthorized push access in property-wrapper {self.prop.id()}!")
             return False
         if self.prop.push(child):
-            self.ctx.emit(
+            self.signal_actions.emit(
                 self.prop.pushed_signal(),
                 parents=self.spike_parents,
                 wipe=False,
@@ -124,7 +154,7 @@ class PropertyWrapper:
             logger.error(f"Unauthorized pop access in property-wrapper {self.prop.id()}!")
             return False
         if self.prop.pop(childname):
-            self.ctx.emit(
+            self.signal_actions.emit(
                 self.prop.popped_signal(),
                 parents=self.spike_parents,
                 wipe=False,
@@ -148,12 +178,16 @@ class ContextWrapper:
     as declared by the state beforehand.
     """
 
-    def __init__(self, *, ctx: icontext.IContext, state: State, spike_parents: Set[Spike]=None, spike_payloads: Dict[str, Any]=None):
+    def __init__(self, *, ctx: IContext, state: State, spike_parents: Set[Spike]=None, spike_payloads: Dict[str, Any]=None):
         self.state = state
         self.ctx = ctx
         self.properties = dict()
         self.spike_parents = spike_parents
         self.spike_payloads = spike_payloads
+        self.signal_actions = SignalActionProxy(
+            ctx=ctx,
+            potential_signals=set(ctx.possible_signals(self.state)))
+
         # Recursively complete properties dict with children:
         for propname in state.write_props + state.read_props:
             # May have been covered by a parent before
@@ -163,7 +197,7 @@ class ContextWrapper:
                     # Child may have been covered by a parent before
                     if prop.id() not in self.properties:
                         self.properties[prop.id()] = PropertyWrapper(
-                            prop=prop, ctx=ctx,
+                            prop=prop, signal_actions=self.signal_actions,
                             spike_parents=self.spike_parents,
                             allow_read=propname in state.read_props,
                             allow_write=propname in state.write_props)
@@ -226,7 +260,7 @@ class ContextWrapper:
         if parentpath in self.properties:
             if self.properties[parentpath].push(child):
                 self.properties[child.id()] = PropertyWrapper(
-                    prop=child, ctx=self.ctx,
+                    prop=child, signal_actions=self.signal_actions,
                     spike_parents=self.spike_parents,
                     allow_read=self.properties[parentpath].allow_read,
                     allow_write=self.properties[parentpath].allow_write)

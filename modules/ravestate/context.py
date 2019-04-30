@@ -188,8 +188,6 @@ class Context(IContext):
 
         service.fillme(self._activations_per_state, self._properties)
 
-
-
     def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> None:
         """
         Emit a signal to the signal processing loop. _Note:_
@@ -316,7 +314,7 @@ class Context(IContext):
             states_to_recomplete: Set[State] = {st}
             if not st.emit_detached:
                 for conj in st.constraint.conjunctions(filter_detached=True):
-                    for signal in self._possible_signals(st):
+                    for signal in self.possible_signals(st):
                         self._signal_causes[signal].append(conj)
                         # Since a new cause for the property's signal is added,
                         #  it must be added to all states depending on that signal.
@@ -502,6 +500,21 @@ class Context(IContext):
         **Returns:** An integer tick count.
         """
         return ceil(seconds * float(self._core_config[self.tick_rate_config]))
+
+    def possible_signals(self, state: State) -> Generator[Signal, None, None]:
+        """
+        Yields all signals, for which spikes may be created if
+         the given state is executed.
+
+        * `state`: The state, which should be analyzed for it's
+         possibly generated signals (declared signal + property-changed signals).
+        """
+        for propname in state.write_props:
+            if propname in self._properties:
+                for signal in self._properties[propname].signals():
+                    yield signal
+        if state.signal():
+            yield state.signal()
 
     def run_once(self, seconds_passed=1.) -> None:
         """
@@ -744,12 +757,4 @@ class Context(IContext):
         tick_interval = 1. / self._core_config[self.tick_rate_config]
         while not self._shutdown_flag.wait(tick_interval):
             self.run_once(tick_interval)
-
-    def _possible_signals(self, state: State) -> Generator[Signal, None, None]:
-        for propname in state.write_props:
-            if propname in self._properties:
-                for signal in self._properties[propname].signals():
-                    yield signal
-        if state.signal():
-            yield state.signal()
 

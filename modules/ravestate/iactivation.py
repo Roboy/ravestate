@@ -120,3 +120,22 @@ class IActivation:
         **Returns:** An integer tick count.
         """
         pass
+
+    def possible_signals(self) -> Generator['Signal', None, None]:
+        """
+        Yields all signals, for which spikes may be created if
+         this activation's state is executed.
+        """
+        pass
+
+    def effects_not_caused(self, group: ICausalGroup, effects: Set['Signal']) -> None:
+        """
+        Notify the activation, that certain follow-up signals will not be produced
+         by the given causal group. The activation will go through it's constraint,
+         and reject all completion spikes for signals in effects, if the completion
+         spikes are from the given causal group.
+
+        * `group`: The causal group which will not contain the mentioned effects.
+        * `effects`: The set of signals for which no spikes will not be produced.
+        """
+        pass

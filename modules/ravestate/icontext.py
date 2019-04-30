@@ -4,7 +4,7 @@
 
 from ravestate import property
 from ravestate import state
-from typing import Set, Any
+from typing import Set, Any, Generator
 from ravestate.constraint import Signal
 from ravestate.spike import Spike
 from ravestate.iactivation import IActivation
@@ -165,5 +165,15 @@ class IContext:
         * `seconds`: Seconds to convert to ticks.
 
         **Returns:** An integer tick count.
+        """
+        pass
+
+    def possible_signals(self, state: 'State') -> Generator['Signal', None, None]:
+        """
+        Yields all signals, for which spikes may be created if
+         the given state is executed.
+
+        * `state`: The state, which should be analyzed for it's
+         possibly generated signals (declared signal + property-changed signals).
         """
         pass
