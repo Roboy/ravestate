@@ -203,7 +203,6 @@ docker exec -it ravestate-ros2-container bash
 Inside the container, first source the ROS2 setups and then 
 ravestate can be run with ROS2 and rclpy available.
 ```bash
-source /opt/ros/bouncy/setup.sh
 source ~/ros2_ws/install/setup.sh
 python3 -m ravestate [...]
 ```
@@ -213,7 +212,6 @@ In order to start ROS Bridge, the image and container have to be set up
 as above. After connecting into the container run from inside the container:
 ```bash
 source ~/melodic_ws/devel/setup.sh
-source /opt/ros/bouncy/setup.sh
 source ~/ros2_ws/install/setup.sh
 source ~/ros1_bridge_ws/install/setup.sh
 ros2 run ros1_bridge dynamic_bridge
