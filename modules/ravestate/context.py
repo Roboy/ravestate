@@ -612,7 +612,7 @@ class Context(IContext):
 
             gc.collect()
 
-        self._update_core_properties(debug=True)
+        self._update_core_properties(debug=False)
 
     def _add_sig(self, sig: Signal):
         if sig in self._needy_acts_per_state_per_signal:

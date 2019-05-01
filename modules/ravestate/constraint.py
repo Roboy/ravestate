@@ -203,7 +203,7 @@ class Signal(Constraint):
                 if cause.spike:
                     with cause.spike.causal_group() as cg:
                         if cg == group:
-                            cg.rejected(self.spike, act, reason=1)
+                            cg.rejected(cause.spike, act, reason=1)
                             cause.spike = None
                             yield self
 
