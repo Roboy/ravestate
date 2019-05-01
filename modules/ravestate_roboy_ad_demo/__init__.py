@@ -53,6 +53,7 @@ with Module(name="ad_demo", config=CONFIG) as mod:
 
     @state(cond=startup(), write=ros2_properties_parent.id())
     def create_ros2_properties(ctx: ContextWrapper):
+        logger.info("creating ros2 pub")
         # create publishers and subscribers
         publish_dr_to_ad = Ros2PubProperty(name="publish_dr_to_ad",
                                            topic=DR_TO_AD_TOPIC,
@@ -73,7 +74,7 @@ with Module(name="ad_demo", config=CONFIG) as mod:
         # add the ros2 properties to context
         ctx.push(ros2_properties_parent.id(), publish_dr_to_ad)
         # ctx.push(ros2_properties_parent.id(), subscribe_ad_to_dr)
-        
+        logger.info("done")
         
         # ctx.push(ros2_properties_parent.id(), subscribe_skin_to_dr)
 
@@ -83,7 +84,7 @@ with Module(name="ad_demo", config=CONFIG) as mod:
             # Trigger phrase: "Pick me up."
             triples = ctx["nlp:triples"]
             if triples[0].match_either_lemma(pred={"pick"}):
-                # ctx[publish_dr_to_ad.id()] = Bool(data=True)
+                ctx[publish_dr_to_ad.id()] = Bool(data=True)
                 ctx[raw_out.id()] = "I'm on my way!"
             else:
                 return Resign()

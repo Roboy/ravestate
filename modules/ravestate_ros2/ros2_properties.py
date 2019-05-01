@@ -118,7 +118,7 @@ def sync_ros_properties(ctx: ContextWrapper):
             global_prop_set.add(prop.__hash__())
 
         # spin once
-        rclpy.spin_once(global_node, timeout_sec=0)
+        #rclpy.spin_once(global_node, timeout_sec=0)
         time.sleep(spin_sleep_time)
 
     global_node.destroy_node()
