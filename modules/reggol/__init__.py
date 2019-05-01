@@ -58,6 +58,7 @@ def get_logger(name: str, logpath: str=None):
     logger.setLevel(_level)
     logger.set_console_formatter(MixedFormatter(ColoredFormatter()))
     logger.set_file_formatter(file_path=logpath)
+    logger.propagate = False
     return logger
 
 
