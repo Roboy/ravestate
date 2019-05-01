@@ -37,14 +37,13 @@ HANDSHAKE_TOPIC = "/shoulder_right_movement_server/goal"
 # ARRIVED_AT_PICKUP_POINT_MSG = "arrived_at_pick_up_point"
 # ARRIVED_AT_DROPOFF_POINT_MSG = "arrived_at_drop_off_point"
 
-if ROBOY_COGNITION_AVAILABLE:
-    ROS2_HANDSHAKE_MOTION_TOPIC_CONFIG = "ros2-handshake-motion-topic"
-    HANDSHAKE_MOTION_NAME_CONFIG = "handshake-motion-name"
+ROS2_HANDSHAKE_MOTION_TOPIC_CONFIG = "ros2-handshake-motion-topic"
+HANDSHAKE_MOTION_NAME_CONFIG = "handshake-motion-name"
 
-    CONFIG = {
-        ROS2_HANDSHAKE_MOTION_TOPIC_CONFIG: HANDSHAKE_TOPIC,  # TODO
-        HANDSHAKE_MOTION_NAME_CONFIG: "shoulder_right_handshake",  # TODO
-    }
+CONFIG = {
+    ROS2_HANDSHAKE_MOTION_TOPIC_CONFIG: HANDSHAKE_TOPIC,  # TODO
+    HANDSHAKE_MOTION_NAME_CONFIG: "shoulder_right_handshake",  # TODO
+}
 
 with Module(name="ad_demo", config=CONFIG) as mod:
     # Create a dummy parent, under which we can push the actual recognized faces topic,
@@ -65,6 +64,8 @@ with Module(name="ad_demo", config=CONFIG) as mod:
             publish_handshake_motion = Ros2PubProperty(name="publish_handshake_motion",
                                                        topic=ctx.conf(key=ROS2_HANDSHAKE_MOTION_TOPIC_CONFIG),
                                                        msg_type=PerformMovement)
+            ctx.push(ros2_properties_parent.id(), publish_handshake_motion)
+            
         # subscribe_skin_to_dr = Ros2PubProperty(name="subscribe_skin_to_dr",
         #                                        topic=SKIN_TO_DR_TOPIC,
         #                                        msg_type=Bool)
@@ -72,7 +73,8 @@ with Module(name="ad_demo", config=CONFIG) as mod:
         # add the ros2 properties to context
         ctx.push(ros2_properties_parent.id(), publish_dr_to_ad)
         # ctx.push(ros2_properties_parent.id(), subscribe_ad_to_dr)
-        ctx.push(ros2_properties_parent.id(), publish_handshake_motion)
+        
+        
         # ctx.push(ros2_properties_parent.id(), subscribe_skin_to_dr)
 
         @state(cond=s("nlp:triples:changed"),
@@ -117,12 +119,12 @@ with Module(name="ad_demo", config=CONFIG) as mod:
         #     else:
         #         return Resign()
 
-        @state(cond=s("stalker:daddy"), write=publish_handshake_motion.id())
-        def daddy_recognized(ctx: ContextWrapper):
-            # check if it is lennart, greets lennart (this is done in stalker) -> TODO signal lennarts-here?
-            # triggers handshake: topic ReplayTrajectory which takes a string as a name
-            ctx[publish_handshake_motion.id()] = PerformMovement(action=ctx.conf(key=HANDSHAKE_MOTION_NAME_CONFIG))
+#         @state(cond=s("stalker:daddy"), write=publish_handshake_motion.id())
+#         def daddy_recognized(ctx: ContextWrapper):
+#             # check if it is lennart, greets lennart (this is done in stalker) -> TODO signal lennarts-here?
+#             # triggers handshake: topic ReplayTrajectory which takes a string as a name
+#             ctx[publish_handshake_motion.id()] = PerformMovement(action=ctx.conf(key=HANDSHAKE_MOTION_NAME_CONFIG))
 
-        for st in [pickup_requested, start_driving, daddy_recognized]:
+        for st in [pickup_requested, start_driving]:
             mod.add(st)
             ctx.add_state(st)
