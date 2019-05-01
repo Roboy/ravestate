@@ -332,7 +332,11 @@ class Context(IContext):
             for state in states_to_recomplete:
                 self._del_state_activations(state)
                 self._complete_constraint(state)
-                self._new_state_activation(state)
+                # first create an activation which reacquires for existing spikes,
+                #  then create another activation which hooks into signals
+                #  that are not looked for anymore by the spiky one.
+                if self._new_state_activation(state, reacquire=True):
+                    self._new_state_activation(state)
 
         # register the state's consumable dummy, so that it is passed
         #  to Spike and from there to CausalGroup as a consumable resource.
@@ -639,21 +643,28 @@ class Context(IContext):
             self.add_state(st=st)
         logger.info(f"Module {mod.name} added to session.")
 
-    def _new_state_activation(self, st: State) -> None:
+    def _new_state_activation(self, st: State, reacquire: bool = False) -> bool:
         activation = Activation(st, self)
+        reacquired = False
         self._activations_per_state[st].add(activation)
         for signal in st.completed_constraint.signals():
             if signal in self._needy_acts_per_state_per_signal:
-                for spike in self._spikes_per_signal[signal]:
-                    if spike.is_wiped():
-                        continue
-                    if activation.acquire(spike=spike):
-                        break
+                signal_reacquired = False
+                if reacquire:
+                    for spike in self._spikes_per_signal[signal]:
+                        if spike.is_wiped():
+                            continue
+                        if activation.acquire(spike=spike):
+                            signal_reacquired = True
+                            break
+                if signal_reacquired:
+                    reacquired = True
                 else:
-                    self._needy_acts_per_state_per_signal[signal][st] |= {activation}
+                    self._needy_acts_per_state_per_signal[signal][st].add(activation)
             else:
                 logger.error(
                     f"Adding state activation for f{st.name} which depends on unknown signal `{signal}`!")
+        return reacquired
 
     def _del_state_activations(self, st: State) -> None:
         # delete activation from gaybar

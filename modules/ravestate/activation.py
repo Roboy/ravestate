@@ -210,10 +210,13 @@ class Activation(IActivation):
         * `group`: The causal group which will not contain the mentioned effects.
         * `effect`: The set of signals for which no spikes will not be produced.
         """
-        logger.debug(f"{self}.effect_not_caused({group}, {effect})")
         # Update constraint, reacquire for rejected spikes
+        affected = False
         for signal in self.constraint.effect_not_caused(self, group, effect):
             self.ctx.reacquire(self, signal)
+            affected = True
+        if affected:
+            logger.debug(f"{self}.effect_not_caused({group}, {effect})")
 
     def update(self) -> bool:
         """

@@ -50,7 +50,7 @@ with Module(name="nlp"):
     lemmas = PropertyBase(name="lemmas", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
     tags = PropertyBase(name="tags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
     ner = PropertyBase(name="ner", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    triples = PropertyBase(name="triples", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False, is_flag_property=True),
+    triples = PropertyBase(name="triples", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
     roboy = PropertyBase(name="roboy", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
     yesno = PropertyBase(name="yesno", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
 

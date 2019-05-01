@@ -198,12 +198,14 @@ class Signal(Constraint):
         return not self.is_completion and self.evaluate()
 
     def effect_not_caused(self, act: IActivation, group: ICausalGroup, effect: str) -> Generator['Signal', None, None]:
-        if self.spike:
-            with self.spike.causal_group() as cg:
-                if cg == group:
-                    cg.rejected(self.spike, act, reason=1)
-                    self.spike = None
-                    yield self
+        if self.completed_by:
+            for cause in self.completed_by:
+                if cause.spike:
+                    with cause.spike.causal_group() as cg:
+                        if cg == group:
+                            cg.rejected(self.spike, act, reason=1)
+                            cause.spike = None
+                            yield self
 
     def __str__(self):
         return self.name
@@ -316,8 +318,10 @@ class Conjunct(Constraint):
         #  spikes from `group` from this conjunction must be rejected.
         if group in self._allowed_causal_groups and effect in self._signals:
             for child in self._signals:
-                yield from child.effect_not_caused(act, group, effect)
-            self._allowed_causal_groups = {sig.spike.causal_group() for sig in self._signals if sig.spike}
+                if child == effect and not child.spike:
+                    yield from child.effect_not_caused(act, group, effect)
+                    self._allowed_causal_groups = {sig.spike.causal_group() for sig in self._signals if sig.spike}
+                    break
 
     def __str__(self):
         return "(" + " & ".join(map(lambda si: si.__str__(), self._signals)) + ")"
