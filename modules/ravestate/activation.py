@@ -3,7 +3,7 @@ import copy
 import traceback
 
 from threading import Thread
-from typing import Set, Optional, List, Dict, Any, Generator
+from typing import Set, Optional, Tuple, Dict, Any, Generator
 from collections import defaultdict
 
 from ravestate.icontext import IContext
@@ -35,7 +35,7 @@ class Activation(IActivation):
     state_to_activate: State
     constraint: Constraint
     ctx: IContext
-    args: List
+    args: Tuple
     kwargs: Dict
     spike_payloads: Dict[str, Any]
     parent_spikes: Set[Spike]
@@ -49,7 +49,7 @@ class Activation(IActivation):
         self.state_to_activate = st
         self.constraint = copy.deepcopy(st.completed_constraint)
         self.ctx = ctx
-        self.args = []
+        self.args = ()
         self.kwargs = {}
         self.parent_spikes = set()
         self.consenting_causal_groups = set()
@@ -200,19 +200,19 @@ class Activation(IActivation):
         """
         yield from self.ctx.possible_signals(self.state_to_activate)
 
-    def effects_not_caused(self, group: ICausalGroup, effects: Set['Signal']) -> None:
+    def effect_not_caused(self, group: ICausalGroup, effect: str) -> None:
         """
-        Notify the activation, that certain follow-up signals will not be produced
+        Notify the activation, that a follow-up signal will not be produced
          by the given causal group. The activation will go through it's constraint,
          and reject all completion spikes for signals in effects, if the completion
          spikes are from the given causal group.
 
         * `group`: The causal group which will not contain the mentioned effects.
-        * `effects`: The set of signals for which no spikes will not be produced.
+        * `effect`: The set of signals for which no spikes will not be produced.
         """
-        logger.debug(f"{self}.effects_not_caused({group}, {effects})")
+        logger.debug(f"{self}.effect_not_caused({group}, {effect})")
         # Update constraint, reacquire for rejected spikes
-        for signal in self.constraint.effects_not_caused(self, group, effects):
+        for signal in self.constraint.effect_not_caused(self, group, effect):
             self.ctx.reacquire(self, signal)
 
     def update(self) -> bool:
@@ -262,13 +262,6 @@ class Activation(IActivation):
             for cg in consenting_causal_groups:
                 with cg:
                     cg.activated(self)
-
-            # Remove references between causal groups <-> self
-            for signal in self.constraint.signals():
-                if signal.spike:
-                    with signal.spike.causal_group() as cg:
-                        cg.rejected(signal.spike, self, reason=2)
-                    signal.spike = None
 
             # Withdraw from context for all (unfulfilled) signals (there might
             #  be some unfulfilled conjunctions next to the fulfilled one).
@@ -323,7 +316,6 @@ class Activation(IActivation):
                                          state=self.state_to_activate,
                                          spike_parents=self.parent_spikes,
                                          spike_payloads=self.spike_payloads)
-
         # Run state function
         try:
             result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
@@ -331,12 +323,19 @@ class Activation(IActivation):
             logger.error(f"An exception occurred while activating {self}: {traceback.format_exc()}")
             result = Resign()
 
+        # Remove references between causal groups <-> self. Note:
+        #  Activations for receptors do not have constraints.
+        if self.constraint:
+            for signal in self.constraint.signals():
+                if signal.spike:
+                    with signal.spike.causal_group() as cg:
+                        cg.rejected(signal.spike, self, reason=2)
+                    signal.spike = None
+
         # Process state function result
         if isinstance(result, Emit):
             if self.state_to_activate.signal():
-                # Emit through SignalActionProxy, such that the emitted signal is
-                #  recorded and removed from signal_actions.signals_not_emitted
-                context_wrapper.signal_actions.emit(
+                self.ctx.emit(
                     self.state_to_activate.signal(),
                     parents=self.parent_spikes,
                     wipe=result.wipe)
@@ -369,7 +368,6 @@ class Activation(IActivation):
         for cg in self._unique_consenting_causal_groups():
             with cg:
                 cg.consumed(self.resources())
-                cg.effects_not_caused(context_wrapper.signal_actions.signals_not_emitted)
 
         self.state_to_activate.activation_finished()
 

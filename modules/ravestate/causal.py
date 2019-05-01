@@ -2,7 +2,6 @@
 
 from typing import Set, Dict, Optional, List, Generator
 from ravestate.iactivation import IActivation, ISpike, ICausalGroup
-from ravestate.constraint import Signal, Conjunct
 from threading import RLock
 from collections import defaultdict
 
@@ -98,8 +97,8 @@ class CausalGroup(ICausalGroup):
     #  there are no other registered activations which could cause the same spikes,
     #  Activation.effect_not_caused(effects, causal_group) will be called on all activations registered
     #  in this causal group.
-    _activations_per_effect: Dict[
-        Signal,
+    _uncaused_spikes: Dict[
+        str,
         Dict[
             IActivation,
             int
@@ -127,7 +126,7 @@ class CausalGroup(ICausalGroup):
             for prop in resources
         }
         self._detached_ref_index = defaultdict(lambda: defaultdict(int))
-        self._activations_per_effect = defaultdict(lambda: defaultdict(int))
+        self._uncaused_spikes = defaultdict(lambda: defaultdict(int))
 
     def __del__(self):
         with self._lock:
@@ -197,8 +196,8 @@ class CausalGroup(ICausalGroup):
         self._detached_ref_index.update(other._detached_ref_index)
 
         # Merge _activations_per_effect
-        for signal, refc_per_act in other._activations_per_effect.items():
-            my_refc_per_act = self._activations_per_effect[signal]
+        for signal, refc_per_act in other._uncaused_spikes.items():
+            my_refc_per_act = self._uncaused_spikes[signal]
             for act, refc in refc_per_act.items():
                 my_refc_per_act[act] += refc
 
@@ -240,8 +239,7 @@ class CausalGroup(ICausalGroup):
                     return False
             for prop in acquired_by.resources():
                 self._ref_index[prop][spike][acquired_by] += 1
-            for sig in acquired_by.possible_signals():
-                self._activations_per_effect[sig][acquired_by] += 1
+            self._change_effect_causes(acquired_by, 1)
 
         logger.debug(f"{self}.acquired({spike} by {acquired_by})")
         return True
@@ -280,11 +278,9 @@ class CausalGroup(ICausalGroup):
                 _decrement_refcount(self._ref_index[prop])
                 if len(self._ref_index[prop][spike]) == 0:
                     del self._ref_index[prop][spike]
-        for sig in rejected_by.possible_signals():
-            assert sig in self._activations_per_effect and rejected_by in self._activations_per_effect[sig]
-            self._activations_per_effect[sig][rejected_by] -= 1
-            if self._activations_per_effect[sig][rejected_by] <= 0:
-                del self._activations_per_effect[sig][rejected_by]
+
+        self._change_effect_causes(rejected_by, -1)
+
         logger.debug(f"{self}.rejected({spike} by {rejected_by}): ")
 
     def consent(self, ready_suitor: IActivation) -> bool:
@@ -381,26 +377,8 @@ class CausalGroup(ICausalGroup):
             # Remove the consumed prop from the index
             del self._ref_index[resource]
         for act in acts_to_forget:
-            for sig in act.possible_signals():
-                if act in self._activations_per_effect[sig]:
-                    del self._activations_per_effect[sig][act]
+            self._change_effect_causes(act, None)
         logger.debug(f"{self}.consumed({resources})")
-
-    def effects_not_caused(self, effects: Set[Signal]):
-        """
-        Called by Activation, to notify the causal group, that some of it's
-         promised spikes were not created. For each forgone spike signal, if
-         there are no other activations registered in the causal group that
-         could produce the same signals, then all activations registered in
-         this causal group will be informed about the forgone signals.
-
-        * `effects`: The effect signals for which no spikes were created.
-        """
-        # Filter effects and only retain those which have no alternate source
-        effects = {effect for effect in effects if not self._activations_per_effect[effect]}
-        if effects:
-            for act in self._non_detached_activations():
-                act.effects_not_caused(self, effects)
 
     def wiped(self, spike: 'ISpike') -> None:
         """
@@ -441,6 +419,28 @@ class CausalGroup(ICausalGroup):
                 del self._detached_ref_index[spike]
         result = not spike.has_offspring()
         return result
+
+    def notify_spike(self, sig: str):
+        self.signal_names.append(sig)
+        if sig in self._uncaused_spikes:
+            del self._uncaused_spikes[sig]
+
+    def _change_effect_causes(self, act: IActivation, change: Optional[int]):
+        for sig in act.possible_signals():
+            sig_present_or_change_positive = sig in self._uncaused_spikes or (change is not None and change > 0)
+            if sig_present_or_change_positive:
+                if (change is None or change < 0) and act not in self._uncaused_spikes[sig]:
+                    continue
+                if change is None:
+                    del self._uncaused_spikes[sig][act]
+                else:
+                    self._uncaused_spikes[sig][act] += change
+                    if self._uncaused_spikes[sig][act] <= 0:
+                        del self._uncaused_spikes[sig][act]
+                if len(self._uncaused_spikes[sig]) == 0:
+                    for act in set(self._non_detached_activations()):
+                        act.effect_not_caused(self, sig.name)
+                    del self._uncaused_spikes[sig]
 
     def _non_detached_activations(self) -> Generator[IActivation, None, None]:
         yielded_activations = set()

@@ -83,7 +83,7 @@ class Spike(ISpike):
         for parent in parents:
             parent.adopt(self)
         with self._causal_group as cg:
-            cg.signal_names.append(sig)
+            cg.notify_spike(sig)
         service.spike(sig)
 
     def __del__(self):

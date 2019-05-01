@@ -107,7 +107,10 @@ class Context(IContext):
     _lock: RLock
 
     _properties: Dict[str, PropertyBase]
-    _spikes: Set[Spike]
+    _spikes_per_signal: Dict[
+        Signal,
+        Set[Spike]
+    ]
 
     # Some activations that have all constraints fulfilled
     #  still need to be updated, because they are waiting for
@@ -156,7 +159,7 @@ class Context(IContext):
         self._lock = RLock()
         self._shutdown_flag = Event()
         self._properties = dict()
-        self._spikes = set()
+        self._spikes_per_signal = defaultdict(set)
         self._needy_acts_per_state_per_signal = dict()
         self._signal_causes = dict()
         self._activations_per_state = dict()
@@ -211,7 +214,7 @@ class Context(IContext):
                 consumable_resources=set(self._properties.keys()),
                 payload=payload)
             logger.debug(f"Emitting {new_spike}")
-            self._spikes.add(new_spike)
+            self._spikes_per_signal[signal].add(new_spike)
 
     def wipe(self, signal: Signal):
         """
@@ -223,9 +226,10 @@ class Context(IContext):
          should be invalidated and forgotten.
         """
         with self._lock:
-            for spike in self._spikes:
-                if spike.name() == signal.name:
-                    spike.wipe()
+            for spikes in self._spikes_per_signal.values():
+                for spike in spikes:
+                    if spike.name() == signal.name:
+                        spike.wipe()
         # Final cleanup will be performed while update is running,
         #  and cg.stale(spike) returns true.
         # TODO: Make sure, that it is not a problem if the spike is currently referenced
@@ -561,20 +565,21 @@ class Context(IContext):
 
             # --------- Acquire new state activations for every spike ----------
 
-            for spike in self._spikes:
-                if spike.is_wiped() or spike.age() > 0:
-                    continue
-                for state, acts in self._needy_acts_per_state_per_signal[s(spike.name())].items():
-                    old_acts = acts.copy()
-                    for act in old_acts:
-                        if act.acquire(spike):
-                            # Remove the Activation instance from _act_per_state_per_signal_age
-                            #  for the Spike with a certain minimum age. In place of the removed
-                            #  activation, if no activation with the same target state is left,
-                            #  a new Activation will be created.
-                            acts.remove(act)
-                            if len(acts) == 0:
-                                self._new_state_activation(state)
+            for spikes in self._spikes_per_signal.values():
+                for spike in spikes:
+                    if spike.is_wiped() or spike.age() > 0:
+                        continue
+                    for state, acts in self._needy_acts_per_state_per_signal[s(spike.name())].items():
+                        old_acts = acts.copy()
+                        for act in old_acts:
+                            if act.acquire(spike):
+                                # Remove the Activation instance from _act_per_state_per_signal_age
+                                #  for the Spike with a certain minimum age. In place of the removed
+                                #  activation, if no activation with the same target state is left,
+                                #  a new Activation will be created.
+                                acts.remove(act)
+                                if len(acts) == 0:
+                                    self._new_state_activation(state)
 
             # ------------------ Update all state activations. -----------------
 
@@ -584,25 +589,26 @@ class Context(IContext):
 
             # ----------------- Forget fully unreferenced spikes ---------------
 
-            old_spike_set = self._spikes.copy()
-            for spike in old_spike_set:
-                with spike.causal_group() as cg:
-                    if cg.stale(spike):
-                        # This should lead to the deletion of the spike
-                        self._spikes.remove(spike)
-                        spike.wipe(already_wiped_in_causal_group=True)
-                        logger.debug(f"{cg}.stale({spike})->Y")
+            for spikes in self._spikes_per_signal.values():
+                for spike in spikes.copy():
+                    with spike.causal_group() as cg:
+                        if cg.stale(spike):
+                            # This should lead to the deletion of the spike
+                            spikes.remove(spike)
+                            spike.wipe(already_wiped_in_causal_group=True)
+                            logger.debug(f"{cg}.stale({spike})->Y")
 
             # ----------------- Increment age on active spikes -----------------
 
-            for spike in self._spikes:
-                spike.tick()
+            for spikes in self._spikes_per_signal.values():
+                for spike in spikes:
+                    spike.tick()
 
             # -------------------- Force garbage collect -----------------------
 
             gc.collect()
 
-        self._update_core_properties(debug=False)
+        self._update_core_properties(debug=True)
 
     def _add_sig(self, sig: Signal):
         if sig in self._needy_acts_per_state_per_signal:
@@ -638,7 +644,13 @@ class Context(IContext):
         self._activations_per_state[st].add(activation)
         for signal in st.completed_constraint.signals():
             if signal in self._needy_acts_per_state_per_signal:
-                self._needy_acts_per_state_per_signal[signal][st] |= {activation}
+                for spike in self._spikes_per_signal[signal]:
+                    if spike.is_wiped():
+                        continue
+                    if activation.acquire(spike=spike):
+                        break
+                else:
+                    self._needy_acts_per_state_per_signal[signal][st] |= {activation}
             else:
                 logger.error(
                     f"Adding state activation for f{st.name} which depends on unknown signal `{signal}`!")
