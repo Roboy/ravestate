@@ -7,11 +7,12 @@ from ravestate.config import Configuration
 
 
 def test_emit(context_fixture, spike_fixture):
-    context_fixture.emit(s(DEFAULT_PROPERTY_CHANGED))
-    assert len(context_fixture._spikes) == 1
-    list(context_fixture._spikes)[0].adopt(spike_fixture)
-    context_fixture.emit(s(DEFAULT_PROPERTY_CHANGED), wipe=True)
-    assert len(context_fixture._spikes) == 2
+    sig = s(DEFAULT_PROPERTY_CHANGED)
+    context_fixture.emit(sig)
+    assert len(context_fixture._spikes_per_signal[sig]) == 1
+    list(context_fixture._spikes_per_signal[sig])[0].adopt(spike_fixture)
+    context_fixture.emit(sig, wipe=True)
+    assert len(context_fixture._spikes_per_signal[sig]) == 2
 
 
 def test_run(mocker, context_fixture):
