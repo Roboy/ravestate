@@ -211,6 +211,7 @@ python3 -m ravestate [...]
 In order to start ROS Bridge, the image and container have to be set up
 as above. After connecting into the container run from inside the container:
 ```bash
+export ROS_IP=192.168.0.105
 source ~/melodic_ws/devel/setup.sh
 source ~/ros2_ws/install/setup.sh
 source ~/ros1_bridge_ws/install/setup.sh
