@@ -205,7 +205,7 @@ class Signal(Constraint):
                         if cg == group:
                             cg.rejected(cause.spike, act, reason=1)
                             cause.spike = None
-                            yield self
+                            yield cause
 
     def __str__(self):
         return self.name

@@ -101,8 +101,8 @@ with Module(name="persqa") as mod:
         @state(cond=s("idle:bored"),
                write=("rawio:out", "persqa:predicate", "persqa:subject"),
                read=(interloc_path, "persqa:predicate"),
-               weight=3.,
-               cooldown=30.,
+               weight=1.2,
+               cooldown=40.,
                signal_name="follow-up")
         def small_talk(ctx: ContextWrapper):
             sess: Session = ravestate_ontology.get_session()

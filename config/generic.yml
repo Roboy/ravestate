@@ -27,8 +27,9 @@ config:
     - ravestate_wildtalk
     - ravestate_hibye
     - ravestate_genqa
+    - ravestate_roboyqa
     - ravestate_persqa
-    - ravestate_akinator
+    #- ravestate_akinator
   ros2-node-name: "ros2-node-name"
 
 ---

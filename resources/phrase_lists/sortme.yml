@@ -75,26 +75,6 @@ opts:
 - "Was that my C P U malfunctioning or did I just feel a spark between us?"
 ---
 type: phrases
-name: "question-answering-reentering-phrases"
-opts:
-- "Is there anything else you would like to know?"
-- "Is that all that comes to your mind? Ask me something!"
-- "Oh well, I know much more stuff, just ask me a question."
-- "Let me uncover my potential. Ask something really difficult!"
----
-type: phrases
-name: "offer-famous-entities"
-opts:
-- "Ask me about famous people!"
-- "Ask me about famous places!"
-- "I know a bit about pop stars. Wanna hear a story about someone?"
-- "I keep profiles of famous people. Ask me about some politician. I know quite a bunch"
-- "Ask me about something famous!"
-- "Ask me about somebody famous!"
-- "I know a lot about famous people, ask me!"
-- "I know a lot about famous places, ask me!"
----
-type: phrases
 name: "segue-jobs"
 opts:
 - "You know, jobs are a transitionary thing anyway. Soon, I'll be doing all of them."

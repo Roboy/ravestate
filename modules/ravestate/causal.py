@@ -318,7 +318,7 @@ class CausalGroup(ICausalGroup):
                                     highest_higher_specificity_act = candidate
             else:
                 # Easy exit condition: prop not free for writing
-                logger.debug(f"{self}.consent({ready_suitor})->N: {prop} unavailable. Condition is {ready_suitor.constraint}")
+                logger.debug(f"{self}.consent({ready_suitor})->N: {prop} unavailable.")
                 return False
 
         if higher_specificity_acts:
@@ -367,14 +367,13 @@ class CausalGroup(ICausalGroup):
         if not resources:
             return
         acts_to_forget = set()
-        for resource in resources:
+        for resource in resources.copy():
             # Notify all concerned activations, that the
             # spikes they are referencing are no longer available
-            for sig in self._ref_index[resource]:
-                for act in self._ref_index[resource][sig]:
-                    act.dereference(spike=sig, reacquire=True)
+            for spike in self._ref_index[resource].copy():
+                for act in self._ref_index[resource][spike].copy():
+                    act.dereference(spike=spike, reacquire=True, reject=True)
                     acts_to_forget.add(act)
-            # Remove the consumed prop from the index
             del self._ref_index[resource]
         for act in acts_to_forget:
             self._change_effect_causes(act, None)
