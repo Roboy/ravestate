@@ -10,6 +10,13 @@ services:
     network_mode: host
     volumes:
       - .:/ravestate
+      - /home/roboy/ros2_speech_recognition:/ros2_speech_recognition
+    devices:
+      - /dev/snd:/dev/snd
+    ports:
+      - "10002:10002"
+      - "9000:9000"
+      - "9001:9001"
     environment:
       - PYTHONPATH=$PYTHONPATH:/ravestate/modules
       - PYTHONUNBUFFERED=1
