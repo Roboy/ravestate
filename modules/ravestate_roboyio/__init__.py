@@ -5,7 +5,7 @@ from ravestate_interloc import handle_single_interlocutor_input
 from ravestate_ros2.ros2_properties import Ros2SubProperty
 from ravestate.context import startup
 import ravestate_ros2
-
+from unidecode import unidecode
 from reggol import get_logger
 logger = get_logger(__name__)
 
@@ -45,7 +45,7 @@ if PYROBOY_AVAILABLE:
         def roboy_input(ctx: ContextWrapper):
             result = ctx[recognized_speech.id()]
             if result:
-                handle_single_interlocutor_input(ctx, result)
+                handle_single_interlocutor_input(ctx, result.text)
 
         # @state(cond=startup(), read="interloc:all")
         # def roboy_input(ctx: ContextWrapper):
@@ -56,5 +56,5 @@ if PYROBOY_AVAILABLE:
 
         @state(read="rawio:out")
         def roboy_output(ctx):
-            ret = say(ctx["rawio:out:changed"])
+            ret = say(unidecode(ctx["rawio:out:changed"]))
             logger.info(f"pyroboy.say() -> {ret}")
