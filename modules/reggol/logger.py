@@ -2,11 +2,10 @@ import logging
 import os
 import time
 
-from reggol.formatters.formatter import Formatter
-from reggol.formatters.mixed_formatter import MixedFormatter
+from reggol.colored_formatter import ColoredFormatter
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)-80s : FILE %(filename)s - %(lineno)d"
+LOG_FORMAT = "%(asctime)s - %(name)s:%(lineno)d - [%(levelname)s] - %(msg)s"
 
 DEFAULT_FILE_NAME = f"log_{time.strftime('%Y%m%d_%H%M%S')}.log"
 DEFAULT_DIRECTORY = os.path.join(os.path.dirname(__file__), 'log')
@@ -23,10 +22,10 @@ class CustomConsoleAndFileLogger(logging.Logger):
         self._file_formatter = None
 
     def set_file_formatter(
-            self,
-            file_path: str = DEFAULT_DIRECTORY,
-            file_name: str = DEFAULT_FILE_NAME,
-            formatter: logging.Formatter = Formatter()
+        self,
+        file_path: str = DEFAULT_DIRECTORY,
+        file_name: str = DEFAULT_FILE_NAME,
+        formatter: logging.Formatter = logging.Formatter(fmt = LOG_FORMAT)
     ):
         self._file_formatter = formatter
         path = os.path.join(file_path, file_name)
@@ -34,9 +33,8 @@ class CustomConsoleAndFileLogger(logging.Logger):
         file.setFormatter(formatter)
         self.addHandler(file)
 
-    def set_console_formatter(self, formatter: logging.Formatter = MixedFormatter()):
+    def set_console_formatter(self, formatter: logging.Formatter = ColoredFormatter()):
         self._console_formatter = formatter
-
         console = logging.StreamHandler()
         console.setFormatter(formatter)
         self.addHandler(console)

@@ -2,8 +2,7 @@ import argparse
 import os
 import sys
 
-from reggol.formatters.colored_formatter import ColoredFormatter
-from reggol.formatters.mixed_formatter import MixedFormatter
+from reggol.colored_formatter import ColoredFormatter
 from reggol.logger import CustomConsoleAndFileLogger
 import logging
 
@@ -56,9 +55,8 @@ def get_logger(name: str, logpath: str=None):
     logger = logging.getLogger(name)
     assert isinstance(logger, CustomConsoleAndFileLogger)
     logger.setLevel(_level)
-    logger.set_console_formatter(MixedFormatter(ColoredFormatter()))
+    logger.set_console_formatter(ColoredFormatter())
     logger.set_file_formatter(file_path=logpath)
-    logger.propagate = False
     return logger
 
 
@@ -92,5 +90,6 @@ def strip_prefix(lr: logging.LogRecord) -> str:
 
 args, unknown_args = argparser.parse_known_args()
 sys.argv[1:] = unknown_args
+logging.getLogger().addHandler(logging.NullHandler())  # Make sure that logging does not add default handlers
 set_default_loglevel(args.loglevel)
 set_default_logpath(args.logdir)
