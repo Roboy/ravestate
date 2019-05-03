@@ -85,11 +85,11 @@ def strip_prefix(lr: logging.LogRecord) -> str:
     **Returns:** The original message from the log record,
      without `[module] [level] ` prefix.
     """
-    return "".join(lr.msg.split("] ")[2:])
+    return lr.msg
 
 
 args, unknown_args = argparser.parse_known_args()
 sys.argv[1:] = unknown_args
-logging.getLogger().addHandler(logging.NullHandler())  # Make sure that logging does not add default handlers
+logging.getLogger().addHandler(logging.NullHandler())
 set_default_loglevel(args.loglevel)
 set_default_logpath(args.logdir)
