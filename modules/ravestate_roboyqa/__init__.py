@@ -123,9 +123,9 @@ with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
             memory_info = random.sample(property_list, 1)[0]
 
         if memory_info:
-            ctx["rawio:out"] = verbaliser.get_random_successful_answer(category) % memory_info
+            ctx["rawio:out"] = verbaliser.get_random_successful_answer("roboy_"+category) % memory_info
         elif category == "well_being":
-            ctx["rawio:out"] = verbaliser.get_random_successful_answer(category)
+            ctx["rawio:out"] = verbaliser.get_random_successful_answer("roboy_"+category)
         else:
             return Resign()
 

@@ -72,4 +72,4 @@ def get_ontology():
     return onto
 
 
-# TODO: Offer ScientioNodeProperty subclass, which enforces that value is a scientio.ontology.Node?!
+# TODO: Offer PersistentInstanceProperty subclass, which enforces that value is a scientio.ontology.Node!
