@@ -151,11 +151,15 @@
             }
 
             socket.on('activate', function(stateName){
+                $("circle").one('animationiteration webkitAnimationIteration', function() {
+                     $(this).removeClass("democolor");
+                });
                 if(activeNode) {
-                    activeNode.attr("democolor", "off");
+                    activeNode.attr("activated", "off");
                 }
                 var activaaate =d3.select("[nodeName=\"" + stateName + "\"]");
                 activaaate.attr("democolor", "on");
+                activaaate.attr("activated", "on");
                 activeNode = activaaate;
             });
 

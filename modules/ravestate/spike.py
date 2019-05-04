@@ -5,8 +5,6 @@ from collections import defaultdict
 from ravestate.iactivation import ISpike
 from ravestate.causal import CausalGroup
 
-from ravestate_ui import service
-
 from reggol import get_logger
 logger = get_logger(__name__)
 
@@ -84,7 +82,6 @@ class Spike(ISpike):
             parent.adopt(self)
         with self._causal_group as cg:
             cg.notify_spike(sig)
-        service.spike(sig)
 
     def __del__(self):
         logger.debug(f"Deleted {self}")

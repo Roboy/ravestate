@@ -19,8 +19,6 @@ from ravestate.config import Configuration
 from ravestate.constraint import s, Signal, Conjunct, Disjunct, ConfigurableAge
 from ravestate.spike import Spike
 
-from ravestate_ui import service
-
 from reggol import get_logger
 logger = get_logger(__name__)
 
@@ -149,7 +147,10 @@ class Context(IContext):
          An example use-case is a module that starts a new context (in separate process) and can set
          config entries to Connection Objects to enable communication between old and new context.
         """
-        modules, overrides, config_files = argparser.handle_args(*arguments)
+        if runtime_overrides:
+            modules, overrides, config_files = argparser.handle_args(*arguments, runtime_overrides)
+        else:
+            modules, overrides, config_files = argparser.handle_args(*arguments)
         self._config = Configuration(config_files)
         self._core_config = {
             self.import_modules_config: [],
@@ -188,8 +189,6 @@ class Context(IContext):
         if self._core_config[self.tick_rate_config] < 1:
             logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
             self._core_config[self.tick_rate_config] = 1
-
-        service.fillme(self._activations_per_state, self._properties)
 
     def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> None:
         """
@@ -589,7 +588,7 @@ class Context(IContext):
 
             for act in self._state_activations():
                 if act.update():
-                    self._activations_per_state[act.state_to_activate].discard(act)
+                    self._state_activated(act)
 
             # ----------------- Forget fully unreferenced spikes ---------------
 
@@ -613,6 +612,9 @@ class Context(IContext):
             gc.collect()
 
         self._update_core_properties(debug=False)
+
+    def _state_activated(self, act: Activation):
+        self._activations_per_state[act.state_to_activate].discard(act)
 
     def _add_sig(self, sig: Signal):
         if sig in self._needy_acts_per_state_per_signal:
