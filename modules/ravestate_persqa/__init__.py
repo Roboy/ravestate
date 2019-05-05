@@ -195,6 +195,8 @@ with Module(name="persqa") as mod:
          - dino
         """
         triple = ctx["nlp:triples"][0]
+        if triple.is_question():
+            return Resign()
         pred = ctx["persqa:predicate"]
         answer_str = None
         if pred == "NAME" or pred in PREDICATE_SET:
