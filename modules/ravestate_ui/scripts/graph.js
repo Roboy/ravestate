@@ -162,6 +162,10 @@
             d.fx = null;
             d.fy = null;
             simulation.alphaTarget(0.1);
+            d["staticnode"] = "true";
+            d["staticx"] = d.x;
+            d["staticy"] = d.y;
+
          }
 
 
@@ -176,9 +180,9 @@
 
             // Use elliptical arc path segments to doubly-encode directionality.
             function tick() {
-                path.attr("d", linkArc);
                 circle.attr("transform", transform);
                 text.attr("transform", transform);
+                path.attr("d", linkArc);
             }
 
             function linkArc(d) {
@@ -189,7 +193,14 @@
             }
 
             function transform(d) {
-                return "translate(" + d.x + "," + d.y + ")";
+                if(!d["staticnode"]) {
+                    return "translate(" + d.x + "," + d.y + ")";
+                    }
+                else {
+                    d.x = d["staticx"];
+                    d.y = d["staticy"];
+                    return "translate(" + d["staticx"] + "," + d["staticy"] + ")";
+                }
             }
 
             socket.on('activate', function(stateName){
