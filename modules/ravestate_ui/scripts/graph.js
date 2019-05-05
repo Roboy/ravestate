@@ -8,8 +8,16 @@
     var nodes;
     var activeNode;
 
+    var links = {};
+    var signals = {};
+    var states = {};
+    var properties = {};
+
+
     $(function () {
         $.getJSON("/data", function (data) {
+
+            links = data;
 
             // Expected input data format:
             //     [{source: "property_name", target: "signal_name", type: "sets"},]
@@ -18,11 +26,6 @@
             //     - triggers: signal -> state
             //     - emits: state -> signal
             //     - sets: property -> signal
-
-            var links = data;
-            var signals = {};
-            var states = {};
-            var properties = {};
 
             // Compute the distinct nodes from the links.
             var i = 0;
@@ -45,19 +48,32 @@
                 }
             });
 
+
+
             nodes = Object.assign({}, signals, states, properties);
+            console.log(nodes)
+
             var width = window.innerWidth,
                 height = window.innerHeight;
-            var force = d3.layout.force()
-                .nodes(d3.values(nodes))
-                .links(links)
-                .size([width, height])
-                .linkDistance(height/6)
-                .charge(-250)
-                .gravity(0.042)
-                .on("tick", tick)
-                .start();
 
+            var simulation = d3.forceSimulation(d3.values(nodes))
+                .force('collision', d3.forceCollide().radius( function(d) {return (d.name in states) ? 70 : 50}))
+                .force('charge', d3.forceManyBody().strength(1))
+                .force('center', d3.forceCenter(width/2, height/2))
+                .force('link', d3.forceLink().links(links).distance(height/6))
+                .on("tick", tick);
+
+
+
+//            var force = d3.layout.force()
+//                .nodes(d3.values(nodes))
+//                .links(links)
+//                .size([width, height])
+//                .linkDistance(height/6)
+//                .charge(-250)
+//                .gravity(0.042)
+//                .on("tick", tick)
+//                .start();
 
             // ---------- Setup graph wrapper ------------
             var svg = d3.select("#chart")
@@ -100,7 +116,7 @@
                 .attr("d", "M0,-5L10,0L0,5");
 
             var path = svg.append("g").selectAll("path")
-                .data(force.links())
+                .data(links)
                 .enter().append("path")
                 .attr("class", function (d) {
                     return "link " + d.type;
@@ -110,10 +126,11 @@
                 });
 
             var circle = svg.append("g").selectAll("circle")
-                .data(force.nodes())
+                .data(d3.values(nodes))
                 .enter().append("circle")
-                .attr("r", 50)
                 .attr("r", function (d) {
+                    return (d.name in states) ? 50 : 30})
+                .attr("radius", function (d) {
                     return (d.name in states) ? 50 : 30})
                 .attr("class", function (d) {
                     return (d.name in signals) ? "signal" :
@@ -121,10 +138,35 @@
                 .attr("nodeName", function (d) {
                     return d.name
                 })
-                .call(force.drag);
+                .call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
+
+        function dragstarted(d)
+         {
+            simulation.restart();
+            simulation.alpha(1.0);
+            d.fx = d.x;
+            d.fy = d.y;
+         }
+
+         function dragged(d)
+         {
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+         }
+
+         function dragended(d)
+         {
+            d.fx = null;
+            d.fy = null;
+            simulation.alphaTarget(0.1);
+         }
+
 
             var text = svg.append("g").selectAll("text")
-                .data(force.nodes())
+                .data(d3.values(nodes))
                 .enter().append("text")
                 .attr("x", -43)
                 .attr("y", 0)
@@ -151,11 +193,15 @@
             }
 
             socket.on('activate', function(stateName){
+                $("circle").one('animationiteration webkitAnimationIteration', function() {
+                     $(this).removeClass("democolor");
+                });
                 if(activeNode) {
-                    activeNode.attr("democolor", "off");
+                    activeNode.attr("activated", "off");
                 }
                 var activaaate =d3.select("[nodeName=\"" + stateName + "\"]");
                 activaaate.attr("democolor", "on");
+                activaaate.attr("activated", "on");
                 activeNode = activaaate;
             });
 

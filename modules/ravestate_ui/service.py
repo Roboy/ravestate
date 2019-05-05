@@ -98,7 +98,7 @@ def spike(signalName):
     socketio.emit("spike", signalName)
 
 
-def advertise(*, ip="0.0.0.0", port=5000, debug=False):
+def advertise(*, ip="0.0.0.0", port=5001, debug=False):
     app.debug=debug
     appthread = threading.Thread(target=app.run, args=(ip, port))
     appthread.start()

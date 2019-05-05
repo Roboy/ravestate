@@ -3,7 +3,7 @@
     --link-width: 1.5px;
     --circle-stroke-width: 1.5px;
     --state-edge: #80d1f2;
-    --state-edge-anim: #04a0dd;
+    --state-edge-anim: #ffffff;
     --state-color: #04a0dd;
     --dark-background: #24292e;
 }
@@ -48,12 +48,12 @@
     0% {
         fill: var(--state-color)
     }
-    30% {
+    5% {
         stroke: var(--state-edge-anim);
         fill: #b3e7fc;
         stroke-width: 6px;
     }
-    70% {
+    20% {
         stroke: var(--state-edge-anim);
         fill: #b3e7fc;
         stroke-width: 6px;
@@ -64,17 +64,8 @@
 }
 
 circle[democolor="on"] {
-    -webkit-animation-name: stateactivecolor;
-    -webkit-animation-duration: 5s;
-    -webkit-animation-iteration-count: infinite;
+    -webkit-animation: stateactivecolor 8s;
 }
-
-circle[democolor="off"] {
-    -webkit-animation-name: stateactivecolor;
-    -webkit-animation-duration: 3s;
-    -webkit-animation-iteration-count: 1;
-}
-
 
 @-webkit-keyframes spike {
     0% {
@@ -93,9 +84,7 @@ circle[democolor="off"] {
 }
 
 circle[spiking="on"] {
-    -webkit-animation-name: spike;
-    -webkit-animation-duration: 1500ms;
-    -webkit-animation-iteration-count: 2;
+    -webkit-animation: spike 2s;
 }
 
 text {
