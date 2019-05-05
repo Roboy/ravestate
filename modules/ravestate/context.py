@@ -493,7 +493,7 @@ class Context(IContext):
         """
         assert isinstance(act, Activation)  # No way around it to avoid import loop
         if sig not in self._needy_acts_per_state_per_signal:
-            logger.error(f"Attempt to withdraw for unknown signal {sig.name}!")
+            logger.warning(f"Attempt to withdraw for unknown signal {sig.name}!")
             return
         interested_acts = self._needy_acts_per_state_per_signal[sig][act.state_to_activate]
         interested_acts.discard(act)
@@ -662,8 +662,8 @@ class Context(IContext):
                 else:
                     self._needy_acts_per_state_per_signal[signal][st].add(activation)
             else:
-                logger.error(
-                    f"Adding state activation for f{st.name} which depends on unknown signal `{signal}`!")
+                logger.warning(
+                    f"Adding state activation for {st.name} which depends on unknown signal `{signal}`!")
         return reacquired
 
     def _del_state_activations(self, st: State) -> None:

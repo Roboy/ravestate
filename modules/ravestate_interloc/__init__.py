@@ -61,21 +61,14 @@ def handle_single_interlocutor_input(ctx: ContextWrapper, input_value: str, id="
     # push Node if you got a greeting
     if input_value.strip() in get_phrase_list("greeting") and not interloc_exists:
         # set up scientio
+        ravestate_ontology.initialized.wait()
         sess: Session = ravestate_ontology.get_session()
         onto: Ontology = ravestate_ontology.get_ontology()
 
         # create scientio Node of type Person
-        query = Node(metatype=onto.get_type("Person"))
-        query.set_name(id)
-        interlocutor_node_list = sess.retrieve(query)
-        if not interlocutor_node_list:
-            interlocutor_node = sess.create(query)
-            logger.info(f"Created new Node in scientio session: {interlocutor_node}")
-        else:
-            interlocutor_node = interlocutor_node_list[0]
-
-        # push interloc-node
-        push_interloc(interlocutor_node)
+        new_interloc = Node(metatype=onto.get_type("Person"))
+        new_interloc.set_name(id)
+        push_interloc(new_interloc)
 
     # pop Node if you got a farewell
     elif input_value.strip() in get_phrase_list("farewells") and interloc_exists:

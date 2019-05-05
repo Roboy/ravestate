@@ -85,7 +85,7 @@ with Module(name="persqa") as mod:
                 return key
         return None
 
-    def retrieve_node(node: Node):
+    def retrieve_or_create_node(node: Node):
         sess: Session = ravestate_ontology.get_session()
         node_list = sess.retrieve(node)
         if not node_list:
@@ -103,25 +103,27 @@ with Module(name="persqa") as mod:
                read=(interloc_path, "persqa:predicate"),
                weight=1.2,
                cooldown=40.,
+               emit_detached=True,
                signal_name="follow-up")
         def small_talk(ctx: ContextWrapper):
             sess: Session = ravestate_ontology.get_session()
             interloc: Node = ctx[interloc_path]
-            interloc_props = interloc.get_properties()
-            if "familiar" not in interloc_props or not interloc_props["familiar"]:
+            if interloc.get_id() < 0:  # ask for name, if the interlocutor is not (yet) a persistent instance
                 pred = "NAME"
             else:
                 pred = find_empty_relationship(interloc.get_relationships())
             ctx["persqa:subject"] = interloc_path
             if not ctx["persqa:predicate"]:
                 if pred:
+                    logger.info(f"Personal question: intent={pred}")
                     ctx["persqa:predicate"] = pred
                     ctx["rawio:out"] = verbaliser.get_random_question(pred)
                 else:
-                    pred = random.sample(PREDICATE_SET.difference(used_follow_up_preds), 1)
-                    if not pred:
+                    unused_fup_preds = PREDICATE_SET.difference(used_follow_up_preds)
+                    if not unused_fup_preds:
                         logger.info(f"Ran out of smalltalk predicates for {interloc_path}, committing suicide...")
-                        return Delete()
+                        return Delete(resign=True)
+                    pred = random.sample(PREDICATE_SET.difference(used_follow_up_preds), 1)
                     pred = pred[0]
                     used_follow_up_preds.add(pred)
                     ctx["persqa:predicate"] = pred
@@ -132,7 +134,7 @@ with Module(name="persqa") as mod:
                             ctx["rawio:out"] = verbaliser.get_random_followup_question(pred).format(
                                 name=interloc.get_name(),
                                 obj=object_node_list[0].get_name())
-                            logger.error(f"Follow-up: intent={pred}")
+                            logger.info(f"Follow-up: intent={pred}")
                             return Emit()
                     return Resign()
             else:
@@ -140,9 +142,9 @@ with Module(name="persqa") as mod:
                 #  it will be set to None, such that a new predicate is entered.
                 ctx["rawio:out"] = verbaliser.get_random_question(ctx["persqa:predicate"])
 
-        @state(cond=s("persqa:follow-up") & s("nlp:triples:changed"),
+        @state(cond=s("persqa:follow-up", max_age=-1.) & s("nlp:triples:changed"),
                write=("rawio:out", "persqa:predicate", inference_mutex.id()),
-               read=(interloc_path, "persqa:predicate"))
+               read=(interloc_path, "persqa:predicate", "nlp:yesno"))
         def fup_react(ctx: ContextWrapper):
             sess: Session = ravestate_ontology.get_session()
             subject_node: Node = ctx[interloc_path]
@@ -151,12 +153,12 @@ with Module(name="persqa") as mod:
             relationship_ids: Set[int] = subject_node.get_relationships(pred)
             if len(relationship_ids) > 0:
                 object_node_list = sess.retrieve(node_id=list(relationship_ids)[0])
-            if ctx["nlp:yesno"] == "no" or len(object_node_list) == 0:
-                ctx["rawio:out"] = "Oh, I see!"
-            elif ctx["nlp:yesno"] == "yes":
+            if len(object_node_list) > 0:
                 ctx["rawio:out"] = verbaliser.get_random_followup_answer(pred).format(
                     name=subject_node.get_name(),
                     obj=object_node_list[0].get_name())
+            else:
+                ctx["rawio:out"] = "Oh, I see!"
             ctx["persqa:predicate"] = None
 
         ctx.add_state(small_talk)
@@ -172,6 +174,15 @@ with Module(name="persqa") as mod:
         """
         interloc_path = ctx["interloc:all:pushed"]
         create_small_talk_states(ctx=ctx, interloc_path=interloc_path)
+
+    @state(cond=s("rawio:in:changed") & s("interloc:all:popped"),
+           write=(inference_mutex.id(), "persqa:predicate", "persqa:subject"))
+    def removed_interloc(ctx: ContextWrapper):
+        """
+        reacts to interloc:popped and makes sure that
+        """
+        ctx["persqa:subject"] = None
+        ctx["persqa:predicate"] = None
 
     @state(cond=s("nlp:triples:changed"),
            write=("persqa:answer", inference_mutex.id()),
@@ -210,18 +221,27 @@ with Module(name="persqa") as mod:
         sess: Session = ravestate_ontology.get_session()
         inferred_answer = ctx["persqa:answer"]
         pred = ctx["persqa:predicate"]
-        subject_node: Node = ctx[ctx["persqa:subject"]]
+        subject_path: str = ctx["persqa:subject"]
+        if not subject_path:
+            return Resign()
+        subject_node: Node = ctx[subject_path]
+        assert inferred_answer
 
         if pred == "NAME":
+            # If name was asked, it must be because the node is not yet persistent
+            assert subject_node.get_id() < 0
             subject_node.set_name(inferred_answer)
-            subject_node = retrieve_node(subject_node)
-            subject_node.set_properties({"familiar": True})
+            persistent_subject_node = retrieve_or_create_node(subject_node)
+            # TODO: Workaround - see #83 - if this state would write to interloc:all,
+            #  it would promise an interloc:all:pushed signal. This would be
+            #  picked up by persqa:new_interloc.
+            subject_node.set_node(persistent_subject_node)
             sess.update(subject_node)
         elif pred in PREDICATE_SET:
             relationship_type = onto.get_type(ONTOLOGY_TYPE_FOR_PRED[pred])
             relationship_node = Node(metatype=relationship_type)
             relationship_node.set_name(inferred_answer)
-            relationship_node = retrieve_node(relationship_node)
+            relationship_node = retrieve_or_create_node(relationship_node)
             if relationship_node is not None:
                 subject_node.add_relationships({pred: {relationship_node.get_id()}})
                 sess.update(subject_node)
