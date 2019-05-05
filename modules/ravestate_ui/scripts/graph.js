@@ -63,18 +63,6 @@
                 .force('link', d3.forceLink().links(links).distance(height/6))
                 .on("tick", tick);
 
-
-
-//            var force = d3.layout.force()
-//                .nodes(d3.values(nodes))
-//                .links(links)
-//                .size([width, height])
-//                .linkDistance(height/6)
-//                .charge(-250)
-//                .gravity(0.042)
-//                .on("tick", tick)
-//                .start();
-
             // ---------- Setup graph wrapper ------------
             var svg = d3.select("#chart")
                 .classed("svg-container", true)
@@ -82,21 +70,6 @@
                 .attr("preserveAspectRatio", "xMinYMin meet")
                 .attr("viewBox", "0 0 " + width + " " + height)
                 .classed("svg-content-responsive", true);
-                // add to css:
-                // overflow-y: scroll;
-            // overhiflow-x: scroll;
-
-// Remove resizing for scrollbars
-//            const resizeHandler = () => {
-//                const wrapper = document.querySelector('.svg-container');
-//                document.querySelector('.svg-container > svg')
-//                    .setAttribute('viewBox', "0 0 " +
-//                        wrapper.getBoundingClientRect().width + " " +
-//                        wrapper.getBoundingClientRect().height)
-//            };
-//            resizeHandler();
-//            window.addEventListener('resize', resizeHandler)
-
 
             // Per-type markers, as they don't inherit styles.
             svg.append("defs").selectAll("marker")
@@ -168,7 +141,6 @@
 
          }
 
-
             var text = svg.append("g").selectAll("text")
                 .data(d3.values(nodes))
                 .enter().append("text")
@@ -221,7 +193,6 @@
                 $("circle").one('animationiteration webkitAnimationIteration', function() {
                      $(this).removeClass("spiking");
                 });
-                // d3.selectAll("circle").attr("spiking", "off");
                 d3.select("[nodeName=\"" + stateName + "\"]").attr("spiking", "on");
             });
 
