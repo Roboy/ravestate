@@ -1,6 +1,6 @@
 # Ravestate context class
 from threading import Thread, RLock, Event
-from typing import Optional, Any, Tuple, Set, Dict, Iterable, List
+from typing import Optional, Any, Tuple, Set, Dict, Iterable, List, Generator
 from collections import defaultdict
 from math import ceil
 from copy import deepcopy
@@ -14,10 +14,12 @@ from ravestate.state import State
 from ravestate.property import PropertyBase
 from ravestate.iactivation import IActivation
 from ravestate.activation import Activation
-from ravestate import argparse
+from ravestate import argparser
 from ravestate.config import Configuration
 from ravestate.constraint import s, Signal, Conjunct, Disjunct, ConfigurableAge
 from ravestate.spike import Spike
+
+from ravestate_ui import service
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -47,6 +49,31 @@ def create_and_run_context(*args, runtime_overrides=None):
     """
     context = Context(*args, runtime_overrides=runtime_overrides)
     context.run()
+
+
+class _Grab:
+    """
+    Helper class to grab an equivalent set item, copied from here:<br>
+      http://python.6.x6.nabble.com/Get-item-from-set-td1530758.html
+
+    ```python
+    grab = _Grab("mysig")
+    if grab in myset:
+        print(grab.result)
+    ```
+    """
+    def __init__(self, value):
+        self.search_value = value
+        self.result = None
+
+    def __hash__(self):
+        return hash(self.search_value)
+
+    def __eq__(self, other):
+        if self.search_value == other:
+            self.result = other
+            return True
+        return False
 
 
 class Context(IContext):
@@ -80,7 +107,10 @@ class Context(IContext):
     _lock: RLock
 
     _properties: Dict[str, PropertyBase]
-    _spikes: Set[Spike]
+    _spikes_per_signal: Dict[
+        Signal,
+        Set[Spike]
+    ]
 
     # Some activations that have all constraints fulfilled
     #  still need to be updated, because they are waiting for
@@ -90,14 +120,11 @@ class Context(IContext):
 
     # This is the bar part of the gaybar - here, activations
     #  register for certain signal spikes which they still need to fulfill.
-    _act_per_state_per_signal_age: Dict[
+    _needy_acts_per_state_per_signal: Dict[
         Signal,
         Dict[
-            int,
-            Dict[
-                State,
-                Set[Activation]
-            ]
+            State,
+            Set[Activation]
         ]
     ]
 
@@ -108,7 +135,7 @@ class Context(IContext):
 
     _config: Configuration
     _core_config: Dict[str, Any]
-    _run_task: Thread
+    _run_task: Optional[Thread]
     _shutdown_flag: Event
 
     def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None):
@@ -116,13 +143,13 @@ class Context(IContext):
         Construct a context from command line arguments.
 
         * `arguments`: A series of command line arguments which can be parsed
-         by the ravestate command line parser (see argparse.py).
+         by the ravestate command line parser (see argparser.py).
         * `runtime_overrides`: A list of config overrides in the form of (modulename, key, value).
          Can be used to set config entries to values other than strings or lists like in command line arguments.
          An example use-case is a module that starts a new context (in separate process) and can set
          config entries to Connection Objects to enable communication between old and new context.
         """
-        modules, overrides, config_files = argparse.handle_args(*arguments)
+        modules, overrides, config_files = argparser.handle_args(*arguments)
         self._config = Configuration(config_files)
         self._core_config = {
             self.import_modules_config: [],
@@ -132,8 +159,8 @@ class Context(IContext):
         self._lock = RLock()
         self._shutdown_flag = Event()
         self._properties = dict()
-        self._spikes = set()
-        self._act_per_state_per_signal_age = dict()
+        self._spikes_per_signal = defaultdict(set)
+        self._needy_acts_per_state_per_signal = dict()
         self._signal_causes = dict()
         self._activations_per_state = dict()
         self._run_task = None
@@ -162,6 +189,8 @@ class Context(IContext):
             logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
             self._core_config[self.tick_rate_config] = 1
 
+        service.fillme(self._activations_per_state, self._properties)
+
     def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> None:
         """
         Emit a signal to the signal processing loop. _Note:_
@@ -185,7 +214,7 @@ class Context(IContext):
                 consumable_resources=set(self._properties.keys()),
                 payload=payload)
             logger.debug(f"Emitting {new_spike}")
-            self._spikes.add(new_spike)
+            self._spikes_per_signal[signal].add(new_spike)
 
     def wipe(self, signal: Signal):
         """
@@ -197,9 +226,10 @@ class Context(IContext):
          should be invalidated and forgotten.
         """
         with self._lock:
-            for spike in self._spikes:
-                if spike.name() == signal.name:
-                    spike.wipe()
+            for spikes in self._spikes_per_signal.values():
+                for spike in spikes:
+                    if spike.name() == signal.name:
+                        spike.wipe()
         # Final cleanup will be performed while update is running,
         #  and cg.stale(spike) returns true.
         # TODO: Make sure, that it is not a problem if the spike is currently referenced
@@ -288,15 +318,11 @@ class Context(IContext):
             states_to_recomplete: Set[State] = {st}
             if not st.emit_detached:
                 for conj in st.constraint.conjunctions(filter_detached=True):
-                    for propname in st.write_props:
-                        if propname in self._properties:
-                            for signal in self._properties[propname].signals():
-                                self._signal_causes[signal].append(conj)
-                                # Since a new cause for the property's signal is added,
-                                #  it must be added to all states depending on that signal.
-                                states_to_recomplete.update(self._states_for_signal(signal))
-                    if st.signal():
-                        self._signal_causes[st.signal()].append(conj)
+                    for signal in self.possible_signals(st):
+                        self._signal_causes[signal].append(conj)
+                        # Since a new cause for the property's signal is added,
+                        #  it must be added to all states depending on that signal.
+                        states_to_recomplete.update(self._states_for_signal(signal))
 
             # add state to state activation map
             self._activations_per_state[st] = set()
@@ -306,7 +332,11 @@ class Context(IContext):
             for state in states_to_recomplete:
                 self._del_state_activations(state)
                 self._complete_constraint(state)
-                self._new_state_activation(state)
+                # first create an activation which reacquires for existing spikes,
+                #  then create another activation which hooks into signals
+                #  that are not looked for anymore by the spiky one.
+                if self._new_state_activation(state, reacquire=True):
+                    self._new_state_activation(state)
 
         # register the state's consumable dummy, so that it is passed
         #  to Spike and from there to CausalGroup as a consumable resource.
@@ -413,22 +443,6 @@ class Context(IContext):
             return self._config.get(mod, key)
         return self._config.get_conf(mod)
 
-    def lowest_upper_bound_eta(self, signals: Set[Signal]) -> int:
-        """
-        Called by activation when it is pressured to resign. The activation wants
-         to know the earliest ETA of one of it's remaining required constraints.
-         Also called by constraint completion algorithm, to figure out the maximum
-         age for a completed constraint.
-
-        * `signals`: The signals, whose ETA will be calculated, and among the
-         results the minimum ETA will be returned.
-
-        **Returns:** Lowest upper bound number of ticks it should take for at least one of the required
-         signals to arrive. Fixed value (1) for now.
-        """
-        # TODO: Proper implementation w/ state runtime_upper_bound
-        return self.secs_to_ticks(.5)
-
     def signal_specificity(self, sig: Signal) -> float:
         """
         Called by state activation to determine it's constraint's specificity.
@@ -438,11 +452,9 @@ class Context(IContext):
         **Returns:** The given signal's specificity.
         """
         # Count activations which are interested in the signal
-        if sig not in self._act_per_state_per_signal_age:
+        if sig not in self._needy_acts_per_state_per_signal:
             return .0
-        num_suitors = sum(
-            len(acts_per_state)
-            for acts_per_state in self._act_per_state_per_signal_age[sig].values())
+        num_suitors = len(self._needy_acts_per_state_per_signal[sig])
         if num_suitors > 0:
             return 1./num_suitors
         else:
@@ -459,10 +471,10 @@ class Context(IContext):
         * `sig`: Signal type for which a new spike is needed.
         """
         assert isinstance(act, Activation)  # No way around it to avoid import loop
-        if sig not in self._act_per_state_per_signal_age:
+        if sig not in self._needy_acts_per_state_per_signal:
             logger.error(f"Attempt to reacquire for unknown signal {sig.name}!")
             return
-        interested_acts = self._act_per_state_per_signal_age[sig][0][act.state_to_activate]  # sig.min_age
+        interested_acts = self._needy_acts_per_state_per_signal[sig][act.state_to_activate]
         interested_acts.add(act)
 
     def withdraw(self, act: IActivation, sig: Signal):
@@ -480,10 +492,10 @@ class Context(IContext):
         * `sig`: Signal type for which interest is lost.
         """
         assert isinstance(act, Activation)  # No way around it to avoid import loop
-        if sig not in self._act_per_state_per_signal_age:
-            logger.error(f"Attempt to withdraw for unknown signal {sig.name}!")
+        if sig not in self._needy_acts_per_state_per_signal:
+            logger.warning(f"Attempt to withdraw for unknown signal {sig.name}!")
             return
-        interested_acts = self._act_per_state_per_signal_age[sig][0][act.state_to_activate]  # sig.min_age
+        interested_acts = self._needy_acts_per_state_per_signal[sig][act.state_to_activate]
         interested_acts.discard(act)
 
     def secs_to_ticks(self, seconds: float) -> int:
@@ -497,17 +509,120 @@ class Context(IContext):
         """
         return ceil(seconds * float(self._core_config[self.tick_rate_config]))
 
+    def possible_signals(self, state: State) -> Generator[Signal, None, None]:
+        """
+        Yields all signals, for which spikes may be created if
+         the given state is executed.
+
+        * `state`: The state, which should be analyzed for it's
+         possibly generated signals (declared signal + property-changed signals).
+        """
+        for propname in state.write_props:
+            if propname in self._properties:
+                for signal in self._properties[propname].signals():
+                    yield signal
+        if state.signal():
+            yield state.signal()
+
+    def run_once(self, seconds_passed=1.) -> None:
+        """
+        Run a single update for this context, which will ...<br>
+        (0) progress cooled down state weights.<br>
+        (1) reduce redundant candidate activations.<br>
+        (2) associate new spikes with state activations.<br>
+        (3) update state activations.<br>
+        (4) forget spikes which have no suitors in their causal groups.<br>
+        (5) age spikes.<br>
+        (6) invoke garbage collection.<br>
+        (7) update the core `:activity` and `:pressure` variables.
+
+        * `seconds_passed`: Seconds, as floatiing point, since the last update. Will be used
+         to determine the number of ticks to add/subtract to/from spike/activation age/cooldown/deathclock.
+        """
+        with self._lock:
+
+            # ---------- Update weights wrt/ cooldown for all states -----------
+
+            for state in self._activations_per_state:
+                state.update_weight(seconds_passed)
+
+            # ----------- For every state, compress it's activations -----------
+
+            for st, acts in self._activations_per_state.items():
+                assert len(acts) > 0
+                if len(acts) > 1:
+                    # We could do some fancy merge of partially fulfilled activations,
+                    #  but for now let's just remove all completely unfulfilled
+                    #  ones apart from one.
+                    allowed_unfulfilled: Optional[Activation] = None
+                    for act in acts.copy():
+                        if not act.spiky():
+                            if allowed_unfulfilled:
+                                for signal in act.constraint.signals():
+                                    if signal in self._needy_acts_per_state_per_signal and \
+                                            act in self._needy_acts_per_state_per_signal[signal][act.state_to_activate]:
+                                        self._needy_acts_per_state_per_signal[
+                                            signal][act.state_to_activate].remove(act)
+                                acts.remove(act)
+                            else:
+                                allowed_unfulfilled = act
+
+            # --------- Acquire new state activations for every spike ----------
+
+            for spikes in self._spikes_per_signal.values():
+                for spike in spikes:
+                    if spike.is_wiped() or spike.age() > 0:
+                        continue
+                    for state, acts in self._needy_acts_per_state_per_signal[s(spike.name())].items():
+                        old_acts = acts.copy()
+                        for act in old_acts:
+                            if act.acquire(spike):
+                                # Remove the Activation instance from _act_per_state_per_signal_age
+                                #  for the Spike with a certain minimum age. In place of the removed
+                                #  activation, if no activation with the same target state is left,
+                                #  a new Activation will be created.
+                                acts.remove(act)
+                                if len(acts) == 0:
+                                    self._new_state_activation(state)
+
+            # ------------------ Update all state activations. -----------------
+
+            for act in self._state_activations():
+                if act.update():
+                    self._activations_per_state[act.state_to_activate].discard(act)
+
+            # ----------------- Forget fully unreferenced spikes ---------------
+
+            for spikes in self._spikes_per_signal.values():
+                for spike in spikes.copy():
+                    with spike.causal_group() as cg:
+                        if cg.stale(spike):
+                            # This should lead to the deletion of the spike
+                            spikes.remove(spike)
+                            spike.wipe(already_wiped_in_causal_group=True)
+                            logger.debug(f"{cg}.stale({spike})->Y")
+
+            # ----------------- Increment age on active spikes -----------------
+
+            for spikes in self._spikes_per_signal.values():
+                for spike in spikes:
+                    spike.tick()
+
+            # -------------------- Force garbage collect -----------------------
+
+            gc.collect()
+
+        self._update_core_properties(debug=False)
+
     def _add_sig(self, sig: Signal):
-        if sig in self._act_per_state_per_signal_age:
+        if sig in self._needy_acts_per_state_per_signal:
             logger.error(f"Attempt to add signal f{sig.name} twice!")
             return
         self._signal_causes[sig] = []
-        self._act_per_state_per_signal_age[sig] = defaultdict(lambda: defaultdict(set))
+        self._needy_acts_per_state_per_signal[sig] = defaultdict(set)
 
     def _rm_sig(self, sig: Signal) -> None:
-        affected_states: Set[State] = set()
-        for _, acts_per_state in self._act_per_state_per_signal_age[sig].items():
-            affected_states |= set(acts_per_state.keys())
+        affected_states: Set[State] = set(self._needy_acts_per_state_per_signal[sig].keys())
         if affected_states:
             logger.warning(
                 f"Since signal {sig.name} was removed, the following states will have dangling constraints: " +
@@ -518,7 +633,7 @@ class Context(IContext):
             causes.clear()
             causes += [cause for cause in old_causes if sig not in cause]
         del self._signal_causes[sig]
-        self._act_per_state_per_signal_age.pop(sig)
+        self._needy_acts_per_state_per_signal.pop(sig)
 
     def _module_registration_callback(self, mod: Module):
         self._config.add_conf(mod)
@@ -528,29 +643,37 @@ class Context(IContext):
             self.add_state(st=st)
         logger.info(f"Module {mod.name} added to session.")
 
-    def _new_state_activation(self, st: State) -> None:
+    def _new_state_activation(self, st: State, reacquire: bool = False) -> bool:
         activation = Activation(st, self)
+        reacquired = False
         self._activations_per_state[st].add(activation)
         for signal in st.completed_constraint.signals():
-            if signal in self._act_per_state_per_signal_age:
-                # TODO: (Here and below) Determine, whether indexing by min age is actually necessary
-                #  -> may not, because immediate acquisition is necessary -> otherwise, the
-                #   signal's causal group will not know about a possibly higher-
-                #   specificity state that runs a bit later.
-                # self._act_per_state_per_signal_age[signal][signal.min_age][st] |= {activation}
-                self._act_per_state_per_signal_age[signal][0][st] |= {activation}
+            if signal in self._needy_acts_per_state_per_signal:
+                signal_reacquired = False
+                if reacquire:
+                    for spike in self._spikes_per_signal[signal]:
+                        if spike.is_wiped():
+                            continue
+                        if activation.acquire(spike=spike):
+                            signal_reacquired = True
+                            break
+                if signal_reacquired:
+                    reacquired = True
+                else:
+                    self._needy_acts_per_state_per_signal[signal][st].add(activation)
             else:
-                logger.error(
-                    f"Adding state activation for f{st.name} which depends on unknown signal `{signal}`!")
+                logger.warning(
+                    f"Adding state activation for {st.name} which depends on unknown signal `{signal}`!")
+        return reacquired
 
     def _del_state_activations(self, st: State) -> None:
         # delete activation from gaybar
         if st not in self._activations_per_state:
             return
         for signal in st.completed_constraint.signals():
-            if signal in self._act_per_state_per_signal_age:
-                if st in self._act_per_state_per_signal_age[signal][0]:
-                    del self._act_per_state_per_signal_age[signal][0][st]  # signal.min_age
+            if signal in self._needy_acts_per_state_per_signal:
+                if st in self._needy_acts_per_state_per_signal[signal]:
+                    del self._needy_acts_per_state_per_signal[signal][st]  # signal.min_age
         for act in self._activations_per_state[st].copy():
             act.dereference(spike=None, reacquire=False, reject=True)
             self._activations_per_state[st].remove(act)
@@ -562,9 +685,9 @@ class Context(IContext):
             return {act for acts in self._activations_per_state.values() for act in acts}
 
     def _states_for_signal(self, sig: Signal) -> Iterable[State]:
-        if sig not in self._act_per_state_per_signal_age:
+        if sig not in self._needy_acts_per_state_per_signal:
             return set()
-        return self._act_per_state_per_signal_age[sig][0].keys()  # sig.min_age
+        return self._needy_acts_per_state_per_signal[sig].keys()
 
     def _complete_constraint(self, st: State):
         new_conjuncts: Set[Conjunct] = deepcopy(set(st.constraint.conjunctions()))
@@ -578,17 +701,26 @@ class Context(IContext):
 
     def _complete_conjunction(self, conj: Conjunct, known_signals: Set[Signal]) -> List[Set[Signal]]:
         result = [set(deepcopy(sig) for sig in conj.signals())]
-        for sig in result[0]:
-            # TODO: Figure out through eta system
-            sig.max_age = 4.
+
+        def copy_conjunct_set_with_completion(original_conj: Set[Signal], completion_conj: Set[Signal], completed_signal: Signal):
+            original_conj = deepcopy(original_conj)
+            completion_conj = deepcopy(completion_conj)
+            original_conj |= completion_conj
+            for sig in original_conj:
+                if sig == completed_signal:
+                    sig.completed_by = completion_conj
+                if sig in completion_conj:
+                    sig.max_age = -1  # See #52 (§3)
+                    sig.is_completion = True
+            return original_conj
 
         for conj_sig in conj.signals():
             completion = self._complete_signal(conj_sig, known_signals)
-            if completion is not None and len(completion) > 0:
-                # the signal is non-cyclic, and has at least one cause (secondary signal).
+            if completion:
+                # the signal is non-cyclic, and has at least one cause (it is a secondary signal).
                 #  permute existing disjunct conjunctions with new conjunction(s)
                 result = [
-                    deepcopy(result_conj) | deepcopy(completion_conj)
+                    copy_conjunct_set_with_completion(result_conj, completion_conj, conj_sig)
                     for result_conj in result for completion_conj in completion]
 
         return result
@@ -601,7 +733,7 @@ class Context(IContext):
 
         # a signal without cause (a primary signal) needs no further completion
         if not self._signal_causes[sig] or sig.detached:
-            return []
+            return None
 
         # a signal with at least one secondary cause needs at least one non-cyclic
         #  cause to be considered a completion itself
@@ -610,7 +742,7 @@ class Context(IContext):
         for conj in self._signal_causes[sig]:
             completion = self._complete_conjunction(conj, known_signals)
             if completion:
-                result += [conj | {sig} for conj in completion]
+                result += completion
         known_signals.discard(sig)
 
         return result if len(result) else None
@@ -647,81 +779,5 @@ class Context(IContext):
     def _run_loop(self):
         tick_interval = 1. / self._core_config[self.tick_rate_config]
         while not self._shutdown_flag.wait(tick_interval):
-            self._run_once(tick_interval)
+            self.run_once(tick_interval)
 
-    def _run_once(self, seconds_passed=1.):
-        with self._lock:
-
-            # ---------- Update weights wrt/ cooldown for all states -----------
-
-            for state in self._activations_per_state:
-                state.update_weight(seconds_passed)
-
-            # ----------- For every state, compress it's activations -----------
-
-            for st, acts in self._activations_per_state.items():
-                assert len(acts) > 0
-                if len(acts) > 1:
-                    # We could do some fancy merge of partially fulfilled activations,
-                    #  but for now let's just remove all completely unfulfilled
-                    #  ones apart from one.
-                    allowed_unfulfilled: Activation = None
-                    for act in acts.copy():
-                        if not act.spiky():
-                            if allowed_unfulfilled:
-                                for signal in act.constraint.signals():
-                                    if signal in self._act_per_state_per_signal_age and \
-                                            act in self._act_per_state_per_signal_age[signal][0][act.state_to_activate]:
-                                        self._act_per_state_per_signal_age[
-                                            signal][0][act.state_to_activate].remove(act)
-                                acts.remove(act)
-                            else:
-                                allowed_unfulfilled = act
-
-            # --------- Acquire new state activations for every spike ----------
-
-            for spike in self._spikes:
-                if spike.is_wiped():
-                    continue
-                for state, acts in self._act_per_state_per_signal_age[s(spike.name())][spike.age()].items():
-                    old_acts = acts.copy()
-                    for act in old_acts:
-                        if act.acquire(spike):
-                            # Remove the Activation instance from _act_per_state_per_signal_age
-                            #  for the Spike with a certain minimum age. In place of the removed
-                            #  activation, if no activation with the same target state is left,
-                            #  a new Activation will be created.
-                            acts.remove(act)
-                            if len(acts) == 0:
-                                self._new_state_activation(state)
-                        else:
-                            logger.error(
-                                "An activation rejected a spike it was registered to be interested in.")
-
-            # ------------------ Update all state activations. -----------------
-
-            for act in self._state_activations():
-                if act.update():
-                    self._activations_per_state[act.state_to_activate].discard(act)
-
-            # ----------------- Forget fully unreferenced spikes ---------------
-
-            old_spike_set = self._spikes.copy()
-            for spike in old_spike_set:
-                with spike.causal_group() as cg:
-                    if cg.stale(spike):
-                        # This should lead to the deletion of the spike
-                        self._spikes.remove(spike)
-                        spike.wipe(already_wiped_in_causal_group=True)
-                        logger.debug(f"{cg}.stale({spike})->Y")
-
-            # ----------------- Increment age on active spikes -----------------
-
-            for spike in self._spikes:
-                spike.tick()
-
-            # -------------------- Force garbage collect -----------------------
-
-            gc.collect()
-
-        self._update_core_properties(False)

@@ -4,7 +4,7 @@
 
 from ravestate import property
 from ravestate import state
-from typing import Set, Any
+from typing import Set, Any, Generator
 from ravestate.constraint import Signal
 from ravestate.spike import Spike
 from ravestate.iactivation import IActivation
@@ -121,19 +121,6 @@ class IContext:
         """
         pass
 
-    def lowest_upper_bound_eta(self, signals: Set[Signal]) -> int:
-        """
-        Called by activation when it is pressured to resign. The activation wants
-         to know the earliest ETA of one of it's remaining required constraints.
-
-        * `signals`: The signals, whose ETA will be calculated, and among the
-         results the minimum ETA will be returned.
-
-        **Returns:** Number of ticks it should take for at least one of the required
-         signals to arrive. Fixed value (1) for now.
-        """
-        pass
-
     def signal_specificity(self, sig: Signal) -> float:
         """
         Called by state activation to determine it's constraint's specificity.
@@ -178,5 +165,15 @@ class IContext:
         * `seconds`: Seconds to convert to ticks.
 
         **Returns:** An integer tick count.
+        """
+        pass
+
+    def possible_signals(self, state: 'State') -> Generator['Signal', None, None]:
+        """
+        Yields all signals, for which spikes may be created if
+         the given state is executed.
+
+        * `state`: The state, which should be analyzed for it's
+         possibly generated signals (declared signal + property-changed signals).
         """
         pass

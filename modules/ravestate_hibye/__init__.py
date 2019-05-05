@@ -11,9 +11,9 @@ import ravestate_interloc
 with Module(name="hibye"):
 
     @state(cond=s("interloc:all:pushed") & s("rawio:in:changed"), write="verbaliser:intent")
-    def react_to_pushed_interloc(ctx: ContextWrapper):
+    def greeting(ctx: ContextWrapper):
         ctx["verbaliser:intent"] = "greeting"
 
     @state(cond=s("interloc:all:popped") & s("rawio:in:changed"), write="verbaliser:intent")
-    def react_to_popped_interloc(ctx: ContextWrapper):
+    def farewell(ctx: ContextWrapper):
         ctx["verbaliser:intent"] = "farewells"

@@ -9,4 +9,5 @@ CONFIG = {
 }
 
 with Module(name="ros2", config=CONFIG) as mod:
+
     mod.add(sync_ros_properties)

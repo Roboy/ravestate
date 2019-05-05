@@ -7,11 +7,12 @@ from ravestate.config import Configuration
 
 
 def test_emit(context_fixture, spike_fixture):
-    context_fixture.emit(s(DEFAULT_PROPERTY_CHANGED))
-    assert len(context_fixture._spikes) == 1
-    list(context_fixture._spikes)[0].adopt(spike_fixture)
-    context_fixture.emit(s(DEFAULT_PROPERTY_CHANGED), wipe=True)
-    assert len(context_fixture._spikes) == 2
+    sig = s(DEFAULT_PROPERTY_CHANGED)
+    context_fixture.emit(sig)
+    assert len(context_fixture._spikes_per_signal[sig]) == 1
+    list(context_fixture._spikes_per_signal[sig])[0].adopt(spike_fixture)
+    context_fixture.emit(sig, wipe=True)
+    assert len(context_fixture._spikes_per_signal[sig]) == 2
 
 
 def test_run(mocker, context_fixture):
@@ -84,9 +85,9 @@ def test_remove_unknown_state(context_fixture: Context, state_fixture: State):
 
 def test_remove_state_with_signal(context_with_property_fixture: Context, state_signal_a_fixture: State):
     context_with_property_fixture.add_state(st=state_signal_a_fixture)
-    assert state_signal_a_fixture.signal() in context_with_property_fixture._act_per_state_per_signal_age
+    assert state_signal_a_fixture.signal() in context_with_property_fixture._needy_acts_per_state_per_signal
     context_with_property_fixture.rm_state(st=state_signal_a_fixture)
-    assert state_signal_a_fixture.signal() not in context_with_property_fixture._act_per_state_per_signal_age
+    assert state_signal_a_fixture.signal() not in context_with_property_fixture._needy_acts_per_state_per_signal
 
 
 def test_add_state(

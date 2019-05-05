@@ -2,11 +2,12 @@
 
 from ravestate.state import State
 from ravestate.wrappers import ContextWrapper
+from ravestate.context import Context
 from ravestate.activation import Activation
 from typing import Union, Set, Tuple
 
 
-def receptor(*, ctx_wrap: ContextWrapper, write: Union[str, Tuple[str]]):
+def receptor(*, ctx_wrap: Union[ContextWrapper, Context], write: Union[str, Tuple[str]]):
     """
     A receptor is a special state which can be invoked from outside,
      to push values into the context.
@@ -34,7 +35,10 @@ def receptor(*, ctx_wrap: ContextWrapper, write: Union[str, Tuple[str]]):
 
     def receptor_decorator(action):
         nonlocal ctx_wrap, write
-        ctx = ctx_wrap.ctx
+        if isinstance(ctx_wrap, ContextWrapper):
+            ctx = ctx_wrap.ctx
+        else:
+            ctx = ctx_wrap
         receptor_state = State(
             write=write,
             read=(),

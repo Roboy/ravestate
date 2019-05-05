@@ -66,16 +66,37 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         yield None
 
+    def fulfilled_causal_groups(self) -> Generator[ICausalGroup, None, None]:
+        logger.error("Don't call this method on the super class Constraint")
+        pass
+
+    def effect_not_caused(self, act: IActivation, group: ICausalGroup, effect: str) -> Generator['Signal', None, None]:
+        logger.error("Don't call this method on the super class Constraint")
+        pass
+
 
 class Signal(Constraint):
     """
     Class that represents a Signal
     """
     name: str
-    spike: Spike
+    spike: Optional[Spike]
     min_age: float
     max_age: float
     detached: bool
+
+    # tells whether this signal has been completed, and may therefore
+    #  not introduce a new causal group into the parent conjunct.
+    #  the back-references to the completing signals allow it
+    #  to dereference the completing signals when the causal tail
+    #  is dereferences because of death_clock.
+    completed_by: Optional[Set['Signal']]
+
+    # tells whether this signal is a potential cause for another signal,
+    #  and should therefore not be (immediately) affected by the activation's
+    #  auto-elimination death clock.
+    is_completion: bool
+
     _min_age_ticks: int  # written on acquire, when act.secs_to_ticks is available
 
     def __init__(self, name: str, *, min_age=0., max_age=5., detached=False):
@@ -84,6 +105,8 @@ class Signal(Constraint):
         self.max_age = max_age
         self.spike = None
         self.detached = detached
+        self.completed_by = None
+        self.is_completion = False
         self._min_age_ticks = 0
         # TODO: Deal with ConfigurableAge
         # if min_age > max_age and max_age > .0:
@@ -109,7 +132,8 @@ class Signal(Constraint):
             return Disjunct(*conjunct_list)
 
     def __eq__(self, other):
-        return isinstance(other, Signal) and self.name == other.name
+        return (isinstance(other, Signal) and self.name == other.name) or\
+               (isinstance(other, str) and self.name == other)
 
     def __hash__(self):
         return hash(self.name)
@@ -127,10 +151,12 @@ class Signal(Constraint):
     def acquire(self, spike: Spike, act: IActivation):
         if not self.spike and self.name == spike.name() and (self.max_age < 0 or spike.age() <= act.secs_to_ticks(self.max_age)):
             assert not spike.is_wiped()
+            with spike.causal_group() as cg:
+                # Causal group might refuse acquisition, if one of act's state's write-props is unavailable.
+                if not cg.acquired(spike, act, self.detached):
+                    return False
             self._min_age_ticks = act.secs_to_ticks(self.min_age)
             self.spike = spike
-            with spike.causal_group() as cg:
-                cg.acquired(spike, act, self.detached)
             return True
         return False
 
@@ -142,9 +168,16 @@ class Signal(Constraint):
                     causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
         if (not spike and self.spike) or (spike and self.spike is spike):
             if causal_groups:
-                with self.spike.causal_group() as cg:
-                    if cg not in list(causal_groups):
-                        return
+                if self.is_fulfilled_causal_tail():
+                    with self.spike.causal_group() as cg:
+                        if cg not in causal_groups:
+                            return
+                    # Also dereference other spikes from this causal chain
+                    if self.completed_by:
+                        for completing_signal in self.completed_by:
+                            yield from completing_signal.dereference()
+                else:
+                    return
             former_signal_instance = self.spike
             self.spike = None
             yield self, former_signal_instance
@@ -152,10 +185,27 @@ class Signal(Constraint):
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
         # Reject spike, once it has become too old
         if self.spike and self.max_age >= 0 and self.spike.age() > act.secs_to_ticks(self.max_age):
-                with self.spike.causal_group() as cg:
-                    cg.rejected(self.spike, act, reason=1)
-                    self.spike = None
-                    yield self
+            with self.spike.causal_group() as cg:
+                cg.rejected(self.spike, act, reason=1)
+                self.spike = None
+                yield self
+
+    def fulfilled_causal_groups(self) -> Generator[ICausalGroup, None, None]:
+        if self.is_fulfilled_causal_tail():
+            yield self.spike.causal_group()
+
+    def is_fulfilled_causal_tail(self):
+        return not self.is_completion and self.evaluate()
+
+    def effect_not_caused(self, act: IActivation, group: ICausalGroup, effect: str) -> Generator['Signal', None, None]:
+        if self.completed_by:
+            for cause in self.completed_by:
+                if cause.spike:
+                    with cause.spike.causal_group() as cg:
+                        if cg == group:
+                            cg.rejected(cause.spike, act, reason=1)
+                            cause.spike = None
+                            yield cause
 
     def __str__(self):
         return self.name
@@ -172,7 +222,8 @@ class Conjunct(Constraint):
     ```
     """
     _signals: Set[Signal]
-    _hash: Tuple[str]
+    _hash: int
+    _allowed_causal_groups: Set[ICausalGroup]
 
     def __init__(self, *args):
         for arg in args:
@@ -181,6 +232,7 @@ class Conjunct(Constraint):
                 raise ValueError
         self._signals = set(args)
         self._hash = hash(tuple(sorted(sig.name for sig in self._signals)))
+        self._allowed_causal_groups = set()
 
     def __iter__(self):
         for signal in self._signals:
@@ -226,23 +278,50 @@ class Conjunct(Constraint):
 
     def acquire(self, spike: Spike, act: IActivation):
         result = False
+        # update causal group set to account for merges
+        self._allowed_causal_groups = set(cg for cg in self._allowed_causal_groups)
         for si in self._signals:
-            result |= si.acquire(spike, act)
+            if spike.causal_group() in self._allowed_causal_groups:
+                # the causal group is already allowed
+                result |= si.acquire(spike, act)
+            elif not si.completed_by:
+                if si.acquire(spike, act):
+                    # add causal group to allowed, since the spike is a root cause
+                    self._allowed_causal_groups.add(spike.causal_group())
+                    result = True
         return result
 
     def evaluate(self) -> bool:
-        return all(map(lambda si: si.evaluate(), self._signals))
+        return all(si.evaluate() for si in self._signals)
 
     def dereference(self, *,
                     spike: Optional[Spike]=None,
                     causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
-        return (
-            result
-            for child in self._signals
-            for result in child.dereference(spike=spike, causal_groups=causal_groups))
+        for child in self._signals:
+            for result in child.dereference(spike=spike, causal_groups=causal_groups):
+                self._allowed_causal_groups = {sig.spike.causal_group() for sig in self._signals if sig.spike}
+                yield result
 
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
-        return (result for child in self._signals for result in child.update(act))
+        for child in self._signals:
+            for result in child.update(act):  # If anything is returned, it means the signal rejected it's spike.
+                self._allowed_causal_groups = {sig.spike.causal_group() for sig in self._signals if sig.spike}
+                yield result
+
+    def fulfilled_causal_groups(self) -> Generator[ICausalGroup, None, None]:
+        for child in self._signals:
+            yield from child.fulfilled_causal_groups()
+
+    def effect_not_caused(self, act: IActivation, group: ICausalGroup, effect: str) -> Generator['Signal', None, None]:
+        # If the causal group is within the allowed, and one this conjuncts signals
+        #  is within the forgone signals, then it is safe (?) to assume that all
+        #  spikes from `group` from this conjunction must be rejected.
+        if group in self._allowed_causal_groups and effect in self._signals:
+            for child in self._signals:
+                if child == effect and not child.spike:
+                    yield from child.effect_not_caused(act, group, effect)
+                    self._allowed_causal_groups = {sig.spike.causal_group() for sig in self._signals if sig.spike}
+                    break
 
     def __str__(self):
         return "(" + " & ".join(map(lambda si: si.__str__(), self._signals)) + ")"
@@ -310,18 +389,25 @@ class Disjunct(Constraint):
         return result
 
     def evaluate(self) -> bool:
-        return any(map(lambda si: si.evaluate(), self._conjunctions))
+        return any(child.evaluate() for child in self._conjunctions)
 
     def dereference(self, *,
                     spike: Optional[Spike]=None,
                     causal_groups: Optional[Set[ICausalGroup]]=None) -> Generator[Tuple['Signal', 'Spike'], None, None]:
-        return (result for child in self._conjunctions for result in child.dereference(spike=spike, causal_groups=causal_groups))
+        for child in self._conjunctions:
+            yield from child.dereference(spike=spike, causal_groups=causal_groups)
 
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
-        return (
-            result
-            for child in self._conjunctions
-            for result in child.update(act))
+        for child in self._conjunctions:
+            yield from child.update(act)
+
+    def fulfilled_causal_groups(self) -> Generator[ICausalGroup, None, None]:
+        for child in self._conjunctions:
+            yield from child.fulfilled_causal_groups()
+
+    def effect_not_caused(self, act: IActivation, group: ICausalGroup, effect: str) -> Generator['Signal', None, None]:
+        for child in self._conjunctions:
+            yield from child.effect_not_caused(act, group, effect)
 
     def __str__(self):
         return " | ".join(map(lambda conjunct: conjunct.__str__(), self._conjunctions))

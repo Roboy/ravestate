@@ -13,7 +13,7 @@
                  \____/                \____/             Olà! -       
 ```
 
-Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events.
+Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events. You may find a short introductory video [here](http://www.youtube.com/watch?v=6GMmY-xvA_Y "Introduction to Ravestate").
 
 ### Reactive Hello World
 
@@ -165,6 +165,7 @@ External (Red) and Skills (Green):
   |----------------------|-------------|
   | ravestate_wildtalk   | [ParlAI](https://github.com/roboy/parlai) -based generative conversational module. 
   | ravestate_hibye      | Simply voices __Hi!__ (or the likes thereof) when an interlocutor is added, and __Bye__ when one is removed.
+  | ravestate_persqa     | Conducts personalized smalltalk with interlocutors, interacts with Scientio to persist trivia.
   | ravestate_genqa      | [DrQA](https://github.com/roboy/drqa) -based general question answering module.
   | ravestate_roboyqa    | QA module which provides answers to questions about Roboy, such as __Who is your dad?__
   | ravestate_akinator   | Enables dialog-based play of [Akinator!](modules/ravestate_akinator/README.md)
@@ -202,7 +203,6 @@ docker exec -it ravestate-ros2-container bash
 Inside the container, first source the ROS2 setups and then 
 ravestate can be run with ROS2 and rclpy available.
 ```bash
-source /opt/ros/bouncy/setup.sh
 source ~/ros2_ws/install/setup.sh
 python3 -m ravestate [...]
 ```
@@ -211,8 +211,8 @@ python3 -m ravestate [...]
 In order to start ROS Bridge, the image and container have to be set up
 as above. After connecting into the container run from inside the container:
 ```bash
+export ROS_IP=192.168.0.105
 source ~/melodic_ws/devel/setup.sh
-source /opt/ros/bouncy/setup.sh
 source ~/ros2_ws/install/setup.sh
 source ~/ros1_bridge_ws/install/setup.sh
 ros2 run ros1_bridge dynamic_bridge

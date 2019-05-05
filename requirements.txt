@@ -1,12 +1,13 @@
+unidecode
 argparse
-pyyaml<4.0
-flask
+pyyaml>=5.1
 python-telegram-bot
 pyyaml-include
 roboy_parlai>=0.1.post3
-spacy
+spacy>=2.1.0
 flask
+flask_socketio
 requests
-scientio
+scientio>=0.9.1rc2
 redis
 face_recognition

@@ -71,6 +71,7 @@ class State:
     emit_detached: bool
     cooldown: float
     weight: float
+    is_receptor: bool
 
     module_name: str                  # The module which this state belongs to
     signal_object: Signal             # Created on the fly during runtime from signal_name
@@ -87,7 +88,7 @@ class State:
                  signal_name: Optional[str],
                  write: Union[str, Tuple[str]],
                  read: Union[str, Tuple[str]],
-                 cond: Constraint,
+                 cond: Optional[Constraint],
                  action,
                  is_receptor: bool=False,
                  emit_detached: bool=False,
@@ -132,6 +133,7 @@ class State:
         self.activated = Semaphore(0)
         self.weight = self.current_weight = weight
         self.cooldown = cooldown
+        self.is_receptor = is_receptor
         self.lock = Lock()
 
         # add state to module in current `with Module(...)` clause
@@ -178,7 +180,8 @@ class State:
                 self.current_weight = .0
 
     def signal(self) -> Optional[Signal]:
-        assert self.module_name
+        if not self.is_receptor:
+            assert self.module_name
         if not self.signal_object and self.signal_name:
             self.signal_object = s(f"{self.module_name}:{self.signal_name}")
         return self.signal_object

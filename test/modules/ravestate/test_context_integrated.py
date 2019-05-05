@@ -32,15 +32,15 @@ def test_run_with_pressure():
     ctx = Context(DEFAULT_MODULE_NAME)
     ctx.emit(startup())
 
-    ctx._run_once()
+    ctx.run_once()
     assert signal_a.wait()
 
-    ctx._run_once()
+    ctx.run_once()
     assert signal_b.wait()
 
     # make sure that pressuring_state is pressuring specific_state
     acts = ctx._state_activations(st=specific_state)
     assert any(act.is_pressured() for act in acts)
 
-    ctx._run_once()
+    ctx.run_once()
     assert specific_state.wait()

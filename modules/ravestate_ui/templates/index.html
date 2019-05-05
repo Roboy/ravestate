@@ -3,177 +3,55 @@
 <head>
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="static/graph.css">
-    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="https://d3js.org/d3.v3.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
 </head>
 <body>
 
-<div class="w3-top w3-card-4 w3-teal w3-center flexbox bars">
-    <h1>ROBOY MIND READING</h1>
-</div>
+<!--<div class="w3-top w3-card-4 w3-teal w3-center flexbox bars">-->
+    <!--<h1>RAVESTATE</h1>-->
+<!--</div>-->
 
-<script>
-    $(function () {
-        $.getJSON("/data", function (data) {
+ <script type="text/javascript" src="scripts/graph.js"></script>
 
-            //var links = [{source: "propery1", target: "state1", type: "licensing"},]
-            var links = data;
-            var nodes = {};
-            var signals = {};
-            var states = {};
-            var properties = {}
-
-            // Compute the distinct nodes from the links.
-            links.forEach(function (link) {
-                if (link.type === 'notifies') { // Relationship signal -> state
-                    link.source = signals[link.source] || (signals[link.source] = {name: link.source});
-                    link.target = states[link.target] || (states[link.target] = {name: link.target});
-                } else if (link.type === 'creates') { // Relationship property -> signal
-                    link.source = properties[link.source] || (properties[link.source] = {name: link.source});
-                    link.target = signals[link.target] || (signals[link.target] = {name: link.target});
-                } else if (link.type === 'changes') {
-                    link.source = states[link.source] || (states[link.source] = {name: link.source});
-                    link.target = properties[link.target] || (properties[link.target] = {name: link.target});
-                }
-            });
-
-            nodes = Object.assign({}, signals, states, properties);
-            console.log(nodes)
-            console.log(links)
-            var width = window.innerWidth,
-                height = window.innerHeight;
-            var force = d3.layout.force()
-                .nodes(d3.values(nodes))
-                .links(links)
-                .size([width, height])
-                .linkDistance(300)
-                .charge(-100)
-                .gravity(0.005)
-                .on("tick", tick)
-                .start();
-
-            var svg = d3.select("#chart")
-                .classed("svg-container", true)
-                .append("svg")
-                .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", "0 0 " + width + " " + height)
-                .classed("svg-content-responsive", true);
-
-            const resizeHandler = () => {
-                const wrapper = document.querySelector('.svg-container');
-                document.querySelector('.svg-container > svg')
-                    .setAttribute('viewBox', "0 0 " +
-                        wrapper.getBoundingClientRect().width + " " +
-                        wrapper.getBoundingClientRect().height)
-            };
-
-            resizeHandler();
-
-            window.addEventListener('resize', resizeHandler)
-
-            // Per-type markers, as they don't inherit styles.
-            svg.append("defs").selectAll("marker")
-                .data(["notifies", "creates", "changes"])
-                .enter().append("marker")
-                .attr("id", function (d) {
-                    return d;
-                })
-                .attr("viewBox", "0 -5 10 10")
-                .attr("refX", 42) // Increase with larger circle radius
-                .attr("refY", -4)  // Decrease with increasing radius to counter arc
-                .attr("markerWidth", 10)
-                .attr("markerHeight", 10)
-                .attr("orient", "auto")
-                .append("path")
-                .attr("d", "M0,-5L10,0L0,5");
-
-            var path = svg.append("g").selectAll("path")
-                .data(force.links())
-                .enter().append("path")
-                .attr("class", function (d) {
-                    return "link " + d.type;
-                })
-                .attr("marker-end", function (d) {
-                    return "url(#" + d.type + ")";
-                });
-
-            var circle = svg.append("g").selectAll("circle")
-                .data(force.nodes())
-                .enter().append("circle")
-                .attr("r", 50)
-                .attr("class", function (d) {
-                    return (d.name in signals) ? "signal" :
-                        ((d.name in states) ? "state" : "prop")
-                })
-                .call(force.drag);
-
-            var text = svg.append("g").selectAll("text")
-                .data(force.nodes())
-                .enter().append("text")
-                .attr("x", -45)
-                .attr("y", 5)
-                .text(function (d) {
-                    return d.name;
-                });
-
-            // Use elliptical arc path segments to doubly-encode directionality.
-            function tick() {
-                path.attr("d", linkArc);
-                circle.attr("transform", transform);
-                text.attr("transform", transform);
-            }
-
-            function linkArc(d) {
-                var dx = d.target.x - d.source.x,
-                    dy = d.target.y - d.source.y,
-                    dr = Math.sqrt(dx * dx + dy * dy);
-                return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
-            }
-
-            function transform(d) {
-                return "translate(" + d.x + "," + d.y + ")";
-            }
-
-        })
-    })
-</script>
 <div id="chart"></div>
-<div class="w3-bottom w3-card-4 w3-teal flex-container bars">
-    <div>
-        <svg width="50" height="50">
-            <circle cx="25" cy="25" r="20" fill="#bbff99"/>
-        </svg>
-    </div>
+<!--<div class="w3-bottom w3-card-4 w3-teal flex-container bars">-->
+    <!--<div>-->
+        <!--<svg width="50" height="50">-->
+            <!--<circle cx="25" cy="25" r="20" fill="#bbff99"/>-->
+        <!--</svg>-->
+    <!--</div>-->
 
-    <div>
-        <h5>Dialog state</h5>
-    </div>
+    <!--<div>-->
+        <!--<h5>Dialog state</h5>-->
+    <!--</div>-->
 
-    <div>
-        <svg width="50" height="50">
-            <circle cx="25" cy="25" r="20" fill="#b3ecff"/>
-        </svg>
-    </div>
+    <!--<div>-->
+        <!--<svg width="50" height="50">-->
+            <!--<circle cx="25" cy="25" r="20" fill="#b3ecff"/>-->
+        <!--</svg>-->
+    <!--</div>-->
 
-    <div>
-        <h5>Property</h5>
-    </div>
+    <!--<div>-->
+        <!--<h5>Property</h5>-->
+    <!--</div>-->
 
-    <div>
-        <svg width="50" height="50">
-            <circle cx="25" cy="25" r="20" fill="#ffb3b3"/>
-        </svg>
-    </div>
+    <!--<div>-->
+        <!--<svg width="50" height="50">-->
+            <!--<circle cx="25" cy="25" r="20" fill="#ffb3b3"/>-->
+        <!--</svg>-->
+    <!--</div>-->
 
-    <div>
-        <h5>Signal</h5>
-    </div>
+    <!--<div>-->
+        <!--<h5>Signal</h5>-->
+    <!--</div>-->
 
 
-    <div>
-    </div>
+    <!--<div>-->
+    <!--</div>-->
 
-</div>
+<!--</div>-->
 
 </body>
 </html>

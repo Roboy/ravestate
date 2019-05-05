@@ -5,6 +5,8 @@ from ravestate.constraint import s
 
 import requests
 
+import ravestate_idle
+
 from reggol import get_logger
 logger = get_logger(__name__)
 
@@ -28,6 +30,9 @@ with Module(name="genqa", config=CONFIG):
         if not server_up(server):
             return Delete()
 
+    @state(cond=s("idle:bored"), write="rawio:out", weight=1.15, cooldown=30.)
+    def prompt(ctx):
+        ctx["rawio:out"] = verbaliser.get_random_phrase("question-answering-prompt")
 
     @state(cond=s("nlp:is-question"), read="rawio:in", write="rawio:out")
     def drqa_module(ctx):

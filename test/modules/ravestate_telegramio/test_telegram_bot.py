@@ -6,9 +6,6 @@ from testfixtures import LogCapture
 
 from ravestate_telegramio.telegram_bot import *
 
-FILE_NAME = 'ravestate_telegramio.telegram_bot'
-PREFIX = f"[{FILE_NAME}] [\x1b[1;36m{FILE_NAME}\x1b[0m]"
-
 
 def generate_fake_conf(conf_dict: Dict):
     def fake_conf(key, **kwargs):
@@ -17,10 +14,9 @@ def generate_fake_conf(conf_dict: Dict):
 
 
 def test_telegram_run(mocker, context_wrapper_fixture: Context):
-    with LogCapture() as capture:
+    with LogCapture(attributes=strip_prefix) as capture:
         assert isinstance(telegram_run(context_wrapper_fixture), Delete)
-        expected = 'telegram-token is not set. Shutting down telegramio'
-        capture.check_present((f"{FILE_NAME}", '\x1b[1;31mERROR\x1b[0m', f"{PREFIX} {expected}"))
+        capture.check_present('telegram-token is not set. Shutting down telegramio')
 
     with LogCapture(attributes=strip_prefix) as log_capture:
         # Master Process should return Delete and error for telegram output when all_in_one_context is True and no Token
