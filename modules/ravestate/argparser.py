@@ -34,10 +34,10 @@ def handle_args(*args) -> Tuple[List[str], List[Tuple[str, str, Any]], List[str]
 {help_string()}
 
 usage:
-  > rasta ravestate_facerec ravestate_hello_world
+  > python3 -m ravestate ravestate_facerec ravestate_hello_world
     Import two python modules and run a context.
 
-  > rasta \\
+  > python3 -m ravestate \\
       -d core import ravestate_facerec ravestate_hello_world \\
       -f generic.yml \\
       -f user.yml

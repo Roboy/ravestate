@@ -92,8 +92,7 @@ with a config file or command line arguments:
 ### Running with command line spec
 
 You can easily run a combination of ravestate modules in a shared context,
-by listing them as arguments to the `rasta` command, which is installed
-with ravestate:
+by listing them as arguments to `python3 -m ravestate`:
 
 ```bash
 python3 -m ravestate \

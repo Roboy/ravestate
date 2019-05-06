@@ -7,6 +7,7 @@ from ravestate.activation import Activation
 from reggol import get_logger
 logger = get_logger(__name__)
 
+
 class UIContext(Context):
 
     def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None):

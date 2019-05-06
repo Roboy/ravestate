@@ -147,10 +147,7 @@ class Context(IContext):
          An example use-case is a module that starts a new context (in separate process) and can set
          config entries to Connection Objects to enable communication between old and new context.
         """
-        if runtime_overrides:
-            modules, overrides, config_files = argparser.handle_args(*arguments, runtime_overrides)
-        else:
-            modules, overrides, config_files = argparser.handle_args(*arguments)
+        modules, overrides, config_files = argparser.handle_args(*arguments)
         self._config = Configuration(config_files)
         self._core_config = {
             self.import_modules_config: [],
