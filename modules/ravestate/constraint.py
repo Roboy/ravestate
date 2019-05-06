@@ -66,6 +66,10 @@ class Constraint:
         logger.error("Don't call this method on the super class Constraint")
         yield None
 
+    def referenced_causal_groups(self) -> Generator[ICausalGroup, None, None]:
+        logger.error("Don't call this method on the super class Constraint")
+        pass
+
     def fulfilled_causal_groups(self) -> Generator[ICausalGroup, None, None]:
         logger.error("Don't call this method on the super class Constraint")
         pass
@@ -190,6 +194,10 @@ class Signal(Constraint):
                 self.spike = None
                 yield self
 
+    def referenced_causal_groups(self) -> Generator[ICausalGroup, None, None]:
+        if self.spike:
+            yield self.spike.causal_group()
+
     def fulfilled_causal_groups(self) -> Generator[ICausalGroup, None, None]:
         if self.is_fulfilled_causal_tail():
             yield self.spike.causal_group()
@@ -308,6 +316,9 @@ class Conjunct(Constraint):
                 self._allowed_causal_groups = {sig.spike.causal_group() for sig in self._signals if sig.spike}
                 yield result
 
+    def referenced_causal_groups(self) -> Generator[ICausalGroup, None, None]:
+        yield from self._allowed_causal_groups
+
     def fulfilled_causal_groups(self) -> Generator[ICausalGroup, None, None]:
         for child in self._signals:
             yield from child.fulfilled_causal_groups()
@@ -400,6 +411,10 @@ class Disjunct(Constraint):
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
         for child in self._conjunctions:
             yield from child.update(act)
+
+    def referenced_causal_groups(self) -> Generator[ICausalGroup, None, None]:
+        for child in self._conjunctions:
+            yield from child.referenced_causal_groups()
 
     def fulfilled_causal_groups(self) -> Generator[ICausalGroup, None, None]:
         for child in self._conjunctions:

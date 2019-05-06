@@ -119,6 +119,8 @@ class Activation(IActivation):
             if reject and dereferenced_spike:
                 with dereferenced_spike.causal_group() as cg:
                     cg.rejected(dereferenced_spike, self, reason=0)
+        # Update pressured causal groups, remove groups for which no spike is referenced anymore
+        self.pressuring_causal_groups &= set(self.constraint.referenced_causal_groups())
         if message:
             logger.debug(f"Dereferenced {self} from" + message)
 
@@ -226,6 +228,9 @@ class Activation(IActivation):
         # Update constraint, reacquire for rejected spikes
         for signal in self.constraint.update(self):
             self.ctx.reacquire(self, signal)
+
+        # Update pressured causal groups, remove groups for which no spike is referenced anymore
+        self.pressuring_causal_groups &= set(self.constraint.referenced_causal_groups())
 
         # Iterate over fulfilled conjunctions and look to activate with one of them
         for conjunction in self.constraint.conjunctions():
