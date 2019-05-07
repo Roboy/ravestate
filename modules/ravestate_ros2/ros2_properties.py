@@ -3,7 +3,7 @@ from typing import Dict
 
 from ravestate.state import state, Delete
 from ravestate.constraint import s
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 
 from ravestate.receptor import receptor
 from ravestate.wrappers import ContextWrapper
@@ -125,7 +125,7 @@ def sync_ros_properties(ctx: ContextWrapper):
     rclpy.shutdown()
 
 
-class Ros2SubProperty(PropertyBase):
+class Ros2SubProperty(Property):
     def __init__(self, name: str, topic: str, msg_type, default_value=None, always_signal_changed: bool = True):
         """
         Initialize Property
@@ -170,7 +170,7 @@ class Ros2SubProperty(PropertyBase):
             self.ros_to_ctx_callback(msg=msg, prop_name=self.id())
 
 
-class Ros2PubProperty(PropertyBase):
+class Ros2PubProperty(Property):
     def __init__(self, name: str, topic: str, msg_type):
         """
         Initialize Property
@@ -214,7 +214,7 @@ class Ros2PubProperty(PropertyBase):
                              f"cannot be published because publisher was not registered in ROS")
 
 
-class Ros2CallProperty(PropertyBase):
+class Ros2CallProperty(Property):
     def __init__(self, name: str, service_name: str, service_type, call_timeout: float = 10.0):
         """
         Initialize Property

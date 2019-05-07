@@ -30,8 +30,8 @@ def test_context_shutting_down(mocker, context_wrapper_fixture, context_fixture)
 def test_property_push_pop(mocker, context_wrapper_fixture, context_with_property_fixture):
     with mocker.patch.object(context_with_property_fixture, 'emit'):
         # push child
-        assert context_wrapper_fixture.push(parentpath=DEFAULT_PROPERTY_ID,
-                                            child=PropertyBase(name=CHILD_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE))
+        assert context_wrapper_fixture.push(parent_property_or_path=DEFAULT_PROPERTY_ID,
+                                            child=Property(name=CHILD_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE))
         context_with_property_fixture.emit.assert_called_with(
             s(f"{DEFAULT_PROPERTY_ID}:pushed"),
             parents=None,
@@ -62,8 +62,8 @@ def test_property_push_pop(mocker, context_wrapper_fixture, context_with_propert
 def test_property_nested(mocker, context_wrapper_fixture, context_with_property_fixture):
     with mocker.patch.object(context_with_property_fixture, 'emit'):
         # push child
-        assert context_wrapper_fixture.push(parentpath=DEFAULT_PROPERTY_ID,
-                                            child=PropertyBase(name=CHILD_PROPERTY_NAME))
+        assert context_wrapper_fixture.push(parent_property_or_path=DEFAULT_PROPERTY_ID,
+                                            child=Property(name=CHILD_PROPERTY_NAME))
         context_with_property_fixture.emit.assert_called_with(
             s(f"{DEFAULT_PROPERTY_ID}:pushed"),
             parents=None,
@@ -71,8 +71,8 @@ def test_property_nested(mocker, context_wrapper_fixture, context_with_property_
             payload=CHILD_PROPERTY_ID)
 
         # push grandchild
-        assert context_wrapper_fixture.push(parentpath=CHILD_PROPERTY_ID,
-                                            child=PropertyBase(name=GRANDCHILD_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE))
+        assert context_wrapper_fixture.push(parent_property_or_path=CHILD_PROPERTY_ID,
+                                            child=Property(name=GRANDCHILD_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE))
         context_with_property_fixture.emit.assert_called_with(
             s(f"{CHILD_PROPERTY_ID}:pushed"),
             parents=None,
@@ -104,8 +104,8 @@ def test_property_nested(mocker, context_wrapper_fixture, context_with_property_
 def test_property_nested_2(mocker, context_wrapper_fixture, context_with_property_fixture):
     with mocker.patch.object(context_with_property_fixture, 'emit'):
         # push child
-        assert context_wrapper_fixture.push(parentpath=DEFAULT_PROPERTY_ID,
-                                            child=PropertyBase(name=CHILD_PROPERTY_NAME))
+        assert context_wrapper_fixture.push(parent_property_or_path=DEFAULT_PROPERTY_ID,
+                                            child=Property(name=CHILD_PROPERTY_NAME))
         context_with_property_fixture.emit.assert_called_with(
             s(f"{DEFAULT_PROPERTY_ID}:pushed"),
             parents=None,
@@ -113,8 +113,8 @@ def test_property_nested_2(mocker, context_wrapper_fixture, context_with_propert
             payload=CHILD_PROPERTY_ID)
 
         # push grandchild
-        assert context_wrapper_fixture.push(parentpath=CHILD_PROPERTY_ID,
-                                            child=PropertyBase(name=GRANDCHILD_PROPERTY_NAME))
+        assert context_wrapper_fixture.push(parent_property_or_path=CHILD_PROPERTY_ID,
+                                            child=Property(name=GRANDCHILD_PROPERTY_NAME))
         context_with_property_fixture.emit.assert_called_with(
             s(f"{CHILD_PROPERTY_ID}:pushed"),
             parents=None,

@@ -11,7 +11,7 @@ def test_run_with_pressure():
 
     with Module(name=DEFAULT_MODULE_NAME):
 
-        PropertyBase(name=DEFAULT_PROPERTY_NAME)
+        Property(name=DEFAULT_PROPERTY_NAME)
 
         @state(cond=startup(), signal_name="a")
         def signal_a(ctx):

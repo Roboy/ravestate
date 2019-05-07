@@ -6,7 +6,7 @@ from testfixtures import LogCapture
 
 from ravestate.constraint import s
 from ravestate.context import Context
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate.state import State, state
 from ravestate.wrappers import PropertyWrapper, ContextWrapper
 from ravestate.activation import Activation
@@ -71,7 +71,7 @@ def context_fixture(mocker):
 
 @pytest.fixture
 def context_with_property_fixture(mocker, context_fixture) -> Context:
-    prop = PropertyBase(name=DEFAULT_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE)
+    prop = Property(name=DEFAULT_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE)
     prop.set_parent_path(DEFAULT_MODULE_NAME)
     context_fixture.add_prop(prop=prop)
     mocker.patch.object(context_fixture, 'add_prop')

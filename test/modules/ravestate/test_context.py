@@ -66,7 +66,7 @@ def test_add_module_present(mocker, context_fixture):
 
 
 def test_remove_dependent_state(context_fixture: Context, state_fixture: State):
-    prop = PropertyBase(name=DEFAULT_PROPERTY_NAME)
+    prop = Property(name=DEFAULT_PROPERTY_NAME)
     prop.set_parent_path(DEFAULT_MODULE_NAME)
     context_fixture.add_prop(prop=prop)
     context_fixture.add_state(st=state_fixture)
@@ -184,7 +184,7 @@ def test_add_state_unknown_property(context_fixture: Context, state_fixture: Sta
 
 def test_add_prop_twice(context_fixture: Context):
     with LogCapture(attributes=strip_prefix) as log_capture:
-        prop = PropertyBase(name=DEFAULT_PROPERTY_NAME)
+        prop = Property(name=DEFAULT_PROPERTY_NAME)
         prop.set_parent_path(DEFAULT_MODULE_NAME)
         context_fixture.add_prop(prop=prop)
         context_fixture.add_prop(prop=prop)

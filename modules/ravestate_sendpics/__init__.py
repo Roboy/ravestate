@@ -1,6 +1,6 @@
 from ravestate.module import Module
 from ravestate.state import s, state, Emit
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate.wrappers import ContextWrapper
 import ravestate_ontology
 import pickle
@@ -31,7 +31,7 @@ CONFIG = {
 
 with Module(name="sendpics", config=CONFIG):
 
-    face_vec = PropertyBase(name="face_vec", always_signal_changed=True)
+    face_vec = Property(name="face_vec", always_signal_changed=True)
 
     @state(cond=s("idle:bored"), write="rawio:out", weight=1.2, cooldown=30.)
     def prompt_send(ctx):

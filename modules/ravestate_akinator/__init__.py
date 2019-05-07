@@ -1,5 +1,5 @@
 from ravestate.module import Module
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate.state import state, Resign, Emit, Delete
 from ravestate.constraint import s
 from ravestate_akinator.api import Api
@@ -16,7 +16,7 @@ CERTAINTY = "certainty_percentage"
 
 with Module(name="akinator", config={CERTAINTY: 90}):
 
-    is_it = PropertyBase(
+    is_it = Property(
         name="is_it",
         default_value="",
         always_signal_changed=True,
@@ -24,7 +24,7 @@ with Module(name="akinator", config={CERTAINTY: 90}):
         allow_push=False,
         is_flag_property=True)
 
-    question = PropertyBase(
+    question = Property(
         name="question",
         default_value="",
         always_signal_changed=True,
@@ -32,7 +32,7 @@ with Module(name="akinator", config={CERTAINTY: 90}):
         allow_push=False,
         is_flag_property=True)
 
-    initiate_play_again = PropertyBase(
+    initiate_play_again = Property(
         name="initiate_play_again",
         default_value="",
         always_signal_changed=True,

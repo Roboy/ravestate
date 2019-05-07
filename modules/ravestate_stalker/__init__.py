@@ -3,7 +3,7 @@ from random import randint
 from typing import List, Dict
 
 from ravestate.module import Module
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate_ros2.ros2_properties import Ros2SubProperty
 from ravestate.context import startup
 from ravestate.state import state, s
@@ -40,7 +40,7 @@ if ROBOY_COGNITION_AVAILABLE:
 
         # Create a dummy parent, under which we can push the actual recognized faces topic,
         #  once a context with a configuration is available.
-        subscriber_parent = PropertyBase(name="face_names_parent")
+        subscriber_parent = Property(name="face_names_parent")
 
         @state(cond=startup(),  write=subscriber_parent.id())
         def create_subscriber(ctx: ContextWrapper):
@@ -51,11 +51,11 @@ if ROBOY_COGNITION_AVAILABLE:
                 msg_type=RecognizedFaces,
                 always_signal_changed=False)
 
-            rec_faces = PropertyBase(name="rec_faces",
-                 default_value={},
-                 always_signal_changed=False,
-                 allow_pop=True,
-                 allow_push=True)
+            rec_faces = Property(name="rec_faces",
+                                 default_value={},
+                                 always_signal_changed=False,
+                                 allow_pop=True,
+                                 allow_push=True)
 
             ctx.push(subscriber_parent.id(), face_names)
             ctx.push(subscriber_parent.id(), rec_faces)

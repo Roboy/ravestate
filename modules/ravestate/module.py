@@ -2,7 +2,7 @@
 
 from typing import Dict, Any, Union, Iterable, Callable
 import importlib
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate.state import State
 from ravestate.threadlocal import ravestate_thread_local
 
@@ -60,14 +60,14 @@ class Module:
         if self.registration_callback:
             self.registration_callback(self)
 
-    def add(self, property_or_state: Union[PropertyBase, State, Iterable[PropertyBase], Iterable[State]]):
+    def add(self, property_or_state: Union[Property, State, Iterable[Property], Iterable[State]]):
         try:
             for obj_to_add in property_or_state:
                 self.add(obj_to_add)
             return
         except TypeError:
             pass
-        if isinstance(property_or_state, PropertyBase):
+        if isinstance(property_or_state, Property):
             property_or_state.set_parent_path(self.name)
             self.props.append(property_or_state)
         elif isinstance(property_or_state, State):

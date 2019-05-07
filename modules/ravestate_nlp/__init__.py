@@ -1,6 +1,6 @@
 
 from ravestate.module import Module
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate.state import state
 from ravestate_nlp.question_word import QuestionWord
 from ravestate_nlp.triple import Triple
@@ -45,14 +45,14 @@ spacy_nlp_en = init_spacy()
 
 with Module(name="nlp"):
 
-    tokens = PropertyBase(name="tokens", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    postags = PropertyBase(name="postags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    lemmas = PropertyBase(name="lemmas", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    tags = PropertyBase(name="tags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    ner = PropertyBase(name="ner", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    triples = PropertyBase(name="triples", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    roboy = PropertyBase(name="roboy", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    yesno = PropertyBase(name="yesno", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+    tokens = Property(name="tokens", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+    postags = Property(name="postags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+    lemmas = Property(name="lemmas", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+    tags = Property(name="tags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+    ner = Property(name="ner", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+    triples = Property(name="triples", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+    roboy = Property(name="roboy", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+    yesno = Property(name="yesno", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
 
 
     @state(

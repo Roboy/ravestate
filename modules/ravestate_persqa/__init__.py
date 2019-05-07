@@ -1,5 +1,5 @@
 from ravestate.module import Module
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate.wrappers import ContextWrapper
 from ravestate.state import state, Emit, Delete, Resign
 from ravestate.constraint import s
@@ -46,9 +46,9 @@ with Module(name="persqa") as mod:
     #  that did not trigger new_interloc. Therefore, new_interloc and inference
     #  are mutually exclusive. This is enfored by having both of them
     #  consume the inference_mutex property.
-    inference_mutex = PropertyBase(name="inference_mutex")
+    inference_mutex = Property(name="inference_mutex")
 
-    subject = PropertyBase(
+    subject = Property(
         name="subject",
         default_value="",
         always_signal_changed=True,
@@ -56,7 +56,7 @@ with Module(name="persqa") as mod:
         allow_push=False,
         is_flag_property=True)
 
-    predicate = PropertyBase(
+    predicate = Property(
         name="predicate",
         default_value="",
         always_signal_changed=True,
@@ -64,7 +64,7 @@ with Module(name="persqa") as mod:
         allow_push=False,
         is_flag_property=True)
 
-    answer = PropertyBase(
+    answer = Property(
         name="answer",
         default_value="",
         always_signal_changed=True,
@@ -72,7 +72,7 @@ with Module(name="persqa") as mod:
         allow_push=False,
         is_flag_property=True)
 
-    follow_up = PropertyBase(
+    follow_up = Property(
         name="follow_up",
         default_value="",
         always_signal_changed=True,

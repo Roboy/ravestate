@@ -8,7 +8,7 @@ import requests
 
 from ravestate.constraint import s
 from ravestate.context import Context, create_and_run_context
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate.receptor import receptor
 from ravestate.state import state, Delete
 from ravestate.wrappers import ContextWrapper
@@ -83,7 +83,7 @@ def telegram_run(ctx: ContextWrapper):
         """
         Push the telegram_node into interloc:all:name
         """
-        if ctx.push(parentpath="interloc:all", child=PropertyBase(name=name, default_value=telegram_node)):
+        if ctx.push(parent_property_or_path="interloc:all", child=Property(name=name, default_value=telegram_node)):
             logger.debug(f"Pushed {telegram_node} to interloc:all")
 
     def make_sure_effective_user_exists(update: Update):

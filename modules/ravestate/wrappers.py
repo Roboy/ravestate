@@ -1,6 +1,6 @@
 # Ravestate wrapper classes which limit a state's context access
 
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate.state import State
 from ravestate.constraint import Signal
 from ravestate.module import get_module
@@ -22,7 +22,7 @@ class PropertyWrapper:
     """
     def __init__(self, *,
                  spike_parents: Set[Spike] = None,
-                 prop: PropertyBase,
+                 prop: Property,
                  ctx: IContext,
                  allow_read: bool,
                  allow_write: bool):
@@ -92,7 +92,7 @@ class PropertyWrapper:
             return True
         return False
 
-    def push(self, child: PropertyBase):
+    def push(self, child: Property):
         """
         Add a child to the property or to children of the property
 
@@ -149,7 +149,7 @@ class ContextWrapper:
     as declared by the state beforehand.
     """
 
-    def __init__(self, *, ctx: IContext, state: State, spike_parents: Set[Spike]=None, spike_payloads: Dict[str, Any]=None):
+    def __init__(self, *, ctx: IContext, state: State, spike_parents: Set[Spike] = None, spike_payloads: Dict[str, Any] = None):
         self.state = state
         self.ctx = ctx
         self.properties = dict()
@@ -170,7 +170,9 @@ class ContextWrapper:
                             allow_read=propname in state.read_props,
                             allow_write=propname in state.write_props)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Union[str, Property], value: Any):
+        if isinstance(key, Property):
+            key = key.id()
         if key in self.properties:
             return self.properties[key].set(value)
         else:
@@ -210,72 +212,78 @@ class ContextWrapper:
             mod = self.state.module_name
         return self.ctx.conf(mod=mod, key=key)
 
-    def push(self, parentpath: str, child: PropertyBase):
+    def push(self, parent_property_or_path: Union[str, Property], child: Property):
         """
         Add a child to a property.
          Note: Child must not yet have a parent or children of itself.
           Write-access to parent is needed.
 
-        * `parentpath`: Path of the parent that should receive the new child.
+        * `parentpath`: (Path of the) parent property that should receive the new child.
 
         * `child`: Parent-less, child-less property object to add.
 
         **Returns:** True if the push was successful, False otherwise
         """
         if child.parent_path:
-            logger.error(f"State {self.state.name} attempted to push child property {child.name} to parent {parentpath}, but it already has parent {child.parent_path}!")
+            logger.error(f"State {self.state.name} attempted to push child property {child.name} to parent {parent_property_or_path}, but it already has parent {child.parent_path}!")
             return False
-        if parentpath in self.properties:
-            if self.properties[parentpath].push(child):
+        if isinstance(parent_property_or_path, Property):
+            parent_property_or_path = parent_property_or_path.id()
+        if parent_property_or_path in self.properties:
+            if self.properties[parent_property_or_path].push(child):
                 self.properties[child.id()] = PropertyWrapper(
                     prop=child, ctx=self.ctx,
                     spike_parents=self.spike_parents,
-                    allow_read=self.properties[parentpath].allow_read,
-                    allow_write=self.properties[parentpath].allow_write)
+                    allow_read=self.properties[parent_property_or_path].allow_read,
+                    allow_write=self.properties[parent_property_or_path].allow_write)
                 self.ctx.add_prop(prop=child)
                 return True
         else:
-            logger.error(f'State {self.state.name} attempted to add child-property {child.name} to non-accessible parent {parentpath}!')
+            logger.error(f'State {self.state.name} attempted to add child-property {child.name} to non-accessible parent {parent_property_or_path}!')
             return False
 
-    def pop(self, path: str):
+    def pop(self, property_or_path: Union[str, Property]):
         """
         Delete a property (remove it from context and it's parent).
          Note: Write-access to parent is needed!
 
-        * `path`: Path to the property. Must be nested (not root-level)!
+        * `path`: (Path to) the property. Must be nested (not root-level)!
 
         **Returns:** True if the pop was successful, False otherwise
         """
-        path_parts = path.split(":")
+        if isinstance(property_or_path, Property):
+            property_or_path = property_or_path.id()
+        path_parts = property_or_path.split(":")
         if len(path_parts) < 3:
-            logger.error(f"State {self.state.name}: Path to pop is not a nested property: {path}")
+            logger.error(f"State {self.state.name}: Path to pop is not a nested property: {property_or_path}")
             return False
         parentpath = ":".join(path_parts[:-1])
         if parentpath in self.properties:
             if self.properties[parentpath].pop(path_parts[-1]):
-                self.ctx.rm_prop(prop=self.properties[path].prop)
+                self.ctx.rm_prop(prop=self.properties[property_or_path].prop)
                 # Remove property from own dict
-                del self.properties[path]
+                del self.properties[property_or_path]
                 # Also remove the deleted propertie's children
                 for childpath in list(self.properties.keys()):
-                    if childpath.startswith(path+":"):
+                    if childpath.startswith(property_or_path + ":"):
                         self.ctx.rm_prop(prop=self.properties[childpath].prop)
                         del self.properties[childpath]
                 return True
             else:
-                logger.error(f'State {self.state.name} attempted to remove non-existent child-property {path}')
+                logger.error(f'State {self.state.name} attempted to remove non-existent child-property {property_or_path}')
                 return False
         else:
-            logger.error(f'State {self.state.name} attempted to remove child-property {path} from non-existent parent-property {parentpath}')
+            logger.error(f'State {self.state.name} attempted to remove child-property {property_or_path} from non-existent parent-property {parentpath}')
             return False
 
-    def enum(self, path) -> Generator[str, None, None]:
+    def enum(self, property_or_path: Union[str, Property]) -> Generator[str, None, None]:
         """
-        Enumerate a propertie's children by their full pathes.
+        Enumerate a property's children by their full pathes.
         """
-        if path in self.properties:
-            return self.properties[path].enum()
+        if isinstance(property_or_path, Property):
+            property_or_path = property_or_path.id()
+        if property_or_path in self.properties:
+            return self.properties[property_or_path].enum()
         else:
-            logger.error(f"State {self.state.name} attempted to enumerate property {path} without permission!")
+            logger.error(f"State {self.state.name} attempted to enumerate property {property_or_path} without permission!")
 

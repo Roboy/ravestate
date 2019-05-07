@@ -11,7 +11,7 @@ from ravestate.wrappers import PropertyWrapper
 from ravestate.icontext import IContext
 from ravestate.module import Module, has_module, get_module, import_module
 from ravestate.state import State
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate.iactivation import IActivation
 from ravestate.activation import Activation
 from ravestate import argparser
@@ -76,8 +76,8 @@ class _Grab:
 
 class Context(IContext):
     _default_signals: Tuple[Signal] = (startup(), shutdown())
-    _default_properties: Tuple[PropertyBase] = (
-        PropertyBase(
+    _default_properties: Tuple[Property] = (
+        Property(
             name="pressure",
             allow_read=True,
             allow_write=True,
@@ -87,7 +87,7 @@ class Context(IContext):
             always_signal_changed=False,
             is_flag_property=True
         ),
-        PropertyBase(
+        Property(
             name="activity",
             allow_read=True,
             allow_write=True,
@@ -104,7 +104,7 @@ class Context(IContext):
 
     _lock: RLock
 
-    _properties: Dict[str, PropertyBase]
+    _properties: Dict[str, Property]
     _spikes_per_signal: Dict[
         Signal,
         Set[Spike]
@@ -361,16 +361,18 @@ class Context(IContext):
         # unregister the state's consumable dummy
         self.rm_prop(prop=st.consumable)
 
-    def add_prop(self, *, prop: PropertyBase) -> None:
+    def add_prop(self, *, prop: Property) -> None:
         """
         Add a property to this context. An error message will be generated, if a property with
-         the same name has already been added previously.
+         the same name has already been added previously. Note: Context will adopt a __copy__
+         of the given property, the actual property will not be changed.
 
         * `prop`: The property object that should be added.
         """
         if prop.id() in self._properties:
             logger.error(f"Attempt to add property {prop.id()} twice!")
             return
+        # Do not adopt the
         with self._lock:
             # register property
             self._properties[prop.id()] = prop
@@ -378,7 +380,7 @@ class Context(IContext):
             for signal in prop.signals():
                 self._add_sig(signal)
 
-    def rm_prop(self, *, prop: PropertyBase) -> None:
+    def rm_prop(self, *, prop: Property) -> None:
         """
         Remove a property from this context.
         Generates error message, if the property was not added with add_prop() to the context previously
@@ -402,7 +404,7 @@ class Context(IContext):
         for st in states_to_remove:
             self.rm_state(st=st)
 
-    def __getitem__(self, key: str) -> Optional[PropertyBase]:
+    def __getitem__(self, key: str) -> Optional[Property]:
         """
         Retrieve a property object by name, that was previously added through add_prop()
          by it's full name. The full name is always the combination of the property's

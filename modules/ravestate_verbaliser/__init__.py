@@ -1,14 +1,14 @@
 import logging
 
 from ravestate.module import Module
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate.state import state
 from ravestate_verbaliser import verbaliser
 
 
 with Module(name="verbaliser"):
 
-    intent = PropertyBase(
+    intent = Property(
         name="intent",
         default_value="",
         allow_push=False,

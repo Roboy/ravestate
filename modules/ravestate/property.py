@@ -45,7 +45,7 @@ def popped(property_name, **kwargs) -> Signal:
     return s(f"{property_name}:popped", **kwargs)
 
 
-class PropertyBase:
+class Property:
     """
     Base class for context properties. Controls read/write/push/pop/delete permissions,
     property name basic impls. for the property value, parent/child mechanism.
@@ -53,7 +53,7 @@ class PropertyBase:
     _Example (Creating a module containing a property named my_property):_
     ```python
     with Module(name="my_module"):
-        my_property = PropertyBase(name="my_property")
+        my_property = Property(name="my_property")
     ```
     """
 
@@ -75,7 +75,7 @@ class PropertyBase:
         self.allow_push = allow_push
         self.allow_pop = allow_pop
         self.value = default_value
-        self.children: Dict[str, PropertyBase] = dict()
+        self.children: Dict[str, Property] = dict()
         self._lock = Lock()
         self.parent_path: str = ""
         self.always_signal_changed = always_signal_changed
@@ -101,7 +101,7 @@ class PropertyBase:
         else:
             logger.error(f'Tried to override parent_path of {self.id()}')
 
-    def gather_children(self) -> List['PropertyBase']:
+    def gather_children(self) -> List['Property']:
         """
         Collect this property, and all of it's children.
         """
@@ -142,7 +142,7 @@ class PropertyBase:
         else:
             return False
 
-    def push(self, child: 'PropertyBase'):
+    def push(self, child: 'Property'):
         """
         Add a child to the property
 

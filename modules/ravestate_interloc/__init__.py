@@ -1,4 +1,4 @@
-from ravestate.property import PropertyBase
+from ravestate.property import Property
 from ravestate.module import Module
 from ravestate.wrappers import ContextWrapper
 from ravestate.receptor import receptor
@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 with Module(name="interloc"):
 
     # TODO: Make interloc:all a special property type, that only accepts ScientioNodeProperty as children
-    all = PropertyBase(name="all", allow_read=True, allow_write=False, allow_push=True, allow_pop=True)
+    all = Property(name="all", allow_read=True, allow_write=False, allow_push=True, allow_pop=True)
 
 
 def handle_single_interlocutor_input(ctx: ContextWrapper, input_value: str, id="anonymous_interlocutor") -> None:
@@ -45,8 +45,8 @@ def handle_single_interlocutor_input(ctx: ContextWrapper, input_value: str, id="
 
     @receptor(ctx_wrap=ctx, write="interloc:all")
     def push_interloc(ctx: ContextWrapper, interlocutor_node: Node):
-        if ctx.push(parentpath="interloc:all",
-                    child=PropertyBase(name=id, default_value=interlocutor_node)):
+        if ctx.push(parent_property_or_path="interloc:all",
+                    child=Property(name=id, default_value=interlocutor_node)):
             logger.debug(f"Pushed {interlocutor_node} to interloc:all")
 
     @receptor(ctx_wrap=ctx, write="interloc:all")
