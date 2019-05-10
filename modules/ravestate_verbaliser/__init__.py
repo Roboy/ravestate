@@ -21,7 +21,7 @@ with rs.Module(name="verbaliser"):
         Looks for intents written to the verbaliser:intent property and
         writes a random phrase for that intent to rawio:out
         """
-        intent = ctx[prop_intent.changed_signal()]
+        intent = ctx[prop_intent.changed()]
         phrase = verbaliser.get_random_phrase(intent)
         if phrase:
             ctx[rawio.prop_out] = phrase

@@ -16,8 +16,10 @@ with rs.Module(name="idle", config=CONFIG):
     sig_impatient = rs.Signal(name="impatient")
     sig_bored = rs.Signal(name="bored")
 
-    @rs.state(cond=rs.prop_activity.changed_signal().min_age(rs.ConfigurableAge(key=BORED_THRESHOLD_CONFIG_KEY)).max_age(-1),
-           read=rs.prop_activity, signal=sig_bored)
+    @rs.state(
+        cond=rs.prop_activity.changed().min_age(rs.ConfigurableAge(key=BORED_THRESHOLD_CONFIG_KEY)).max_age(-1),
+        read=rs.prop_activity,
+        signal=sig_bored)
     def am_i_bored(ctx: rs.ContextWrapper):
         """
         Emits idle:bored signal if no states are currently partially fulfilled
@@ -25,8 +27,8 @@ with rs.Module(name="idle", config=CONFIG):
         if ctx[rs.prop_activity] == 0:
             return rs.Emit(wipe=True)
 
-    @rs.state(cond=rs.prop_pressure.flag_true_signal().
-           min_age(rs.ConfigurableAge(key=IMPATIENCE_THRESHOLD_CONFIG_KEY)).max_age(-1.),
-           signal=sig_impatient)
+    @rs.state(
+        cond=rs.prop_pressure.true().min_age(rs.ConfigurableAge(key=IMPATIENCE_THRESHOLD_CONFIG_KEY)).max_age(-1.),
+        signal=sig_impatient)
     def am_i_impatient(ctx: rs.ContextWrapper):
         return rs.Emit(wipe=True)

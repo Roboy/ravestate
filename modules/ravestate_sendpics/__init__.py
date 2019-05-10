@@ -52,8 +52,8 @@ with rs.Module(name="sendpics", config=CONFIG):
 
     @rs.state(
         cond=(
-            sig_repeat_name.max_age(30) | prop_face_vec.changed_signal().max_age(30)
-        ) & nlp.prop_tokens.changed_signal(),
+            sig_repeat_name.max_age(30) | prop_face_vec.changed().max_age(30)
+        ) & nlp.prop_tokens.changed(),
         signal=sig_repeat_name,
         read=(nlp.prop_triples, nlp.prop_tokens, prop_face_vec),
         write=rawio.prop_out,

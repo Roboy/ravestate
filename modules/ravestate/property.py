@@ -9,48 +9,6 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-def changed(property_name, module_name, **kwargs) -> Signal:
-    """
-    Returns the `changed` Signal for the given property.
-    This signal is emitted, when the Property is written to,
-     and the new property value is different from the old one,
-     or the propertie's `always_signal_changed` flag is True.<br>
-    __Hint:__ All key-word arguments of #constraint.s(...)
-     (`min_age`, `max_age`, `detached`) are supported.
-    """
-    sig = s(f"{property_name}:changed", **kwargs)
-    sig.module_name = module_name
-    return sig
-
-
-def pushed(property_name, module_name, **kwargs) -> Signal:
-    """
-    Returns the `pushed` Signal for the given property. This signal
-     is emitted, when a new child property is added to it.
-     From the perspective of a state, this can be achieved
-     with the `ContextWrapper.push(...)` function.<br>
-    __Hint:__ All key-word arguments of #constraint.s(...)
-     (`min_age`, `max_age`, `detached`) are supported.
-    """
-    sig = s(f"{property_name}:pushed", **kwargs)
-    sig.module_name = module_name
-    return sig
-
-
-def popped(property_name, module_name, **kwargs) -> Signal:
-    """
-    Returns the `popped` Signal for the given property. This signal
-     is emitted, when a child property removed from it.
-     From the perspective of a state, this can be achieved
-     with the `ContextWrapper.pop(...)` function.<br>
-    __Hint:__ All key-word arguments of #constraint.s(...)
-     (`min_age`, `max_age`, `detached`) are supported.
-    """
-    sig = s(f"{property_name}:popped", **kwargs)
-    sig.module_name = module_name
-    return sig
-
-
 class Property:
     """
     Base class for context properties. Controls read/write/push/pop/delete permissions,
@@ -87,6 +45,11 @@ class Property:
         self.always_signal_changed = always_signal_changed
         self.is_flag_property = is_flag_property
         self.wipe_on_changed = wipe_on_changed
+        self.changed_signal = Signal(f"{name}:changed")
+        self.pushed_signal = Signal(f"{name}:pushed")
+        self.popped_signal = Signal(f"{name}:popped")
+        self.true_signal = Signal(f"{name}:true")
+        self.false_signal = Signal(f"{name}:false")
 
         # add property to module in current `with Module(...)` clause
         module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
@@ -104,6 +67,11 @@ class Property:
         """
         if not self.parent_path:
             self.parent_path = path
+            self.changed_signal.module_name = path
+            self.pushed_signal.module_name = path
+            self.popped_signal.module_name = path
+            self.true_signal.module_name = path
+            self.false_signal.module_name = path
         else:
             logger.error(f'Tried to override parent_path of {self.id()}')
 
@@ -184,44 +152,35 @@ class Property:
             logger.error(f"Tried to remove non-existent child-property {self.id()}:{child_name}")
             return False
 
-    def changed_signal(self) -> Signal:
+    def changed(self) -> Signal:
         """
         Signal that is emitted by PropertyWrapper when #write() returns True.
         """
-        module_name, name_without_module = self.id().split(':', 1)
-        return changed(name_without_module, module_name)
+        return self.changed_signal
 
-    def pushed_signal(self) -> Signal:
+    def pushed(self) -> Signal:
         """
         Signal that is emitted by PropertyWrapper when #push() returns True.
         """
-        module_name, name_without_module = self.id().split(':', 1)
-        return pushed(name_without_module, module_name)
+        return self.pushed_signal
 
-    def popped_signal(self) -> Signal:
+    def popped(self) -> Signal:
         """
         Signal that is emitted by PropertyWrapper when #pop() returns True.
         """
-        module_name, name_without_module = self.id().split(':', 1)
-        return popped(name_without_module, module_name)
+        return self.popped_signal
 
-    def flag_true_signal(self) -> Signal:
+    def true(self) -> Signal:
         """
         Signal that is emitted by PropertyWrapper when it is a flag-property and #self.value is set to True.
         """
-        module_name, name_without_module = self.id().split(':', 1)
-        sig = s(f"{name_without_module}:true")
-        sig.module_name = module_name
-        return sig
+        return self.true_signal
 
-    def flag_false_signal(self) -> Signal:
+    def false(self) -> Signal:
         """
         Signal that is emitted by PropertyWrapper when it is a flag-property and #self.value is set to False.
         """
-        module_name, name_without_module = self.id().split(':', 1)
-        sig = s(f"{name_without_module}:false")
-        sig.module_name = module_name
-        return sig
+        return self.false_signal
 
     def signals(self) -> Generator[Signal, None, None]:
         """
@@ -229,12 +188,12 @@ class Property:
          this property, given it's write/push/pop permissions.
         """
         if self.allow_write:
-            yield self.changed_signal()
+            yield self.changed()
         if self.allow_push:
-            yield self.pushed_signal()
+            yield self.pushed()
         if self.allow_pop:
-            yield self.popped_signal()
+            yield self.popped()
         if self.is_flag_property:
-            yield self.flag_true_signal()
-            yield self.flag_false_signal()
+            yield self.true()
+            yield self.false()
 

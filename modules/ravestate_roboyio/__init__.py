@@ -38,7 +38,7 @@ if PYROBOY_AVAILABLE:
             msg_type=RecognizedSpeech,
             always_signal_changed=True)
 
-        @rs.state(cond=recognized_speech.changed_signal(), read=(interloc.prop_all, recognized_speech))
+        @rs.state(cond=recognized_speech.changed(), read=(interloc.prop_all, recognized_speech))
         def roboy_input(ctx: rs.ContextWrapper):
             result = ctx[recognized_speech]
             if result:

@@ -739,7 +739,7 @@ class Context(IContext):
             pressured_acts = []
             partially_fulfilled_acts = []
             for act in self._state_activations():
-                if self[":activity"].changed_signal() not in set(act.constraint.signals()):
+                if self[":activity"].changed() not in set(act.constraint.signals()):
                     if act.is_pressured():
                         pressured_acts.append(act.id)
                     if act.spiky():

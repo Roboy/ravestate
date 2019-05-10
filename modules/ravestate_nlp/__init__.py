@@ -57,7 +57,7 @@ with rs.Module(name="nlp"):
 
     @rs.state(read=rawio.prop_in, write=(prop_tokens, porp_postags, prop_lemmas, prop_tags, prop_ner, prop_triples, prop_roboy, prop_yesno))
     def nlp_preprocess(ctx):
-        text = ctx[rawio.prop_out]
+        text = ctx[rawio.prop_in]
         if not text:
             return False
         text = text.lower()

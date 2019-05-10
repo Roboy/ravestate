@@ -302,7 +302,7 @@ def telegram_output(ctx: rs.ContextWrapper):
 
         if child_conn:
             # Child Process -> write to Pipe
-            child_conn.send(ctx[rawio.prop_out.changed_signal()])
+            child_conn.send(ctx[rawio.prop_out.changed()])
         else:
             # Master Process -> State not needed
             return rs.Delete()

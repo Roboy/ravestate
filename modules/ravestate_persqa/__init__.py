@@ -143,7 +143,7 @@ with rs.Module(name="persqa") as mod:
                 ctx[rawio.prop_out] = verbaliser.get_random_question(ctx[prop_predicate])
 
         @rs.state(
-            cond=sig_follow_up.max_age(-1.) & nlp.prop_triples.changed_signal(),
+            cond=sig_follow_up.max_age(-1.) & nlp.prop_triples.changed(),
             write=(rawio.prop_out, prop_predicate, prop_inference_mutex),
             read=(interloc_path, prop_predicate, nlp.prop_yesno))
         def fup_react(ctx: rs.ContextWrapper):
@@ -166,18 +166,18 @@ with rs.Module(name="persqa") as mod:
         ctx.add_state(fup_react)
 
     @rs.state(
-        cond=rawio.prop_in.changed_signal() & interloc.prop_all.pushed_signal(),
+        cond=rawio.prop_in.changed() & interloc.prop_all.pushed(),
         write=prop_inference_mutex,
         read=interloc.prop_all)
     def new_interloc(ctx: rs.ContextWrapper):
         """
         reacts to interloc:pushed and creates persqa:ask_name state
         """
-        interloc_path = ctx[interloc.prop_all.pushed_signal()]
+        interloc_path = ctx[interloc.prop_all.pushed()]
         create_small_talk_states(ctx=ctx, interloc_path=interloc_path)
 
     @rs.state(
-        cond=rawio.prop_in.changed_signal() & interloc.prop_all.popped_signal(),
+        cond=rawio.prop_in.changed() & interloc.prop_all.popped(),
         write=(prop_inference_mutex, prop_predicate, prop_subject))
     def removed_interloc(ctx: rs.ContextWrapper):
         """
@@ -187,7 +187,7 @@ with rs.Module(name="persqa") as mod:
         ctx[prop_predicate] = None
 
     @rs.state(
-        cond=nlp.prop_triples.changed_signal(),
+        cond=nlp.prop_triples.changed(),
         write=(prop_answer, prop_inference_mutex),
         read=(prop_predicate, nlp.prop_triples, nlp.prop_tokens, nlp.prop_yesno))
     def inference(ctx: rs.ContextWrapper):
@@ -215,7 +215,7 @@ with rs.Module(name="persqa") as mod:
             ctx[prop_answer] = answer_str
 
     @rs.state(
-        cond=prop_answer.changed_signal(),
+        cond=prop_answer.changed(),
         write=(rawio.prop_out, prop_predicate),
         read=(prop_predicate, prop_subject, prop_answer, interloc.prop_all))
     def react(ctx: rs.ContextWrapper):

@@ -120,7 +120,7 @@ class State:
         # listen to default changed-signals if no signals are given.
         # convert triggers to disjunctive normal form.
         if not cond and len(read) > 0:
-            cond = Disjunct(*(Conjunct(rprop.changed_signal()) if isinstance(rprop, Property)
+            cond = Disjunct(*(Conjunct(rprop.changed()) if isinstance(rprop, Property)
                               else Conjunct(s(f"{rprop}:changed")) for rprop in read))
 
         self.signal = signal

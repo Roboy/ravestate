@@ -71,21 +71,21 @@ class PropertyWrapper:
             # emit flag signals if it is a flag property
             if self.prop.is_flag_property and value is True:
                 # wipe false signal, emit true signal
-                self.ctx.wipe(self.prop.flag_false_signal())
+                self.ctx.wipe(self.prop.false())
                 self.ctx.emit(
-                    self.prop.flag_true_signal(),
+                    self.prop.true(),
                     parents=self.spike_parents,
                     wipe=self.prop.wipe_on_changed)
             if self.prop.is_flag_property and value is False:
                 # wipe true signal, emit false signal
-                self.ctx.wipe(self.prop.flag_true_signal())
+                self.ctx.wipe(self.prop.true())
                 self.ctx.emit(
-                    self.prop.flag_false_signal(),
+                    self.prop.false(),
                     parents=self.spike_parents,
                     wipe=self.prop.wipe_on_changed)
 
             self.ctx.emit(
-                self.prop.changed_signal(),
+                self.prop.changed(),
                 parents=self.spike_parents,
                 wipe=self.prop.wipe_on_changed,
                 payload=value)
@@ -106,7 +106,7 @@ class PropertyWrapper:
             return False
         if self.prop.push(child):
             self.ctx.emit(
-                self.prop.pushed_signal(),
+                self.prop.pushed(),
                 parents=self.spike_parents,
                 wipe=False,
                 payload=child.id())
@@ -126,7 +126,7 @@ class PropertyWrapper:
             return False
         if self.prop.pop(childname):
             self.ctx.emit(
-                self.prop.popped_signal(),
+                self.prop.popped(),
                 parents=self.spike_parents,
                 wipe=False,
                 payload=f"{self.prop.id()}:{childname}")

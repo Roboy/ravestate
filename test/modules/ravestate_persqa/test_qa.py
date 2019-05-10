@@ -1,19 +1,11 @@
-from ravestate_interloc import handle_single_interlocutor_input
-import ravestate_nlp
-from ravestate_rawio import prop_out as rawio_output, prop_in as rawio_input
-from ravestate_interloc import prop_all
-import ravestate_persqa
-import ravestate_idle
+import ravestate as rs
+import ravestate_interloc as interloc
+import ravestate_rawio as rawio
+import ravestate_persqa as persqa
+import ravestate_idle as idle
 import ravestate_ontology
-from ravestate_verbaliser import verbaliser
+import ravestate_verbaliser as verbaliser
 
-from ravestate.context import Context
-from ravestate.testfixtures import *
-from ravestate.receptor import receptor
-from ravestate.state import s, Emit
-from ravestate.context import sig_startup, sig_shutdown
-from ravestate.module import Module
-from ravestate.wrappers import ContextWrapper, PropertyWrapper
 
 from reggol import get_logger, set_default_loglevel
 logger = get_logger(__name__)
@@ -22,20 +14,20 @@ logger = get_logger(__name__)
 def test_run_qa():
     last_output = ""
 
-    with Module(name="persqa_test"):
+    with rs.Module(name="persqa_test"):
 
-        @state(cond=sig_startup, read=prop_all)
-        def persqa_hi(ctx: ContextWrapper):
+        @rs.state(cond=rs.sig_startup, read=interloc.prop_all)
+        def persqa_hi(ctx: rs.ContextWrapper):
             ravestate_ontology.initialized.wait()
-            handle_single_interlocutor_input(ctx, "hi")
+            interloc.handle_single_interlocutor_input(ctx, "hi")
 
-        @state(read=rawio_output)
-        def raw_out(ctx: ContextWrapper):
+        @rs.state(read=rawio.prop_out)
+        def raw_out(ctx: rs.ContextWrapper):
             nonlocal last_output
-            last_output = ctx[rawio_output]
-            logger.info(f"Output: {ctx[rawio_output]}")
+            last_output = ctx[rawio.prop_out]
+            logger.info(f"Output: {ctx[rawio.prop_out]}")
 
-    ctx = Context(
+    ctx = rs.Context(
         "rawio",
         "ontology",
         "idle",
@@ -45,11 +37,11 @@ def test_run_qa():
         "persqa_test"
     )
 
-    @receptor(ctx_wrap=ctx, write=rawio_input)
-    def say(ctx: ContextWrapper, what: str):
-        ctx[rawio_input] = what
+    @rs.receptor(ctx_wrap=ctx, write=rawio.prop_in)
+    def say(ctx: rs.ContextWrapper, what: str):
+        ctx[rawio.prop_in] = what
 
-    ctx.emit(sig_startup)
+    ctx.emit(rs.sig_startup)
     ctx.run_once()
 
     assert persqa_hi.wait()
@@ -65,6 +57,9 @@ def test_run_qa():
     # Wait for acknowledgement of name
     while not raw_out.wait(.1):
         ctx.run_once()
+
+    assert persqa.inference.wait(0)
+    assert persqa.react.wait(0)
     assert "herbert" in last_output.lower()
 
     # Wait for any other question via idle:bored
@@ -78,10 +73,13 @@ def test_run_qa():
     while not raw_out.wait(.1):
         ctx.run_once()
 
+    assert persqa.inference.wait(0)
+    assert persqa.react.wait(0)
+
 
 if __name__ == "__main__":
-    #from hanging_threads import start_monitoring
-    #monitoring_thread = start_monitoring()
+    from hanging_threads import start_monitoring
+    monitoring_thread = start_monitoring()
     set_default_loglevel("DEBUG")
     test_run_qa()
     exit()
