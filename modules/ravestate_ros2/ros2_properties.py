@@ -1,12 +1,7 @@
 import time
 from typing import Dict
 
-from ravestate.state import state, Delete
-from ravestate.constraint import s
-from ravestate.property import Property
-
-from ravestate.receptor import receptor
-from ravestate.wrappers import ContextWrapper
+import ravestate as rs
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -40,8 +35,8 @@ def set_node_once(ros2_node):
         global_node = ros2_node
 
 
-@state(cond=s(":startup"))
-def sync_ros_properties(ctx: ContextWrapper):
+@rs.state(cond=rs.sig_startup)
+def sync_ros_properties(ctx: rs.ContextWrapper):
     """
     State that creates a ROS2-Node, registers all Ros2SubProperties and Ros2PubProperties in ROS2 and keeps them synced
     """
@@ -51,17 +46,17 @@ def sync_ros_properties(ctx: ContextWrapper):
     if not ROS2_AVAILABLE:
         logger.error("ROS2 is not available, therefore all ROS2-Properties "
                      "will be just normal properties without connection to ROS2!")
-        return Delete()
+        return rs.Delete()
 
     # get config stuff
     node_name = ctx.conf(key=NODE_NAME_CONFIG_KEY)
     if not node_name:
         logger.error(f"{NODE_NAME_CONFIG_KEY} is not set. Shutting down ravestate_ros2")
-        return Delete()
+        return rs.Delete()
     spin_frequency = ctx.conf(key=SPIN_FREQUENCY_CONFIG_KEY)
     if spin_frequency is None or spin_frequency < 0:
         logger.error(f"{SPIN_FREQUENCY_CONFIG_KEY} is not set or less than 0. Shutting down ravestate_ros2")
-        return Delete()
+        return rs.Delete()
     if spin_frequency == 0:
         spin_sleep_time = 0
     else:
@@ -97,7 +92,7 @@ def sync_ros_properties(ctx: ContextWrapper):
             # register subscribers in ROS
             if isinstance(prop, Ros2SubProperty):
                 # register in context
-                @receptor(ctx_wrap=ctx, write=prop.id())
+                @rs.receptor(ctx_wrap=ctx, write=prop.id())
                 def ros_to_ctx_callback(ctx, msg, prop_name: str):
                     ctx[prop_name] = msg
 
@@ -125,7 +120,7 @@ def sync_ros_properties(ctx: ContextWrapper):
     rclpy.shutdown()
 
 
-class Ros2SubProperty(Property):
+class Ros2SubProperty(rs.Property):
     def __init__(self, name: str, topic: str, msg_type, default_value=None, always_signal_changed: bool = True):
         """
         Initialize Property
@@ -170,7 +165,7 @@ class Ros2SubProperty(Property):
             self.ros_to_ctx_callback(msg=msg, prop_name=self.id())
 
 
-class Ros2PubProperty(Property):
+class Ros2PubProperty(rs.Property):
     def __init__(self, name: str, topic: str, msg_type):
         """
         Initialize Property
@@ -214,7 +209,7 @@ class Ros2PubProperty(Property):
                              f"cannot be published because publisher was not registered in ROS")
 
 
-class Ros2CallProperty(Property):
+class Ros2CallProperty(rs.Property):
     def __init__(self, name: str, service_name: str, service_type, call_timeout: float = 10.0):
         """
         Initialize Property

@@ -1,24 +1,22 @@
-from ravestate.module import Module
-from ravestate.constraint import s
-from ravestate.state import state
-from ravestate.wrappers import ContextWrapper
-from ravestate_interloc import handle_single_interlocutor_input, all as interloc_all
-from ravestate_rawio import output as raw_out
-from ravestate.context import startup
+
+import ravestate as rs
+
+import ravestate_rawio as rawio
+import ravestate_interloc as interloc
 
 from reggol import get_logger
 logger = get_logger(__name__)
 
 
-with Module(name="consoleio"):
+with rs.Module(name="consoleio"):
 
-    @state(cond=startup(), read=interloc_all)
-    def console_input(ctx: ContextWrapper):
+    @rs.state(cond=rs.sig_startup, read=interloc.prop_all)
+    def console_input(ctx: rs.ContextWrapper):
 
         while not ctx.shutting_down():
             input_value = input("> ")
-            handle_single_interlocutor_input(ctx, input_value)
+            interloc.handle_single_interlocutor_input(ctx, input_value)
 
-    @state(read=raw_out)
+    @rs.state(read=rawio.prop_out)
     def console_output(ctx):
         print(ctx["rawio:out:changed"])

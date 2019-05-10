@@ -1,18 +1,15 @@
+import ravestate as rs
 
-from ravestate.module import Module
-from ravestate.property import Property
+with rs.Module(name="rawio"):
 
-
-with Module(name="rawio"):
-
-    input = Property(
+    prop_in = rs.Property(
         name="in",
         default_value="",
         allow_pop=False,
         allow_push=False,
         always_signal_changed=True)
 
-    output = Property(
+    prop_out = rs.Property(
         name="out",
         default_value="",
         allow_pop=False,
@@ -20,7 +17,7 @@ with Module(name="rawio"):
         always_signal_changed=True,
         wipe_on_changed=False)
 
-    pic_in = Property(
+    prop_pic_in = rs.Property(
         name="pic_in",
         default_value=None,
         allow_pop=False,

@@ -1,7 +1,7 @@
 from ravestate_interloc import handle_single_interlocutor_input
 import ravestate_nlp
-from ravestate_rawio import output as rawio_output, input as rawio_input
-from ravestate_interloc import all
+from ravestate_rawio import prop_out as rawio_output, prop_in as rawio_input
+from ravestate_interloc import prop_all
 import ravestate_persqa
 import ravestate_idle
 import ravestate_ontology
@@ -11,7 +11,7 @@ from ravestate.context import Context
 from ravestate.testfixtures import *
 from ravestate.receptor import receptor
 from ravestate.state import s, Emit
-from ravestate.context import startup, shutdown
+from ravestate.context import sig_startup, sig_shutdown
 from ravestate.module import Module
 from ravestate.wrappers import ContextWrapper, PropertyWrapper
 
@@ -20,14 +20,11 @@ logger = get_logger(__name__)
 
 
 def test_run_qa():
-    # TODO fix testcase
-    assert False
-
     last_output = ""
 
     with Module(name="persqa_test"):
 
-        @state(cond=startup(), read=all)
+        @state(cond=sig_startup, read=prop_all)
         def persqa_hi(ctx: ContextWrapper):
             ravestate_ontology.initialized.wait()
             handle_single_interlocutor_input(ctx, "hi")
@@ -52,7 +49,7 @@ def test_run_qa():
     def say(ctx: ContextWrapper, what: str):
         ctx[rawio_input] = what
 
-    ctx.emit(startup())
+    ctx.emit(sig_startup)
     ctx.run_once()
 
     assert persqa_hi.wait()

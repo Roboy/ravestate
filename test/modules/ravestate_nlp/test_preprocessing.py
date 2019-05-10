@@ -1,6 +1,6 @@
 import pytest
-from ravestate_nlp import nlp_preprocess, tokens, postags, lemmas, tags, ner, roboy
-from ravestate_rawio import input as raw_in
+from ravestate_nlp import nlp_preprocess, prop_tokens, porp_postags, prop_lemmas, prop_tags, prop_ner, prop_roboy
+from ravestate_rawio import prop_in as raw_in
 from testfixtures import log_capture
 
 FILE_NAME = 'ravestate_nlp'
@@ -15,7 +15,7 @@ def basic_input():
 def test_tokenization(capture, basic_input):
     nlp_preprocess(basic_input)
     expected = ('hello', 'world', 'my', 'name', 'is', 'roboy')
-    assert basic_input[tokens] == expected
+    assert basic_input[prop_tokens] == expected
     capture.check_present((f"{FILE_NAME}", 'INFO', f"[NLP:tokens]: {expected}"))
 
 
@@ -23,7 +23,7 @@ def test_tokenization(capture, basic_input):
 def test_postags(capture, basic_input):
     nlp_preprocess(basic_input)
     expected = ('INTJ', 'NOUN', 'DET', 'NOUN', 'VERB', 'ADJ')
-    assert basic_input[postags] == expected
+    assert basic_input[porp_postags] == expected
     capture.check_present((f"{FILE_NAME}", 'INFO', f"[NLP:postags]: {expected}"))
 
 
@@ -31,7 +31,7 @@ def test_postags(capture, basic_input):
 def test_lemmas(capture, basic_input):
     nlp_preprocess(basic_input)
     expected = ('hello', 'world', '-PRON-', 'name', 'be', 'roboy')
-    assert basic_input[lemmas] == expected
+    assert basic_input[prop_lemmas] == expected
     capture.check_present((f"{FILE_NAME}", 'INFO', f"[NLP:lemmas]: {expected}"))
 
 
@@ -39,7 +39,7 @@ def test_lemmas(capture, basic_input):
 def test_tags(capture, basic_input):
     nlp_preprocess(basic_input)
     expected = ('UH', 'NN', 'PRP$', 'NN', 'VBZ', 'JJ')
-    assert basic_input[tags] == expected
+    assert basic_input[prop_tags] == expected
     capture.check_present((f"{FILE_NAME}", 'INFO', f"[NLP:tags]: {expected}"))
 
 
@@ -48,7 +48,7 @@ def test_tags(capture, basic_input):
 def test_ner(capture, basic_input):
     nlp_preprocess(basic_input)
     expected = (('roboy', 'ORG'),)
-    assert basic_input[ner] == expected
+    assert basic_input[prop_ner] == expected
     capture.check_present((f"{FILE_NAME}", 'INFO', f"[NLP:ner]: {expected}"))
 
 
@@ -56,5 +56,5 @@ def test_ner(capture, basic_input):
 def test_roboy(capture, basic_input):
     nlp_preprocess(basic_input)
     expected = True
-    assert basic_input[roboy] == expected
+    assert basic_input[prop_roboy] == expected
     capture.check_present((f"{FILE_NAME}", 'INFO', f"[NLP:roboy]: {expected}"))

@@ -1,7 +1,7 @@
 from ravestate.constraint import Signal, ConfigurableAge
 from ravestate.spike import Spike
 from ravestate.state import s, Emit
-from ravestate.context import startup
+from ravestate.context import sig_startup
 from ravestate.module import Module
 from ravestate.testfixtures import *
 from threading import Lock
@@ -16,7 +16,7 @@ def test_run_with_pressure():
         a = Signal("a")
         b = Signal("b")
 
-        @state(cond=startup(), signal=a)
+        @state(cond=sig_startup, signal=a)
         def signal_a(ctx):
             return Emit()
 
@@ -33,7 +33,7 @@ def test_run_with_pressure():
             pass
 
     ctx = Context(DEFAULT_MODULE_NAME)
-    ctx.emit(startup())
+    ctx.emit(sig_startup)
 
     ctx.run_once()
     assert signal_a.wait()

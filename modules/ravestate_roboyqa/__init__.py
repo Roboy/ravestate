@@ -1,12 +1,9 @@
-from ravestate.module import Module
-from ravestate.state import state, Resign
-from ravestate.constraint import s, ConfigurableAge
-from ravestate_nlp.question_word import QuestionWord
+import ravestate as rs
+import ravestate_nlp as nlp
+import ravestate_verbaliser as verbaliser
+import ravestate_idle as idle
+import ravestate_rawio as rawio
 import ravestate_ontology
-from ravestate_nlp import contains_roboy, is_question, triples
-from ravestate_verbaliser import verbaliser
-from ravestate_idle import bored
-from ravestate_rawio import output as raw_out
 
 
 from os.path import realpath, dirname, join
@@ -21,13 +18,13 @@ verbaliser.add_folder(join(dirname(realpath(__file__)), "answering_phrases"))
 ROBOY_NODE_CONF_KEY = "roboy_node_id"
 
 
-with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
+with rs.Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
 
-    @state(cond=bored, write=raw_out, weight=0.6, cooldown=30.)
+    @rs.state(cond=idle.sig_bored, write=rawio.prop_out, weight=0.6, cooldown=30.)
     def hello_world_roboyqa(ctx):
-       ctx[raw_out] = "Ask me something about myself!"
+       ctx[rawio.prop_out] = "Ask me something about myself!"
 
-    @state(cond=contains_roboy & is_question, read=triples, write=raw_out)
+    @rs.state(cond=nlp.sig_contains_roboy & nlp.sig_is_question, read=nlp.prop_triples, write=rawio.prop_out)
     def roboyqa(ctx):
         """
         answers question regarding roboy by retrieving the information out of the neo4j roboy memory graph
@@ -62,15 +59,15 @@ with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
             roboy = node_list[0]
         else:
             logger.error(f"Seems like you do not have my memory running, or no node with ID {ctx.conf(key=ROBOY_NODE_CONF_KEY)} exists!")
-            return Resign()
+            return rs.Resign()
         
-        triple = ctx[triples][0]
+        triple = ctx[nlp.prop_triples][0]
 
         category = None
         memory_info = None
 
         # question word: What?
-        if triple.is_question(QuestionWord.OBJECT):
+        if triple.is_question(nlp.QuestionWord.OBJECT):
             if triple.match_either_lemma(pred={"like"}, subj={"hobby"}):
                 category = "HAS_HOBBY"
             elif triple.match_either_lemma(pred={"learn"}, subj={"skill"}):
@@ -85,14 +82,16 @@ with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
                 memory_info = roboy.get_properties(key=category)
             elif triple.match_either_lemma(pred={"become"}):
                 category = "future"
+
         # question word: Where?
-        elif triple.is_question(QuestionWord.PLACE):
+        elif triple.is_question(nlp.QuestionWord.PLACE):
             if triple.match_either_lemma(pred={"be"}):
                 category = "FROM"
             elif triple.match_either_lemma(pred={"live"}):
                 category = "LIVE_IN"
+
         # question word: Who?
-        elif triple.is_question(QuestionWord.PERSON):
+        elif triple.is_question(nlp.QuestionWord.PERSON):
             if triple.match_either_lemma(obj={"father", "dad"}):
                 category = "CHILD_OF"
             elif triple.match_either_lemma(obj={"brother", "sibling"}):
@@ -104,8 +103,9 @@ with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
                 memory_info = roboy.get_properties(key=category)
         elif triple.match_either_lemma(obj={"part", "member"}):
             category = "MEMBER_OF"
+
         # question word: How?
-        elif triple.is_question(QuestionWord.FORM):
+        elif triple.is_question(nlp.QuestionWord.FORM):
             if triple.match_either_lemma(pred={"old"}):
                 category = "age"
                 memory_info = roboy_age(roboy.get_properties(key="birthdate"))
@@ -117,7 +117,7 @@ with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
             category = "abilities"
 
         if category and category.isupper() and not isinstance(roboy.get_relationships(key=category), dict):
-            node_id = random.sample(roboy.get_relationships(key=category),1)[0]
+            node_id = random.sample(roboy.get_relationships(key=category), 1)[0]
             memory_info = sess.retrieve(node_id=int(node_id))[0].get_name()
 
         elif category and category.islower() and not isinstance(roboy.get_properties(key=category), dict):
@@ -125,11 +125,11 @@ with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
             memory_info = random.sample(property_list, 1)[0]
 
         if memory_info:
-            ctx[raw_out] = verbaliser.get_random_successful_answer("roboy_"+category) % memory_info
+            ctx[rawio.prop_out] = verbaliser.get_random_successful_answer("roboy_"+category) % memory_info
         elif category == "well_being":
-            ctx[raw_out] = verbaliser.get_random_successful_answer("roboy_"+category)
+            ctx[rawio.prop_out] = verbaliser.get_random_successful_answer("roboy_"+category)
         else:
-            return Resign()
+            return rs.Resign()
 
 
 def roboy_age(birth_date: str):

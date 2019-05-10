@@ -1,19 +1,16 @@
-from ravestate.state import state
-from ravestate.module import Module
-from ravestate.constraint import s
-from ravestate.wrappers import ContextWrapper
+import ravestate as rs
+from ravestate_verbaliser import prop_intent
 
-from ravestate_verbaliser import intent
-import ravestate_phrases_basic_en
-from ravestate_interloc import all as interloc_all
-from ravestate_rawio import input as raw_in
+import ravestate_phrases_basic_en as lang
+from ravestate_interloc import prop_all as interloc_all
+from ravestate_rawio import prop_in
 
-with Module(name="hibye"):
+with rs.Module(name="hibye"):
 
-    @state(cond=interloc_all.pushed_signal() & raw_in.changed_signal(), write=intent)
-    def greeting(ctx: ContextWrapper):
-        ctx[intent] = "greeting"
+    @rs.state(cond=interloc_all.pushed_signal() & prop_in.changed_signal(), write=prop_intent)
+    def greeting(ctx: rs.ContextWrapper):
+        ctx[prop_intent] = lang.intent_greeting
 
-    @state(cond=interloc_all.popped_signal() & raw_in.changed_signal(), write=intent)
-    def farewell(ctx: ContextWrapper):
-        ctx[intent] = "farewells"
+    @rs.state(cond=interloc_all.popped_signal() & prop_in.changed_signal(), write=prop_intent)
+    def farewell(ctx: rs.ContextWrapper):
+        ctx[prop_intent] = lang.intent_farewells

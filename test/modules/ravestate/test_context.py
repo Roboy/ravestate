@@ -2,7 +2,7 @@ from ravestate.constraint import Signal, ConfigurableAge
 from ravestate.spike import Spike
 from ravestate.module import Module
 from ravestate.testfixtures import *
-from ravestate.context import create_and_run_context, startup, shutdown
+from ravestate.context import create_and_run_context, sig_startup, sig_shutdown
 from ravestate.config import Configuration
 
 
@@ -19,7 +19,7 @@ def test_run(mocker, context_fixture):
     context_fixture.emit = mocker.stub()
     context_fixture.shutdown_flag = True
     context_fixture.run()
-    context_fixture.emit.assert_called_once_with(startup())
+    context_fixture.emit.assert_called_once_with(sig_startup)
     context_fixture.shutdown()
 
 
@@ -43,7 +43,7 @@ def test_shutdown(mocker, context_fixture):
     mocker.patch.object(context_fixture._run_task, 'join')
     context_fixture.emit = mocker.stub(name='emit')
     context_fixture.shutdown()
-    context_fixture.emit.assert_called_once_with(shutdown())
+    context_fixture.emit.assert_called_once_with(sig_shutdown)
     context_fixture._run_task.join.assert_called_once()
 
 

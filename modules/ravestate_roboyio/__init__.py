@@ -1,15 +1,12 @@
-from ravestate.module import Module
-from ravestate.state import state
-from ravestate.wrappers import ContextWrapper
-from ravestate_interloc import handle_single_interlocutor_input
-from ravestate_ros2.ros2_properties import Ros2SubProperty
-from ravestate.context import startup
-import ravestate_ros2
+import ravestate as rs
+import ravestate_interloc as interloc
+import ravestate_ros2 as ros2
 from unidecode import unidecode
+from time import sleep
+
 from reggol import get_logger
 logger = get_logger(__name__)
 
-from time import sleep
 
 PYROBOY_AVAILABLE = False
 try:
@@ -31,30 +28,30 @@ Please make sure to have the following items installed & sourced:
 
 if PYROBOY_AVAILABLE:
 
-    ravestate_ros2.set_node_once(node)
+    ros2.set_node_once(node)
 
-    with Module(name="roboyio"):
+    with rs.Module(name="roboyio"):
 
-        recognized_speech = Ros2SubProperty(
+        recognized_speech = ros2.Ros2SubProperty(
             name="recognized_speech",
             topic="/roboy/cognition/speech/recognition",
             msg_type=RecognizedSpeech,
             always_signal_changed=True)
 
-        @state(cond=recognized_speech.changed_signal(), read=("interloc:all", recognized_speech.id()))
-        def roboy_input(ctx: ContextWrapper):
-            result = ctx[recognized_speech.id()]
+        @rs.state(cond=recognized_speech.changed_signal(), read=(interloc.prop_all, recognized_speech))
+        def roboy_input(ctx: rs.ContextWrapper):
+            result = ctx[recognized_speech]
             if result:
-                handle_single_interlocutor_input(ctx, result.text)
+                interloc.handle_single_interlocutor_input(ctx, result.text)
 
-        # @state(cond=startup(), read="interloc:all")
+        # @rs.state(cond=startup(), read=interloc.prop_all)
         # def roboy_input(ctx: ContextWrapper):
         #     while not ctx.shutting_down():
         #         result = listen()
         #         if result:
-        #             handle_single_interlocutor_input(ctx, result)
+        #             interloc.handle_single_interlocutor_input(ctx, result)
 
-        @state(read="rawio:out")
+        @rs.state(read="rawio:out")
         def roboy_output(ctx):
             ret = say(unidecode(ctx["rawio:out:changed"]))
             logger.info(f"pyroboy.say() -> {ret}")

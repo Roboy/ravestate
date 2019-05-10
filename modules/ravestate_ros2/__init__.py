@@ -1,5 +1,6 @@
-from ravestate.module import Module
-from ravestate_ros2.ros2_properties import sync_ros_properties, set_node_once
+import ravestate as rs
+
+from ravestate_ros2.ros2_properties import sync_ros_properties, set_node_once, Ros2SubProperty, Ros2PubProperty, Ros2CallProperty
 
 CONFIG = {
     # name of the ROS2-Node that is created by ravestate_ros2
@@ -8,6 +9,6 @@ CONFIG = {
     ros2_properties.SPIN_FREQUENCY_CONFIG_KEY: 10
 }
 
-with Module(name="ros2", config=CONFIG) as mod:
+with rs.Module(name="ros2", config=CONFIG) as mod:
 
     mod.add(sync_ros_properties)

@@ -22,35 +22,26 @@ from ravestate.spike import Spike
 from reggol import get_logger
 logger = get_logger(__name__)
 
-_startup_signal = Signal(":startup")
-_shutdown_signal = Signal(":shutdown")
+"""
+The startup signal, which is fired once when `Context.run()` is executed.<br>
+__Hint:__ All key-word arguments of #constraint.s(...)
+ (`min_age`, `max_age`, `detached`) are supported.
+"""
+sig_startup = Signal(":startup")
+
+"""
+Obtain the shutdown signal, which is fired once when `Context.shutdown()` is called.<br>
+__Hint:__ All key-word arguments of #constraint.s(...)
+ (`min_age`, `max_age`, `detached`) are supported.
+"""
+sig_shutdown = Signal(":shutdown")
 
 
-# TODO do startup and shutdown have to be methods?
-#  Maybe put them so that they can be imported with from ravestate import startup?
-def startup(**kwargs) -> Signal:
-    """
-    Obtain the startup signal, which is fired once when `Context.run()` is executed.<br>
-    __Hint:__ All key-word arguments of #constraint.s(...)
-     (`min_age`, `max_age`, `detached`) are supported.
-    """
-    return _startup_signal
+prop_pressure = Property(name="pressure", allow_read=True, allow_write=True, allow_push=False, allow_pop=False,
+                         default_value=False, always_signal_changed=False, is_flag_property=True)
 
-
-def shutdown(**kwargs) -> Signal:
-    """
-    Obtain the shutdown signal, which is fired once when `Context.shutdown()` is called.<br>
-    __Hint:__ All key-word arguments of #constraint.s(...)
-     (`min_age`, `max_age`, `detached`) are supported.
-    """
-    return _shutdown_signal
-
-
-pressure_property = Property(name="pressure", allow_read=True, allow_write=True, allow_push=False, allow_pop=False,
-                             default_value=False, always_signal_changed=False, is_flag_property=True)
-activity_property = Property(name="activity", allow_read=True, allow_write=True, allow_push=False, allow_pop=False,
-                             default_value=0, always_signal_changed=False)
-
+prop_activity = Property(name="activity", allow_read=True, allow_write=True, allow_push=False, allow_pop=False,
+                         default_value=0, always_signal_changed=False)
 
 def create_and_run_context(*args, runtime_overrides=None):
     """
@@ -86,8 +77,8 @@ class _Grab:
 
 
 class Context(IContext):
-    _default_signals: Tuple[Signal] = (startup(), shutdown())
-    _default_properties: Tuple[Property] = (activity_property, pressure_property)
+    _default_signals: Tuple[Signal] = (sig_startup, sig_shutdown)
+    _default_properties: Tuple[Property] = (prop_activity, prop_pressure)
 
     core_module_name = "core"
     import_modules_config = "import"
@@ -231,7 +222,7 @@ class Context(IContext):
             return
         self._run_task = Thread(target=self._run_loop)
         self._run_task.start()
-        self.emit(startup())
+        self.emit(sig_startup)
 
     def shutting_down(self) -> bool:
         """
@@ -244,7 +235,7 @@ class Context(IContext):
         Sets the shutdown flag and waits for the signal processing thread to join.
         """
         self._shutdown_flag.set()
-        self.emit(shutdown())
+        self.emit(sig_shutdown)
         self._run_task.join()
 
     def add_module(self, module_name: str) -> None:

@@ -1,5 +1,5 @@
 from pytest_mock import mocker
-from ravestate_rawio import input as raw_in, output as raw_out
+from ravestate_rawio import prop_in as raw_in, prop_out as raw_out
 
 
 def test_wildtalk_state(mocker):

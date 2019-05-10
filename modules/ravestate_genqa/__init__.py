@@ -1,14 +1,10 @@
-from ravestate.module import Module
-from ravestate.state import state, Delete
-from ravestate_verbaliser import verbaliser
-from ravestate.constraint import s
-from ravestate.context import startup
-
+import ravestate as rs
 import requests
 
-from ravestate_idle import bored
-from ravestate_rawio import input as raw_in, output as raw_out
-from ravestate_nlp import is_question
+import ravestate_idle as idle
+import ravestate_rawio as rawio
+import ravestate_nlp as nlp
+import ravestate_verbaliser as verbaliser
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -22,22 +18,22 @@ CONFIG = {
 SERVER_AVAILABLE_CODE = 200
 
 
-with Module(name="genqa", config=CONFIG):
+with rs.Module(name="genqa", config=CONFIG):
 
-    @state(cond=startup())
+    @rs.state(cond=rs.sig_startup)
     def hello_world_genqa(ctx):
         server = ctx.conf(key=DRQA_SERVER_ADDRESS)
         if not server:
             logger.error('Server address is not set. Shutting down GenQA.')
-            return Delete()
+            return rs.Delete()
         if not server_up(server):
-            return Delete()
+            return rs.Delete()
 
-    @state(cond=bored, write=raw_out, weight=1.15, cooldown=30.)
+    @rs.state(cond=idle.sig_bored, write=rawio.prop_out, weight=1.15, cooldown=30.)
     def prompt(ctx):
-        ctx[raw_out] = verbaliser.get_random_phrase("question-answering-prompt")
+        ctx[rawio.prop_out] = verbaliser.get_random_phrase("question-answering-prompt")
 
-    @state(cond=is_question, read=raw_in, write=raw_out)
+    @rs.state(cond=nlp.sig_is_question, read=rawio.prop_in, write=rawio.prop_out)
     def drqa_module(ctx):
         """
         general question answering using DrQA through a HTTP server
@@ -47,18 +43,18 @@ with Module(name="genqa", config=CONFIG):
         """
         server = ctx.conf(key=DRQA_SERVER_ADDRESS)
         if not server_up(server):
-            return Delete(resign=True)
-        params = {'question': str(ctx[raw_in]).lower()}
+            return rs.Delete(resign=True)
+        params = {'question': str(ctx[rawio.prop_in]).lower()}
         response = requests.get(server, params=params)
         response_json = response.json()
         certainty = response_json["answers"][0]["span_score"]
         # sane answer
         if certainty > ctx.conf(key=ROBOY_ANSWER_SANITY):
-            ctx[raw_out] = verbaliser.get_random_phrase("question-answering-starting-phrases") + " " + \
+            ctx[rawio.prop_out] = verbaliser.get_random_phrase("question-answering-starting-phrases") + " " + \
                                response_json["answers"][0]["span"]
         # insane/unsure answer
         else:
-            ctx[raw_out] = verbaliser.get_random_phrase("unsure-question-answering-phrases") \
+            ctx[rawio.prop_out] = verbaliser.get_random_phrase("unsure-question-answering-phrases") \
                                % response_json["answers"][0]["span"] \
                                + "\n" + "Maybe I can find out more if your rephrase the question for me."
 
