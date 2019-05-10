@@ -4,7 +4,7 @@ from ravestate.spike import Spike
 from reggol import strip_prefix
 from testfixtures import LogCapture
 
-from ravestate.constraint import s
+from ravestate.constraint import s, Signal
 from ravestate.context import Context
 from ravestate.property import Property
 from ravestate.state import State, state
@@ -18,6 +18,15 @@ DEFAULT_PROPERTY_VALUE = 'Kruder'
 DEFAULT_PROPERTY_CHANGED = f"{DEFAULT_PROPERTY_ID}:changed"
 NEW_PROPERTY_VALUE = 'Dorfmeister'
 
+SIGNAL_A = Signal("a")
+SIGNAL_A.module_name = DEFAULT_MODULE_NAME
+SIGNAL_B = Signal("b")
+SIGNAL_B.module_name = DEFAULT_MODULE_NAME
+SIGNAL_C = Signal("c")
+SIGNAL_C.module_name = DEFAULT_MODULE_NAME
+SIGNAL_D = Signal("d")
+SIGNAL_D.module_name = DEFAULT_MODULE_NAME
+
 
 @pytest.fixture
 def state_fixture(mocker):
@@ -30,7 +39,7 @@ def state_fixture(mocker):
 
 @pytest.fixture
 def state_signal_a_fixture(mocker):
-    @state(read=(DEFAULT_PROPERTY_ID,), signal_name="a")
+    @state(read=(DEFAULT_PROPERTY_ID,), signal=SIGNAL_A)
     def state_mock_a_fn(ctx):
         pass
     state_mock_a_fn.module_name = DEFAULT_MODULE_NAME
@@ -39,7 +48,7 @@ def state_signal_a_fixture(mocker):
 
 @pytest.fixture
 def state_signal_b_fixture(mocker):
-    @state(signal_name="b", cond=s("module:a"))
+    @state(signal=SIGNAL_B, cond=SIGNAL_A)
     def state_mock_b_fn(ctx):
         pass
     state_mock_b_fn.module_name = DEFAULT_MODULE_NAME
@@ -48,7 +57,7 @@ def state_signal_b_fixture(mocker):
 
 @pytest.fixture
 def state_signal_c_fixture(mocker):
-    @state(signal_name="c", cond=s("module:a"))
+    @state(signal=SIGNAL_C, cond=SIGNAL_A)
     def state_mock_c_fn(ctx):
         pass
     state_mock_c_fn.module_name = DEFAULT_MODULE_NAME
@@ -57,7 +66,7 @@ def state_signal_c_fixture(mocker):
 
 @pytest.fixture
 def state_signal_d_fixture(mocker):
-    @state(signal_name="d", cond=s("module:b")|s("module:c"))
+    @state(signal=SIGNAL_D, cond=SIGNAL_B | SIGNAL_C)
     def state_mock_c_fn(ctx):
         pass
     state_mock_c_fn.module_name = DEFAULT_MODULE_NAME

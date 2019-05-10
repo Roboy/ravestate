@@ -43,7 +43,7 @@ with Module(name="akinator", config={CERTAINTY: 90}):
 
     @state(cond=s("nlp:intent-play") | s("idle:bored"),
            write="rawio:out",
-           signal_name="initiate-play",
+           signal="initiate-play",
            emit_detached=True,
            weight=1.,
            cooldown=30.)
@@ -89,7 +89,7 @@ with Module(name="akinator", config={CERTAINTY: 90}):
            read="nlp:yesno",
            write=("rawio:out", "akinator:is_it", "akinator:question"),
            emit_detached=True,
-           signal_name="wrong-input")
+           signal="wrong-input")
     def question_answered(ctx):
         """
         Reads the answer to a question and outputs the next question
@@ -113,7 +113,7 @@ with Module(name="akinator", config={CERTAINTY: 90}):
 
     @state(cond=s("akinator:is_it:changed"),
            write="rawio:out",
-           signal_name="is-it",
+           signal="is-it",
            emit_detached=True)
     def is_it(ctx):
         """
@@ -151,7 +151,7 @@ with Module(name="akinator", config={CERTAINTY: 90}):
     @state(cond=s("akinator:wrong-input"),
            write="rawio:out",
            emit_detached=True,
-           signal_name="exit-game")
+           signal="exit-game")
     def wrong_input(ctx):
         """
         Catches wrong inputs from the interlocutor during questions answering and loops back to the question state

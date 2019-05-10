@@ -1,6 +1,7 @@
 from ravestate_interloc import handle_single_interlocutor_input
 import ravestate_nlp
-import ravestate_rawio
+from ravestate_rawio import output as rawio_output, input as rawio_input
+from ravestate_interloc import all
 import ravestate_persqa
 import ravestate_idle
 import ravestate_ontology
@@ -19,21 +20,23 @@ logger = get_logger(__name__)
 
 
 def test_run_qa():
+    # TODO fix testcase
+    assert False
 
     last_output = ""
 
     with Module(name="persqa_test"):
 
-        @state(cond=startup(), read="interloc:all")
+        @state(cond=startup(), read=all)
         def persqa_hi(ctx: ContextWrapper):
             ravestate_ontology.initialized.wait()
             handle_single_interlocutor_input(ctx, "hi")
 
-        @state(read="rawio:out")
+        @state(read=rawio_output)
         def raw_out(ctx: ContextWrapper):
             nonlocal last_output
-            last_output = ctx['rawio:out']
-            logger.info(f"Output: {ctx['rawio:out']}")
+            last_output = ctx[rawio_output]
+            logger.info(f"Output: {ctx[rawio_output]}")
 
     ctx = Context(
         "rawio",
@@ -45,9 +48,9 @@ def test_run_qa():
         "persqa_test"
     )
 
-    @receptor(ctx_wrap=ctx, write="rawio:in")
+    @receptor(ctx_wrap=ctx, write=rawio_input)
     def say(ctx: ContextWrapper, what: str):
-        ctx["rawio:in"] = what
+        ctx[rawio_input] = what
 
     ctx.emit(startup())
     ctx.run_once()

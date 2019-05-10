@@ -2,7 +2,7 @@ from ravestate.constraint import Signal, ConfigurableAge
 from ravestate.spike import Spike
 from ravestate.module import Module
 from ravestate.testfixtures import *
-from ravestate.context import create_and_run_context
+from ravestate.context import create_and_run_context, startup, shutdown
 from ravestate.config import Configuration
 
 
@@ -19,7 +19,7 @@ def test_run(mocker, context_fixture):
     context_fixture.emit = mocker.stub()
     context_fixture.shutdown_flag = True
     context_fixture.run()
-    context_fixture.emit.assert_called_once_with(s(':startup'))
+    context_fixture.emit.assert_called_once_with(startup())
     context_fixture.shutdown()
 
 
@@ -43,7 +43,7 @@ def test_shutdown(mocker, context_fixture):
     mocker.patch.object(context_fixture._run_task, 'join')
     context_fixture.emit = mocker.stub(name='emit')
     context_fixture.shutdown()
-    context_fixture.emit.assert_called_once_with(s(':shutdown'))
+    context_fixture.emit.assert_called_once_with(shutdown())
     context_fixture._run_task.join.assert_called_once()
 
 
@@ -85,9 +85,9 @@ def test_remove_unknown_state(context_fixture: Context, state_fixture: State):
 
 def test_remove_state_with_signal(context_with_property_fixture: Context, state_signal_a_fixture: State):
     context_with_property_fixture.add_state(st=state_signal_a_fixture)
-    assert state_signal_a_fixture.signal() in context_with_property_fixture._needy_acts_per_state_per_signal
+    assert state_signal_a_fixture.signal in context_with_property_fixture._needy_acts_per_state_per_signal
     context_with_property_fixture.rm_state(st=state_signal_a_fixture)
-    assert state_signal_a_fixture.signal() not in context_with_property_fixture._needy_acts_per_state_per_signal
+    assert state_signal_a_fixture.signal not in context_with_property_fixture._needy_acts_per_state_per_signal
 
 
 def test_add_state(
@@ -108,7 +108,7 @@ def test_add_state(
 
     # Make sure, that module:property:changed was added as a cause for module:a
     assert s(DEFAULT_PROPERTY_CHANGED) in \
-        context_with_property_fixture._signal_causes[state_signal_a_fixture.signal()][0]
+        context_with_property_fixture._signal_causes[state_signal_a_fixture.signal][0]
 
     context_with_property_fixture.add_state(st=state_signal_b_fixture)
     context_with_property_fixture.add_state(st=state_signal_c_fixture)
@@ -123,12 +123,12 @@ def test_add_state(
         if len(tuple(conj.signals())) > 2]
     assert len(d_conjunctions) == 2  # 2 completed
     assert s(DEFAULT_PROPERTY_CHANGED) in d_conjunctions[0]
-    assert state_signal_a_fixture.signal() in d_conjunctions[0]
+    assert state_signal_a_fixture.signal in d_conjunctions[0]
     assert s(DEFAULT_PROPERTY_CHANGED) in d_conjunctions[1]
-    assert state_signal_a_fixture.signal() in d_conjunctions[1]
+    assert state_signal_a_fixture.signal in d_conjunctions[1]
     assert \
-        state_signal_b_fixture.signal() in d_conjunctions[0] and state_signal_c_fixture.signal() in d_conjunctions[1] or \
-        state_signal_b_fixture.signal() in d_conjunctions[1] and state_signal_c_fixture.signal() in d_conjunctions[0]
+        state_signal_b_fixture.signal in d_conjunctions[0] and state_signal_c_fixture.signal in d_conjunctions[1] or \
+        state_signal_b_fixture.signal in d_conjunctions[1] and state_signal_c_fixture.signal in d_conjunctions[0]
 
     # Basic specificity sanity checks
     assert len(list(context_with_property_fixture._states_for_signal(s(DEFAULT_PROPERTY_CHANGED)))) == 5
@@ -142,7 +142,7 @@ def test_add_state(
     assert len(d_acts) == 1
     propchange_sig_spec = context_with_property_fixture.signal_specificity(s(DEFAULT_PROPERTY_CHANGED))
     assert a_acts[0].specificity() == propchange_sig_spec
-    a_sig_spec = context_with_property_fixture.signal_specificity(state_signal_a_fixture.signal())
+    a_sig_spec = context_with_property_fixture.signal_specificity(state_signal_a_fixture.signal)
     assert a_sig_spec == 1/3
     assert b_acts[0].specificity() == a_sig_spec
     assert d_acts[0].specificity() == 1.0
@@ -159,8 +159,8 @@ def test_add_state_configurable_age(context_with_property_fixture: Context):
     context_with_property_fixture._config.add_conf(mod=Module(name=DEFAULT_MODULE_NAME,
                                                               config={"min_age_key": 2.5, "max_age_key": 4.5}))
     context_with_property_fixture.add_state(st=conf_st)
-    assert my_cond.min_age == 2.5
-    assert my_cond.max_age == 4.5
+    assert my_cond.min_age_value == 2.5
+    assert my_cond.max_age_value == 4.5
 
 
 def test_add_state_configurable_age_not_in_config(context_with_property_fixture: Context):
@@ -172,8 +172,8 @@ def test_add_state_configurable_age_not_in_config(context_with_property_fixture:
         pass
     conf_st.module_name = DEFAULT_MODULE_NAME
     context_with_property_fixture.add_state(st=conf_st)
-    assert my_cond.min_age == 0.
-    assert my_cond.max_age == 5.
+    assert my_cond.min_age_value == 0.
+    assert my_cond.max_age_value == 5.
 
 
 def test_add_state_unknown_property(context_fixture: Context, state_fixture: State):

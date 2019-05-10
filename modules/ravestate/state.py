@@ -1,7 +1,9 @@
 # Ravestate State-related definitions
 
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Set
 from threading import Semaphore, Lock
+
+from ravestate.property import Property
 from ravestate.threadlocal import ravestate_thread_local
 from ravestate.constraint import Conjunct, Disjunct, Signal, s, Constraint
 from ravestate.consumable import Consumable
@@ -64,9 +66,9 @@ class State:
     Do not use this class - instead use the `@state` decorator.
     """
 
-    signal_name: str
-    write_props: Tuple
-    read_props: Tuple
+    signal: Signal
+    write_props: Tuple[Union[str, Property]]
+    read_props: Tuple[Union[str, Property]]
     constraint: Constraint
     emit_detached: bool
     cooldown: float
@@ -74,7 +76,6 @@ class State:
     is_receptor: bool
 
     module_name: str                  # The module which this state belongs to
-    signal_object: Signal             # Created on the fly during runtime from signal_name
     completed_constraint: Constraint  # Updated by context, to add constraint causes to constraint
     activated: Semaphore              # Semaphore which counts finished activations
     lock: Lock                        # Mutex to lock access to the current weight/cooldown state
@@ -85,9 +86,9 @@ class State:
     consumable: Consumable
 
     def __init__(self, *,
-                 signal_name: Optional[str],
-                 write: Union[str, Tuple[str]],
-                 read: Union[str, Tuple[str]],
+                 signal: Optional[Signal],
+                 write: Union[str, Property, Tuple[Union[str, Property]]],
+                 read: Union[str, Property, Tuple[Union[str, Property]]],
                  cond: Optional[Constraint],
                  action,
                  is_receptor: bool=False,
@@ -104,31 +105,31 @@ class State:
             logger.error(f"Attempt to create state {self.name} which has a string as condition, not a constraint!")
             cond = None
 
+        # convert read/write properties to tuples
+        if isinstance(write, Property) or isinstance(write, str):
+            write = (write,)
+        if isinstance(read, Property) or isinstance(read, str):
+            read = (read,)
+
         # catch the insane case
         if not len(read) and not cond and not is_receptor:
             logger.warning(
                 f"The state `{self.name}` is not reading any properties, nor waiting for any signals. " +
                 "It will never be activated!")
 
-        # convert read/write properties to tuples
-        if isinstance(write, str):
-            write = (write,)
-        if isinstance(read, str):
-            read = (read,)
-
         # listen to default changed-signals if no signals are given.
         # convert triggers to disjunctive normal form.
         if not cond and len(read) > 0:
-            cond = Disjunct(*list(Conjunct(s(f"{rprop_name}:changed")) for rprop_name in read))
+            cond = Disjunct(*(Conjunct(rprop.changed_signal()) if isinstance(rprop, Property)
+                              else Conjunct(s(f"{rprop}:changed")) for rprop in read))
 
-        self.signal_name = signal_name
+        self.signal = signal
         self.write_props = write
         self.read_props = read
         self.constraint = cond
         self.completed_constraint = cond
         self.action = action
         self.module_name = ""
-        self.signal_object = None
         self.emit_detached = emit_detached
         self.activated = Semaphore(0)
         self.weight = self.current_weight = weight
@@ -144,6 +145,15 @@ class State:
     def __call__(self, context, *args, **kwargs) -> Optional[_StateActivationResult]:
         args = (context,) + args
         return self.action(*args, **kwargs)
+
+    def get_read_props_ids(self) -> Set[str]:
+        return set(prop.id() if isinstance(prop, Property) else prop for prop in self.read_props)
+
+    def get_write_props_ids(self) -> Set[str]:
+        return set(prop.id() if isinstance(prop, Property) else prop for prop in self.write_props)
+
+    def get_all_props_ids(self) -> Set[str]:
+        return self.get_read_props_ids().union(self.get_write_props_ids())
 
     def update_weight(self, seconds_passed: float):
         """
@@ -179,13 +189,6 @@ class State:
                 # over the course of repeated update_weight() calls.
                 self.current_weight = .0
 
-    def signal(self) -> Optional[Signal]:
-        if not self.is_receptor:
-            assert self.module_name
-        if not self.signal_object and self.signal_name:
-            self.signal_object = s(f"{self.module_name}:{self.signal_name}")
-        return self.signal_object
-
     def wait(self, timeout=5.):
         """
         Wait for the state's activation function to be run at least once.
@@ -201,13 +204,13 @@ class State:
 
 
 def state(*,
-    signal_name: Optional[str]="",
-    write: tuple=(),
-    read: tuple=(),
-    cond: Constraint=None,
-    emit_detached=False,
-    weight: float=1.,
-    cooldown: float=0.):
+          signal: Optional[Signal] = "",
+          write: Tuple[Union[Property, str]] = (),
+          read: Tuple[Union[Property, str]] = (),
+          cond: Constraint = None,
+          emit_detached: bool = False,
+          weight: float = 1.,
+          cooldown: float = 0.):
 
     """
     Decorator to declare a new state, which may emit a certain signal,
@@ -223,9 +226,9 @@ def state(*,
     ```
     """
     def state_decorator(action):
-        nonlocal signal_name, write, read, cond
+        nonlocal signal, write, read, cond
         return State(
-            signal_name=signal_name,
+            signal=signal,
             write=write,
             read=read,
             cond=cond,

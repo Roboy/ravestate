@@ -22,14 +22,19 @@ from ravestate.spike import Spike
 from reggol import get_logger
 logger = get_logger(__name__)
 
+_startup_signal = Signal(":startup")
+_shutdown_signal = Signal(":shutdown")
 
+
+# TODO do startup and shutdown have to be methods?
+#  Maybe put them so that they can be imported with from ravestate import startup?
 def startup(**kwargs) -> Signal:
     """
     Obtain the startup signal, which is fired once when `Context.run()` is executed.<br>
     __Hint:__ All key-word arguments of #constraint.s(...)
      (`min_age`, `max_age`, `detached`) are supported.
     """
-    return s(":startup", **kwargs)
+    return _startup_signal
 
 
 def shutdown(**kwargs) -> Signal:
@@ -38,7 +43,13 @@ def shutdown(**kwargs) -> Signal:
     __Hint:__ All key-word arguments of #constraint.s(...)
      (`min_age`, `max_age`, `detached`) are supported.
     """
-    return s(":shutdown", **kwargs)
+    return _shutdown_signal
+
+
+pressure_property = Property(name="pressure", allow_read=True, allow_write=True, allow_push=False, allow_pop=False,
+                             default_value=False, always_signal_changed=False, is_flag_property=True)
+activity_property = Property(name="activity", allow_read=True, allow_write=True, allow_push=False, allow_pop=False,
+                             default_value=0, always_signal_changed=False)
 
 
 def create_and_run_context(*args, runtime_overrides=None):
@@ -76,27 +87,7 @@ class _Grab:
 
 class Context(IContext):
     _default_signals: Tuple[Signal] = (startup(), shutdown())
-    _default_properties: Tuple[Property] = (
-        Property(
-            name="pressure",
-            allow_read=True,
-            allow_write=True,
-            allow_push=False,
-            allow_pop=False,
-            default_value=False,
-            always_signal_changed=False,
-            is_flag_property=True
-        ),
-        Property(
-            name="activity",
-            allow_read=True,
-            allow_write=True,
-            allow_push=False,
-            allow_pop=False,
-            default_value=0,
-            always_signal_changed=False
-        )
-    )
+    _default_properties: Tuple[Property] = (activity_property, pressure_property)
 
     core_module_name = "core"
     import_modules_config = "import"
@@ -205,7 +196,7 @@ class Context(IContext):
             self.wipe(signal)
         with self._lock:
             new_spike = Spike(
-                sig=signal.name,
+                sig=signal.id(),
                 parents=parents,
                 consumable_resources=set(self._properties.keys()),
                 payload=payload)
@@ -224,7 +215,7 @@ class Context(IContext):
         with self._lock:
             for spikes in self._spikes_per_signal.values():
                 for spike in spikes:
-                    if spike.name() == signal.name:
+                    if spike.id() == signal.id():
                         spike.wipe()
         # Final cleanup will be performed while update is running,
         #  and cg.stale(spike) returns true.
@@ -282,32 +273,32 @@ class Context(IContext):
             return
 
         # make sure that all of the state's depended-upon properties exist
-        for prop in st.read_props+st.write_props:
-            if prop not in self._properties:
-                logger.error(f"Attempt to add state which depends on unknown property `{prop}`!")
+        for prop_id in st.get_all_props_ids():
+            if prop_id not in self._properties:
+                logger.error(f"Attempt to add state which depends on unknown property `{prop_id}`!")
                 return
 
         # replace configurable ages with their config values
         for signal in st.constraint.signals():
-            if isinstance(signal.min_age, ConfigurableAge):
-                conf_entry = self.conf(mod=st.module_name, key=signal.min_age.key)
+            if isinstance(signal.min_age_value, ConfigurableAge):
+                conf_entry = self.conf(mod=st.module_name, key=signal.min_age_value.key)
                 if conf_entry is None:
                     logger.error(f"Could not set min_age for cond of state {st.name} in module {st.module_name}")
-                    signal.min_age = 0.
+                    signal.min_age_value = 0.
                 else:
-                    signal.min_age = conf_entry
-            if isinstance(signal.max_age, ConfigurableAge):
-                conf_entry = self.conf(mod=st.module_name, key=signal.max_age.key)
+                    signal.min_age_value = conf_entry
+            if isinstance(signal.max_age_value, ConfigurableAge):
+                conf_entry = self.conf(mod=st.module_name, key=signal.max_age_value.key)
                 if conf_entry is None:
                     logger.error(f"Could not set max_age for cond of state {st.name} in module {st.module_name}")
-                    signal.max_age = 5.
+                    signal.max_age_value = 5.
                 else:
-                    signal.max_age = conf_entry
+                    signal.max_age_value = conf_entry
 
         # register the state's signal
         with self._lock:
-            if st.signal():
-                self._add_sig(st.signal())
+            if st.signal:
+                self._add_sig(st.signal)
 
             # add state's constraints as causes for the written prop's :changed signals,
             #  as well as the state's own signal.
@@ -352,8 +343,8 @@ class Context(IContext):
             return
         with self._lock:
             # Remove the state's signal
-            if st.signal():
-                self._rm_sig(st.signal())
+            if st.signal:
+                self._rm_sig(st.signal)
             # Remove state activations for the state
             self._del_state_activations(st)
             # Actually forget about the state
@@ -399,7 +390,7 @@ class Context(IContext):
                 self._rm_sig(signal)
             # remove all states that depend upon property
             for st in self._activations_per_state:
-                if prop.id() in st.read_props + st.write_props:
+                if prop.id() in st.get_all_props_ids():
                     states_to_remove.add(st)
         for st in states_to_remove:
             self.rm_state(st=st)
@@ -470,7 +461,7 @@ class Context(IContext):
         """
         assert isinstance(act, Activation)  # No way around it to avoid import loop
         if sig not in self._needy_acts_per_state_per_signal:
-            logger.error(f"Attempt to reacquire for unknown signal {sig.name}!")
+            logger.error(f"Attempt to reacquire for unknown signal {sig.id()}!")
             return
         interested_acts = self._needy_acts_per_state_per_signal[sig][act.state_to_activate]
         interested_acts.add(act)
@@ -491,7 +482,7 @@ class Context(IContext):
         """
         assert isinstance(act, Activation)  # No way around it to avoid import loop
         if sig not in self._needy_acts_per_state_per_signal:
-            logger.warning(f"Attempt to withdraw for unknown signal {sig.name}!")
+            logger.warning(f"Attempt to withdraw for unknown signal {sig.id()}!")
             return
         interested_acts = self._needy_acts_per_state_per_signal[sig][act.state_to_activate]
         interested_acts.discard(act)
@@ -515,12 +506,16 @@ class Context(IContext):
         * `state`: The state, which should be analyzed for it's
          possibly generated signals (declared signal + property-changed signals).
         """
-        for propname in state.write_props:
-            if propname in self._properties:
-                for signal in self._properties[propname].signals():
-                    yield signal
-        if state.signal():
-            yield state.signal()
+        for prop in state.write_props:
+            if isinstance(prop, str):
+                if prop in self._properties:
+                    prop = self._properties[prop]
+                else:
+                    continue  # TODO does this happen? (was there previously)
+            for signal in prop.signals():  # TODO also check here if in self._properties?
+                yield signal
+        if state.signal:
+            yield state.signal
 
     def run_once(self, seconds_passed=1.) -> None:
         """
@@ -571,7 +566,7 @@ class Context(IContext):
                 for spike in spikes:
                     if spike.is_wiped() or spike.age() > 0:
                         continue
-                    for state, acts in self._needy_acts_per_state_per_signal[s(spike.name())].items():
+                    for state, acts in self._needy_acts_per_state_per_signal[s(spike.id())].items():
                         old_acts = acts.copy()
                         for act in old_acts:
                             if act.acquire(spike):
@@ -617,7 +612,7 @@ class Context(IContext):
 
     def _add_sig(self, sig: Signal):
         if sig in self._needy_acts_per_state_per_signal:
-            logger.error(f"Attempt to add signal f{sig.name} twice!")
+            logger.error(f"Attempt to add signal f{sig.id()} twice!")
             return
         self._signal_causes[sig] = []
         self._needy_acts_per_state_per_signal[sig] = defaultdict(set)
@@ -626,7 +621,7 @@ class Context(IContext):
         affected_states: Set[State] = set(self._needy_acts_per_state_per_signal[sig].keys())
         if affected_states:
             logger.warning(
-                f"Since signal {sig.name} was removed, the following states will have dangling constraints: " +
+                f"Since signal {sig.id()} was removed, the following states will have dangling constraints: " +
                 ",".join(st.name for st in affected_states))
         # Remove signal as a cause for other signals
         for _, causes in self._signal_causes.items():
@@ -711,7 +706,7 @@ class Context(IContext):
                 if sig == completed_signal:
                     sig.completed_by = completion_conj
                 if sig in completion_conj:
-                    sig.max_age = -1  # See #52 (§3)
+                    sig.max_age_value = -1  # See #52 (§3)
                     sig.is_completion = True
             return original_conj
 
@@ -733,7 +728,7 @@ class Context(IContext):
         assert sig in self._signal_causes
 
         # a signal without cause (a primary signal) needs no further completion
-        if not self._signal_causes[sig] or sig.detached:
+        if not self._signal_causes[sig] or sig.detached_value:
             return None
 
         # a signal with at least one secondary cause needs at least one non-cyclic

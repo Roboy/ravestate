@@ -89,7 +89,7 @@ class Spike(ISpike):
     def __repr__(self):
         return self._name + f"[t+{self._age}]"
 
-    def name(self):
+    def id(self):
         return self._signal
 
     def causal_group(self) -> CausalGroup:

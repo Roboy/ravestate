@@ -157,18 +157,18 @@ class ContextWrapper:
         self.spike_payloads = spike_payloads
 
         # Recursively complete properties dict with children:
-        for propname in state.write_props + state.read_props:
+        for prop_parent_id in state.get_all_props_ids():
             # May have been covered by a parent before
-            if propname not in self.properties:
-                prop_and_children = ctx[propname].gather_children()
+            if prop_parent_id not in self.properties:
+                prop_and_children = ctx[prop_parent_id].gather_children()
                 for prop in prop_and_children:
                     # Child may have been covered by a parent before
                     if prop.id() not in self.properties:
                         self.properties[prop.id()] = PropertyWrapper(
                             prop=prop, ctx=self.ctx,
                             spike_parents=self.spike_parents,
-                            allow_read=propname in state.read_props,
-                            allow_write=propname in state.write_props)
+                            allow_read=prop_parent_id in state.get_read_props_ids(),
+                            allow_write=prop_parent_id in state.get_write_props_ids())
 
     def __setitem__(self, key: Union[str, Property], value: Any):
         if isinstance(key, Property):
@@ -178,7 +178,9 @@ class ContextWrapper:
         else:
             logger.error(f"State {self.state.name} attempted to write property {key} without permission!")
 
-    def __getitem__(self, key) -> Any:
+    def __getitem__(self, key: Union[str, Property, Signal]) -> Any:
+        if isinstance(key, Signal) or isinstance(key, Property):
+            key = key.id()
         if key in self.properties:
             return self.properties[key].get()
         elif key in self.spike_payloads:
@@ -199,6 +201,8 @@ class ContextWrapper:
             mod = get_module(self.state.module_name)
             assert mod
             mod.add(state)
+            if state.signal:
+                mod.add(state.signal)
         self.ctx.add_state(st=state)
 
     def shutdown(self):

@@ -9,7 +9,7 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-def changed(property_name, **kwargs) -> Signal:
+def changed(property_name, module_name, **kwargs) -> Signal:
     """
     Returns the `changed` Signal for the given property.
     This signal is emitted, when the Property is written to,
@@ -18,10 +18,12 @@ def changed(property_name, **kwargs) -> Signal:
     __Hint:__ All key-word arguments of #constraint.s(...)
      (`min_age`, `max_age`, `detached`) are supported.
     """
-    return s(f"{property_name}:changed", **kwargs)
+    sig = s(f"{property_name}:changed", **kwargs)
+    sig.module_name = module_name
+    return sig
 
 
-def pushed(property_name, **kwargs) -> Signal:
+def pushed(property_name, module_name, **kwargs) -> Signal:
     """
     Returns the `pushed` Signal for the given property. This signal
      is emitted, when a new child property is added to it.
@@ -30,10 +32,12 @@ def pushed(property_name, **kwargs) -> Signal:
     __Hint:__ All key-word arguments of #constraint.s(...)
      (`min_age`, `max_age`, `detached`) are supported.
     """
-    return s(f"{property_name}:pushed", **kwargs)
+    sig = s(f"{property_name}:pushed", **kwargs)
+    sig.module_name = module_name
+    return sig
 
 
-def popped(property_name, **kwargs) -> Signal:
+def popped(property_name, module_name, **kwargs) -> Signal:
     """
     Returns the `popped` Signal for the given property. This signal
      is emitted, when a child property removed from it.
@@ -42,7 +46,9 @@ def popped(property_name, **kwargs) -> Signal:
     __Hint:__ All key-word arguments of #constraint.s(...)
      (`min_age`, `max_age`, `detached`) are supported.
     """
-    return s(f"{property_name}:popped", **kwargs)
+    sig = s(f"{property_name}:popped", **kwargs)
+    sig.module_name = module_name
+    return sig
 
 
 class Property:
@@ -182,31 +188,40 @@ class Property:
         """
         Signal that is emitted by PropertyWrapper when #write() returns True.
         """
-        return changed(self.id())
+        module_name, name_without_module = self.id().split(':', 1)
+        return changed(name_without_module, module_name)
 
     def pushed_signal(self) -> Signal:
         """
         Signal that is emitted by PropertyWrapper when #push() returns True.
         """
-        return pushed(self.id())
+        module_name, name_without_module = self.id().split(':', 1)
+        return pushed(name_without_module, module_name)
 
     def popped_signal(self) -> Signal:
         """
         Signal that is emitted by PropertyWrapper when #pop() returns True.
         """
-        return popped(self.id())
+        module_name, name_without_module = self.id().split(':', 1)
+        return popped(name_without_module, module_name)
 
     def flag_true_signal(self) -> Signal:
         """
         Signal that is emitted by PropertyWrapper when it is a flag-property and #self.value is set to True.
         """
-        return s(f"{self.id()}:true")
+        module_name, name_without_module = self.id().split(':', 1)
+        sig = s(f"{name_without_module}:true")
+        sig.module_name = module_name
+        return sig
 
     def flag_false_signal(self) -> Signal:
         """
         Signal that is emitted by PropertyWrapper when it is a flag-property and #self.value is set to False.
         """
-        return s(f"{self.id()}:false")
+        module_name, name_without_module = self.id().split(':', 1)
+        sig = s(f"{name_without_module}:false")
+        sig.module_name = module_name
+        return sig
 
     def signals(self) -> Generator[Signal, None, None]:
         """

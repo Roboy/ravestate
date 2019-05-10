@@ -1,6 +1,9 @@
+import copy
 from typing import List, Set, Generator, Optional, Tuple, Union, Callable, Any
 from ravestate.spike import Spike
 from ravestate.iactivation import IActivation, ICausalGroup
+from ravestate.threadlocal import ravestate_thread_local
+
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -81,9 +84,10 @@ class Signal(Constraint):
     """
     name: str
     spike: Optional[Spike]
-    min_age: float
-    max_age: float
-    detached: bool
+    min_age_value: float
+    max_age_value: float
+    detached_value: bool
+    module_name: str
 
     # tells whether this signal has been completed, and may therefore
     #  not introduce a new causal group into the parent conjunct.
@@ -101,16 +105,22 @@ class Signal(Constraint):
 
     def __init__(self, name: str, *, min_age=0., max_age=5., detached=False):
         self.name = name
-        self.min_age = min_age
-        self.max_age = max_age
+        self.min_age_value = min_age
+        self.max_age_value = max_age
         self.spike = None
-        self.detached = detached
+        self.detached_value = detached
         self.completed_by = None
         self.is_completion = False
         self._min_age_ticks = 0
+        self.module_name = ""
         # TODO: Deal with ConfigurableAge
         # if min_age > max_age and max_age > .0:
         #     logger.warning(f"{self}: max_age={max_age} < min_age={min_age}!")
+
+        # add signal to module in current `with Module(...)` clause
+        module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
+        if module_under_construction:
+            module_under_construction.add(self)
 
     def __or__(self, other):
         if isinstance(other, Signal):
@@ -132,30 +142,34 @@ class Signal(Constraint):
             return Disjunct(*conjunct_list)
 
     def __eq__(self, other):
-        return (isinstance(other, Signal) and self.name == other.name) or\
-               (isinstance(other, str) and self.name == other)
+        return (isinstance(other, Signal) and self.id() == other.id()) or\
+               (isinstance(other, str) and self.id() == other)
 
     def __hash__(self):
-        return hash(self.name)
+        return hash(self.id())
 
     def __repr__(self):
-        return f"Signal({self.name}, {self.min_age}, {self.max_age}, {self.detached})"
+        return f"Signal({self.id()}, {self.min_age_value}, {self.max_age_value}, {self.detached_value})"
+
+    def id(self):
+        prefix = f'{self.module_name}:' if self.module_name else ''
+        return f'{prefix}{self.name}'
 
     def signals(self) -> Generator['Signal', None, None]:
         yield self
 
     def conjunctions(self, filter_detached=False) -> Generator['Conjunct', None, None]:
-        if not filter_detached or not self.detached:
+        if not filter_detached or not self.detached_value:
             yield Conjunct(self)
 
     def acquire(self, spike: Spike, act: IActivation):
-        if not self.spike and self.name == spike.name() and (self.max_age < 0 or spike.age() <= act.secs_to_ticks(self.max_age)):
+        if not self.spike and self.id() == spike.id() and (self.max_age_value < 0 or spike.age() <= act.secs_to_ticks(self.max_age_value)):
             assert not spike.is_wiped()
             with spike.causal_group() as cg:
                 # Causal group might refuse acquisition, if one of act's state's write-props is unavailable.
-                if not cg.acquired(spike, act, self.detached):
+                if not cg.acquired(spike, act, self.detached_value):
                     return False
-            self._min_age_ticks = act.secs_to_ticks(self.min_age)
+            self._min_age_ticks = act.secs_to_ticks(self.min_age_value)
             self.spike = spike
             return True
         return False
@@ -184,7 +198,7 @@ class Signal(Constraint):
 
     def update(self, act: IActivation) -> Generator['Signal', None, None]:
         # Reject spike, once it has become too old
-        if self.spike and self.max_age >= 0 and self.spike.age() > act.secs_to_ticks(self.max_age):
+        if self.spike and self.max_age_value >= 0 and self.spike.age() > act.secs_to_ticks(self.max_age_value):
             with self.spike.causal_group() as cg:
                 cg.rejected(self.spike, act, reason=1)
                 self.spike = None
@@ -207,8 +221,23 @@ class Signal(Constraint):
                             cause.spike = None
                             yield cause
 
+    def min_age(self, min_age: Union[float, ConfigurableAge]) -> 'Signal':
+        new_sig = copy.deepcopy(self)
+        new_sig.min_age_value = min_age
+        return new_sig
+
+    def max_age(self, max_age: Union[float, ConfigurableAge]) -> 'Signal':
+        new_sig = copy.deepcopy(self)
+        new_sig.max_age_value = max_age
+        return new_sig
+
+    def detached(self) -> 'Signal':
+        new_sig = copy.deepcopy(self)
+        new_sig.detached_value = True
+        return new_sig
+
     def __str__(self):
-        return self.name
+        return self.id()
 
 
 class Conjunct(Constraint):
@@ -231,7 +260,7 @@ class Conjunct(Constraint):
                 logger.error("Conjunct can only be constructed with Signals.")
                 raise ValueError
         self._signals = set(args)
-        self._hash = hash(tuple(sorted(sig.name for sig in self._signals)))
+        self._hash = hash(tuple(sorted(sig.id() for sig in self._signals)))
         self._allowed_causal_groups = set()
 
     def __iter__(self):
@@ -272,7 +301,7 @@ class Conjunct(Constraint):
     def conjunctions(self, filter_detached=False) -> Generator['Conjunct', None, None]:
         result = self
         if filter_detached:
-            result = Conjunct(*(sig for sig in self._signals if not sig.detached))
+            result = Conjunct(*(sig for sig in self._signals if not sig.detached_value))
         if result._signals:
             yield result
 

@@ -2,6 +2,7 @@
 
 from typing import Dict, Any, Union, Iterable, Callable
 import importlib
+from ravestate.constraint import Signal
 from ravestate.property import Property
 from ravestate.state import State
 from ravestate.threadlocal import ravestate_thread_local
@@ -41,6 +42,7 @@ class Module:
             config = {}
         self.props = []
         self.states = []
+        self.signals = []
         self.name = name
         self.conf = config
         if name in self.registered_modules:
@@ -60,21 +62,24 @@ class Module:
         if self.registration_callback:
             self.registration_callback(self)
 
-    def add(self, property_or_state: Union[Property, State, Iterable[Property], Iterable[State]]):
+    def add(self, ownable: Union[Property, State, Signal, Iterable[Property], Iterable[State], Iterable[Signal]]):
         try:
-            for obj_to_add in property_or_state:
+            for obj_to_add in ownable:
                 self.add(obj_to_add)
             return
         except TypeError:
             pass
-        if isinstance(property_or_state, Property):
-            property_or_state.set_parent_path(self.name)
-            self.props.append(property_or_state)
-        elif isinstance(property_or_state, State):
-            property_or_state.module_name = self.name
-            self.states.append(property_or_state)
+        if isinstance(ownable, Property):
+            ownable.set_parent_path(self.name)
+            self.props.append(ownable)
+        elif isinstance(ownable, State):
+            ownable.module_name = self.name
+            self.states.append(ownable)
+        elif isinstance(ownable, Signal):
+            ownable.module_name = self.name
+            self.signals.append(ownable)
         else:
-            logger.error(f"Module.add() called with invalid argument {property_or_state}!")
+            logger.error(f"Module.add() called with invalid argument {ownable}!")
 
 
 def import_module(*, module_name: str, callback):

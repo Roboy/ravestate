@@ -2,7 +2,7 @@ from ravestate.module import Module
 from ravestate.property import Property
 from ravestate.wrappers import ContextWrapper
 from ravestate.state import state, Emit, Delete, Resign
-from ravestate.constraint import s
+from ravestate.constraint import s, Signal
 from ravestate_verbaliser import verbaliser
 import ravestate_ontology
 
@@ -17,9 +17,10 @@ from scientio.ontology.node import Node
 from reggol import get_logger
 logger = get_logger(__name__)
 
-import ravestate_idle
-import ravestate_nlp
-import ravestate_rawio
+from ravestate_idle import bored
+from ravestate_rawio import input as raw_in, output as raw_out
+from ravestate_nlp import triples, yesno, tokens
+from ravestate_interloc import all as interloc_all
 
 verbaliser.add_folder(join(dirname(realpath(__file__)), "persqa_phrases"))
 
@@ -72,12 +73,14 @@ with Module(name="persqa") as mod:
         allow_push=False,
         is_flag_property=True)
 
-    follow_up = Property(
+    follow_up_prop = Property(
         name="follow_up",
         default_value="",
         always_signal_changed=True,
         allow_pop=False,
         allow_push=False)
+
+    follow_up_signal = Signal(name="follow-up")
 
     def find_empty_relationship(dictonary: Dict):
         for key in dictonary:
@@ -98,13 +101,13 @@ with Module(name="persqa") as mod:
 
         used_follow_up_preds = set()
 
-        @state(cond=s("idle:bored"),
-               write=("rawio:out", "persqa:predicate", "persqa:subject"),
-               read=(interloc_path, "persqa:predicate"),
+        @state(cond=bored,
+               write=(raw_out, predicate, subject),
+               read=(interloc_path, predicate),
                weight=1.2,
                cooldown=40.,
                emit_detached=True,
-               signal_name="follow-up")
+               signal=follow_up_signal)
         def small_talk(ctx: ContextWrapper):
             sess: Session = ravestate_ontology.get_session()
             interloc: Node = ctx[interloc_path]
@@ -112,12 +115,12 @@ with Module(name="persqa") as mod:
                 pred = "NAME"
             else:
                 pred = find_empty_relationship(interloc.get_relationships())
-            ctx["persqa:subject"] = interloc_path
-            if not ctx["persqa:predicate"]:
+            ctx[subject] = interloc_path
+            if not ctx[predicate]:
                 if pred:
                     logger.info(f"Personal question: intent={pred}")
-                    ctx["persqa:predicate"] = pred
-                    ctx["rawio:out"] = verbaliser.get_random_question(pred)
+                    ctx[predicate] = pred
+                    ctx[raw_out] = verbaliser.get_random_question(pred)
                 else:
                     unused_fup_preds = PREDICATE_SET.difference(used_follow_up_preds)
                     if not unused_fup_preds:
@@ -126,12 +129,12 @@ with Module(name="persqa") as mod:
                     pred = random.sample(PREDICATE_SET.difference(used_follow_up_preds), 1)
                     pred = pred[0]
                     used_follow_up_preds.add(pred)
-                    ctx["persqa:predicate"] = pred
+                    ctx[predicate] = pred
                     relationship_ids: Set[int] = interloc.get_relationships(pred)
                     if len(relationship_ids) > 0:  # Just to be safe ...
                         object_node_list = sess.retrieve(node_id=list(relationship_ids)[0])
                         if len(object_node_list) > 0:
-                            ctx["rawio:out"] = verbaliser.get_random_followup_question(pred).format(
+                            ctx[raw_out] = verbaliser.get_random_followup_question(pred).format(
                                 name=interloc.get_name(),
                                 obj=object_node_list[0].get_name())
                             logger.info(f"Follow-up: intent={pred}")
@@ -140,53 +143,53 @@ with Module(name="persqa") as mod:
             else:
                 # While the predicate is set, repeat the question. Once the predicate is answered,
                 #  it will be set to None, such that a new predicate is entered.
-                ctx["rawio:out"] = verbaliser.get_random_question(ctx["persqa:predicate"])
+                ctx[raw_out] = verbaliser.get_random_question(ctx[predicate])
 
-        @state(cond=s("persqa:follow-up", max_age=-1.) & s("nlp:triples:changed"),
-               write=("rawio:out", "persqa:predicate", inference_mutex.id()),
-               read=(interloc_path, "persqa:predicate", "nlp:yesno"))
+        @state(cond=follow_up_signal.max_age(-1.) & triples.changed_signal(),
+               write=(raw_out, predicate, inference_mutex),
+               read=(interloc_path, predicate, yesno))
         def fup_react(ctx: ContextWrapper):
             sess: Session = ravestate_ontology.get_session()
             subject_node: Node = ctx[interloc_path]
-            pred = ctx["persqa:predicate"]
+            pred = ctx[predicate]
             object_node_list = []
             relationship_ids: Set[int] = subject_node.get_relationships(pred)
             if len(relationship_ids) > 0:
                 object_node_list = sess.retrieve(node_id=list(relationship_ids)[0])
             if len(object_node_list) > 0:
-                ctx["rawio:out"] = verbaliser.get_random_followup_answer(pred).format(
+                ctx[raw_out] = verbaliser.get_random_followup_answer(pred).format(
                     name=subject_node.get_name(),
                     obj=object_node_list[0].get_name())
             else:
-                ctx["rawio:out"] = "Oh, I see!"
-            ctx["persqa:predicate"] = None
+                ctx[raw_out] = "Oh, I see!"
+            ctx[predicate] = None
 
         ctx.add_state(small_talk)
         ctx.add_state(fup_react)
 
-    @state(cond=s("rawio:in:changed") & s("interloc:all:pushed"),
-           write=inference_mutex.id(),
-           read="interloc:all",
+    @state(cond=raw_in.changed_signal() & interloc_all.pushed_signal(),
+           write=inference_mutex,
+           read=interloc_all,
            emit_detached=True)
     def new_interloc(ctx: ContextWrapper):
         """
         reacts to interloc:pushed and creates persqa:ask_name state
         """
-        interloc_path = ctx["interloc:all:pushed"]
+        interloc_path = ctx[interloc_all.pushed_signal()]
         create_small_talk_states(ctx=ctx, interloc_path=interloc_path)
 
-    @state(cond=s("rawio:in:changed") & s("interloc:all:popped"),
-           write=(inference_mutex.id(), "persqa:predicate", "persqa:subject"))
+    @state(cond=raw_in.changed_signal() & interloc_all.popped_signal(),
+           write=(inference_mutex, predicate, subject))
     def removed_interloc(ctx: ContextWrapper):
         """
         reacts to interloc:popped and makes sure that
         """
-        ctx["persqa:subject"] = None
-        ctx["persqa:predicate"] = None
+        ctx[subject] = None
+        ctx[predicate] = None
 
-    @state(cond=s("nlp:triples:changed"),
-           write=("persqa:answer", inference_mutex.id()),
-           read=("persqa:predicate", "nlp:triples", "nlp:tokens", "nlp:yesno"))
+    @state(cond=triples.changed_signal(),
+           write=(answer, inference_mutex),
+           read=(predicate, triples, tokens, yesno))
     def inference(ctx: ContextWrapper):
         """
         recognizes name in sentences like:
@@ -194,26 +197,26 @@ with Module(name="persqa") as mod:
          - my name toseban
          - dino
         """
-        triple = ctx["nlp:triples"][0]
+        triple = ctx[triples][0]
         if triple.is_question():
             return Resign()
-        pred = ctx["persqa:predicate"]
+        pred = ctx[predicate]
         answer_str = None
         if pred == "NAME" or pred in PREDICATE_SET:
             # TODO City, Country -> NLP NER also only recognizes locations...
             if triple.has_object():
                 answer_str = triple.get_object().text
-            elif len(ctx["nlp:tokens"]) == 1:
-                answer_str = ctx["nlp:tokens"][0]
-            elif len(ctx["nlp:tokens"]) == 2:
-                answer_str = "%s %s" % (ctx["nlp:tokens"][0], ctx["nlp:tokens"][1])
+            elif len(ctx[tokens]) == 1:
+                answer_str = ctx[tokens][0]
+            elif len(ctx[tokens]) == 2:
+                answer_str = "%s %s" % (ctx[tokens][0], ctx[tokens][1])
         if answer_str:
             logger.debug(f"Inference: extracted answer '{answer_str}' for predicate {pred}")
-            ctx["persqa:answer"] = answer_str
+            ctx[answer] = answer_str
 
     @state(cond=answer.changed_signal(),
-           write=("rawio:out", "persqa:predicate"),
-           read=("persqa:predicate", "persqa:subject", "persqa:answer", "interloc:all"))
+           write=(raw_out, predicate),
+           read=(predicate, subject, answer, interloc_all))
     def react(ctx: ContextWrapper):
         """
         Retrieves memory node with the name, or creates a new one
@@ -221,9 +224,9 @@ with Module(name="persqa") as mod:
         """
         onto: Ontology = ravestate_ontology.get_ontology()
         sess: Session = ravestate_ontology.get_session()
-        inferred_answer = ctx["persqa:answer"]
-        pred = ctx["persqa:predicate"]
-        subject_path: str = ctx["persqa:subject"]
+        inferred_answer = ctx[answer]
+        pred = ctx[predicate]
+        subject_path: str = ctx[subject]
         if not subject_path:
             return Resign()
         subject_node: Node = ctx[subject_path]
@@ -248,9 +251,9 @@ with Module(name="persqa") as mod:
                 subject_node.add_relationships({pred: {relationship_node.get_id()}})
                 sess.update(subject_node)
 
-        ctx["rawio:out"] = verbaliser.get_random_successful_answer(pred).format(
+        ctx[raw_out] = verbaliser.get_random_successful_answer(pred).format(
             name=subject_node.get_name(),
             obj=inferred_answer)
-        ctx["persqa:predicate"] = None
+        ctx[predicate] = None
 
 

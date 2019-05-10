@@ -3,13 +3,15 @@ from ravestate.state import state, Resign
 from ravestate.constraint import s, ConfigurableAge
 from ravestate_nlp.question_word import QuestionWord
 import ravestate_ontology
+from ravestate_nlp import contains_roboy, is_question, triples
 from ravestate_verbaliser import verbaliser
+from ravestate_idle import bored
+from ravestate_rawio import output as raw_out
+
 
 from os.path import realpath, dirname, join
 import random
 import datetime
-
-import ravestate_idle
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -21,11 +23,11 @@ ROBOY_NODE_CONF_KEY = "roboy_node_id"
 
 with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
 
-    @state(cond=s("idle:bored"), write="rawio:out", weight=1.1, cooldown=30.)
+    @state(cond=bored, write=raw_out, weight=0.6, cooldown=30.)
     def hello_world_roboyqa(ctx):
-       ctx["rawio:out"] = "Ask me something about myself!"
+       ctx[raw_out] = "Ask me something about myself!"
 
-    @state(cond=s("nlp:contains-roboy") & s("nlp:is-question"), read="nlp:triples", write="rawio:out")
+    @state(cond=contains_roboy & is_question, read=triples, write=raw_out)
     def roboyqa(ctx):
         """
         answers question regarding roboy by retrieving the information out of the neo4j roboy memory graph
@@ -62,7 +64,7 @@ with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
             logger.error(f"Seems like you do not have my memory running, or no node with ID {ctx.conf(key=ROBOY_NODE_CONF_KEY)} exists!")
             return Resign()
         
-        triple = ctx["nlp:triples"][0]
+        triple = ctx[triples][0]
 
         category = None
         memory_info = None
@@ -123,9 +125,9 @@ with Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
             memory_info = random.sample(property_list, 1)[0]
 
         if memory_info:
-            ctx["rawio:out"] = verbaliser.get_random_successful_answer("roboy_"+category) % memory_info
+            ctx[raw_out] = verbaliser.get_random_successful_answer("roboy_"+category) % memory_info
         elif category == "well_being":
-            ctx["rawio:out"] = verbaliser.get_random_successful_answer("roboy_"+category)
+            ctx[raw_out] = verbaliser.get_random_successful_answer("roboy_"+category)
         else:
             return Resign()
 

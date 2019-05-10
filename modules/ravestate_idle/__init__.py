@@ -1,8 +1,8 @@
 from ravestate.module import Module
-from ravestate.constraint import ConfigurableAge
-from ravestate.constraint import s
+from ravestate.constraint import ConfigurableAge, Signal, s
 from ravestate.wrappers import ContextWrapper
 from ravestate.state import state, Emit
+from ravestate.context import activity_property, pressure_property
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -17,17 +17,20 @@ CONFIG = {
 
 with Module(name="idle", config=CONFIG):
 
-    @state(cond=s(signal_name=":activity:changed", min_age=ConfigurableAge(key=BORED_THRESHOLD_CONFIG_KEY), max_age=-1), read=":activity", signal_name="bored")
+    impatient = Signal(name="impatient")
+    bored = Signal(name="bored")
+
+    @state(cond=activity_property.changed_signal().min_age(ConfigurableAge(key=BORED_THRESHOLD_CONFIG_KEY)).max_age(-1),
+           read=activity_property, signal=bored)
     def am_i_bored(ctx: ContextWrapper):
         """
         Emits idle:bored signal if no states are currently partially fulfilled
         """
-        if ctx[":activity"] == 0:
+        if ctx[activity_property] == 0:
             return Emit(wipe=True)
 
-    @state(cond=s(signal_name=":pressure:true",
-                  min_age=ConfigurableAge(key=IMPATIENCE_THRESHOLD_CONFIG_KEY),
-                  max_age=-1.),
-           signal_name="impatient")
+    @state(cond=pressure_property.flag_true_signal().
+           min_age(ConfigurableAge(key=IMPATIENCE_THRESHOLD_CONFIG_KEY)).max_age(-1.),
+           signal=impatient)
     def am_i_impatient(ctx: ContextWrapper):
         return Emit(wipe=True)

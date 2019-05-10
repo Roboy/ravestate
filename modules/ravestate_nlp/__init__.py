@@ -1,13 +1,12 @@
 
 from ravestate.module import Module
 from ravestate.property import Property
-from ravestate.state import state
+from ravestate.state import state, Emit
+from ravestate.constraint import s, Signal
+from ravestate_rawio import input as raw_in
 from ravestate_nlp.question_word import QuestionWord
 from ravestate_nlp.triple import Triple
 from ravestate_nlp.extract_triples import extract_triples
-from ravestate_nlp.triple import Triple
-from ravestate.state import Emit
-from ravestate.constraint import s
 from ravestate_nlp.yes_no import yes_no
 
 from reggol import get_logger
@@ -45,85 +44,77 @@ spacy_nlp_en = init_spacy()
 
 with Module(name="nlp"):
 
-    tokens = Property(name="tokens", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    postags = Property(name="postags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    lemmas = Property(name="lemmas", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    tags = Property(name="tags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    ner = Property(name="ner", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    triples = Property(name="triples", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
-    roboy = Property(name="roboy", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False),
+    tokens = Property(name="tokens", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+    postags = Property(name="postags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+    lemmas = Property(name="lemmas", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+    tags = Property(name="tags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+    ner = Property(name="ner", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+    triples = Property(name="triples", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+    roboy = Property(name="roboy", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
     yesno = Property(name="yesno", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
 
+    contains_roboy = Signal(name="contains-roboy")
+    is_question = Signal(name="is-question")
+    intent_play = Signal(name="intent-play")
 
-    @state(
-        cond=s("rawio:in:changed"),
-        read="rawio:in",
-        write=(
-                "nlp:tokens",
-                "nlp:postags",
-                "nlp:lemmas",
-                "nlp:tags",
-                "nlp:ner",
-                "nlp:triples",
-                "nlp:roboy",
-                "nlp:yesno"
-        ))
+
+    @state(read=raw_in, write=(tokens, postags, lemmas, tags, ner, triples, roboy, yesno))
     def nlp_preprocess(ctx):
-        text = ctx["rawio:in"]
+        text = ctx[raw_in]
         if not text:
             return False
         text = text.lower()
         nlp_doc = spacy_nlp_en(text)
 
         nlp_tokens = tuple(str(token) for token in nlp_doc)
-        ctx["nlp:tokens"] = nlp_tokens
+        ctx[tokens] = nlp_tokens
         logger.info(f"[NLP:tokens]: {nlp_tokens}")
 
         nlp_postags = tuple(str(token.pos_) for token in nlp_doc)
-        ctx["nlp:postags"] = nlp_postags
+        ctx[postags] = nlp_postags
         logger.info(f"[NLP:postags]: {nlp_postags}")
 
         nlp_lemmas = tuple(str(token.lemma_) for token in nlp_doc)
-        ctx["nlp:lemmas"] = nlp_lemmas
+        ctx[lemmas] = nlp_lemmas
         logger.info(f"[NLP:lemmas]: {nlp_lemmas}")
 
         nlp_tags = tuple(str(token.tag_) for token in nlp_doc)
-        ctx["nlp:tags"] = nlp_tags
+        ctx[tags] = nlp_tags
         logger.info(f"[NLP:tags]: {nlp_tags}")
 
         nlp_ner = tuple((str(ents.text), str(ents.label_)) for ents in nlp_doc.ents)
-        ctx["nlp:ner"] = nlp_ner
+        ctx[ner] = nlp_ner
         logger.info(f"[NLP:ner]: {nlp_ner}")
 
         nlp_triples = nlp_doc._.triples
-        ctx["nlp:triples"] = nlp_triples
+        ctx[triples] = nlp_triples
         logger.info(f"[NLP:triples]: {nlp_triples}")
 
         nlp_roboy = nlp_doc._.about_roboy
-        ctx["nlp:roboy"] = nlp_roboy
+        ctx[roboy] = nlp_roboy
         logger.info(f"[NLP:roboy]: {nlp_roboy}")
 
         nlp_yesno = nlp_doc._.yesno
-        ctx["nlp:yesno"] = nlp_yesno
+        ctx[yesno] = nlp_yesno
         logger.info(f"[NLP:yesno]: {nlp_yesno}")
 
 
-    @state(signal_name="contains-roboy", read="nlp:roboy")
+    @state(signal=contains_roboy, read=roboy)
     def nlp_contains_roboy_signal(ctx):
-        if ctx["nlp:roboy"]:
+        if ctx[roboy]:
             return Emit()
         return False
 
 
-    @state(signal_name="is-question", read="nlp:triples")
+    @state(signal=is_question, read=triples)
     def nlp_is_question_signal(ctx):
-        if ctx["nlp:triples"][0].is_question():
+        if ctx[triples][0].is_question():
             return Emit()
         return False
 
-    @state(signal_name="intent-play", read="nlp:triples")
+    @state(signal=intent_play, read=triples)
     def nlp_intent_play_signal(ctx):
-        nlp_triples = ctx["nlp:triples"]
+        nlp_triples = ctx[triples]
         if nlp_triples[0].match_either_lemma(pred={"play"}, obj={"game"}):
             return Emit()
         return False

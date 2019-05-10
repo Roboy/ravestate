@@ -55,7 +55,7 @@ with Module(name="sendpics", config=CONFIG):
         cond=(
             s("sendpics:repeat_name", max_age=30.) | s("sendpics:face_vec:changed", max_age=30.)
         ) & s("nlp:tokens:changed"),
-        signal_name="repeat_name",
+        signal="repeat_name",
         read=("nlp:triples", "nlp:tokens", "sendpics:face_vec"),
         write="rawio:out",
         emit_detached=True)

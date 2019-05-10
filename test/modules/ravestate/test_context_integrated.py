@@ -13,19 +13,22 @@ def test_run_with_pressure():
 
         Property(name=DEFAULT_PROPERTY_NAME)
 
-        @state(cond=startup(), signal_name="a")
+        a = Signal("a")
+        b = Signal("b")
+
+        @state(cond=startup(), signal=a)
         def signal_a(ctx):
             return Emit()
 
-        @state(cond=s(f"{DEFAULT_MODULE_NAME}:a"), signal_name="b")
+        @state(cond=a, signal=b)
         def signal_b(ctx):
             return Emit()
 
-        @state(cond=s(f"{DEFAULT_MODULE_NAME}:a"), write=DEFAULT_PROPERTY_ID)
+        @state(cond=a, write=DEFAULT_PROPERTY_ID)
         def pressuring_state(ctx):
             pass
 
-        @state(cond=s(f"{DEFAULT_MODULE_NAME}:a") & s(f"{DEFAULT_MODULE_NAME}:b"), write=DEFAULT_PROPERTY_ID)
+        @state(cond=a & b, write=DEFAULT_PROPERTY_ID)
         def specific_state(ctx):
             pass
 

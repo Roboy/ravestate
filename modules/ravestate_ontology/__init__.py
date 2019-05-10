@@ -1,6 +1,6 @@
 from ravestate.module import Module
 from ravestate.state import state
-from ravestate.constraint import s
+from ravestate.context import startup
 
 from scientio.ontology.ontology import Ontology
 from scientio.session import Session
@@ -27,7 +27,7 @@ CONFIG = {
 
 with Module(name="ontology", config=CONFIG):
 
-    @state(cond=s(":startup"))
+    @state(cond=startup())
     def hello_world_ontology(ctx):
         """
         Creates a scientio session with neo4j backend.

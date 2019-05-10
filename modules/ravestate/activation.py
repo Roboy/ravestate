@@ -66,7 +66,7 @@ class Activation(IActivation):
         Return's the set of the activation's write-access property names.
         """
         if self.state_to_activate.write_props:
-            return set(self.state_to_activate.write_props)
+            return self.state_to_activate.get_write_props_ids()
         else:
             # Return a dummy resource that will be "consumed" by the activation.
             #  This allows CausalGroup to track the spike acquisitions for this
@@ -236,7 +236,7 @@ class Activation(IActivation):
             self.death_clock = None
 
             # Ask each spike's causal group for activation consent
-            spikes_for_conjunct = set((sig.spike, sig.detached) for sig in conjunction.signals())
+            spikes_for_conjunct = set((sig.spike, sig.detached_value) for sig in conjunction.signals())
             consenting_causal_groups = set()
             all_consented = True
             for spike, detached in spikes_for_conjunct:
@@ -255,7 +255,7 @@ class Activation(IActivation):
 
             # Gather payloads for all spikes
             self.spike_payloads = {
-                spike.name(): spike.payload()
+                spike.id(): spike.payload()
                 for spike, _ in spikes_for_conjunct if spike.payload()}
 
             # Notify all consenting causal groups that activation is going forward
@@ -334,17 +334,17 @@ class Activation(IActivation):
 
         # Process state function result
         if isinstance(result, Emit):
-            if self.state_to_activate.signal():
+            if self.state_to_activate.signal:
                 self.ctx.emit(
-                    self.state_to_activate.signal(),
+                    self.state_to_activate.signal,
                     parents=self.parent_spikes,
                     wipe=result.wipe)
             else:
                 logger.error(f"Attempt to emit spike from state {self.name}, which does not specify a signal name!")
 
         elif isinstance(result, Wipe):
-            if self.state_to_activate.signal():
-                self.ctx.wipe(self.state_to_activate.signal())
+            if self.state_to_activate.signal:
+                self.ctx.wipe(self.state_to_activate.signal)
             else:
                 logger.error(f"Attempt to wipe spikes from state {self.name}, which does not specify a signal name!")
 

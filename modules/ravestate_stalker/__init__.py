@@ -60,7 +60,7 @@ if ROBOY_COGNITION_AVAILABLE:
             ctx.push(subscriber_parent.id(), face_names)
             ctx.push(subscriber_parent.id(), rec_faces)
 
-            @state(read=(face_names.id(), rec_faces.id()),  write=(rec_faces.id(), raw_out.id()), signal_name="daddy")
+            @state(read=(face_names.id(), rec_faces.id()), write=(rec_faces.id(), raw_out.id()), signal="daddy")
             def react_to_recognized_face(ctx: ContextWrapper):
                 nonlocal face_names
                 faces: RecognizedFaces = ctx[face_names.id()]

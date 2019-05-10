@@ -3,8 +3,7 @@ from ravestate.module import Module
 from ravestate.wrappers import ContextWrapper
 from ravestate.receptor import receptor
 
-import ravestate_rawio
-import ravestate_interloc
+from ravestate_rawio import input as raw_in
 from ravestate_verbaliser.verbaliser import get_phrase_list
 import ravestate_phrases_basic_en
 import ravestate_ontology
@@ -39,24 +38,24 @@ def handle_single_interlocutor_input(ctx: ContextWrapper, input_value: str, id="
      the interlocutor's Neo4j node (until a proper name is set by persqa).
     """
 
-    @receptor(ctx_wrap=ctx, write="rawio:in")
+    @receptor(ctx_wrap=ctx, write=raw_in)
     def write_input(ctx_input, value: str):
-        ctx_input["rawio:in"] = value
+        ctx_input[raw_in] = value
 
-    @receptor(ctx_wrap=ctx, write="interloc:all")
+    @receptor(ctx_wrap=ctx, write=all)
     def push_interloc(ctx: ContextWrapper, interlocutor_node: Node):
-        if ctx.push(parent_property_or_path="interloc:all",
+        if ctx.push(parent_property_or_path=all,
                     child=Property(name=id, default_value=interlocutor_node)):
             logger.debug(f"Pushed {interlocutor_node} to interloc:all")
 
-    @receptor(ctx_wrap=ctx, write="interloc:all")
+    @receptor(ctx_wrap=ctx, write=all)
     def pop_interloc(ctx: ContextWrapper):
         if ctx.pop(f"interloc:all:{id}"):
             logger.debug(f"Popped interloc:all:{id}")
 
     write_input(input_value)
 
-    interloc_exists = f"interloc:all:{id}" in ctx.enum("interloc:all")
+    interloc_exists = f"interloc:all:{id}" in ctx.enum(all)
 
     # push Node if you got a greeting
     if input_value.strip() in get_phrase_list("greeting") and not interloc_exists:

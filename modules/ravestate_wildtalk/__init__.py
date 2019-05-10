@@ -4,14 +4,14 @@ from ravestate.module import Module
 from ravestate.constraint import s
 
 from roboy_parlai import wildtalk
-import ravestate_rawio
+from ravestate_rawio import input as raw_in, output as raw_out
 
 
 with Module(name="wildtalk"):
 
-    @state(cond=s("rawio:in:changed", max_age=-1), read="rawio:in", write="rawio:out")
+    @state(cond=raw_in.changed_signal().max_age(-1.), read=raw_in, write=raw_out)
     def wildtalk_state(ctx):
-        text = ctx["rawio:in"]
+        text = ctx[raw_in]
         if not text:  # make sure that text is not empty
             text = " "
-        ctx["rawio:out"] = wildtalk(text)
+        ctx[raw_out] = wildtalk(text)
