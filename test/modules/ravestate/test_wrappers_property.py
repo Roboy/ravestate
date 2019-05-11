@@ -1,5 +1,5 @@
 from ravestate.testfixtures import *
-from ravestate.constraint import s
+from ravestate.constraint import Signal
 from ravestate.icontext import IContext
 from ravestate.state import State
 from ravestate.property import Property
@@ -100,7 +100,7 @@ def test_property_write(under_test_read_write: PropertyWrapper, default_property
     under_test_read_write.set(NEW_PROPERTY_VALUE)
     assert (under_test_read_write.get() == NEW_PROPERTY_VALUE)
     context_mock.emit.assert_called_once_with(
-        s(f"{under_test_read_write.prop.id()}:changed"),
+        Signal(f"{under_test_read_write.prop.id()}:changed"),
         parents=None,
         wipe=True,
         payload=NEW_PROPERTY_VALUE)
@@ -115,12 +115,12 @@ def test_flag_property(context_mock):
     prop_wrapper.set(True)
     assert (prop_wrapper.get() is True)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.id()}:changed"),
+        Signal(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True,
         payload=True)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.id()}:true"),
+        Signal(f"{prop_wrapper.prop.id()}:true"),
         parents=None,
         wipe=True)
 
@@ -128,12 +128,12 @@ def test_flag_property(context_mock):
     prop_wrapper.set(False)
     assert (prop_wrapper.get() is False)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.id()}:changed"),
+        Signal(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True,
         payload=False)
     context_mock.emit.assert_any_call(
-        s(f"{prop_wrapper.prop.id()}:false"),
+        Signal(f"{prop_wrapper.prop.id()}:false"),
         parents=None,
         wipe=True)
 
@@ -141,7 +141,7 @@ def test_flag_property(context_mock):
     prop_wrapper.set(None)
     assert (prop_wrapper.get() is None)
     context_mock.emit.assert_called_once_with(
-        s(f"{prop_wrapper.prop.id()}:changed"),
+        Signal(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True,
         payload=None)

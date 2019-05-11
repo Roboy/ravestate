@@ -16,7 +16,7 @@ from ravestate.iactivation import IActivation
 from ravestate.activation import Activation
 from ravestate import argparser
 from ravestate.config import Configuration
-from ravestate.constraint import s, Signal, Conjunct, Disjunct, ConfigurableAge
+from ravestate.constraint import Signal, Conjunct, Disjunct, ConfigurableAge
 from ravestate.spike import Spike
 
 from reggol import get_logger
@@ -24,14 +24,14 @@ logger = get_logger(__name__)
 
 """
 The startup signal, which is fired once when `Context.run()` is executed.<br>
-__Hint:__ All key-word arguments of #constraint.s(...)
+__Hint:__ All key-word arguments of #constraint.Signal(...)
  (`min_age`, `max_age`, `detached`) are supported.
 """
 sig_startup = Signal(":startup")
 
 """
 Obtain the shutdown signal, which is fired once when `Context.shutdown()` is called.<br>
-__Hint:__ All key-word arguments of #constraint.s(...)
+__Hint:__ All key-word arguments of #constraint.Signal(...)
  (`min_age`, `max_age`, `detached`) are supported.
 """
 sig_shutdown = Signal(":shutdown")
@@ -557,7 +557,7 @@ class Context(IContext):
                 for spike in spikes:
                     if spike.is_wiped() or spike.age() > 0:
                         continue
-                    for state, acts in self._needy_acts_per_state_per_signal[s(spike.id())].items():
+                    for state, acts in self._needy_acts_per_state_per_signal[spike.id()].items():
                         old_acts = acts.copy()
                         for act in old_acts:
                             if act.acquire(spike):

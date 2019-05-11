@@ -4,7 +4,7 @@ from ravestate.spike import Spike
 from reggol import strip_prefix
 from testfixtures import LogCapture
 
-from ravestate.constraint import s, Signal
+from ravestate.constraint import Signal
 from ravestate.context import Context
 from ravestate.property import Property
 from ravestate.state import State, state
@@ -18,6 +18,9 @@ DEFAULT_PROPERTY_VALUE = 'Kruder'
 DEFAULT_PROPERTY_CHANGED = f"{DEFAULT_PROPERTY_ID}:changed"
 NEW_PROPERTY_VALUE = 'Dorfmeister'
 
+DEFAULT_PROPERTY = Property(name=DEFAULT_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE)
+DEFAULT_PROPERTY.set_parent_path(DEFAULT_MODULE_NAME)
+
 SIGNAL_A = Signal("a")
 SIGNAL_A.module_name = DEFAULT_MODULE_NAME
 SIGNAL_B = Signal("b")
@@ -30,16 +33,16 @@ SIGNAL_D.module_name = DEFAULT_MODULE_NAME
 
 @pytest.fixture
 def state_fixture(mocker):
-    @state(write=(DEFAULT_PROPERTY_ID,), read=(DEFAULT_PROPERTY_ID,))
+    @state(write=(DEFAULT_PROPERTY,), read=(DEFAULT_PROPERTY,))
     def state_mock_fn(ctx):
-        ctx[DEFAULT_PROPERTY_ID] = "test"
+        ctx[DEFAULT_PROPERTY] = "test"
     state_mock_fn.module_name = DEFAULT_MODULE_NAME
     return state_mock_fn
 
 
 @pytest.fixture
 def state_signal_a_fixture(mocker):
-    @state(read=(DEFAULT_PROPERTY_ID,), signal=SIGNAL_A)
+    @state(read=(DEFAULT_PROPERTY,), signal=SIGNAL_A)
     def state_mock_a_fn(ctx):
         pass
     state_mock_a_fn.module_name = DEFAULT_MODULE_NAME
@@ -80,9 +83,7 @@ def context_fixture(mocker):
 
 @pytest.fixture
 def context_with_property_fixture(mocker, context_fixture) -> Context:
-    prop = Property(name=DEFAULT_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE)
-    prop.set_parent_path(DEFAULT_MODULE_NAME)
-    context_fixture.add_prop(prop=prop)
+    context_fixture.add_prop(prop=DEFAULT_PROPERTY)
     mocker.patch.object(context_fixture, 'add_prop')
     return context_fixture
 

@@ -17,7 +17,7 @@ class ColoredFormatter(logging.Formatter):
 
     GROUP_COLOR = CYAN
 
-    FORMAT = "[%(levelname_color)-5s] [%(name_color)s] %(msg)s"
+    FORMAT = "[%(levelname_color)-5s] [%(name_color)Signal] %(msg)Signal"
 
     def __init__(self, log_format=FORMAT, colors=None):
         super().__init__(log_format)

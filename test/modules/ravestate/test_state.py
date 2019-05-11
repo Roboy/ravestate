@@ -1,5 +1,5 @@
 import pytest
-from ravestate.constraint import s, Signal
+from ravestate.constraint import Signal
 
 from ravestate.state import State, state
 from ravestate.wrappers import ContextWrapper
@@ -67,7 +67,7 @@ def test_decorator_illegal_trigger(under_test, default_signal, default_read, def
         @state(signal=default_signal,
                read=default_read,
                write=default_write,
-               cond=(s("rawio:in:changed") | s("facerec:face:changed")) & (s("sys:has-internet") | s("foo:poo")))
+               cond=(Signal("rawio:in:changed") | Signal("facerec:face:changed")) & (Signal("sys:has-internet") | Signal("foo:poo")))
         def test_state(_):
             return "Hello world!"
 

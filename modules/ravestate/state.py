@@ -5,7 +5,7 @@ from threading import Semaphore, Lock
 
 from ravestate.property import Property
 from ravestate.threadlocal import ravestate_thread_local
-from ravestate.constraint import Conjunct, Disjunct, Signal, s, Constraint
+from ravestate.constraint import Conjunct, Disjunct, Signal, Constraint
 from ravestate.consumable import Consumable
 
 from reggol import get_logger
@@ -87,8 +87,8 @@ class State:
 
     def __init__(self, *,
                  signal: Optional[Signal],
-                 write: Union[str, Property, Tuple[Union[str, Property]]],
-                 read: Union[str, Property, Tuple[Union[str, Property]]],
+                 write: Union[Property, Tuple[Property]],
+                 read: Union[Property, Tuple[Property]],
                  cond: Optional[Constraint],
                  action,
                  is_receptor: bool=False,
@@ -106,9 +106,9 @@ class State:
             cond = None
 
         # convert read/write properties to tuples
-        if isinstance(write, Property) or isinstance(write, str):
+        if isinstance(write, Property):
             write = (write,)
-        if isinstance(read, Property) or isinstance(read, str):
+        if isinstance(read, Property):
             read = (read,)
 
         # catch the insane case
@@ -120,8 +120,7 @@ class State:
         # listen to default changed-signals if no signals are given.
         # convert triggers to disjunctive normal form.
         if not cond and len(read) > 0:
-            cond = Disjunct(*(Conjunct(rprop.changed()) if isinstance(rprop, Property)
-                              else Conjunct(s(f"{rprop}:changed")) for rprop in read))
+            cond = Disjunct(*(Conjunct(read_prop.changed()) for read_prop in read))
 
         self.signal = signal
         self.write_props = write
@@ -205,8 +204,8 @@ class State:
 
 def state(*,
           signal: Optional[Signal] = "",
-          write: Tuple[Union[Property, str]] = (),
-          read: Tuple[Union[Property, str]] = (),
+          write: Tuple[Property] = (),
+          read: Tuple[Property] = (),
           cond: Constraint = None,
           emit_detached: bool = False,
           weight: float = 1.,

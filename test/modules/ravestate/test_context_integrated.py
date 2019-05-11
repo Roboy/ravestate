@@ -1,6 +1,6 @@
 from ravestate.constraint import Signal, ConfigurableAge
 from ravestate.spike import Spike
-from ravestate.state import s, Emit
+from ravestate.state import Signal, Emit
 from ravestate.context import sig_startup
 from ravestate.module import Module
 from ravestate.testfixtures import *
@@ -11,7 +11,7 @@ def test_run_with_pressure():
 
     with Module(name=DEFAULT_MODULE_NAME):
 
-        Property(name=DEFAULT_PROPERTY_NAME)
+        prop = Property(name=DEFAULT_PROPERTY_NAME)
 
         a = Signal("a")
         b = Signal("b")
@@ -24,11 +24,11 @@ def test_run_with_pressure():
         def signal_b(ctx):
             return Emit()
 
-        @state(cond=a, write=DEFAULT_PROPERTY_ID)
+        @state(cond=a, write=prop)
         def pressuring_state(ctx):
             pass
 
-        @state(cond=a & b, write=DEFAULT_PROPERTY_ID)
+        @state(cond=a & b, write=prop)
         def specific_state(ctx):
             pass
 

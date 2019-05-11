@@ -2,7 +2,7 @@
 
 from threading import Lock
 from typing import Dict, List, Generator
-from ravestate.constraint import s, Signal
+from ravestate.constraint import Signal
 from ravestate.threadlocal import ravestate_thread_local
 
 from reggol import get_logger

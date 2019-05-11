@@ -33,7 +33,7 @@ def test_property_push_pop(mocker, context_wrapper_fixture, context_with_propert
         assert context_wrapper_fixture.push(parent_property_or_path=DEFAULT_PROPERTY_ID,
                                             child=Property(name=CHILD_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE))
         context_with_property_fixture.emit.assert_called_with(
-            s(f"{DEFAULT_PROPERTY_ID}:pushed"),
+            Signal(f"{DEFAULT_PROPERTY_ID}:pushed"),
             parents=None,
             wipe=False,
             payload=CHILD_PROPERTY_ID)
@@ -43,7 +43,7 @@ def test_property_push_pop(mocker, context_wrapper_fixture, context_with_propert
         assert context_wrapper_fixture[CHILD_PROPERTY_ID] == DEFAULT_PROPERTY_VALUE
         context_wrapper_fixture[CHILD_PROPERTY_ID] = CHILD_PROPERTY_VALUE
         context_with_property_fixture.emit.assert_called_with(
-            s(f"{CHILD_PROPERTY_ID}:changed"),
+            Signal(f"{CHILD_PROPERTY_ID}:changed"),
             parents=None,
             wipe=True,
             payload=CHILD_PROPERTY_VALUE)
@@ -52,7 +52,7 @@ def test_property_push_pop(mocker, context_wrapper_fixture, context_with_propert
         # pop child
         assert context_wrapper_fixture.pop(CHILD_PROPERTY_ID)
         context_with_property_fixture.emit.assert_called_with(
-            s(f"{DEFAULT_PROPERTY_ID}:popped"),
+            Signal(f"{DEFAULT_PROPERTY_ID}:popped"),
             parents=None,
             wipe=False,
             payload=CHILD_PROPERTY_ID)
@@ -65,7 +65,7 @@ def test_property_nested(mocker, context_wrapper_fixture, context_with_property_
         assert context_wrapper_fixture.push(parent_property_or_path=DEFAULT_PROPERTY_ID,
                                             child=Property(name=CHILD_PROPERTY_NAME))
         context_with_property_fixture.emit.assert_called_with(
-            s(f"{DEFAULT_PROPERTY_ID}:pushed"),
+            Signal(f"{DEFAULT_PROPERTY_ID}:pushed"),
             parents=None,
             wipe=False,
             payload=CHILD_PROPERTY_ID)
@@ -74,7 +74,7 @@ def test_property_nested(mocker, context_wrapper_fixture, context_with_property_
         assert context_wrapper_fixture.push(parent_property_or_path=CHILD_PROPERTY_ID,
                                             child=Property(name=GRANDCHILD_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE))
         context_with_property_fixture.emit.assert_called_with(
-            s(f"{CHILD_PROPERTY_ID}:pushed"),
+            Signal(f"{CHILD_PROPERTY_ID}:pushed"),
             parents=None,
             wipe=False,
             payload=GRANDCHILD_PROPERTY_ID)
@@ -85,7 +85,7 @@ def test_property_nested(mocker, context_wrapper_fixture, context_with_property_
         assert context_wrapper_fixture[GRANDCHILD_PROPERTY_ID] == DEFAULT_PROPERTY_VALUE
         context_wrapper_fixture[GRANDCHILD_PROPERTY_ID] = GRANDCHILD_PROPERTY_VALUE
         context_with_property_fixture.emit.assert_called_with(
-            s(f"{GRANDCHILD_PROPERTY_ID}:changed"),
+            Signal(f"{GRANDCHILD_PROPERTY_ID}:changed"),
             parents=None,
             wipe=True,
             payload=GRANDCHILD_PROPERTY_VALUE)
@@ -94,7 +94,7 @@ def test_property_nested(mocker, context_wrapper_fixture, context_with_property_
         # pop child
         assert context_wrapper_fixture.pop(CHILD_PROPERTY_ID)
         context_with_property_fixture.emit.assert_called_with(
-            s(f"{DEFAULT_PROPERTY_ID}:popped"),
+            Signal(f"{DEFAULT_PROPERTY_ID}:popped"),
             parents=None,
             wipe=False,
             payload=CHILD_PROPERTY_ID)
@@ -107,7 +107,7 @@ def test_property_nested_2(mocker, context_wrapper_fixture, context_with_propert
         assert context_wrapper_fixture.push(parent_property_or_path=DEFAULT_PROPERTY_ID,
                                             child=Property(name=CHILD_PROPERTY_NAME))
         context_with_property_fixture.emit.assert_called_with(
-            s(f"{DEFAULT_PROPERTY_ID}:pushed"),
+            Signal(f"{DEFAULT_PROPERTY_ID}:pushed"),
             parents=None,
             wipe=False,
             payload=CHILD_PROPERTY_ID)
@@ -116,7 +116,7 @@ def test_property_nested_2(mocker, context_wrapper_fixture, context_with_propert
         assert context_wrapper_fixture.push(parent_property_or_path=CHILD_PROPERTY_ID,
                                             child=Property(name=GRANDCHILD_PROPERTY_NAME))
         context_with_property_fixture.emit.assert_called_with(
-            s(f"{CHILD_PROPERTY_ID}:pushed"),
+            Signal(f"{CHILD_PROPERTY_ID}:pushed"),
             parents=None,
             wipe=False,
             payload=GRANDCHILD_PROPERTY_ID)
@@ -128,7 +128,7 @@ def test_property_nested_2(mocker, context_wrapper_fixture, context_with_propert
         # pop grandchild
         assert context_wrapper_fixture.pop(GRANDCHILD_PROPERTY_ID)
         context_with_property_fixture.emit.assert_called_with(
-            s(f"{CHILD_PROPERTY_ID}:popped"),
+            Signal(f"{CHILD_PROPERTY_ID}:popped"),
             parents=None,
             wipe=False,
             payload=GRANDCHILD_PROPERTY_ID)

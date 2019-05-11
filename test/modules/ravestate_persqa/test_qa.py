@@ -78,8 +78,8 @@ def test_run_qa():
 
 
 if __name__ == "__main__":
-    from hanging_threads import start_monitoring
-    monitoring_thread = start_monitoring()
+    # from hanging_threads import start_monitoring
+    # monitoring_thread = start_monitoring()
     set_default_loglevel("DEBUG")
     test_run_qa()
     exit()
