@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 
 def init_spacy():
-    # TODO: Create nlp instance in :startup state, save in context instead of global var
+    # TODO: Create nlp instance in core:startup state, save in context instead of global var
     global empty_token
     try:
         import en_core_web_sm as spacy_en

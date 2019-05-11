@@ -61,8 +61,10 @@ class Constraint:
 
 class Signal(Constraint):
     """
-    Class that represents a Signal
+    Class that represents a Signal. Should be constructed in a `with Module(..)`
+     context, such that it's module scope is set automatically.
     """
+
     name: str
     spike: Optional[Spike]
     min_age_value: float
@@ -84,7 +86,7 @@ class Signal(Constraint):
 
     _min_age_ticks: int  # written on acquire, when act.secs_to_ticks is available
 
-    def __init__(self, name: str, *, min_age=0., max_age=5., detached=False):
+    def __init__(self, name: str, *, min_age=0., max_age=5., detached=False, _skip_module_context=False):
         self.name = name
         self.min_age_value = min_age
         self.max_age_value = max_age
@@ -98,9 +100,10 @@ class Signal(Constraint):
         # if min_age > max_age and max_age > .0:
         #     logger.warning(f"{self}: max_age={max_age} < min_age={min_age}!")
 
-        # add signal to module in current `with Module(...)` clause
-        module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
-        if module_under_construction:
+        if not _skip_module_context:
+            # add signal to module in current `with Module(...)` clause
+            module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
+            assert module_under_construction
             module_under_construction.add(self)
 
     def __or__(self, other):
@@ -132,9 +135,11 @@ class Signal(Constraint):
     def __repr__(self):
         return f"Signal({self.id()}, {self.min_age_value}, {self.max_age_value}, {self.detached_value})"
 
+    def __str__(self):
+        return self.id()
+
     def id(self):
-        prefix = f'{self.module_name}:' if self.module_name else ''
-        return f'{prefix}{self.name}'
+        return f'{self.module_name}:{self.name}'
 
     def signals(self) -> Generator['Signal', None, None]:
         yield self
@@ -217,8 +222,24 @@ class Signal(Constraint):
         new_sig.detached_value = True
         return new_sig
 
-    def __str__(self):
-        return self.id()
+
+class SignalRef(Signal):
+    """
+    Signal reference. Almost the same as a signal, except that
+     it will not try to auto-discover it's module out of thread-local context
+     (module_name will stay unfilled).
+    """
+
+    def __init__(self, name: str, *, min_age=0., max_age=5., detached=False):
+        super().__init__(
+            name,
+            min_age=min_age,
+            max_age=max_age,
+            detached=detached,
+            _skip_module_context=True)
+
+    def id(self):
+        return self.name
 
 
 class Conjunct(Constraint):

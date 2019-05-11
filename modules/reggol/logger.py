@@ -5,7 +5,7 @@ import time
 from reggol.colored_formatter import ColoredFormatter
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-LOG_FORMAT = "%(asctime)Signal - %(name)Signal:%(lineno)d - [%(levelname)Signal] - %(msg)Signal"
+LOG_FORMAT = "%(asctime)s - %(name)s:%(lineno)d - [%(levelname)s] - %(msg)s"
 
 DEFAULT_FILE_NAME = f"log_{time.strftime('%Y%m%d_%H%M%S')}.log"
 DEFAULT_DIRECTORY = os.path.join(os.path.dirname(__file__), 'log')

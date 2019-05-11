@@ -1,15 +1,9 @@
 import pytest
 
-from ravestate.spike import Spike
 from reggol import strip_prefix
 from testfixtures import LogCapture
 
-from ravestate.constraint import Signal
-from ravestate.context import Context
-from ravestate.property import Property
-from ravestate.state import State, state
-from ravestate.wrappers import PropertyWrapper, ContextWrapper
-from ravestate.activation import Activation
+from ravestate import *
 
 DEFAULT_MODULE_NAME = 'module'
 DEFAULT_PROPERTY_NAME = 'property'
@@ -21,14 +15,10 @@ NEW_PROPERTY_VALUE = 'Dorfmeister'
 DEFAULT_PROPERTY = Property(name=DEFAULT_PROPERTY_NAME, default_value=DEFAULT_PROPERTY_VALUE)
 DEFAULT_PROPERTY.set_parent_path(DEFAULT_MODULE_NAME)
 
-SIGNAL_A = Signal("a")
-SIGNAL_A.module_name = DEFAULT_MODULE_NAME
-SIGNAL_B = Signal("b")
-SIGNAL_B.module_name = DEFAULT_MODULE_NAME
-SIGNAL_C = Signal("c")
-SIGNAL_C.module_name = DEFAULT_MODULE_NAME
-SIGNAL_D = Signal("d")
-SIGNAL_D.module_name = DEFAULT_MODULE_NAME
+SIGNAL_A = SignalRef(f"{DEFAULT_MODULE_NAME}:a")
+SIGNAL_B = SignalRef(f"{DEFAULT_MODULE_NAME}:b")
+SIGNAL_C = SignalRef(f"{DEFAULT_MODULE_NAME}:c")
+SIGNAL_D = SignalRef(f"{DEFAULT_MODULE_NAME}:d")
 
 
 @pytest.fixture

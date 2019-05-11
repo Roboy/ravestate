@@ -5,7 +5,7 @@ from threading import Semaphore, Lock
 
 from ravestate.property import Property
 from ravestate.threadlocal import ravestate_thread_local
-from ravestate.constraint import Conjunct, Disjunct, Signal, Constraint
+from ravestate.constraint import Conjunct, Disjunct, Signal, SignalRef, Constraint
 from ravestate.consumable import Consumable
 
 from reggol import get_logger
@@ -67,8 +67,8 @@ class State:
     """
 
     signal: Signal
-    write_props: Tuple[Union[str, Property]]
-    read_props: Tuple[Union[str, Property]]
+    write_props: Set[str]
+    read_props: Set[str]
     constraint: Constraint
     emit_detached: bool
     cooldown: float
@@ -87,8 +87,8 @@ class State:
 
     def __init__(self, *,
                  signal: Optional[Signal],
-                 write: Union[Property, Tuple[Property]],
-                 read: Union[Property, Tuple[Property]],
+                 write: Union[Property, str, Tuple[Property, str]],
+                 read: Union[Property, str, Tuple[Property, str]],
                  cond: Optional[Constraint],
                  action,
                  is_receptor: bool=False,
@@ -105,11 +105,17 @@ class State:
             logger.error(f"Attempt to create state {self.name} which has a string as condition, not a constraint!")
             cond = None
 
-        # convert read/write properties to tuples
-        if isinstance(write, Property):
+        # normalize read/write properties to sets of strings
+        if isinstance(write, Property) or isinstance(write, str):
             write = (write,)
-        if isinstance(read, Property):
+        if isinstance(read, Property) or isinstance(write, str):
             read = (read,)
+        write: Set[str] = set(
+            write_prop.id() if isinstance(write_prop, Property) else write_prop
+            for write_prop in write)
+        read: Set[str] = set(
+            read_prop.id() if isinstance(read_prop, Property) else read_prop
+            for read_prop in read)
 
         # catch the insane case
         if not len(read) and not cond and not is_receptor:
@@ -120,7 +126,7 @@ class State:
         # listen to default changed-signals if no signals are given.
         # convert triggers to disjunctive normal form.
         if not cond and len(read) > 0:
-            cond = Disjunct(*(Conjunct(read_prop.changed()) for read_prop in read))
+            cond = Disjunct(*(Conjunct(SignalRef(f"{read_prop}:changed")) for read_prop in read))
 
         self.signal = signal
         self.write_props = write
@@ -146,13 +152,13 @@ class State:
         return self.action(*args, **kwargs)
 
     def get_read_props_ids(self) -> Set[str]:
-        return set(prop.id() if isinstance(prop, Property) else prop for prop in self.read_props)
+        return self.read_props
 
     def get_write_props_ids(self) -> Set[str]:
-        return set(prop.id() if isinstance(prop, Property) else prop for prop in self.write_props)
+        return self.write_props
 
     def get_all_props_ids(self) -> Set[str]:
-        return self.get_read_props_ids().union(self.get_write_props_ids())
+        return self.read_props | self.write_props
 
     def update_weight(self, seconds_passed: float):
         """

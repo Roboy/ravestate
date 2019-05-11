@@ -53,8 +53,8 @@ class Property:
 
         # add property to module in current `with Module(...)` clause
         module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
-        if module_under_construction:
-            module_under_construction.add(self)
+        assert module_under_construction
+        module_under_construction.add(self)
 
     def id(self):
         return f'{self.parent_path}:{self.name}'

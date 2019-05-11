@@ -438,7 +438,7 @@ class CausalGroup(ICausalGroup):
                         del self._uncaused_spikes[sig][act]
                 if len(self._uncaused_spikes[sig]) == 0:
                     for act in set(self._non_detached_activations()):
-                        act.effect_not_caused(self, sig.id)
+                        act.effect_not_caused(self, sig.id())
                     del self._uncaused_spikes[sig]
 
     def _non_detached_activations(self) -> Generator[IActivation, None, None]:

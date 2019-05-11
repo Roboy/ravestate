@@ -1,5 +1,5 @@
 import pytest
-from ravestate.constraint import Signal
+from ravestate.constraint import Signal, SignalRef
 
 from ravestate.state import State, state
 from ravestate.wrappers import ContextWrapper
@@ -7,7 +7,7 @@ from ravestate.wrappers import ContextWrapper
 
 @pytest.fixture
 def default_signal():
-    return Signal("test-signal")
+    return SignalRef("test-signal")
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def default_write():
 
 @pytest.fixture
 def default_triggers():
-    return Signal("idle")
+    return SignalRef("idle")
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def test_decorator_illegal_trigger(under_test, default_signal, default_read, def
         @state(signal=default_signal,
                read=default_read,
                write=default_write,
-               cond=(Signal("rawio:in:changed") | Signal("facerec:face:changed")) & (Signal("sys:has-internet") | Signal("foo:poo")))
+               cond=(SignalRef("rawio:in:changed") | SignalRef("facerec:face:changed")) & (SignalRef("sys:has-internet") | SignalRef("foo:poo")))
         def test_state(_):
             return "Hello world!"
 

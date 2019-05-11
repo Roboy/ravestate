@@ -16,32 +16,56 @@ from ravestate.iactivation import IActivation
 from ravestate.activation import Activation
 from ravestate import argparser
 from ravestate.config import Configuration
-from ravestate.constraint import Signal, Conjunct, Disjunct, ConfigurableAge
+from ravestate.constraint import *
 from ravestate.spike import Spike
 
 from reggol import get_logger
 logger = get_logger(__name__)
 
-"""
-The startup signal, which is fired once when `Context.run()` is executed.<br>
-__Hint:__ All key-word arguments of #constraint.Signal(...)
- (`min_age`, `max_age`, `detached`) are supported.
-"""
-sig_startup = Signal(":startup")
 
-"""
-Obtain the shutdown signal, which is fired once when `Context.shutdown()` is called.<br>
-__Hint:__ All key-word arguments of #constraint.Signal(...)
- (`min_age`, `max_age`, `detached`) are supported.
-"""
-sig_shutdown = Signal(":shutdown")
+CORE_MODULE_NAME = "core"
+IMPORT_MODULES_CONFIG_KEY = "import"
+TICK_RATE_CONFIG_KEY = "tickrate"
+CORE_MODULE_CONFIG = {
+    IMPORT_MODULES_CONFIG_KEY: [],
+    TICK_RATE_CONFIG_KEY: 20
+}
 
+with Module(name="core", config=CORE_MODULE_CONFIG):
 
-prop_pressure = Property(name="pressure", allow_read=True, allow_write=True, allow_push=False, allow_pop=False,
-                         default_value=False, always_signal_changed=False, is_flag_property=True)
+    """
+    The startup signal, which is fired once when `Context.run()` is executed.<br>
+    __Hint:__ All key-word arguments of #constraint.Signal(...)
+     (`min_age`, `max_age`, `detached`) are supported.
+    """
+    sig_startup = Signal("startup")
 
-prop_activity = Property(name="activity", allow_read=True, allow_write=True, allow_push=False, allow_pop=False,
-                         default_value=0, always_signal_changed=False)
+    """
+    Obtain the shutdown signal, which is fired once when `Context.shutdown()` is called.<br>
+    __Hint:__ All key-word arguments of #constraint.Signal(...)
+     (`min_age`, `max_age`, `detached`) are supported.
+    """
+    sig_shutdown = Signal("shutdown")
+
+    prop_pressure = Property(
+        name="pressure",
+        allow_read=True,
+        allow_write=True,
+        allow_push=False,
+        allow_pop=False,
+        default_value=False,
+        always_signal_changed=False,
+        is_flag_property=True)
+
+    prop_activity = Property(
+        name="activity",
+        allow_read=True,
+        allow_write=True,
+        allow_push=False,
+        allow_pop=False,
+        default_value=0,
+        always_signal_changed=False)
+
 
 def create_and_run_context(*args, runtime_overrides=None):
     """
@@ -79,10 +103,6 @@ class _Grab:
 class Context(IContext):
     _default_signals: Tuple[Signal] = (sig_startup, sig_shutdown)
     _default_properties: Tuple[Property] = (prop_activity, prop_pressure)
-
-    core_module_name = "core"
-    import_modules_config = "import"
-    tick_rate_config = "tickrate"
 
     _lock: RLock
 
@@ -131,11 +151,6 @@ class Context(IContext):
         """
         modules, overrides, config_files = argparser.handle_args(*arguments)
         self._config = Configuration(config_files)
-        self._core_config = {
-            self.import_modules_config: [],
-            self.tick_rate_config: 20
-        }
-        self._config.add_conf(Module(name=self.core_module_name, config=self._core_config))
         self._lock = RLock()
         self._shutdown_flag = Event()
         self._properties = dict()
@@ -145,16 +160,9 @@ class Context(IContext):
         self._activations_per_state = dict()
         self._run_task = None
 
-        # Register default signals
-        for signal in self._default_signals:
-            self._add_sig(signal)
-
-        # Register default properties
-        for prop in self._default_properties:
-            self.add_prop(prop=prop)
-
         # Load required modules
-        for module_name in self._core_config[self.import_modules_config] + modules:
+        self.add_module(CORE_MODULE_NAME)
+        for module_name in self.conf(mod=CORE_MODULE_NAME, key=IMPORT_MODULES_CONFIG_KEY) + modules:
             self.add_module(module_name)
 
         # Set required config overrides
@@ -165,9 +173,10 @@ class Context(IContext):
             for module_name, key, value in runtime_overrides:
                 self._config.set(module_name, key, value)
 
-        if self._core_config[self.tick_rate_config] < 1:
+        self.tick_rate = self.conf(mod=CORE_MODULE_NAME, key=TICK_RATE_CONFIG_KEY)
+        if self.tick_rate < 1:
             logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
-            self._core_config[self.tick_rate_config] = 1
+            self.tick_rate = 1
 
     def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> None:
         """
@@ -215,7 +224,7 @@ class Context(IContext):
 
     def run(self) -> None:
         """
-        Creates a signal processing thread, starts it, and emits the :startup signal.
+        Creates a signal processing thread, starts it, and emits the core:startup signal.
         """
         if self._run_task:
             logger.error("Attempt to start context twice!")
@@ -487,7 +496,7 @@ class Context(IContext):
 
         **Returns:** An integer tick count.
         """
-        return ceil(seconds * float(self._core_config[self.tick_rate_config]))
+        return ceil(seconds * float(self.tick_rate))
 
     def possible_signals(self, state: State) -> Generator[Signal, None, None]:
         """
@@ -518,7 +527,7 @@ class Context(IContext):
         (4) forget spikes which have no suitors in their causal groups.<br>
         (5) age spikes.<br>
         (6) invoke garbage collection.<br>
-        (7) update the core `:activity` and `:pressure` variables.
+        (7) update the `core:activity` and `core:pressure` variables.
 
         * `seconds_passed`: Seconds, as floatiing point, since the last update. Will be used
          to determine the number of ticks to add/subtract to/from spike/activation age/cooldown/deathclock.
@@ -603,7 +612,6 @@ class Context(IContext):
 
     def _add_sig(self, sig: Signal):
         if sig in self._needy_acts_per_state_per_signal:
-            logger.error(f"Attempt to add signal f{sig.id()} twice!")
             return
         self._signal_causes[sig] = []
         self._needy_acts_per_state_per_signal[sig] = defaultdict(set)
@@ -626,6 +634,8 @@ class Context(IContext):
         self._config.add_conf(mod)
         for prop in mod.props:
             self.add_prop(prop=prop)
+        for sig in mod.signals:
+            self._add_sig(sig)
         for st in mod.states:
             self.add_state(st=st)
         logger.info(f"Module {mod.name} added to session.")
@@ -739,19 +749,19 @@ class Context(IContext):
             pressured_acts = []
             partially_fulfilled_acts = []
             for act in self._state_activations():
-                if self[":activity"].changed() not in set(act.constraint.signals()):
+                if prop_activity.changed() not in set(act.constraint.signals()):
                     if act.is_pressured():
                         pressured_acts.append(act.id)
                     if act.spiky():
                         partially_fulfilled_acts.append(act)
         PropertyWrapper(
-            prop=self[":pressure"],
+            prop=prop_pressure,
             ctx=self,
             allow_write=True,
             allow_read=True
         ).set(len(pressured_acts) > 0)
         PropertyWrapper(
-            prop=self[":activity"],
+            prop=prop_activity,
             ctx=self,
             allow_write=True,
             allow_read=True
@@ -764,7 +774,7 @@ class Context(IContext):
                 logger.info(partially_fulfilled_info)
 
     def _run_loop(self):
-        tick_interval = 1. / self._core_config[self.tick_rate_config]
+        tick_interval = 1. / self.tick_rate
         while not self._shutdown_flag.wait(tick_interval):
             self.run_once(tick_interval)
 
