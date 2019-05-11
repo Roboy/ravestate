@@ -91,14 +91,15 @@ class State:
                  read: Union[Property, str, Tuple[Property, str]],
                  cond: Optional[Constraint],
                  action,
-                 is_receptor: bool=False,
-                 emit_detached: bool=False,
-                 weight: float=1.,
-                 cooldown: float=0.):
+                 is_receptor: bool = False,
+                 emit_detached: bool = False,
+                 weight: float = 1.,
+                 cooldown: float = 0.):
 
         assert(callable(action))
         self.name = action.__name__
-        self.consumable = Consumable(f"@{action.__name__}")
+        if not is_receptor:
+            self.consumable = Consumable(f"@{action.__name__}")
 
         # check to recognize states using old signal implementation
         if isinstance(cond, str):

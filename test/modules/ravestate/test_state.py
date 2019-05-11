@@ -78,8 +78,8 @@ def test_decorator_default(under_test):
         return "Hello world!"
 
     assert (test_state.signal == "")
-    assert (test_state.read_props == ())
-    assert (test_state.write_props == ())
+    assert (test_state.read_props == set())
+    assert (test_state.write_props == set())
     assert (test_state.constraint is None)
     assert (test_state(default_context_wrapper) == "Hello world!")
     assert (isinstance(test_state.action, type(under_test.action)))

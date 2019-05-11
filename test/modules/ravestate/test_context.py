@@ -1,9 +1,4 @@
-from ravestate.constraint import Signal, ConfigurableAge
-from ravestate.spike import Spike
-from ravestate.module import Module
 from ravestate.testfixtures import *
-from ravestate.context import create_and_run_context, sig_startup, sig_shutdown
-from ravestate.config import Configuration
 
 
 def test_emit(context_fixture, spike_fixture):
@@ -220,6 +215,6 @@ def test_runtime_overriding_config(mocker):
 
 def test_invalid_tickrate():
     with LogCapture(attributes=strip_prefix) as log_capture:
-        ctx = Context(runtime_overrides=[(Context.core_module_name, Context.tick_rate_config, 0)])
+        ctx = Context(runtime_overrides=[(CORE_MODULE_NAME, TICK_RATE_CONFIG_KEY, 0)])
         log_capture.check_present("Attempt to set core config `tickrate` to a value less-than 1!")
-        assert ctx._core_config[Context.tick_rate_config] == 1
+        assert ctx.tick_rate == 1

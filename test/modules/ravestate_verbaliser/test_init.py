@@ -8,9 +8,10 @@ def test_react_to_intent(mocker):
     verbaliser.add_file(join(dirname(realpath(__file__)),
                                                   "verbaliser_testfiles", "phrases_test.yml"))
     import ravestate_verbaliser
+    import ravestate_rawio as rawio
     test_dict = {'verbaliser:intent:changed': 'test1'}
     ravestate_verbaliser.react_to_intent(test_dict)
-    assert test_dict["rawio:out"] in ravestate_verbaliser.verbaliser.get_phrase_list('test1')
+    assert test_dict[rawio.prop_out] in ravestate_verbaliser.verbaliser.get_phrase_list('test1')
 
 
 def test_react_to_intent_no_phrase(mocker):

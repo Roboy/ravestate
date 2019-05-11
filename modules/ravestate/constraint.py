@@ -100,10 +100,9 @@ class Signal(Constraint):
         # if min_age > max_age and max_age > .0:
         #     logger.warning(f"{self}: max_age={max_age} < min_age={min_age}!")
 
-        if not _skip_module_context:
-            # add signal to module in current `with Module(...)` clause
-            module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
-            assert module_under_construction
+        # add signal to module in current `with Module(...)` clause
+        module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
+        if module_under_construction:
             module_under_construction.add(self)
 
     def __or__(self, other):
@@ -227,7 +226,9 @@ class SignalRef(Signal):
     """
     Signal reference. Almost the same as a signal, except that
      it will not try to auto-discover it's module out of thread-local context
-     (module_name will stay unfilled).
+     (module_name will stay unfilled). Needed, because sometimes
+     you need to reference a singal within a module scope
+     without assigning that signal to the contextual module.
     """
 
     def __init__(self, name: str, *, min_age=0., max_age=5., detached=False):

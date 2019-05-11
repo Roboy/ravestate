@@ -605,7 +605,7 @@ class Context(IContext):
 
             gc.collect()
 
-        self._update_core_properties(debug=False)
+        self._update_core_properties(debug=True)
 
     def _state_activated(self, act: Activation):
         self._activations_per_state[act.state_to_activate].discard(act)
