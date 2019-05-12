@@ -78,6 +78,8 @@ with rs.Module(name="persqa") as mod:
 
     sig_follow_up = rs.Signal(name="follow-up")
 
+    sig_predicate_asked = rs.Signal(name="predicate-asked")
+
     def find_empty_relationship(dictonary: Dict):
         for key in dictonary:
             if not dictonary[key] and key in PREDICATE_SET:
@@ -186,8 +188,14 @@ with rs.Module(name="persqa") as mod:
         ctx[prop_subject] = None
         ctx[prop_predicate] = None
 
+    @rs.state(signal=sig_predicate_asked, read=prop_predicate)
+    def check_predicate_asked(ctx):
+        if ctx[prop_predicate]:
+            return rs.Emit()
+
     @rs.state(
-        cond=nlp.prop_triples.changed(),
+        # optionally acquire sig_predicate_asked, such that active engagement does not run when a predicate was asked
+        cond=nlp.prop_triples.changed() | (sig_predicate_asked.max_age(-1) & nlp.prop_triples.changed()),
         write=(prop_answer, prop_inference_mutex),
         read=(prop_predicate, nlp.prop_triples, nlp.prop_tokens, nlp.prop_yesno))
     def inference(ctx: rs.ContextWrapper):

@@ -354,12 +354,13 @@ class Context(IContext):
 
     def add_prop(self, *, prop: Property) -> None:
         """
-        Add a property to this context. An error message will be generated, if a property with
+        Add a copy of a property to this context. An error message will be generated, if a property with
          the same name has already been added previously. Note: Context will adopt a __copy__
          of the given property, the actual property will not be changed.
 
         * `prop`: The property object that should be added.
         """
+        # prop = prop.clone()
         if prop.id() in self._properties:
             logger.error(f"Attempt to add property {prop.id()} twice!")
             return

@@ -59,6 +59,26 @@ class Property:
     def id(self):
         return f'{self.parent_path}:{self.name}'
 
+    def clone(self):
+        result = Property(
+            name=self.name,
+            allow_read=self.allow_read,
+            allow_write=self.allow_write,
+            allow_push=self.allow_push,
+            allow_pop=self.allow_pop,
+            default_value=self.value,
+            always_signal_changed=self.always_signal_changed,
+            is_flag_property=self.is_flag_property,
+            wipe_on_changed=self.wipe_on_changed)
+        result.set_parent_path(self.parent_path)
+        return result
+
+    def __hash__(self):
+        return hash(self.id())
+
+    def __eq__(self, other):
+        return self.__hash__() == other.__hash__()
+
     def set_parent_path(self, path):
         """
         Set the ancestors (including modulename) for a property

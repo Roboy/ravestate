@@ -154,6 +154,16 @@ class Ros2SubProperty(rs.Property):
         global global_prop_set
         global_prop_set.remove(self.__hash__())
 
+    def clone(self):
+        result = Ros2SubProperty(
+            name=self.name,
+            topic=self.topic,
+            msg_type=self.msg_type,
+            default_value=self.value,
+            always_signal_changed=self.always_signal_changed)
+        result.set_parent_path(self.parent_path)
+        return result
+
     def ros_subscription_callback(self, msg):
         """
         Writes the message from ROS to the property
@@ -193,6 +203,14 @@ class Ros2PubProperty(rs.Property):
     def __del__(self):
         global global_prop_set
         global_prop_set.remove(self.__hash__())
+
+    def clone(self):
+        result = Ros2PubProperty(
+            name=self.name,
+            topic=self.topic,
+            msg_type=self.msg_type)
+        result.set_parent_path(self.parent_path)
+        return result
 
     def write(self, value):
         """
@@ -240,6 +258,15 @@ class Ros2CallProperty(rs.Property):
     def __del__(self):
         global global_prop_set
         global_prop_set.remove(self.__hash__())
+
+    def clone(self):
+        result = Ros2CallProperty(
+            name=self.name,
+            service_name=self.service_name,
+            service_type=self.service_type,
+            call_timeout=self.call_timeout)
+        result.set_parent_path(self.parent_path)
+        return result
 
     def write(self, value):
         """
