@@ -249,9 +249,9 @@ class CausalGroup(ICausalGroup):
         Called by a state activation, to notify the group that a member spike
          is no longer being referenced for the given state's write props.
         This may be because ... <br>
-        ... the state activation's dereference function was called. (reason=0) <br>
+        ... the activation's dereference function was called. (reason=0) <br>
         ... the spike got too old. (reason=1) <br>
-        ... the activation is happening and dereferencing it's spikes. (reason=2)
+        ... the activation happened and is dereferencing it's spikes. (reason=2)
 
         * `spike`: The member spike whose ref-set should be reduced.
 
@@ -281,7 +281,7 @@ class CausalGroup(ICausalGroup):
 
         self._change_effect_causes(rejected_by, -1)
 
-        logger.debug(f"{self}.rejected({spike} by {rejected_by}): ")
+        logger.debug(f"{self}.rejected({spike} by {rejected_by})")
 
     def consent(self, ready_suitor: IActivation) -> bool:
         """
@@ -437,8 +437,8 @@ class CausalGroup(ICausalGroup):
                     if self._uncaused_spikes[sig][act] <= 0:
                         del self._uncaused_spikes[sig][act]
                 if len(self._uncaused_spikes[sig]) == 0:
-                    for act in set(self._non_detached_activations()):
-                        act.effect_not_caused(self, sig.id())
+                    for act_to_notify in set(self._non_detached_activations()):
+                        act_to_notify.effect_not_caused(self, sig.id())
                     del self._uncaused_spikes[sig]
 
     def _non_detached_activations(self) -> Generator[IActivation, None, None]:
@@ -450,3 +450,36 @@ class CausalGroup(ICausalGroup):
                         yielded_activations.add(act)
                         yield act
 
+    def check_reference_sanity(self) -> bool:
+        """
+        Make sure, that the refcount-per-act-per-spike-per-resource value sum
+         is equal to the number of spikes from this causal group acquired per activation
+         for each activation in the index.
+        :return: True if the criterion is fulfilled, False otherwise.
+        """
+        result = True
+        signals_with_cause = set()
+        for act in self._non_detached_activations():
+            sum_refcount = sum(
+                refc_per_act[act]
+                for resource in act.resources()
+                for refc_per_act in self._ref_index[resource].values() if act in refc_per_act)
+            sum_spikes = sum(
+                len(act.resources())
+                for signal in act.constraint.signals() if signal.spike and signal.spike.causal_group() == self)
+            if sum_spikes != sum_refcount:
+                logger.error(f"Mutual refcount mismatch: {self} -> {sum_refcount} : {sum_spikes} <- {act}")
+                result = False
+            for sig in act.possible_signals():
+                signals_with_cause.add(sig)
+                if sig in self._uncaused_spikes:
+                    causes = sum_spikes / len(act.resources())
+                    if self._uncaused_spikes[sig][act] != causes:
+                        logger.error(f"Signal cause mismatch for {sig} by {act}: is {self._uncaused_spikes[sig][act]}, "
+                                     f"should be {causes}")
+                        result = False
+        for signal in set(self._uncaused_spikes.keys())-signals_with_cause:
+            logger.error(f"Signal cause mismatch for {signal}: is {self._uncaused_spikes[signal]}, "
+                         f"should be ZERO")
+            result = False
+        return result

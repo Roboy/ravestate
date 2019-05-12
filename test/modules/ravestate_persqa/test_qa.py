@@ -48,7 +48,8 @@ def test_run_qa():
 
     # Wait for name being asked
     while not raw_out.wait(.1):
-        ctx.run_once()
+        ctx.run_once(debug=True)
+        ctx.test()
     assert last_output in verbaliser.get_question_list("NAME")
 
     # Say name

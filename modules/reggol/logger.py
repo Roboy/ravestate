@@ -5,7 +5,7 @@ import time
 from reggol.colored_formatter import ColoredFormatter
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-LOG_FORMAT = "%(asctime)s - %(name)s:%(lineno)d - [%(levelname)s] - %(msg)s"
+LOG_FORMAT = "%(asctime)s - %(threadName)s:%(name)s:%(lineno)d - [%(levelname)s] - %(msg)s"
 
 DEFAULT_FILE_NAME = f"log_{time.strftime('%Y%m%d_%H%M%S')}.log"
 DEFAULT_DIRECTORY = os.path.join(os.path.dirname(__file__), 'log')
@@ -25,7 +25,7 @@ class CustomConsoleAndFileLogger(logging.Logger):
         self,
         file_path: str = DEFAULT_DIRECTORY,
         file_name: str = DEFAULT_FILE_NAME,
-        formatter: logging.Formatter = logging.Formatter(fmt = LOG_FORMAT)
+        formatter: logging.Formatter = logging.Formatter(fmt=LOG_FORMAT)
     ):
         self._file_formatter = formatter
         path = os.path.join(file_path, file_name)

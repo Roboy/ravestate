@@ -517,7 +517,7 @@ class Context(IContext):
         if state.signal:
             yield state.signal
 
-    def run_once(self, seconds_passed=1.) -> None:
+    def run_once(self, seconds_passed=1., debug=False) -> None:
         """
         Run a single update for this context, which will ...<br>
         (0) progress cooled down state weights.<br>
@@ -605,7 +605,7 @@ class Context(IContext):
 
             gc.collect()
 
-        self._update_core_properties(debug=True)
+        self._update_core_properties(debug=debug)
 
     def _state_activated(self, act: Activation):
         self._activations_per_state[act.state_to_activate].discard(act)
@@ -778,3 +778,19 @@ class Context(IContext):
         while not self._shutdown_flag.wait(tick_interval):
             self.run_once(tick_interval)
 
+    def test(self) -> bool:
+        """
+        Execute internal integrity checks.
+        """
+        # Check all causal groups for refcount correctness
+        checked_causal_groups = set()
+        result = True
+        with self._lock:
+            for spikes in self._spikes_per_signal.values():
+                for spike in spikes:
+                    with spike.causal_group() as cg:
+                        if cg not in checked_causal_groups:
+                            checked_causal_groups.add(cg)
+                            if not cg.check_reference_sanity():
+                                result = False
+        return result

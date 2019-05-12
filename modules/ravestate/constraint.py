@@ -154,8 +154,8 @@ class Signal(Constraint):
                 # Causal group might refuse acquisition, if one of act's state's write-props is unavailable.
                 if not cg.acquired(spike, act, self.detached_value):
                     return False
+                self.spike = spike
             self._min_age_ticks = act.secs_to_ticks(self.min_age_value)
-            self.spike = spike
             return True
         return False
 
