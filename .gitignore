@@ -5,6 +5,7 @@
 .idea
 __pycache__
 tts.wav
+keys*
 keys.yml
 dist/*
 build/*

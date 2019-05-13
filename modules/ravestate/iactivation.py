@@ -9,9 +9,9 @@ class ISpike:
     Base interface class for spikes.
     """
 
-    def name(self) -> str:
+    def id(self) -> str:
         """
-        Returns the name of this spike's signal.
+        Returns the id of this spike's signal.
         """
         pass
 

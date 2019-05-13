@@ -60,16 +60,16 @@ def parse_data():
         for signal in state.constraint.signals():
             # Add depended-on signals
             set = {}
-            set['source'] = signal.name
+            set['source'] = signal.id()
             # set['target'] = format_whitespace(state.name, "_", 2).replace("_", " ")
             set['target'] = state.name
             set['type'] = 'triggers'
             sets.append(set)
-        if state.signal():
+        if state.signal:
             set = {}
             # set['source'] = format_whitespace(state.name, "_", 2).replace("_", " ")
             set['source'] = state.name
-            set['target'] = state.signal().name
+            set['target'] = state.signal.id()
             set['type'] = 'emits'
             sets.append(set)
 
@@ -77,7 +77,7 @@ def parse_data():
         for signal in property.signals():
             set = {}
             set['source'] = str(property.id())
-            set['target'] = str(signal.name)
+            set['target'] = str(signal.id())
             set['type'] = 'sets'
             sets.append(set)
 

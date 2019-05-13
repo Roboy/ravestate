@@ -29,7 +29,7 @@ class IContext:
         """
         pass
 
-    def add_prop(self, *, prop: property.PropertyBase):
+    def add_prop(self, *, prop: property.Property):
         """
         Add a property to this context. An error message will be generated,
          if a property with the same name has already been added previously.
@@ -38,7 +38,7 @@ class IContext:
         """
         pass
 
-    def rm_prop(self, *, prop: property.PropertyBase):
+    def rm_prop(self, *, prop: property.Property):
         """
         Remove a property from this context.
         Generates error message, if the property was not added with add_prop()

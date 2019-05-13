@@ -21,12 +21,12 @@ class UIContext(Context):
             self.wipe(signal)
         with self._lock:
             new_spike = Spike(
-                sig=signal.name,
+                sig=signal.id(),
                 parents=parents,
                 consumable_resources=set(self._properties.keys()),
                 payload=payload)
             logger.debug(f"Emitting {new_spike}")
-            service.spike(new_spike.name())
+            service.spike(new_spike.id())
             self._spikes_per_signal[signal].add(new_spike)
 
     def _state_activated(self, act: Activation):

@@ -76,7 +76,6 @@ class Spike(ISpike):
         self._offspring = set()
         self._parents = parents.copy() if parents else set()
         self._causal_group = next(iter(parents)).causal_group() if parents else CausalGroup(consumable_resources)
-        self._suitors_per_property = {prop: set() for prop in consumable_resources}
         self._payload = payload
         for parent in parents:
             parent.adopt(self)
@@ -89,7 +88,7 @@ class Spike(ISpike):
     def __repr__(self):
         return self._name + f"[t+{self._age}]"
 
-    def name(self):
+    def id(self):
         return self._signal
 
     def causal_group(self) -> CausalGroup:
