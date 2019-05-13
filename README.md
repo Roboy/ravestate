@@ -18,13 +18,11 @@ Ravestate is a reactive library for real-time natural language dialog systems. I
 ### Reactive Hello World
 
 ```python
-from ravestate.context import startup, Context
-from ravestate.state import state
-from ravestate.module import Module
+import ravestate as rs
 
 # We want to write some text output, so we
 # need the raw:out context property from ravestate_rawio.
-from ravestate_rawio import output as raw_out
+import ravestate_rawio as rawio
 
 # Make sure that we use some i/o implementation,
 # so we can actually see stuff that is written to rawio:out.
@@ -33,17 +31,17 @@ import ravestate_conio
 # Ravestate applications should always be wrapped in a Module.
 # This allows easier scoping, and enables separation of concerns
 # beyond states.
-with Module(name="hi!"):
+with rs.Module(name="hi!"):
 
     # Create an application state which reacts to the `:startup` signal,
     # and writes a string to raw:out. Note: State functions are
     # always run asynchronously!
-    @state(cond=startup(min_age=3.), write=raw_out.id())
+    @rs.state(cond=rs.sig_startup, write=rawio.prop_out)
     def hello_world(context):
-        context[raw_out.id()] = "Waddup waddup waddup!"
+        context[rawio.prop_out] = "Waddup waddup waddup!"
 
 # Run context with console input/output and our 'hi!' module.
-Context("conio", "hi!").run()
+rs.Context("conio", "hi!").run()
 ```
 
 ## Installation
@@ -99,7 +97,7 @@ python3 -m ravestate \
     ravestate_wildtalk \
     ravestate_conio \
     ravestate_hibye \
-    ravestate_akinator
+    ravestate_persqa
 ```
 Run `python3 -m ravestate -h` to see more options!
 
@@ -116,7 +114,7 @@ config:
     - ravestate_wildtalk
     - ravestate_conio
     - ravestate_hibye
-    - ravestate_akinator
+    - ravestate_persqa
 ```
 Then, run `ravestate` with this config file:
 
