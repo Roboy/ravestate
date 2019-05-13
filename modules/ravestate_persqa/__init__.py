@@ -192,6 +192,8 @@ with rs.Module(name="persqa") as mod:
     def check_predicate_asked(ctx):
         if ctx[prop_predicate]:
             return rs.Emit()
+        else:
+            return rs.Wipe()
 
     @rs.state(
         # optionally acquire sig_predicate_asked, such that active engagement does not run when a predicate was asked
