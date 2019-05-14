@@ -132,10 +132,10 @@ class IActivation:
         """
         Notify the activation, that a follow-up signal will not be produced
          by the given causal group. The activation will go through it's constraint,
-         and reject all completion spikes for signals in effects, if the completion
+         and reject all completion spikes for signals of name `effect`, if the completion
          spikes are from the given causal group.
 
-        * `group`: The causal group which will not contain the mentioned effects.
-        * `effect`: The set of signals for which no spikes will not be produced.
+        * `group`: The causal group which will not contain a spike for signal `effect`.
+        * `effect`: Name of the signal for which no spike will be produced.
         """
         pass

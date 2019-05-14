@@ -89,11 +89,11 @@ class CausalGroup(ICausalGroup):
     ]
 
     # Dictionary, which records activations that may cause particular signal spikes
-    #  for particular reasons (conjuncts). Whenever an activation acquires or dereferences
-    #  a spike from this causal group, the dictionary is updated to add/remove activations
-    #  to/from this dictionary. A special case occurs, when an activation finishes
+    #  by consuming spikes from this causal group. Whenever an activation acquires or dereferences
+    #  a spike from this causal group, or notify_spike(signal) is called, the dictionary is updated to
+    #  add/remove activations. A special case occurs, when an activation finishes
     #  without causing some of it's possible effects (spikes): Then, effect_not_caused(effects) will
-    #  be called by the activation with the forgone signals. If for any of the forgone signal spikes
+    #  be called by the activation with the forgone signals: If for any of the forgone signal spikes
     #  there are no other registered activations which could cause the same spikes,
     #  Activation.effect_not_caused(effects, causal_group) will be called on all activations registered
     #  in this causal group.
