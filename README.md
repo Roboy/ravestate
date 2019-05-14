@@ -231,7 +231,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)/modules
 git rm -rf docs
 rm -rf _build docs
 pydocmd build
-mkdir -p docs/resources/docs && cp resources/docs/*.png docs/resources/docs
+mkdir -p docs/resources/docs && cp resources/docs/*.png docs/resources/docs && cp resources/docs/*.gif docs/resources/docs
 git add docs/*
 # For inspection: python3 -m http.server --directory docs
 ```

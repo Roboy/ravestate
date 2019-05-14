@@ -1,4 +1,5 @@
 site_name: "Ravestate"
+theme: material
 
 # This tells pydocmd which pages to generate from which Python modules,
 # functions and classes. At the first level is the page name, below that
@@ -19,7 +20,7 @@ generate:
   - ravestate.activation++
   - ravestate.causal++
 - config.md:
-  - ravestate.argparse++
+  - ravestate.argparser++
   - ravestate.config++
 
 
