@@ -44,6 +44,12 @@ with rs.Module(name="hi!"):
 rs.Context("conio", "hi!").run()
 ```
 
+### Visualization
+
+Ravestate has a [d3.js](https://d3js.org)-based visualization. When using `ravestate_ui.UIContext` instead of `Context`, or `python3 -m ravestate_ui` instead of `python3 -m ravestate`, a real-time visualization of all states/properties/signals in the state machine will be hosted on port 5001. Here is the view of `http://localhost:5001` after launching `python3 ravestate_ui -f generic.yml`:
+
+<img src="resources/docs/ravestate_ui.gif">
+
 ## Installation
 
 ### Via PIP
