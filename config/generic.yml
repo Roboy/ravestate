@@ -19,10 +19,6 @@ config:
   tickrate: 10
   import:
     - ravestate_conio
-    - ravestate_idle
-    - ravestate_ontology
-    - ravestate_nlp
-    - ravestate_interloc
     - ravestate_fillers
     - ravestate_wildtalk
     - ravestate_hibye
@@ -37,8 +33,3 @@ module: genqa
 config:
   drqa_server_address: http://35.246.158.89:5000
   roboy_answer_sanity: 1000
-
----
-module: roboyqa
-config:
-  roboy_node_id: 356

@@ -11,22 +11,21 @@
 #     neo4j_username: neo4j                 # Your neo4j user here
 #     neo4j_pw: <cornycrab>                 # Your neo4j pw here
 #
-# Then, start `python3 -m ravestate` with `-f config/generic.yml -f config/keys.yml`
+# Then, start `python3 -m ravestate` with `-f config/telegram_test.yml -f config/keys.yml`
 
 ---
 module: core
 config:
   tickrate: 10
   import:
+    - ravestate_telegramio
     - ravestate_conio
-    - ravestate_roboyio
-    - ravestate_roboyqa
-    - ravestate_genqa
-    - ravestate_persqa
+    - ravestate_fillers
     - ravestate_wildtalk
     - ravestate_hibye
-    - ravestate_stalker
-    - ravestate_fillers
+    - ravestate_genqa
+    - ravestate_roboyqa
+    - ravestate_persqa
     #- ravestate_akinator
 
 ---
@@ -36,6 +35,6 @@ config:
   roboy_answer_sanity: 1000
 
 ---
-module: akinator
+module: telegramio
 config:
-  certainty_percentage: 90
+  all_in_one_context: True

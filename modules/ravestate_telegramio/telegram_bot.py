@@ -287,9 +287,9 @@ def telegram_output(ctx: rs.ContextWrapper):
     If all telegram chats should be in the same context, sends the content of rawio:out to every currently active chat.
     Otherwise it only sends output using the Pipe if it is a child process
     """
-    text = ctx["rawio:out:changed"]
+    text = ctx[rawio.prop_out.changed()]
     if not text or not isinstance(text, str):
-        return
+        return rs.Resign()
     text = text.lower().strip()
     if ctx.conf(key=ALL_IN_ONE_CONTEXT_CONFIG_KEY):
         # TODO don't instantiate the updater every time
@@ -297,13 +297,11 @@ def telegram_output(ctx: rs.ContextWrapper):
         if not token:
             logger.error('telegram-token is not set. Shutting down telegramio')
             return rs.Delete()
-
         updater: Updater = Updater(token)
         for chat_id in active_chats.keys():
             updater.bot.send_message(chat_id=chat_id, text=text)
     else:
         child_conn = ctx.conf(key=CHILD_CONN_CONFIG_KEY)
-
         if child_conn:
             # Child Process -> write to Pipe
             child_conn.send(text)

@@ -129,7 +129,12 @@ python3 -m ravestate -f config/generic.yml -f config/keys.yml
 
 After the conversation, check the Neo4j interface under `localhost:7474`. It should now contain some nodes!
 
-__Reminder: Whenever you use ravestate from the command line, activate the virtual environment first!__
+__Reminder: Whenever you use ravestate from the command line, source the virtual environment first!__
+
+#### Running your Telegram bot
+
+To test your telegram bot with a custom bot token in your `keys.yml`,
+just run `telegram_test.yml` instead of `generic.yml`. This will load the `ravestate_telegramio` module.
 
 #### Setting up PyCharm
 

@@ -4,6 +4,7 @@ from ravestate.testfixtures import *
 from pytest_mock import mocker
 from testfixtures import LogCapture
 
+import ravestate_rawio as rawio
 from ravestate_telegramio.telegram_bot import *
 
 
@@ -31,6 +32,7 @@ def test_telegram_run(mocker, context_wrapper_fixture: Context):
 
 
 def test_telegram_output(mocker, context_wrapper_fixture: ContextWrapper):
+    context_wrapper_fixture.spike_payloads = {rawio.prop_out.changed(): "FAKE TEXT"}
     with LogCapture(attributes=strip_prefix) as log_capture:
         # Master Process should return Delete and error for telegram output when all_in_one_context is True and no Token
         with mocker.patch.object(context_wrapper_fixture, "conf",
@@ -40,14 +42,13 @@ def test_telegram_output(mocker, context_wrapper_fixture: ContextWrapper):
             log_capture.check_present('telegram-token is not set. Shutting down telegramio')
 
     # Child process should send message via pipe
-    context_wrapper_fixture.spike_payloads = {"rawio:out:changed": "FAKE TEXT"}
     child_conn = mocker.patch('multiprocessing.connection.Connection')
     with mocker.patch.object(child_conn, "send"):
         with mocker.patch.object(context_wrapper_fixture, "conf",
                                  side_effect=generate_fake_conf({ALL_IN_ONE_CONTEXT_CONFIG_KEY: False,
                                                                  CHILD_CONN_CONFIG_KEY: child_conn})):
             telegram_output(context_wrapper_fixture)
-            child_conn.send.assert_called_once_with("FAKE TEXT")
+            child_conn.send.assert_called_once_with("fake text")
 
     # Master Process should return Delete and no error for telegram output when all_in_one_context is False
     with mocker.patch.object(context_wrapper_fixture, "conf",
