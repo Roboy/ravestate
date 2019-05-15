@@ -132,6 +132,105 @@ with rs.Module(name="roboyqa", config={ROBOY_NODE_CONF_KEY: 356}):
             return rs.Resign()
 
 
+def create_default_nodes():
+    onto = get_ontology()
+    sess = get_session()
+
+    organization_type = onto.get_type("Organization")
+    city_type = onto.get_type("City")
+    robot_type = onto.get_type("Robot")
+    person_type = onto.get_type("Person")
+    robot_type = onto.get_type("Robot")
+    hobby_type = onto.get_type("Hobby")
+
+    student_team_node = Node(metatype=organization_type)
+    student_team_node.set_properties({
+        "name": "roboy student team"
+    })
+    munich_node = Node(metatype=city_type)
+    munich_node.set_properties({
+        "name": "munich"
+    })
+    roboy_junior_node = Node(metatype=robot_type)
+    roboy_junior_node.set_properties({
+        "name": "roboy",
+        "abilities": "talking to people,reading wikipedia,reading reddit",
+        "skills": "tell jokes,tell fun facts about famous people and places,recognize you next time we meet,remember your name and our conversation",
+        "speed_kmh": 0,
+        "full_name": "roboy junior",
+        "birthdate": "08.03.2013",
+        "conversation_id": "#bitch_boy",
+        "sex": "male",
+        "age": 5
+    })
+    raf_node = Node(metatype=person_type)
+    raf_node.set_properties({
+        "name": "rafael",
+        "full_name": "rafael hostettler "
+    })
+    lucy_node = Node(metatype=person_type)
+    lucy_node.set_properties({
+        "name": "lucy",
+        "age": 6,
+        "sex": "female"
+    })
+    reddit_node = Node(metatype=hobby_type)
+    reddit_node.set_properties({
+        "name": "reading reddit"
+    })
+    roboy_node = Node(metatype=robot_type)
+    roboy_node.set_properties({
+        "name": "roboy two",
+        "skills": "telling jokes,telling fun facts,telling you about the famous people and places,doing the math",
+        "abilities": "talk to people,recognize objects,show emotions,move my body,shake a hand,party like there is no tomorrow,surf the internet,answer your questions",
+        "speed_kmh": 0,
+        "birthdate": "12.04.2018",
+        "full_name": "roboy 2.0",
+        "conversation_id": "#bitch_boy",
+        "future": "become a robot rights advocate,help people and robots become friends,find the answer to the question of life the universe and everything,visit mars and other planets,become a music star,become a michelin star chef,get a robo pet,become as good as my father",
+        "sex": "male",
+        "age": "0"
+    })
+    tricycle_node = Node(metatype=Hobby)
+    tricycle_node.set_properties({
+        "name": "riding a tricycle"
+    })
+
+    nodes = (
+        student_team_node,
+        munich_node,
+        roboy_junior_node,
+        raf_node,
+        lucy_node,
+        reddit_node,
+        roboy_node,
+        tricycle_node
+    )
+    
+    for node in nodes:
+        sess.create(node)
+
+    roboy_junior_node.add_relationships( {"HAS_HOBBY": reddit_node.get_id()}       )
+    roboy_junior_node.add_relationships( {"MEMBER_OF": student_team_node.get_id()} )
+    roboy_junior_node.add_relationships( {"CHILD_OF":  raf_node.get_id()}          )
+    roboy_junior_node.add_relationships( {"LIVE_IN":   munich_node.get_id()}       )
+    raf_node.add_relationships(          {"FRIEND_OF": roboy_node.get_id()}        )
+    raf_node.add_relationships(          {"WORK_FOR":  student_team_node.get_id()} )
+    raf_node.add_relationships(          {"FRIEND_OF": roboy_junior_node.get_id()} )
+    lucy_node.add_relationships(         {"FRIEND_OF": roboy_node.get_id()}        )
+    lucy_node.add_relationships(         {"FRIEND_OF": roboy_junior_node.get_id()} )
+    roboy_node.add_relationships(        {"FROM":      munich_node.get_id()}       )
+    roboy_node.add_relationships(        {"SIBLING_OF":roboy_junior_node.get_id()} )
+    roboy_node.add_relationships(        {"HAS_HOBBY": tricycle_node.get_id()}     )
+    roboy_node.add_relationships(        {"MEMBER_OF": student_team_node.get_id()} )
+    roboy_node.add_relationships(        {"HAS_HOBBY": reddit_node.get_id()}       )
+    roboy_node.add_relationships(        {"CHILD_OF":  raf_node.get_id()}          )
+    roboy_node.add_relationships(        {"LIVE_IN":   munich_node.get_id()}       )
+
+    for node in nodes:
+        sess.update(node)
+
+
 def roboy_age(birth_date: str):
     """
     Calculates roboys age given his birth date
