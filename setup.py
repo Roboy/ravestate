@@ -21,13 +21,14 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
 
-    package_dir={package: 'modules/'+package for package in packages},
+    package_dir={'': 'modules'},
     packages=packages,
     include_package_data=True,
     package_data={
         'ravestate_phrases_basic_en': ['en/*.yml'],
         'ravestate_ontology': ['ravestate_ontology.yml'],
-        'ravestate_roboyqa': ['answering_phrases/RoboyInfoList.yml']
+        'ravestate_roboyqa': ['answering_phrases/RoboyInfoList.yml'],
+        'ravestate_persqa': ['persqa_phrases/*.yml']
     },
 
     install_requires=required + ["reggol"],

@@ -70,20 +70,76 @@ or [conda](https://conda.io/en/latest/).
 
 ### For developers
 
-First, install dependencies:
+#### Initial configuration and setup
+
+Clone the repository and install dependencies:
 
 ```bash
+# Create a virtual python environment to not pollute the global setup
+python3 -m virtualenv python-ravestate
+
+# Source the virtual environment
+. python-ravestate/bin/activate
+
+# Clone the repo
+git clone git@github.com:roboy/ravestate && cd ravestate
+
+# Install normal requirements
 pip install -r requirements.txt
 
-# To run tests, install pytest, mocking, fixtures...
+# To run tests & build docs, install pytest, mocking, fixtures, pydoc, ...
 pip install -r requirements-dev.txt
+
+# Link your local ravestate clone into your virtualenv
+pip install -e .
 ```
 
-Then, you may open the repository in any IDE, and mark the
-`modules` folder as a sources root. Alternatively for development
-purposes, call `export PYTHONPATH=$PYTHONPATH:$(pwd)/modules` from
-your ravestate clone, to tell python that there are modules
-to be loaded in the `modules` directory (the IDE does this for you).
+Now, launch a Neo4j docker instance to serve [Scientio](https://github.com/roboy/scientio), so the dialog system has a memory:
+```bash
+docker run \                                                                                              joseph@ke-dev-jb-2
+    --publish=7474:7474 --publish=7687:7687 \
+    --volume=$HOME/neo4j/data:/data \
+    --volume=$HOME/neo4j/logs:/logs \
+    neo4j:latest
+    
+# Open the address localhost:7474 in a browser, and enter the
+# credentials `neo4j`/`neo4j`. You will then be prompted to enter
+# your own password. Remember this password.
+```
+
+In the `config` folder, create a file called `keys.yml`. It should have the following content:
+
+```yaml
+module: telegramio
+config:
+  telegram-token: <sexycactus>  # Thsi is where your own telegram bot token will go later
+---
+module: ontology
+config:
+  neo4j_address: bolt://localhost:7687  # Your neo4j server uri here
+  neo4j_username: neo4j                 # Your neo4j user here
+  neo4j_pw: test                        # Your neo4j pw here
+```
+
+You may now conduct your first conversation with ravestate:
+```bash
+python3 -m ravestate -f config/generic.yml -f config/keys.yml
+```
+
+After the conversation, check the Neo4j interface under `localhost:7474`. It should now contain some nodes!
+
+__Reminder: Whenever you use ravestate from the command line, activate the virtual environment first!__
+
+#### Setting up PyCharm
+
+1. Open your local ravestate clone as a project in pycharm.
+2. Mark the `modules` folder as sources root via the right-click context menu.
+3. Create a run config alà the "Edit configurations menu":
+   - Create a new Python configuration
+   - Set `modules/ravestate/__main__.py` as the script to execute
+   - Set the working directory to the git clone directory
+   - Set parameters to `-f config/generic.yml -f config/keys.yml` 
+4. You should now be able to run the generic ravestate config from pycharm.
 
 ## Running Hello World
 
