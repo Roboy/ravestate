@@ -1,4 +1,4 @@
-[![Release](https://img.shields.io/github/release/Roboy/ravestate.svg)](https://github.com/ro-boy/ravestate)
+[![Release](https://img.shields.io/github/release/Roboy/ravestate.svg)](https://github.com/roboy/ravestate)
 [![Build Status](https://travis-ci.org/Roboy/ravestate.svg?branch=master)](https://travis-ci.org/Roboy/ravestate)
 [![codecov](https://codecov.io/gh/Roboy/ravestate/branch/master/graph/badge.svg)](https://codecov.io/gh/Roboy/ravestate)
 
