@@ -96,7 +96,7 @@ pip install -e .
 
 Now, launch a Neo4j docker instance to serve [Scientio](https://github.com/roboy/scientio), so the dialog system has a memory:
 ```bash
-docker run \                                                                                              joseph@ke-dev-jb-2
+docker run \
     --publish=7474:7474 --publish=7687:7687 \
     --volume=$HOME/neo4j/data:/data \
     --volume=$HOME/neo4j/logs:/logs \
@@ -112,7 +112,8 @@ In the `config` folder, create a file called `keys.yml`. It should have the foll
 ```yaml
 module: telegramio
 config:
-  telegram-token: <sexycactus>  # Thsi is where your own telegram bot token will go later
+  telegram-token: <sexycactus>  # This is where your own telegram bot token
+                                # will go later
 ---
 module: ontology
 config:
@@ -134,11 +135,11 @@ __Reminder: Whenever you use ravestate from the command line, activate the virtu
 
 1. Open your local ravestate clone as a project in pycharm.
 2. Mark the `modules` folder as sources root via the right-click context menu.
-3. Create a run config alà the "Edit configurations menu":
-   - Create a new Python configuration
-   - Set `modules/ravestate/__main__.py` as the script to execute
-   - Set the working directory to the git clone directory
-   - Set parameters to `-f config/generic.yml -f config/keys.yml` 
+3. Create a run config alà the "Edit configurations menu":<br>
+   • Create a new Python configuration.<br>
+   • Set `modules/ravestate/__main__.py` as the script to execute<br>
+   • Set the working directory to the git clone directory.<br>
+   • Set parameters to `-f config/generic.yml -f config/keys.yml`.<br> 
 4. You should now be able to run the generic ravestate config from pycharm.
 
 ## Running Hello World

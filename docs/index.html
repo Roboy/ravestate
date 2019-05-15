@@ -237,6 +237,26 @@
     For developers
   </a>
   
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#initial-configuration-and-setup" title="Initial configuration and setup" class="md-nav__link">
+    Initial configuration and setup
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#setting-up-pycharm" title="Setting up PyCharm" class="md-nav__link">
+    Setting up PyCharm
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -571,6 +591,26 @@
     For developers
   </a>
   
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#initial-configuration-and-setup" title="Initial configuration and setup" class="md-nav__link">
+    Initial configuration and setup
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#setting-up-pycharm" title="Setting up PyCharm" class="md-nav__link">
+    Setting up PyCharm
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -746,18 +786,69 @@ It is currently not tested on Windows.</p>
 like <a href="https://virtualenv.pypa.io/en/latest/">virtualenv</a>
 or <a href="https://conda.io/en/latest/">conda</a>.</p>
 <h3 id="for-developers">For developers</h3>
-<p>First, install dependencies:</p>
-<pre><code class="bash">pip install -r requirements.txt
+<h4 id="initial-configuration-and-setup">Initial configuration and setup</h4>
+<p>Clone the repository and install dependencies:</p>
+<pre><code class="bash"># Create a virtual python environment to not pollute the global setup
+python3 -m virtualenv python-ravestate
 
-# To run tests, install pytest, mocking, fixtures...
+# Source the virtual environment
+. python-ravestate/bin/activate
+
+# Clone the repo
+git clone git@github.com:roboy/ravestate &amp;&amp; cd ravestate
+
+# Install normal requirements
+pip install -r requirements.txt
+
+# To run tests &amp; build docs, install pytest, mocking, fixtures, pydoc, ...
 pip install -r requirements-dev.txt
+
+# Link your local ravestate clone into your virtualenv
+pip install -e .
 </code></pre>
 
-<p>Then, you may open the repository in any IDE, and mark the
-<code>modules</code> folder as a sources root. Alternatively for development
-purposes, call <code>export PYTHONPATH=$PYTHONPATH:$(pwd)/modules</code> from
-your ravestate clone, to tell python that there are modules
-to be loaded in the <code>modules</code> directory (the IDE does this for you).</p>
+<p>Now, launch a Neo4j docker instance to serve <a href="https://github.com/roboy/scientio">Scientio</a>, so the dialog system has a memory:</p>
+<pre><code class="bash">docker run \
+    --publish=7474:7474 --publish=7687:7687 \
+    --volume=$HOME/neo4j/data:/data \
+    --volume=$HOME/neo4j/logs:/logs \
+    neo4j:latest
+
+# Open the address localhost:7474 in a browser, and enter the
+# credentials `neo4j`/`neo4j`. You will then be prompted to enter
+# your own password. Remember this password.
+</code></pre>
+
+<p>In the <code>config</code> folder, create a file called <code>keys.yml</code>. It should have the following content:</p>
+<pre><code class="yaml">module: telegramio
+config:
+  telegram-token: &lt;sexycactus&gt;  # This is where your own telegram bot token
+                                # will go later
+---
+module: ontology
+config:
+  neo4j_address: bolt://localhost:7687  # Your neo4j server uri here
+  neo4j_username: neo4j                 # Your neo4j user here
+  neo4j_pw: test                        # Your neo4j pw here
+</code></pre>
+
+<p>You may now conduct your first conversation with ravestate:</p>
+<pre><code class="bash">python3 -m ravestate -f config/generic.yml -f config/keys.yml
+</code></pre>
+
+<p>After the conversation, check the Neo4j interface under <code>localhost:7474</code>. It should now contain some nodes!</p>
+<p><strong>Reminder: Whenever you use ravestate from the command line, activate the virtual environment first!</strong></p>
+<h4 id="setting-up-pycharm">Setting up PyCharm</h4>
+<ol>
+<li>Open your local ravestate clone as a project in pycharm.</li>
+<li>Mark the <code>modules</code> folder as sources root via the right-click context menu.</li>
+<li>Create a run config alà the "Edit configurations menu":<br>
+   • Create a new Python configuration.<br>
+   • Set <code>modules/ravestate/__main__.py</code> as the script to execute<br>
+   • Set the working directory to the git clone directory.<br>
+   • Set parameters to <code>-f config/generic.yml -f config/keys.yml</code>.<br> </li>
+<li>You should now be able to run the generic ravestate config from pycharm.</li>
+</ol>
 <h2 id="running-hello-world">Running Hello World</h2>
 <p>Ravestate applications are defined by a configuration,
 which specifies the ravestate modules that should be loaded.</p>
