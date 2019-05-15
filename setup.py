@@ -8,7 +8,8 @@ with open("requirements.txt", "r") as freq:
     for line in freq.read().split():
         required.append(line)
 
-packages = setuptools.find_packages("modules", exclude=["reggol*"])
+packages = setuptools.find_packages("modules")
+packages.remove("reggol")
 
 setuptools.setup(
     name="ravestate",
@@ -31,7 +32,7 @@ setuptools.setup(
         'ravestate_persqa': ['persqa_phrases/*.yml']
     },
 
-    install_requires=required + ["reggol"],
+    install_requires=required + ["reggol>=0.2.0"],
     python_requires='>=3.6',
 
     classifiers=[

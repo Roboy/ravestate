@@ -18,33 +18,26 @@ module: core
 config:
   tickrate: 10
   import:
+    - ravestate_nlp
     - ravestate_interloc
     - ravestate_conio
-#    - ravestate_roboyio
+    - ravestate_roboyio
     - ravestate_roboyqa
     - ravestate_genqa
+    - ravestate_persqa
     - ravestate_akinator
     - ravestate_idle
     - ravestate_fillers
     - ravestate_wildtalk
     - ravestate_hibye
-    - ravestate_roboyqa
-    - ravestate_genqa
     - ravestate_stalker
-    - ravestate_akinator
-    - ravestate_nlp
     - ravestate_fillers
 
 ---
 module: genqa
 config:
-  drqa_server_address: "http://localhost:5000"
+  drqa_server_address: http://35.246.158.89:5000
   roboy_answer_sanity: 1000
-
----
-module: roboyqa
-config:
-  roboy_node_id: 356
 
 ---
 module: akinator

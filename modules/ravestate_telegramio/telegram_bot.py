@@ -195,7 +195,7 @@ def telegram_run(ctx: rs.ContextWrapper):
             removable_chats = set()
             removable_users = set()
             # wait for children to write to Pipe and then send message to chat
-            tick_interval = 1. / ctx.conf(mod=Context.core_module_name, key=Context.tick_rate_config)
+            tick_interval = 1. / ctx.conf(mod=rs.CORE_MODULE_NAME, key=rs.TICK_RATE_CONFIG_KEY)
             time.sleep(tick_interval)
             for chat_id, (last_msg_timestamp, parent_pipe) in active_chats.items():
                 if parent_pipe.poll():
@@ -287,6 +287,10 @@ def telegram_output(ctx: rs.ContextWrapper):
     If all telegram chats should be in the same context, sends the content of rawio:out to every currently active chat.
     Otherwise it only sends output using the Pipe if it is a child process
     """
+    text = ctx["rawio:out:changed"]
+    if not text or not isinstance(text, str):
+        return
+    text = text.lower().strip()
     if ctx.conf(key=ALL_IN_ONE_CONTEXT_CONFIG_KEY):
         # TODO don't instantiate the updater every time
         token = ctx.conf(key=TOKEN_CONFIG_KEY)
@@ -296,13 +300,13 @@ def telegram_output(ctx: rs.ContextWrapper):
 
         updater: Updater = Updater(token)
         for chat_id in active_chats.keys():
-            updater.bot.send_message(chat_id=chat_id, text=ctx["rawio:out:changed"])
+            updater.bot.send_message(chat_id=chat_id, text=text)
     else:
         child_conn = ctx.conf(key=CHILD_CONN_CONFIG_KEY)
 
         if child_conn:
             # Child Process -> write to Pipe
-            child_conn.send(ctx[rawio.prop_out.changed()])
+            child_conn.send(text)
         else:
             # Master Process -> State not needed
             return rs.Delete()

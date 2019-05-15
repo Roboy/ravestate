@@ -17,25 +17,20 @@ config:
   tickrate: 10
   import:
     - ravestate_telegramio
-    - ravestate_conio
     - ravestate_fillers
     - ravestate_wildtalk
     - ravestate_hibye
     - ravestate_roboyqa
     - ravestate_genqa
-    - ravestate_akinator
+    - ravestate_persqa
     - ravestate_sendpics
+    #- ravestate_akinator
 
 ---
 module: genqa
 config:
-  drqa_server_address: "http://localhost:5000"
+  drqa_server_address: http://35.246.158.89:5000
   roboy_answer_sanity: 1000
-
----
-module: roboyqa
-config:
-  roboy_node_id: 356
 
 ---
 module: akinator
