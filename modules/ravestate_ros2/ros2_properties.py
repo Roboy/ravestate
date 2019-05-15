@@ -25,7 +25,7 @@ def set_node_once(ros2_node):
     """
     May be called once to override the internal ros2 node, which will
      be created otherwise. ravestate_ros2 only supports one internal
-     node fro compatibility with ROS1<->ROS2 bridge.
+     node for compatibility with ROS1<->ROS2 bridge.
     :param ros2_node: The node which should be adapted and spun by ravestate_ros2.
     """
     global global_node

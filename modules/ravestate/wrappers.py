@@ -222,7 +222,7 @@ class ContextWrapper:
          Note: Child must not yet have a parent or children of itself.
           Write-access to parent is needed.
 
-        * `parentpath`: (Path of the) parent property that should receive the new child.
+        * `parent_property_or_path`: (Path of the) parent property that should receive the new child.
 
         * `child`: Parent-less, child-less property object to add.
 
@@ -251,7 +251,7 @@ class ContextWrapper:
         Delete a property (remove it from context and it's parent).
          Note: Write-access to parent is needed!
 
-        * `path`: (Path to) the property. Must be nested (not root-level)!
+        * `property_or_path`: (Path to) the property. Must be nested (not root-level)!
 
         **Returns:** True if the pop was successful, False otherwise
         """

@@ -79,7 +79,7 @@ def telegram_run(ctx: rs.ContextWrapper):
         """
         Push the telegram_node into interloc:all:name
         """
-        if ctx.push(parent_property_or_path="interloc:all", child=rs.Property(name=name, default_value=telegram_node)):
+        if ctx.push(parent_property_or_path=interloc.prop_all, child=rs.Property(name=name, default_value=telegram_node)):
             logger.debug(f"Pushed {telegram_node} to interloc:all")
 
     def make_sure_effective_user_exists(update: Update):

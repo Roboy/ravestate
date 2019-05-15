@@ -10,6 +10,7 @@ services:
     network_mode: host
     volumes:
       - .:/ravestate
+      # Change this path to where your ros2_speech_recognition is
       - /home/roboy/ros2_speech_recognition:/ros2_speech_recognition
     devices:
       - /dev/snd:/dev/snd
