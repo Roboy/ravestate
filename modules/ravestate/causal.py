@@ -1,6 +1,6 @@
 # Ravestate class which encapsulates a graph of signal parent/offspring instances
 
-from typing import Set, Dict, Optional, List
+from typing import Set, Dict, Optional, List, Generator
 from ravestate.iactivation import IActivation, ISpike, ICausalGroup
 from threading import RLock
 from collections import defaultdict
@@ -78,10 +78,27 @@ class CausalGroup(ICausalGroup):
     #  The reason is, that the activations with detached signal
     #  constraints do not expect to need any consent for their
     #  write-activities from those signal's causal groups.
-    # They are therefore not rejected upon consumed(), but upon wiped()
+    # They are therefore not de-referenced upon consumed(), but upon wiped()
     #  or rejected().
     _detached_ref_index: Dict[
         ISpike,
+        Dict[
+            IActivation,
+            int
+        ]
+    ]
+
+    # Dictionary, which records activations that may cause particular signal spikes
+    #  by consuming spikes from this causal group. Whenever an activation acquires or dereferences
+    #  a spike from this causal group, or notify_spike(signal) is called, the dictionary is updated to
+    #  add/remove activations. A special case occurs, when an activation finishes
+    #  without causing some of it's possible effects (spikes): Then, effect_not_caused(effects) will
+    #  be called by the activation with the forgone signals: If for any of the forgone signal spikes
+    #  there are no other registered activations which could cause the same spikes,
+    #  Activation.effect_not_caused(effects, causal_group) will be called on all activations registered
+    #  in this causal group.
+    _uncaused_spikes: Dict[
+        str,
         Dict[
             IActivation,
             int
@@ -109,6 +126,7 @@ class CausalGroup(ICausalGroup):
             for prop in resources
         }
         self._detached_ref_index = defaultdict(lambda: defaultdict(int))
+        self._uncaused_spikes = defaultdict(lambda: defaultdict(int))
 
     def __del__(self):
         with self._lock:
@@ -159,6 +177,8 @@ class CausalGroup(ICausalGroup):
          all properties that are consumed by other, but not this.
         Afterwards, other's member objects will be set to this's.
         """
+        logger.debug(f"=======> CausalGroup.merge({self} | {other})")
+
         # Intersect _available_resources
         self._available_resources = self._available_resources & other._available_resources
 
@@ -174,6 +194,12 @@ class CausalGroup(ICausalGroup):
 
         # Merge _detached_ref_index
         self._detached_ref_index.update(other._detached_ref_index)
+
+        # Merge _activations_per_effect
+        for signal, refc_per_act in other._uncaused_spikes.items():
+            my_refc_per_act = self._uncaused_spikes[signal]
+            for act, refc in refc_per_act.items():
+                my_refc_per_act[act] += refc
 
         # Merge signal names/merge count
         self.signal_names += other.signal_names
@@ -210,10 +236,11 @@ class CausalGroup(ICausalGroup):
         else:
             for prop in acquired_by.resources():
                 if prop not in self._ref_index:
-                    logger.error(f"{prop} is unavailable, but {acquired_by} wants it from {self} for {spike}!")
                     return False
             for prop in acquired_by.resources():
                 self._ref_index[prop][spike][acquired_by] += 1
+            self._change_effect_causes(acquired_by, 1)
+
         logger.debug(f"{self}.acquired({spike} by {acquired_by})")
         return True
 
@@ -222,9 +249,9 @@ class CausalGroup(ICausalGroup):
         Called by a state activation, to notify the group that a member spike
          is no longer being referenced for the given state's write props.
         This may be because ... <br>
-        ... the state activation's dereference function was called. (reason=0) <br>
+        ... the activation's dereference function was called. (reason=0) <br>
         ... the spike got too old. (reason=1) <br>
-        ... the activation is happening and dereferencing it's spikes. (reason=2)
+        ... the activation happened and is dereferencing it's spikes. (reason=2)
 
         * `spike`: The member spike whose ref-set should be reduced.
 
@@ -251,6 +278,9 @@ class CausalGroup(ICausalGroup):
                 _decrement_refcount(self._ref_index[prop])
                 if len(self._ref_index[prop][spike]) == 0:
                     del self._ref_index[prop][spike]
+
+        self._change_effect_causes(rejected_by, -1)
+
         logger.debug(f"{self}.rejected({spike} by {rejected_by})")
 
     def consent(self, ready_suitor: IActivation) -> bool:
@@ -271,6 +301,10 @@ class CausalGroup(ICausalGroup):
         higher_specificity_acts = set()
         highest_higher_specificity = .0
         highest_higher_specificity_act = None
+
+        # Go through the ready_suitors write-props. For each property,
+        #  check whether it is still available, and also check whether
+        #  there are other activations for this property that have higher specificity.
         for prop in ready_suitor.resources():
             if prop in self._available_resources:
                 for spike in self._ref_index[prop]:
@@ -284,7 +318,7 @@ class CausalGroup(ICausalGroup):
                                     highest_higher_specificity_act = candidate
             else:
                 # Easy exit condition: prop not free for writing
-                logger.debug(f"{self}.consent({ready_suitor})->N: {prop} unavailable. Condition is {ready_suitor.constraint}")
+                logger.debug(f"{self}.consent({ready_suitor})->N: {prop} unavailable.")
                 return False
 
         if higher_specificity_acts:
@@ -332,14 +366,17 @@ class CausalGroup(ICausalGroup):
         """
         if not resources:
             return
-        for resource in resources:
+        acts_to_forget = set()
+        for resource in resources.copy():
             # Notify all concerned activations, that the
             # spikes they are referencing are no longer available
-            for sig in self._ref_index[resource]:
-                for act in self._ref_index[resource][sig]:
-                    act.dereference(spike=sig, reacquire=True)
-            # Remove the consumed prop from the index
+            for spike in self._ref_index[resource].copy():
+                for act in self._ref_index[resource][spike].copy():
+                    act.dereference(spike=spike, reacquire=True, reject=True)
+                    acts_to_forget.add(act)
             del self._ref_index[resource]
+        for act in acts_to_forget:
+            self._change_effect_causes(act, None)
         logger.debug(f"{self}.consumed({resources})")
 
     def wiped(self, spike: 'ISpike') -> None:
@@ -380,4 +417,69 @@ class CausalGroup(ICausalGroup):
                 # Do some cleanup
                 del self._detached_ref_index[spike]
         result = not spike.has_offspring()
+        return result
+
+    def notify_spike(self, sig: str):
+        self.signal_names.append(sig)
+        if sig in self._uncaused_spikes:
+            del self._uncaused_spikes[sig]
+
+    def _change_effect_causes(self, act: IActivation, change: Optional[int]):
+        for sig in act.possible_signals():
+            sig_present_or_change_positive = sig in self._uncaused_spikes or (change is not None and change > 0)
+            if sig_present_or_change_positive:
+                if (change is None or change < 0) and act not in self._uncaused_spikes[sig]:
+                    continue
+                if change is None:
+                    del self._uncaused_spikes[sig][act]
+                else:
+                    self._uncaused_spikes[sig][act] += change
+                    if self._uncaused_spikes[sig][act] <= 0:
+                        del self._uncaused_spikes[sig][act]
+                if len(self._uncaused_spikes[sig]) == 0:
+                    for act_to_notify in set(self._non_detached_activations()):
+                        act_to_notify.effect_not_caused(self, sig.id())
+                    del self._uncaused_spikes[sig]
+
+    def _non_detached_activations(self) -> Generator[IActivation, None, None]:
+        yielded_activations = set()
+        for refc_per_act_per_spike in self._ref_index.values():
+            for refc_per_act in refc_per_act_per_spike.values():
+                for act in refc_per_act:
+                    if act not in yielded_activations:
+                        yielded_activations.add(act)
+                        yield act
+
+    def check_reference_sanity(self) -> bool:
+        """
+        Make sure, that the refcount-per-act-per-spike-per-resource value sum
+         is equal to the number of spikes from this causal group acquired per activation
+         for each activation in the index.
+        :return: True if the criterion is fulfilled, False otherwise.
+        """
+        result = True
+        signals_with_cause = set()
+        for act in self._non_detached_activations():
+            sum_refcount = sum(
+                refc_per_act[act]
+                for resource in act.resources()
+                for refc_per_act in self._ref_index[resource].values() if act in refc_per_act)
+            sum_spikes = sum(
+                len(act.resources())
+                for signal in act.constraint.signals() if signal.spike and signal.spike.causal_group() == self)
+            if sum_spikes != sum_refcount:
+                logger.error(f"Mutual refcount mismatch: {self} -> {sum_refcount} : {sum_spikes} <- {act}")
+                result = False
+            for sig in act.possible_signals():
+                signals_with_cause.add(sig)
+                if sig in self._uncaused_spikes:
+                    causes = sum_spikes / len(act.resources())
+                    if self._uncaused_spikes[sig][act] != causes:
+                        logger.error(f"Signal cause mismatch for {sig} by {act}: is {self._uncaused_spikes[sig][act]}, "
+                                     f"should be {causes}")
+                        result = False
+        for signal in set(self._uncaused_spikes.keys())-signals_with_cause:
+            logger.error(f"Signal cause mismatch for {signal}: is {self._uncaused_spikes[signal]}, "
+                         f"should be ZERO")
+            result = False
         return result

@@ -1,0 +1,40 @@
+# In addition to this file, load a config file `keys.yml`, where
+#  `keys.yml` should contain the following content:
+#
+#   module: telegramio
+#   config:
+#     telegram-token: <sexycactus>  # Your telegram token here
+#   ---
+#   module: ontology
+#   config:
+#     neo4j_address: bolt://localhost:7687  # Your neo4j server uri here
+#     neo4j_username: neo4j                 # Your neo4j user here
+#     neo4j_pw: <cornycrab>                 # Your neo4j pw here
+#
+# Then, start `python3 -m ravestate` with `-f config/telegram_test.yml -f config/keys.yml`
+
+---
+module: core
+config:
+  tickrate: 10
+  import:
+    - ravestate_telegramio
+    - ravestate_conio
+    - ravestate_fillers
+    - ravestate_wildtalk
+    - ravestate_hibye
+    - ravestate_genqa
+    - ravestate_roboyqa
+    - ravestate_persqa
+    #- ravestate_akinator
+
+---
+module: genqa
+config:
+  drqa_server_address: http://35.246.158.89:5000
+  roboy_answer_sanity: 1000
+
+---
+module: telegramio
+config:
+  all_in_one_context: True

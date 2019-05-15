@@ -1,4 +1,4 @@
-[![Release](https://img.shields.io/github/release/Roboy/ravestate.svg)](https://github.com/ro-boy/ravestate)
+[![Release](https://img.shields.io/github/release/Roboy/ravestate.svg)](https://github.com/roboy/ravestate)
 [![Build Status](https://travis-ci.org/Roboy/ravestate.svg?branch=master)](https://travis-ci.org/Roboy/ravestate)
 [![codecov](https://codecov.io/gh/Roboy/ravestate/branch/master/graph/badge.svg)](https://codecov.io/gh/Roboy/ravestate)
 
@@ -13,18 +13,16 @@
                  \____/                \____/             Olà! -       
 ```
 
-Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events.
+Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events. You may find a short introductory video [here](http://www.youtube.com/watch?v=6GMmY-xvA_Y "Introduction to Ravestate").
 
 ### Reactive Hello World
 
 ```python
-from ravestate.context import startup, Context
-from ravestate.state import state
-from ravestate.module import Module
+import ravestate as rs
 
 # We want to write some text output, so we
 # need the raw:out context property from ravestate_rawio.
-from ravestate_rawio import output as raw_out
+import ravestate_rawio as rawio
 
 # Make sure that we use some i/o implementation,
 # so we can actually see stuff that is written to rawio:out.
@@ -33,18 +31,24 @@ import ravestate_conio
 # Ravestate applications should always be wrapped in a Module.
 # This allows easier scoping, and enables separation of concerns
 # beyond states.
-with Module(name="hi!"):
+with rs.Module(name="hi!"):
 
     # Create an application state which reacts to the `:startup` signal,
     # and writes a string to raw:out. Note: State functions are
     # always run asynchronously!
-    @state(cond=startup(min_age=3.), write=raw_out.id())
+    @rs.state(cond=rs.sig_startup, write=rawio.prop_out)
     def hello_world(context):
-        context[raw_out.id()] = "Waddup waddup waddup!"
+        context[rawio.prop_out] = "Waddup waddup waddup!"
 
 # Run context with console input/output and our 'hi!' module.
-Context("conio", "hi!").run()
+rs.Context("conio", "hi!").run()
 ```
+
+### Visualization
+
+Ravestate has a [d3.js](https://d3js.org)-based visualization. When using `ravestate_ui.UIContext` instead of `Context`, or `python3 -m ravestate_ui` instead of `python3 -m ravestate`, a real-time visualization of all states/properties/signals in the state machine will be hosted on port 5001. Here is the view of `http://localhost:5001` after launching `python3 ravestate_ui -f generic.yml`:
+
+<img src="resources/docs/ravestate_ui.gif">
 
 ## Installation
 
@@ -66,20 +70,82 @@ or [conda](https://conda.io/en/latest/).
 
 ### For developers
 
-First, install dependencies:
+#### Initial configuration and setup
+
+Clone the repository and install dependencies:
 
 ```bash
+# Create a virtual python environment to not pollute the global setup
+python3 -m virtualenv python-ravestate
+
+# Source the virtual environment
+. python-ravestate/bin/activate
+
+# Clone the repo
+git clone git@github.com:roboy/ravestate && cd ravestate
+
+# Install normal requirements
 pip install -r requirements.txt
 
-# To run tests, install pytest, mocking, fixtures...
+# To run tests & build docs, install pytest, mocking, fixtures, pydoc, ...
 pip install -r requirements-dev.txt
+
+# Link your local ravestate clone into your virtualenv
+pip install -e .
 ```
 
-Then, you may open the repository in any IDE, and mark the
-`modules` folder as a sources root. Alternatively for development
-purposes, call `export PYTHONPATH=$PYTHONPATH:$(pwd)/modules` from
-your ravestate clone, to tell python that there are modules
-to be loaded in the `modules` directory (the IDE does this for you).
+Now, launch a Neo4j docker instance to serve [Scientio](https://github.com/roboy/scientio), so the dialog system has a memory:
+```bash
+docker run \
+    --publish=7474:7474 --publish=7687:7687 \
+    --volume=$HOME/neo4j/data:/data \
+    --volume=$HOME/neo4j/logs:/logs \
+    neo4j:latest
+    
+# Open the address localhost:7474 in a browser, and enter the
+# credentials `neo4j`/`neo4j`. You will then be prompted to enter
+# your own password. Remember this password.
+```
+
+In the `config` folder, create a file called `keys.yml`. It should have the following content:
+
+```yaml
+module: telegramio
+config:
+  telegram-token: <sexycactus>  # This is where your own telegram bot token
+                                # will go later
+---
+module: ontology
+config:
+  neo4j_address: bolt://localhost:7687  # Your neo4j server uri here
+  neo4j_username: neo4j                 # Your neo4j user here
+  neo4j_pw: test                        # Your neo4j pw here
+```
+
+You may now conduct your first conversation with ravestate:
+```bash
+python3 -m ravestate -f config/generic.yml -f config/keys.yml
+```
+
+After the conversation, check the Neo4j interface under `localhost:7474`. It should now contain some nodes!
+
+__Reminder: Whenever you use ravestate from the command line, source the virtual environment first!__
+
+#### Running your Telegram bot
+
+To test your telegram bot with a custom bot token in your `keys.yml`,
+just run `telegram_test.yml` instead of `generic.yml`. This will load the `ravestate_telegramio` module.
+
+#### Setting up PyCharm
+
+1. Open your local ravestate clone as a project in pycharm.
+2. Mark the `modules` folder as sources root via the right-click context menu.
+3. Create a run config alà the "Edit configurations menu":<br>
+   • Create a new Python configuration.<br>
+   • Set `modules/ravestate/__main__.py` as the script to execute<br>
+   • Set the working directory to the git clone directory.<br>
+   • Set parameters to `-f config/generic.yml -f config/keys.yml`.<br> 
+4. You should now be able to run the generic ravestate config from pycharm.
 
 ## Running Hello World
 
@@ -92,15 +158,14 @@ with a config file or command line arguments:
 ### Running with command line spec
 
 You can easily run a combination of ravestate modules in a shared context,
-by listing them as arguments to the `rasta` command, which is installed
-with ravestate:
+by listing them as arguments to `python3 -m ravestate`:
 
 ```bash
 python3 -m ravestate \
     ravestate_wildtalk \
     ravestate_conio \
     ravestate_hibye \
-    ravestate_akinator
+    ravestate_persqa
 ```
 Run `python3 -m ravestate -h` to see more options!
 
@@ -117,7 +182,7 @@ config:
     - ravestate_wildtalk
     - ravestate_conio
     - ravestate_hibye
-    - ravestate_akinator
+    - ravestate_persqa
 ```
 Then, run `ravestate` with this config file:
 
@@ -165,6 +230,7 @@ External (Red) and Skills (Green):
   |----------------------|-------------|
   | ravestate_wildtalk   | [ParlAI](https://github.com/roboy/parlai) -based generative conversational module. 
   | ravestate_hibye      | Simply voices __Hi!__ (or the likes thereof) when an interlocutor is added, and __Bye__ when one is removed.
+  | ravestate_persqa     | Conducts personalized smalltalk with interlocutors, interacts with Scientio to persist trivia.
   | ravestate_genqa      | [DrQA](https://github.com/roboy/drqa) -based general question answering module.
   | ravestate_roboyqa    | QA module which provides answers to questions about Roboy, such as __Who is your dad?__
   | ravestate_akinator   | Enables dialog-based play of [Akinator!](modules/ravestate_akinator/README.md)
@@ -181,6 +247,42 @@ may run the ravestate test suite as follows:
 ./run_tests.sh
 ``
 
+## Docker for ROS and ROS2
+
+There is a Dockerfile for ROS and ROS2 support which can be built with
+```bash
+docker build -t ravestate-ros2-image .
+```
+The image contains ROS, ROS2 and a ROS Bridge to connect ROS with ROS2.
+Furthermore the roboy_communication message and service types are installed.
+
+A container can then be created with the docker-compose.yml:
+```bash
+docker-compose up --detach ravestate
+```
+The container is now running and a connection into the container can be
+established with:
+```bash
+docker exec -it ravestate-ros2-container bash
+```
+Inside the container, first source the ROS2 setups and then 
+ravestate can be run with ROS2 and rclpy available.
+```bash
+source ~/ros2_ws/install/setup.sh
+python3 -m ravestate [...]
+```
+
+### Start ROS Bridge
+In order to start ROS Bridge, the image and container have to be set up
+as above. After connecting into the container run from inside the container:
+```bash
+export ROS_IP=192.168.0.105
+source ~/melodic_ws/devel/setup.sh
+source ~/ros2_ws/install/setup.sh
+source ~/ros1_bridge_ws/install/setup.sh
+ros2 run ros1_bridge dynamic_bridge
+```
+
 ## Building/maintaining the docs
 
 If you have installed the dependencies from ``requirements-dev.txt``,
@@ -191,7 +293,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)/modules
 git rm -rf docs
 rm -rf _build docs
 pydocmd build
-mkdir -p docs/resources/docs && cp resources/docs/*.png docs/resources/docs
+mkdir -p docs/resources/docs && cp resources/docs/*.png docs/resources/docs && cp resources/docs/*.gif docs/resources/docs
 git add docs/*
 # For inspection: python3 -m http.server --directory docs
 ```

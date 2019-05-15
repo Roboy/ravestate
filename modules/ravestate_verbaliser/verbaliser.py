@@ -1,10 +1,11 @@
-import logging
 import os
 import random
 import yaml
 from typing import Dict, List, Optional
 
 from ravestate_verbaliser.qa_phrases import QAPhrases
+from reggol import get_logger
+logger = get_logger(__name__)
 
 """
 Produces actual utterances. This should in the future lead to diversifying
@@ -28,7 +29,7 @@ def add_folder(dirpath: str):
         for filename in os.listdir(dirpath):
             add_file(os.path.join(dirpath, filename))
     except FileNotFoundError:
-        logging.error('Cannot add folder ' + dirpath + ' because it does not exist')
+        logger.error('Cannot add folder ' + dirpath + ' because it does not exist')
 
 
 def add_file(path: str):
@@ -47,20 +48,20 @@ def add_file(path: str):
         for entry in file_data:
             if entry['type'] == TYPE_PHRASES:
                 if str(entry['name']) in phrases:
-                    logging.error('Import of section ' + str(entry['name']) + ' in ' + path +
+                    logger.error('Import of section ' + str(entry['name']) + ' in ' + path +
                                   ' would overwrite phrases-list entry ' + str(entry['name']))
                 phrases[str(entry['name'])] = entry['opts']
             elif entry['type'] == TYPE_QA:
                 if str(entry['name']) in qa:
-                    logging.error('Import of section ' + str(entry['name']) + ' in ' + path +
+                    logger.error('Import of section ' + str(entry['name']) + ' in ' + path +
                                   ' would overwrite qa-list entry ' + str(entry['name']))
                 qa[str(entry['name'])] = QAPhrases(entry)
             else:
-                logging.error('Unknown type given for section ' + str(entry['name']) + ' in ' + path)
+                logger.error('Unknown type given for section ' + str(entry['name']) + ' in ' + path)
 
         return True
     except (FileNotFoundError, KeyError):
-        logging.error('Cannot add file ' + path + ' because it does not exist or is in the wrong format.')
+        logger.error('Cannot add file ' + path + ' because it does not exist or is in the wrong format.')
         return False
 
 

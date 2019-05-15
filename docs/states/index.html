@@ -1,232 +1,356 @@
-<!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  
-  <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>States - Ravestate</title>
-  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
-  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
-  
-  <script>
-    // Current page data
-    var mkdocs_page_name = "States";
-    var mkdocs_page_input_path = "states.md";
-    var mkdocs_page_url = null;
-  </script>
-  
-  <script src="../js/jquery-2.1.1.min.js" defer></script>
-  <script src="../js/modernizr-2.8.3.min.js" defer></script>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-  <script>hljs.initHighlightingOnLoad();</script> 
-  
-</head>
 
-<body class="wy-body-for-nav" role="document">
 
-  <div class="wy-grid-for-nav">
 
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
     
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
-      <div class="wy-side-nav-search">
-        <a href=".." class="icon icon-home"> Ravestate</a>
-        <div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
-  </form>
-</div>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.2.0">
+    
+    
+      
+        <title>States - Ravestate</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/application.750b69bd.css">
+      
+      
+    
+    
+      <script src="../assets/javascripts/modernizr.74668098.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../assets/fonts/material-icons.css">
+    
+    
+    
+      
+    
+    
+  </head>
+  
+    <body dir="ltr">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href=".." title="Ravestate" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon"></i>
+          
+        </a>
       </div>
-
-      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-	<ul class="current">
-	  
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
           
-            <li class="toctree-l1">
-		
-    <a class="" href="..">Home</a>
-	    </li>
+            <span class="md-header-nav__topic">
+              Ravestate
+            </span>
+            <span class="md-header-nav__topic">
+              States
+            </span>
           
-            <li class="toctree-l1">
-		
-    <span class="caption-text">Modules</span>
-    <ul class="subnav">
-                <li class="">
-                    
-    <a class="" href="../modules/ravestate_nlp/">NLP</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../modules/ravestate_verbaliser/">Verbaliser</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../modules/ravestate_telegramio/">TelegramIO</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../modules/ravestate_akinator/">Akinator</a>
-                </li>
-    </ul>
-	    </li>
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
           
-            <li class="toctree-l1">
-		
-    <span class="caption-text">API</span>
-    <ul class="subnav">
-                <li class="">
-                    
-    <a class="" href="../modules/">Modules</a>
-                </li>
-                <li class=" current">
-                    
-    <a class="current" href="./">States</a>
-    <ul class="subnav">
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
             
-    </ul>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../properties/">Properties</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../context/">Context</a>
-                </li>
-                <li class="">
-                    
-    <a class="" href="../config/">Configuration</a>
-                </li>
-    </ul>
-	    </li>
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href=".." title="Ravestate" class="md-nav__button md-logo">
+      
+        <i class="md-icon"></i>
+      
+    </a>
+    Ravestate
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href=".." title="Home" class="md-nav__link">
+      Home
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+    
+    <label class="md-nav__link" for="nav-2">
+      Modules
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        Modules
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
           
-        </ul>
-      </div>
-      &nbsp;
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_nlp/" title="NLP" class="md-nav__link">
+      NLP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_verbaliser/" title="Verbaliser" class="md-nav__link">
+      Verbaliser
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_telegramio/" title="TelegramIO" class="md-nav__link">
+      TelegramIO
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_akinator/" title="Akinator" class="md-nav__link">
+      Akinator
+    </a>
+  </li>
+
+        
+      </ul>
     </nav>
+  </li>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="..">Ravestate</a>
-      </nav>
-
-      
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="breadcrumbs navigation">
-  <ul class="wy-breadcrumbs">
-    <li><a href="..">Docs</a> &raquo;</li>
     
       
-        
-          <li>API &raquo;</li>
-        
       
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-    <li>States</li>
-    <li class="wy-breadcrumbs-aside">
-      
-    </li>
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+    
+    <label class="md-nav__link" for="nav-3">
+      API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/" title="Modules" class="md-nav__link">
+      Modules
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+    
+    <a href="./" title="States" class="md-nav__link md-nav__link--active">
+      States
+    </a>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../properties/" title="Properties" class="md-nav__link">
+      Properties
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../context/" title="Context" class="md-nav__link">
+      Context
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../config/" title="Configuration" class="md-nav__link">
+      Configuration
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
   </ul>
-  <hr/>
-</div>
-          <div role="main">
-            <div class="section">
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
               
-                <h1 id="ravestate.state">ravestate.state</h1>
+                
+                
+                <h1 id="ravestate.state">state</h1>
 
-<h2 id="ravestate.state.Delete">Delete</h2>
-
-<pre><code class="python">Delete(self, resign: bool = False)
-</code></pre>
-
-<p>Return an instance of this class, if the invoked state should be deleted.</p>
-<ul>
-<li><code>resign</code>: Set to true, if the state being deleted is due to
- it failing to execute, so a resignation is implied.
- This means, that the spikes that were allocated for it's activation
-  may be re-used by another state.</li>
-</ul>
-<h2 id="ravestate.state.Wipe">Wipe</h2>
-
-<pre><code class="python">Wipe(self, /, *args, **kwargs)
-</code></pre>
-
-<p>Return an instance of this class, if context.wipe(signal) should be called,
- to ensure that there are no more active spikes for the state's signal.</p>
-<h2 id="ravestate.state.Emit">Emit</h2>
-
-<pre><code class="python">Emit(self, wipe: bool = False)
-</code></pre>
-
-<p>Return an instance of this class, if the invoked state's signal should be emitted.</p>
-<ul>
-<li><code>wipe</code>: Set to true, if context.wipe(signal) should be called before emit,
- to ensure that there is only one free spike for the given signal.</li>
-</ul>
-<h2 id="ravestate.state.Resign">Resign</h2>
-
-<pre><code class="python">Resign(self, /, *args, **kwargs)
-</code></pre>
-
-<p>Return an instance of this class, if the state invocation should be regarded unsuccessful.
- This means, that the state's signal will not be emitted, and the spikes
- that were allocated for it's activation may be re-used by another state.</p>
-<h2 id="ravestate.state.State">State</h2>
-
-<pre><code class="python">State(self, *, signal_name: Union[str, NoneType], write: Union[str, Tuple[str]], read: Union[str, Tuple[str]], cond: ravestate.constraint.Constraint, action, is_receptor: bool = False, emit_detached: bool = False, weight: float = 1.0, cooldown: float = 0.0)
-</code></pre>
-
-<p>Class which encapsulates a single application state function.
-Do not use this class - instead use the <code>@state</code> decorator.</p>
-<h3 id="ravestate.state.State.update_weight">update_weight</h3>
-
-<pre><code class="python">State.update_weight(self, seconds_passed: float)
-</code></pre>
-
-<p>Called once per tick by context, where <code>seconds_passed</code> is
- one over the context's tick rate. The state will use this
- function, to update it's actual weight, given it's cooldown
- period and last activation</p>
-<h3 id="ravestate.state.State.get_current_weight">get_current_weight</h3>
-
-<pre><code class="python">State.get_current_weight(self)
-</code></pre>
-
-<p>Called by activation to obtain the weight factor for this
- state's constraint's specificity.</p>
-<h3 id="ravestate.state.State.activation_finished">activation_finished</h3>
-
-<pre><code class="python">State.activation_finished(self)
-</code></pre>
-
-<p>Called by a running activation for this state, once it is about to
- exit it's dedicated thread.</p>
-<h3 id="ravestate.state.State.wait">wait</h3>
-
-<pre><code class="python">State.wait(self, timeout=5.0)
-</code></pre>
-
-<p>Wait for the state's activation function to be run at least once.</p>
-<ul>
-<li><code>timeout</code>: Timeout after which this function should return False,
- if the activation is not occurring.</li>
-</ul>
-<p><strong>Return:</strong> True if the activation has been invoked at least once
- since the last call to this function, false if invocation does not
- occur after <code>timeout</code> seconds.</p>
-<h2 id="ravestate.state.state">state</h2>
-
-<pre><code class="python">state(*, signal_name: Union[str, NoneType] = '', write: tuple = (), read: tuple = (), cond: ravestate.constraint.Constraint = None, emit_detached=False, weight: float = 1.0, cooldown: float = 0.0)
+<pre><code class="python">state(*, signal: Union[ravestate.constraint.Signal, NoneType] = '', write: Tuple[ravestate.property.Property] = (), read: Tuple[ravestate.property.Property] = (), cond: ravestate.constraint.Constraint = None, emit_detached: bool = False, weight: float = 1.0, cooldown: float = 0.0)
 </code></pre>
 
 <p>Decorator to declare a new state, which may emit a certain signal,
@@ -258,40 +382,28 @@ Otherwise, returns the result of object.<strong>str</strong>() (if defined)
 or repr(object).
 encoding defaults to sys.getdefaultencoding().
 errors defaults to 'strict'.
-<h2 id="ravestate.constraint.s">s</h2></p>
-<pre><code class="python">s(signal_name: str, *, min_age: Union[float, ravestate.constraint.ConfigurableAge] = 0.0, max_age: Union[float, ravestate.constraint.ConfigurableAge] = 5.0, detached: bool = False) -&gt; 'Signal'
-</code></pre>
-
-<p>Alias to call Signal-constructor</p>
-<ul>
-<li>
-<p><code>signal_name</code>: Name of the Signal</p>
-</li>
-<li>
-<p><code>min_age</code>: Minimum age for the signal, in seconds. Can also be ConfigurableAge that gets the age from the config.</p>
-</li>
-<li>
-<p><code>max_age</code>: Maximum age for the signal, in seconds. Can also be ConfigurableAge that gets the age from the config.
- Set to less-than zero for unrestricted age.</p>
-</li>
-<li>
-<p><code>detached</code>: Flag which indicates, whether spikes that fulfill this signal
- are going to have a separate causal group from spikes that
- are generated by a state that uses this signal as a constraint.</p>
-</li>
-</ul>
-<h2 id="ravestate.constraint.Constraint">Constraint</h2>
-
+<h2 id="ravestate.constraint.Constraint">Constraint</h2></p>
 <pre><code class="python">Constraint(self, /, *args, **kwargs)
 </code></pre>
 
 <p>Superclass for Signal, Conjunct and Disjunct</p>
 <h2 id="ravestate.constraint.Signal">Signal</h2>
 
-<pre><code class="python">Signal(self, name: str, *, min_age=0.0, max_age=5.0, detached=False)
+<pre><code class="python">Signal(self, name: str, *, min_age=0.0, max_age=5.0, detached=False, _skip_module_context=False)
 </code></pre>
 
-<p>Class that represents a Signal</p>
+<p>Class that represents a Signal. Should be constructed in a <code>with Module(..)</code>
+ context, such that it's module scope is set automatically.</p>
+<h2 id="ravestate.constraint.SignalRef">SignalRef</h2>
+
+<pre><code class="python">SignalRef(self, name: str, *, min_age=0.0, max_age=5.0, detached=False)
+</code></pre>
+
+<p>Signal reference. Almost the same as a signal, except that
+ it will not try to auto-discover it's module out of thread-local context
+ (module_name will stay unfilled). Needed, because sometimes
+ you need to reference a singal within a module scope
+ without assigning that signal to the contextual module.</p>
 <h2 id="ravestate.constraint.Conjunct">Conjunct</h2>
 
 <pre><code class="python">Conjunct(self, *args)
@@ -316,11 +428,9 @@ Can be constructed using an overloaded | operator.</p>
 (signal_A &amp; signal_B) | (signal_C &amp; signal_D)
 </code></pre>
 
-<h1 id="ravestate.receptor">ravestate.receptor</h1>
+<h1 id="ravestate.receptor">receptor</h1>
 
-<h2 id="ravestate.receptor.receptor">receptor</h2>
-
-<pre><code class="python">receptor(*, ctx_wrap: ravestate.wrappers.ContextWrapper, write: Union[str, Tuple[str]])
+<pre><code class="python">receptor(*, ctx_wrap: Union[ravestate.wrappers.ContextWrapper, ravestate.context.Context], write: Union[str, ravestate.property.Property, Tuple[Union[str, ravestate.property.Property]]])
 </code></pre>
 
 <p>A receptor is a special state which can be invoked from outside,
@@ -347,52 +457,79 @@ with Module(name=&quot;my_module&quot;):
         sleep(60)
         dont_panic()
 </code></pre>
+                
+                  
+                
               
-            </div>
+              
+                
+
+
+              
+            </article>
           </div>
-          <footer>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
   
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="../properties/" class="btn btn-neutral float-right" title="Properties">Next <span class="icon icon-circle-arrow-right"></span></a>
-      
-      
-        <a href="../modules/" class="btn btn-neutral" title="Modules"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-      
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../modules/" title="Modules" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Modules
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../properties/" title="Properties" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Properties
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
     </div>
   
-
-  <hr/>
-
-  <div role="contentinfo">
-    <!-- Copyright etc -->
-    
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+    </div>
   </div>
-
-  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
       
-        </div>
-      </div>
-
-    </section>
-
-  </div>
-
-  <div class="rst-versions" role="note" style="cursor: pointer">
-    <span class="rst-current-version" data-toggle="rst-current-version">
+    </div>
+    
+      <script src="../assets/javascripts/application.39abc4af.js"></script>
       
+      <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
       
-        <span><a href="../modules/" style="color: #fcfcfc;">&laquo; Previous</a></span>
-      
-      
-        <span style="margin-left: 15px"><a href="../properties/" style="color: #fcfcfc">Next &raquo;</a></span>
-      
-    </span>
-</div>
-    <script>var base_url = '..';</script>
-    <script src="../js/theme.js" defer></script>
-      <script src="../search/main.js" defer></script>
-
-</body>
+    
+  </body>
 </html>

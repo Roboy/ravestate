@@ -1,12 +1,12 @@
 # Ravestate wrapper classes which limit a state's context access
 
-from ravestate.property import PropertyBase
-from ravestate import state
-from ravestate import icontext
+from ravestate.property import Property
+from ravestate.state import State
+from ravestate.constraint import Signal
+from ravestate.module import get_module
+from ravestate.icontext import IContext
 from ravestate.spike import Spike
-from typing import Any, Generator, Set, Dict
-
-from ravestate.constraint import s
+from typing import Any, Generator, Set, Dict, Union
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -22,8 +22,8 @@ class PropertyWrapper:
     """
     def __init__(self, *,
                  spike_parents: Set[Spike] = None,
-                 prop: PropertyBase,
-                 ctx: icontext.IContext,
+                 prop: Property,
+                 ctx: IContext,
                  allow_read: bool,
                  allow_write: bool):
         self.prop = prop
@@ -71,28 +71,28 @@ class PropertyWrapper:
             # emit flag signals if it is a flag property
             if self.prop.is_flag_property and value is True:
                 # wipe false signal, emit true signal
-                self.ctx.wipe(self.prop.flag_false_signal())
+                self.ctx.wipe(self.prop.false())
                 self.ctx.emit(
-                    self.prop.flag_true_signal(),
+                    self.prop.true(),
                     parents=self.spike_parents,
                     wipe=self.prop.wipe_on_changed)
             if self.prop.is_flag_property and value is False:
                 # wipe true signal, emit false signal
-                self.ctx.wipe(self.prop.flag_true_signal())
+                self.ctx.wipe(self.prop.true())
                 self.ctx.emit(
-                    self.prop.flag_false_signal(),
+                    self.prop.false(),
                     parents=self.spike_parents,
                     wipe=self.prop.wipe_on_changed)
 
             self.ctx.emit(
-                self.prop.changed_signal(),
+                self.prop.changed(),
                 parents=self.spike_parents,
                 wipe=self.prop.wipe_on_changed,
                 payload=value)
             return True
         return False
 
-    def push(self, child: PropertyBase):
+    def push(self, child: Property):
         """
         Add a child to the property or to children of the property
 
@@ -106,7 +106,7 @@ class PropertyWrapper:
             return False
         if self.prop.push(child):
             self.ctx.emit(
-                self.prop.pushed_signal(),
+                self.prop.pushed(),
                 parents=self.spike_parents,
                 wipe=False,
                 payload=child.id())
@@ -126,7 +126,7 @@ class PropertyWrapper:
             return False
         if self.prop.pop(childname):
             self.ctx.emit(
-                self.prop.popped_signal(),
+                self.prop.popped(),
                 parents=self.spike_parents,
                 wipe=False,
                 payload=f"{self.prop.id()}:{childname}")
@@ -149,42 +149,61 @@ class ContextWrapper:
     as declared by the state beforehand.
     """
 
-    def __init__(self, *, ctx: icontext.IContext, st: state.State, spike_parents: Set[Spike]=None, spike_payloads: Dict[str, Any]=None):
-        self.st = st
+    def __init__(self, *, ctx: IContext, state: State, spike_parents: Set[Spike] = None, spike_payloads: Dict[str, Any] = None):
+        self.state = state
         self.ctx = ctx
         self.properties = dict()
         self.spike_parents = spike_parents
         self.spike_payloads = spike_payloads
+
         # Recursively complete properties dict with children:
-        for propname in st.write_props + st.read_props:
+        for prop_parent_id in state.get_all_props_ids():
             # May have been covered by a parent before
-            if propname not in self.properties:
-                prop_and_children = ctx[propname].gather_children()
+            if prop_parent_id not in self.properties:
+                prop_and_children = ctx[prop_parent_id].gather_children()
                 for prop in prop_and_children:
                     # Child may have been covered by a parent before
                     if prop.id() not in self.properties:
                         self.properties[prop.id()] = PropertyWrapper(
-                            prop=prop, ctx=ctx,
+                            prop=prop, ctx=self.ctx,
                             spike_parents=self.spike_parents,
-                            allow_read=propname in st.read_props,
-                            allow_write=propname in st.write_props)
+                            allow_read=prop_parent_id in state.get_read_props_ids(),
+                            allow_write=prop_parent_id in state.get_write_props_ids())
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Union[str, Property], value: Any):
+        if isinstance(key, Property):
+            key = key.id()
         if key in self.properties:
             return self.properties[key].set(value)
         else:
-            logger.error(f"State {self.st.name} attempted to write property {key} without permission!")
+            logger.error(f"State {self.state.name} attempted to write property {key} without permission!")
 
-    def __getitem__(self, key) -> Any:
+    def __getitem__(self, key: Union[str, Property, Signal]) -> Any:
+        if isinstance(key, Signal) or isinstance(key, Property):
+            key = key.id()
         if key in self.properties:
             return self.properties[key].get()
         elif key in self.spike_payloads:
             return self.spike_payloads[key]
         else:
-            logger.error(f"State {self.st.name} attempted to access property {key} without permission!")
+            logger.error(f"State {self.state.name} attempted to access property {key} without permission!")
 
-    def add_state(self, st: state.State):
-        self.ctx.add_state(st=st)
+    def add_state(self, state: State):
+        """
+        Add a state to the context. If it has not been assigned to a module yet,
+         it will ne assigned to the module that ownes that state that owns this
+         context wrapper.
+
+        * `state`: The state which should be added to context, and optionally added
+          to this ContextWrapper's state's module if it does not have a module yet.
+        """
+        if not state.module_name:
+            mod = get_module(self.state.module_name)
+            assert mod
+            mod.add(state)
+            if state.signal:
+                mod.add(state.signal)
+        self.ctx.add_state(st=state)
 
     def shutdown(self):
         self.ctx.shutdown()
@@ -194,75 +213,81 @@ class ContextWrapper:
 
     def conf(self, *, mod=None, key=None):
         if not mod:
-            mod = self.st.module_name
+            mod = self.state.module_name
         return self.ctx.conf(mod=mod, key=key)
 
-    def push(self, parentpath: str, child: PropertyBase):
+    def push(self, parent_property_or_path: Union[str, Property], child: Property):
         """
         Add a child to a property.
          Note: Child must not yet have a parent or children of itself.
           Write-access to parent is needed.
 
-        * `parentpath`: Path of the parent that should receive the new child.
+        * `parent_property_or_path`: (Path of the) parent property that should receive the new child.
 
         * `child`: Parent-less, child-less property object to add.
 
         **Returns:** True if the push was successful, False otherwise
         """
         if child.parent_path:
-            logger.error(f"State {self.st.name} attempted to push child property {child.name} to parent {parentpath}, but it already has parent {child.parent_path}!")
+            logger.error(f"State {self.state.name} attempted to push child property {child.name} to parent {parent_property_or_path}, but it already has parent {child.parent_path}!")
             return False
-        if parentpath in self.properties:
-            if self.properties[parentpath].push(child):
+        if isinstance(parent_property_or_path, Property):
+            parent_property_or_path = parent_property_or_path.id()
+        if parent_property_or_path in self.properties:
+            if self.properties[parent_property_or_path].push(child):
                 self.properties[child.id()] = PropertyWrapper(
                     prop=child, ctx=self.ctx,
                     spike_parents=self.spike_parents,
-                    allow_read=self.properties[parentpath].allow_read,
-                    allow_write=self.properties[parentpath].allow_write)
+                    allow_read=self.properties[parent_property_or_path].allow_read,
+                    allow_write=self.properties[parent_property_or_path].allow_write)
                 self.ctx.add_prop(prop=child)
                 return True
         else:
-            logger.error(f'State {self.st.name} attempted to add child-property {child.name} to non-accessible parent {parentpath}!')
+            logger.error(f'State {self.state.name} attempted to add child-property {child.name} to non-accessible parent {parent_property_or_path}!')
             return False
 
-    def pop(self, path: str):
+    def pop(self, property_or_path: Union[str, Property]):
         """
         Delete a property (remove it from context and it's parent).
          Note: Write-access to parent is needed!
 
-        * `path`: Path to the property. Must be nested (not root-level)!
+        * `property_or_path`: (Path to) the property. Must be nested (not root-level)!
 
         **Returns:** True if the pop was successful, False otherwise
         """
-        path_parts = path.split(":")
+        if isinstance(property_or_path, Property):
+            property_or_path = property_or_path.id()
+        path_parts = property_or_path.split(":")
         if len(path_parts) < 3:
-            logger.error(f"State {self.st.name}: Path to pop is not a nested property: {path}")
+            logger.error(f"State {self.state.name}: Path to pop is not a nested property: {property_or_path}")
             return False
         parentpath = ":".join(path_parts[:-1])
         if parentpath in self.properties:
             if self.properties[parentpath].pop(path_parts[-1]):
-                self.ctx.rm_prop(prop=self.properties[path].prop)
+                self.ctx.rm_prop(prop=self.properties[property_or_path].prop)
                 # Remove property from own dict
-                del self.properties[path]
+                del self.properties[property_or_path]
                 # Also remove the deleted propertie's children
                 for childpath in list(self.properties.keys()):
-                    if childpath.startswith(path+":"):
+                    if childpath.startswith(property_or_path + ":"):
                         self.ctx.rm_prop(prop=self.properties[childpath].prop)
                         del self.properties[childpath]
                 return True
             else:
-                logger.error(f'State {self.st.name} attempted to remove non-existent child-property {path}')
+                logger.error(f'State {self.state.name} attempted to remove non-existent child-property {property_or_path}')
                 return False
         else:
-            logger.error(f'State {self.st.name} attempted to remove child-property {path} from non-existent parent-property {parentpath}')
+            logger.error(f'State {self.state.name} attempted to remove child-property {property_or_path} from non-existent parent-property {parentpath}')
             return False
 
-    def enum(self, path) -> Generator[str, None, None]:
+    def enum(self, property_or_path: Union[str, Property]) -> Generator[str, None, None]:
         """
-        Enumerate a propertie's children by their full pathes.
+        Enumerate a property's children by their full pathes.
         """
-        if path in self.properties:
-            return self.properties[path].enum()
+        if isinstance(property_or_path, Property):
+            property_or_path = property_or_path.id()
+        if property_or_path in self.properties:
+            return self.properties[property_or_path].enum()
         else:
-            logger.error(f"State {self.st.name} attempted to enumerate property {path} without permission!")
+            logger.error(f"State {self.state.name} attempted to enumerate property {property_or_path} without permission!")
 

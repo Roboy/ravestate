@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="reggol",
-    version="0.1.0",
+    version="0.2.0",
     url="https://github.com/roboy/ravestate",
     author="Roboy",
     author_email="info@roboy.org",
@@ -29,7 +29,7 @@ beautiful synced console-file logging. Woah!
     long_description_content_type="text/markdown",
 
     package_dir={'': 'modules'},
-    packages=setuptools.find_packages("modules", exclude=["ravestate*"]),
+    packages=["reggol"],
     include_package_data=False,
 
     install_requires=[],

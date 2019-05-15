@@ -8,11 +8,12 @@ with open("requirements.txt", "r") as freq:
     for line in freq.read().split():
         required.append(line)
 
-packages = setuptools.find_packages("modules", exclude=["reggol*"])
+packages = setuptools.find_packages("modules")
+packages.remove("reggol")
 
 setuptools.setup(
     name="ravestate",
-    version="0.5.0pre",
+    version="0.6.0",
     url="https://github.com/roboy/ravestate",
     author="Roboy",
     author_email="info@roboy.org",
@@ -21,16 +22,17 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
 
-    package_dir={package: 'modules/'+package for package in packages},
+    package_dir={'': 'modules'},
     packages=packages,
     include_package_data=True,
     package_data={
         'ravestate_phrases_basic_en': ['en/*.yml'],
         'ravestate_ontology': ['ravestate_ontology.yml'],
-        'ravestate_roboyqa': ['answering_phrases/RoboyInfoList.yml']
+        'ravestate_roboyqa': ['answering_phrases/RoboyInfoList.yml'],
+        'ravestate_persqa': ['persqa_phrases/*.yml']
     },
 
-    install_requires=required + ["reggol"],
+    install_requires=required + ["reggol>=0.2.0"],
     python_requires='>=3.6',
 
     classifiers=[

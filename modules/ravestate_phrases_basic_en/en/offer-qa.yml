@@ -1,0 +1,12 @@
+type: phrases
+name: "question-answering-prompt"
+opts:
+- "Is there anything you would like to know? I love general knowledge questions!"
+- "Anything that comes to your mind? Ask me something!"
+- "I know so much stuff, just ask me a question."
+- "Let me uncover my potential. Ask something really difficult!"
+- "Why don't you ask me about famous people!"
+- "Why don't you ask me about famous places!"
+- "I know a bit about pop stars. Wanna hear a story about someone?"
+- "I keep profiles of famous people. Ask me about some politician. I know quite a bunch."
+- "I know a lot about famous people, ask me!"

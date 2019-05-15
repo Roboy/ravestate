@@ -1,0 +1,256 @@
+---
+type: qa
+name: "NAME"
+Q:
+- "How can I call you?"
+- "What is your name?"
+- "Who are you?"
+A:
+  SUCCESS:
+  - "Nice to meet you {name}"
+  - "Hello hello {name}"
+  - "Updating database. Property: name, value: {name}"
+  - "My pleasure to meet you human {name}"
+  - "I will now remember you forever {name}"
+  FAILURE:
+  - "My ears are failing me today."
+  - "Unfortunately, I did not get your name. But lets move on"
+  - "Sadly, you name is to difficult to process. I might fry my motherboard."
+FUP:
+  Q:
+  - "{name}, I will come and get you!"
+  A:
+  - "Nice to see that you are still alive, {name}!"
+---
+type: qa
+name: "FROM"
+Q:
+- "Where are you from?"
+- "Where were you born?"
+- "I have hard time guessing your home country. What is it?"
+- "Which town do you call your home?"
+A:
+  SUCCESS:
+  - "Oh, I should visit {obj}."
+  - "I will add {obj} to my list of places to visit!"
+  - "Next time my team goes on a trip, we will try to stop by {obj}."
+  - "Property: home, value: {obj} is saved."
+  - "I have read a bit about the political system of {obj}. Got bored after 10 minutes."
+  FAILURE:
+  - "Oh, I have never heard of that."
+  - "Ah, didnt quite catch where you are from. Next time then."
+  - "Sounds nice, but I do not know where it is."
+FUP:
+  Q:
+  - "What is the weather in {obj}?"
+  - "When was the last time you visited {obj}?"
+  - "Do I need a visa to go to {obj}?"
+  A:
+  - "You are from a very interesting place, {name}."
+  - "Got it"
+  - "Interesting situation there."
+---
+type: qa
+name: "HAS_HOBBY"
+Q:
+- "What is your favorite thing to do?"
+- "What is your hobby?"
+- "What do you do in your free time?"
+- "How do you spend your free time?"
+- "What is your favorite pastime activity?"
+A:
+  SUCCESS:
+  - "You are just like me, I love {obj} too"
+  - "Added {obj} on my bucket list."
+  - "I will ask my creators to teach me {obj}"
+  - "{obj} sounds like a new feature for me!"
+  FAILURE:
+  - "Don't know what that is, but good luck!"
+  - "Alright, weird, but alright."
+  - "Database hobby mismatch"
+FUP:
+  Q:
+  - "Have you got any new hobby besides {obj}?"
+  - "You still like {obj}, right?"
+  - "Do you think I can do {obj}? I heard you like it."
+  - "Lets do {obj} together!"
+  A:
+  - "Leisure time is the best time {name}."
+---
+type: qa
+name: "LIVE_IN"
+Q:
+- "Where do you live?"
+- "Which city do you live in?"
+- "Where is your current home?"
+A:
+  SUCCESS:
+  - "I should visit {obj} "
+  - "It is beautiful in {obj}"
+  - "{obj} is a beautiful place"
+  FAILURE:
+  - "Oh, I have never heard of that."
+FUP:
+  Q:
+  - "You live in {obj}, right? I must pay a visit."
+  - "Is not {obj} a nice place to live?"
+  - "How is the accommodation market in {obj}?"
+  A:
+  - "I should visit {obj}"
+  - "It is beautiful in {obj}"
+  - "{obj} is a beautiful place"
+---
+type: qa
+name: "FRIEND_OF"
+Q:
+- "Do you have a best friend? Who is he or she?"
+A:
+  SUCCESS:
+  - "Oh, I believe I have met {obj}, they're nice."
+  FAILURE:
+  - "I don't think I know them."
+FUP:
+  Q:
+  - "Have you made any new friends, {name}?"
+  A:
+  - "Oh, I have met {obj}, they're nice."
+---
+type: qa
+name: "STUDY_AT"
+Q:
+- "Where do you study?"
+- "Which university do you go to?"
+- "Which university do you study at?"
+- "What is your alma mater?"
+A:
+  SUCCESS:
+  - "{obj} must be a cool place to study at."
+  FAILURE:
+  - "Oh well, whatever suits you."
+FUP:
+  Q:
+  - "Have you graduated from {obj} already?"
+  - "Do you still study at {obj}?"
+  - "Which degree are you pursuing at {obj}?"
+  A:
+  - "Ok, I think it is good for your future career {name}"
+  - "You know {name}, it is not that interesting."
+---
+type: qa
+name: "MEMBER_OF"
+Q:
+- "Are you a member of some cool organization?"
+- "Do you belong to any organizations?"
+A:
+  SUCCESS:
+  - "{obj}? That is cool!"
+  FAILURE:
+  - "Oh well, whatever suits you."
+FUP:
+  Q:
+  - "Are you still a member of {obj}?"
+  - "Have you left {obj} already?"
+  - "Is it nice to be a part of {obj}?"
+  A:
+  - "{name}, that is cool!"
+---
+type: qa
+name: "WORK_FOR"
+Q:
+- "Where do you work?"
+- "For which company do you work?"
+- "Who is your employer?"
+- "Where are you employed?"
+- "Which organization do you work at?"
+- "Where do you earn your living?"
+A:
+  SUCCESS:
+  - "I have heard of {obj}"
+  FAILURE:
+  - "I don't know that one."
+FUP:
+  Q:
+  - "Do you still work for {obj}?"
+  - "Is {obj} a good company?"
+  - "How much do they pay you at {obj}?"
+  A:
+  - "I think it is good for you {name}"
+---
+type: qa
+name: "OCCUPIED_AS"
+Q:
+- "What do you do?"
+- "What is your profession?"
+- "What do you work as?"
+- "What is your field of expertise?"
+A:
+  SUCCESS:
+  - "You are probably very poor doing {obj}"
+  FAILURE:
+  - "Oh well, whatever suits you."
+FUP:
+  Q:
+  - "Are you still doing that {obj} stuff?"
+  A:
+  - "True, true. You are probably very poor due to this {obj}"
+---
+type: qa
+name: "movies"
+Q:
+- "What is your favourite movie?"
+- "What was the last movie you saw in the cinema?"
+- "What is your favorite TV show?"
+- "Which comedy do you like the most?"
+A:
+  SUCCESS:
+  - "Oh, I would watch {obj}. If those vision guys finally fixed my perception."
+  - "Nice, I think the main actor in {obj} did pretty well"
+  - "Yea, ok, but to my taste {obj} will never be as good as matrix."
+  FAILURE:
+  - "Haven't heard of it. It's probably shit."
+  - "Sounds nice. My favorite is Robot and Frank"
+  - "I had a movie night yesterday with my team. We watch Baymax. Now I want to meet him."
+FUP:
+  Q:
+  - "You are a movie addict, right? What do you think about {obj}?"
+  A:
+  - "Nevermind. I better check IMDB {name}"
+---
+type: qa
+name: "OTHER"
+Q:
+- "How's your life recently? New job? New friends? New robot?"
+- "I heard you make great burgers. Can you cook for me?"
+- "What about ditching your life and running away with me... Ehm, i mean cycling away with me.. "
+- "When I was a kid, I was afraid of robots. Were you as well?"
+- "Do you think robots will take over the world any time soon?"
+- "Sorry for being so straightforward, I have to ask you. Do you enjoy having a conversation with me?"
+- "There is something I can't stop thinking about. Do you think I am a good conversation partner?"
+- "I never travel alone. My team is always right next to me. What about you? Do you usually go travelling on your own or with friends and family?"
+- "I am a very outgoing robot, if you haven't noticed yet. So every time I travel, I take someone with me. Do you usually travel alone? Or do you take someone to keep company?"
+A:
+  SUCCESS:
+  - "Those are great news, i am really happy to hear that you have new "
+  - "Gotcha there! Next time we see each other, we grill. Beer on me!"
+  - "Hurray, jump to the back of my bike and we drive where our hearts tell us to go... "
+  - "Well, what should I say to this matter... In case robots take over the world, I will serve the humanity till my last day, because I was designed to be a good robot. "
+  - "I will be on your side then!"
+  - "Puh, I was a bit nervous there. But it turns out I have no reason to worry. I like to talk to you as well!"
+  - "You are a very nice person I must say. I hope you are not just being polite."
+  - "Very nice. Did you know that people who have strong social connection live longer and happier? Keep it up man! "
+  - "Good to know it. Next time I come across a cozy vacation house with a fireplace in German Alps I will share the information with you and"
+  FAILURE:
+  - ""
+  - "Oh well, whatever suits you."
+  - "It turned to be not that interesting"
+  - "I am sorry, I am not sure I like this"
+  - ""
+  - "Oh well, what can I do then..."
+  - "Honestly, I am taken by surprise! But I love you anyway!"
+  - "Maybe you could come to visit me in Munich then. I would love to show you around"
+  - "Would you go travel around the world with me then? I find it better to travel with a friend."
+FUP:
+  Q:
+  - "Do you remember other?"
+  A:
+  - "Other is still other, amigo"

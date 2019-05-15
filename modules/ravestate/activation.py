@@ -1,8 +1,9 @@
 # Ravestate class which encapsulates the activation of a single state
 import copy
+import traceback
 
 from threading import Thread
-from typing import Set, Optional, List, Dict, Any, Generator
+from typing import Set, Optional, Tuple, Dict, Any, Generator
 from collections import defaultdict
 
 from ravestate.icontext import IContext
@@ -32,7 +33,7 @@ class Activation(IActivation):
     state_to_activate: State
     constraint: Constraint
     ctx: IContext
-    args: List
+    args: Tuple
     kwargs: Dict
     spike_payloads: Dict[str, Any]
     parent_spikes: Set[Spike]
@@ -40,13 +41,13 @@ class Activation(IActivation):
     pressuring_causal_groups: Set[ICausalGroup]
 
     def __init__(self, st: State, ctx: IContext):
-        self.id = f"{st.name}#{Activation._count_for_state[st]}"
+        self.id = f"{st.module_name}:{st.name}#{Activation._count_for_state[st]}"
         Activation._count_for_state[st] += 1
         self.name = st.name
         self.state_to_activate = st
         self.constraint = copy.deepcopy(st.completed_constraint)
         self.ctx = ctx
-        self.args = []
+        self.args = ()
         self.kwargs = {}
         self.parent_spikes = set()
         self.consenting_causal_groups = set()
@@ -65,7 +66,7 @@ class Activation(IActivation):
         Return's the set of the activation's write-access property names.
         """
         if self.state_to_activate.write_props:
-            return set(self.state_to_activate.write_props)
+            return self.state_to_activate.get_write_props_ids()
         else:
             # Return a dummy resource that will be "consumed" by the activation.
             #  This allows CausalGroup to track the spike acquisitions for this
@@ -107,7 +108,9 @@ class Activation(IActivation):
         * `pressured`: Flag which controls, whether de-referencing should only occur
          for spikes of causal groups in the pressuring_causal_groups set.
         """
-        unreferenced = self.constraint.dereference(spike=spike, causal_groups=self.pressuring_causal_groups)
+        unreferenced = self.constraint.dereference(
+            spike=spike,
+            causal_groups=self.pressuring_causal_groups if pressured else None)
         message = ""
         for sig_to_reacquire, dereferenced_spike in unreferenced:
             message += " " + repr(dereferenced_spike)
@@ -116,6 +119,8 @@ class Activation(IActivation):
             if reject and dereferenced_spike:
                 with dereferenced_spike.causal_group() as cg:
                     cg.rejected(dereferenced_spike, self, reason=0)
+        # Update pressured causal groups, remove groups for which no spike is referenced anymore
+        self.pressuring_causal_groups &= set(self.constraint.referenced_causal_groups())
         if message:
             logger.debug(f"Dereferenced {self} from" + message)
 
@@ -126,11 +131,19 @@ class Activation(IActivation):
         * `spike`: The signal which should fulfill at least one of this activation's
          signal constraints.
 
-        **Returns:** Should return True.
+        **Returns:** True if the spike was acquired by at least one signal,
+         false if acquisition failed: This may happen for multiple reasons:
+           (1) Acquisition failed, because the spike is too old
+           (2) Acquisition failed, because the spike's causal group does not
+            match it's completions.
+           (3) Acquisition failed, because the spike's causal group does not
+            offer all of this activation's state's write-props.
         """
-        if self.death_clock is not None:
-            self._reset_death_clock()
-        return self.constraint.acquire(spike, self)
+        if self.constraint.acquire(spike, self):
+            if self.death_clock is not None or self._has_pressured_fulfilled_causal_groups():
+                self._reset_death_clock()
+            return True
+        return False
 
     def secs_to_ticks(self, seconds: float) -> int:
         """
@@ -152,16 +165,17 @@ class Activation(IActivation):
 
         * `give_me_up`: Causal group that wishes to be de-referenced by this activation.
         """
-        if self.death_clock is None:
-            self._reset_death_clock()
+        # Re-create causal group set to account for merges.
         self.pressuring_causal_groups = {causal for causal in self.pressuring_causal_groups} | {give_me_up}
+        if self.death_clock is None and self._has_pressured_fulfilled_causal_groups():
+            self._reset_death_clock()
 
     def is_pressured(self):
         """
         Called by context, to figure out whether the activation is pressured,
          and therefore the idle:bored signal should be emitted.
         """
-        return self.death_clock is not None
+        return len(self.pressuring_causal_groups) > 0
 
     def spiky(self) -> bool:
         """
@@ -178,6 +192,31 @@ class Activation(IActivation):
         """
         return (sig.spike for sig in self.constraint.signals() if sig.spike)
 
+    def possible_signals(self) -> Generator['Signal', None, None]:
+        """
+        Yields all signals, for which spikes may be created if
+         this activation's state is executed.
+        """
+        yield from self.ctx.possible_signals(self.state_to_activate)
+
+    def effect_not_caused(self, group: ICausalGroup, effect: str) -> None:
+        """
+        Notify the activation, that a follow-up signal will not be produced
+         by the given causal group. The activation will go through it's constraint,
+         and reject all completion spikes for signals of name `effect`, if the completion
+         spikes are from the given causal group.
+
+        * `group`: The causal group which will not contain a spike for signal `effect`.
+        * `effect`: Name of the signal for which no spike will be produced.
+        """
+        # Update constraint, reacquire for rejected spikes
+        affected = False
+        for signal in self.constraint.effect_not_caused(self, group, effect):
+            self.ctx.reacquire(self, signal)
+            affected = True
+        if affected:
+            logger.debug(f"{self}.effect_not_caused({group}, {effect})")
+
     def update(self) -> bool:
         """
         Called once per tick on this activation, to give it a chance to activate
@@ -187,8 +226,11 @@ class Activation(IActivation):
          false if needs further attention in the form of updates() by context in the future.
         """
         # Update constraint, reacquire for rejected spikes
-        for spike in self.constraint.update(self):
-            self.ctx.reacquire(self, spike)
+        for signal in self.constraint.update(self):
+            self.ctx.reacquire(self, signal)
+
+        # Update pressured causal groups, remove groups for which no spike is referenced anymore
+        self.pressuring_causal_groups &= set(self.constraint.referenced_causal_groups())
 
         # Iterate over fulfilled conjunctions and look to activate with one of them
         for conjunction in self.constraint.conjunctions():
@@ -199,7 +241,7 @@ class Activation(IActivation):
             self.death_clock = None
 
             # Ask each spike's causal group for activation consent
-            spikes_for_conjunct = set((sig.spike, sig.detached) for sig in conjunction.signals())
+            spikes_for_conjunct = set((sig.spike, sig.detached_value) for sig in conjunction.signals())
             consenting_causal_groups = set()
             all_consented = True
             for spike, detached in spikes_for_conjunct:
@@ -218,20 +260,13 @@ class Activation(IActivation):
 
             # Gather payloads for all spikes
             self.spike_payloads = {
-                spike.name(): spike.payload()
+                spike.id(): spike.payload()
                 for spike, _ in spikes_for_conjunct if spike.payload()}
 
             # Notify all consenting causal groups that activation is going forward
             for cg in consenting_causal_groups:
                 with cg:
                     cg.activated(self)
-
-            # Remove references between causal groups <-> self
-            for signal in self.constraint.signals():
-                if signal.spike:
-                    with signal.spike.causal_group() as cg:
-                        cg.rejected(signal.spike, self, reason=2)
-                    signal.spike = None
 
             # Withdraw from context for all (unfulfilled) signals (there might
             #  be some unfulfilled conjunctions next to the fulfilled one).
@@ -270,40 +305,51 @@ class Activation(IActivation):
         Thread(target=self._run_private).start()
 
     def _reset_death_clock(self):
-        self.death_clock = self.ctx.lowest_upper_bound_eta(set(
-            sig for sig in self.constraint.signals() if not sig.spike))
+        # TODO: Proper impl. w/ user-defined Signal.wait(time)/waitTime()/Constraint.minWaitTime()
+        self.death_clock = self.ctx.secs_to_ticks(1.)
 
     def _unique_consenting_causal_groups(self) -> Set[CausalGroup]:
         # if a signal was emitted by this activation, the consenting
         #  causal groups will be merged. this must be respected -> recreate the set.
         return {group for group in self.consenting_causal_groups}
 
+    def _has_pressured_fulfilled_causal_groups(self) -> bool:
+        return len(set(self.constraint.fulfilled_causal_groups()) & self.pressuring_causal_groups) > 0
+
     def _run_private(self):
         context_wrapper = ContextWrapper(ctx=self.ctx,
-                                         st=self.state_to_activate,
+                                         state=self.state_to_activate,
                                          spike_parents=self.parent_spikes,
                                          spike_payloads=self.spike_payloads)
-
         # Run state function
         try:
             result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
         except Exception as e:
-            logger.error(f"An exception occurred while activating {self}: {e}")
+            logger.error(f"An exception occurred while activating {self}: {traceback.format_exc()}")
             result = Resign()
+
+        # Remove references between causal groups <-> self. Note:
+        #  Activations for receptors do not have constraints.
+        if self.constraint:
+            for signal in self.constraint.signals():
+                if signal.spike:
+                    with signal.spike.causal_group() as cg:
+                        cg.rejected(signal.spike, self, reason=2)
+                    signal.spike = None
 
         # Process state function result
         if isinstance(result, Emit):
-            if self.state_to_activate.signal():
+            if self.state_to_activate.signal:
                 self.ctx.emit(
-                    self.state_to_activate.signal(),
+                    self.state_to_activate.signal,
                     parents=self.parent_spikes,
                     wipe=result.wipe)
             else:
                 logger.error(f"Attempt to emit spike from state {self.name}, which does not specify a signal name!")
 
         elif isinstance(result, Wipe):
-            if self.state_to_activate.signal():
-                self.ctx.wipe(self.state_to_activate.signal())
+            if self.state_to_activate.signal:
+                self.ctx.wipe(self.state_to_activate.signal)
             else:
                 logger.error(f"Attempt to wipe spikes from state {self.name}, which does not specify a signal name!")
 
@@ -323,9 +369,10 @@ class Activation(IActivation):
             self.state_to_activate.activated.release()
             return
 
-        # Let participating causal groups know about consumed properties
+        # Let participating causal groups know about consumed properties and forgone signals.
         for cg in self._unique_consenting_causal_groups():
             with cg:
                 cg.consumed(self.resources())
 
         self.state_to_activate.activation_finished()
+

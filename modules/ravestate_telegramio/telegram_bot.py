@@ -6,12 +6,8 @@ from typing import Set, Dict, Optional, Tuple
 from tempfile import mkstemp
 import requests
 
-from ravestate.constraint import s
-from ravestate.context import Context, create_and_run_context
-from ravestate.property import PropertyBase
-from ravestate.receptor import receptor
-from ravestate.state import state, Delete
-from ravestate.wrappers import ContextWrapper
+import ravestate as rs
+
 from telegram import Bot, Update, TelegramError
 from telegram.ext import Updater, MessageHandler, Filters, Dispatcher
 
@@ -22,8 +18,8 @@ from scientio.ontology.ontology import Ontology
 from reggol import get_logger
 logger = get_logger(__name__)
 
-import ravestate_rawio
-import ravestate_interloc
+import ravestate_rawio as rawio
+import ravestate_interloc as interloc
 import ravestate_ontology
 
 
@@ -58,32 +54,32 @@ active_chats: Dict[int, Tuple[Timestamp, Optional[mp.connection.Connection]]] = 
 active_users: Dict[int, Set[int]] = dict()
 
 
-@state(cond=s(":startup"))
-def telegram_run(ctx: ContextWrapper):
+@rs.state(cond=rs.sig_startup)
+def telegram_run(ctx: rs.ContextWrapper):
     """
     Starts up the telegram bot and adds a handler to write incoming messages to rawio:in
     """
 
-    @receptor(ctx_wrap=ctx, write="rawio:in")
-    def text_receptor(ctx: ContextWrapper, message_text: str):
+    @rs.receptor(ctx_wrap=ctx, write=rawio.prop_in)
+    def text_receptor(ctx: rs.ContextWrapper, message_text: str):
         """
         Writes the message_text to rawio:in
         """
-        ctx["rawio:in"] = message_text
+        ctx[rawio.prop_in] = message_text
 
-    @receptor(ctx_wrap=ctx, write="rawio:pic_in")
-    def photo_receptor(ctx: ContextWrapper, photo_path):
+    @rs.receptor(ctx_wrap=ctx, write=rawio.prop_pic_in)
+    def photo_receptor(ctx: rs.ContextWrapper, photo_path):
         """
         Handles photo messages, write to rawio:pic_in
         """
-        ctx["rawio:pic_in"] = photo_path
+        ctx[rawio.prop_pic_in] = photo_path
 
-    @receptor(ctx_wrap=ctx, write="interloc:all")
-    def push_telegram_interloc(ctx: ContextWrapper, telegram_node: Node, name: str):
+    @rs.receptor(ctx_wrap=ctx, write=interloc.prop_all)
+    def push_telegram_interloc(ctx: rs.ContextWrapper, telegram_node: Node, name: str):
         """
         Push the telegram_node into interloc:all:name
         """
-        if ctx.push(parentpath="interloc:all", child=PropertyBase(name=name, default_value=telegram_node)):
+        if ctx.push(parent_property_or_path=interloc.prop_all, child=rs.Property(name=name, default_value=telegram_node)):
             logger.debug(f"Pushed {telegram_node} to interloc:all")
 
     def make_sure_effective_user_exists(update: Update):
@@ -176,7 +172,7 @@ def telegram_run(ctx: ContextWrapper):
         for child_config_path in child_config_paths_list:
             args += ['-f', child_config_path]
         # set up new Process and override child_conn with the Pipe-Connection
-        p = mp_context.Process(target=create_and_run_context,
+        p = mp_context.Process(target=rs.create_and_run_context,
                                args=(*args,),
                                kwargs={'runtime_overrides': [(MODULE_NAME, CHILD_CONN_CONFIG_KEY, child_conn)]})
         p.start()
@@ -199,7 +195,7 @@ def telegram_run(ctx: ContextWrapper):
             removable_chats = set()
             removable_users = set()
             # wait for children to write to Pipe and then send message to chat
-            tick_interval = 1. / ctx.conf(mod=Context.core_module_name, key=Context.tick_rate_config)
+            tick_interval = 1. / ctx.conf(mod=rs.CORE_MODULE_NAME, key=rs.TICK_RATE_CONFIG_KEY)
             time.sleep(tick_interval)
             for chat_id, (last_msg_timestamp, parent_pipe) in active_chats.items():
                 if parent_pipe.poll():
@@ -232,13 +228,13 @@ def telegram_run(ctx: ContextWrapper):
         token = ctx.conf(key=TOKEN_CONFIG_KEY)
         if not token:
             logger.error(f'{TOKEN_CONFIG_KEY} is not set. Shutting down telegramio')
-            return Delete()
+            return rs.Delete()
         child_config_paths_list = ctx.conf(key=CHILD_FILES_CONFIG_KEY)
         if not ctx.conf(key=ALL_IN_ONE_CONTEXT_CONFIG_KEY) and (
                 not child_config_paths_list or not isinstance(child_config_paths_list, list)
                 or not all(os.path.isfile(child_config_path) for child_config_path in child_config_paths_list)):
             logger.error(f'{CHILD_FILES_CONFIG_KEY} is not set (correctly). Shutting down telegramio')
-            return Delete()
+            return rs.Delete()
 
         updater: Updater = Updater(token)
         # Get the dispatcher to register handlers
@@ -280,33 +276,35 @@ def telegram_run(ctx: ContextWrapper):
     child_conn = ctx.conf(key=CHILD_CONN_CONFIG_KEY)
     is_master_process = child_conn is None
     if is_master_process:
-        _bootstrap_telegram_master()
+        return _bootstrap_telegram_master()
     else:
         _bootstrap_telegram_child()
 
 
-@state(read="rawio:out")
-def telegram_output(ctx: ContextWrapper):
+@rs.state(read=rawio.prop_out)
+def telegram_output(ctx: rs.ContextWrapper):
     """
     If all telegram chats should be in the same context, sends the content of rawio:out to every currently active chat.
     Otherwise it only sends output using the Pipe if it is a child process
     """
+    text = ctx[rawio.prop_out.changed()]
+    if not text or not isinstance(text, str):
+        return rs.Resign()
+    text = text.lower().strip()
     if ctx.conf(key=ALL_IN_ONE_CONTEXT_CONFIG_KEY):
         # TODO don't instantiate the updater every time
         token = ctx.conf(key=TOKEN_CONFIG_KEY)
         if not token:
             logger.error('telegram-token is not set. Shutting down telegramio')
-            return Delete()
-
+            return rs.Delete()
         updater: Updater = Updater(token)
         for chat_id in active_chats.keys():
-            updater.bot.send_message(chat_id=chat_id, text=ctx["rawio:out:changed"])
+            updater.bot.send_message(chat_id=chat_id, text=text)
     else:
         child_conn = ctx.conf(key=CHILD_CONN_CONFIG_KEY)
-
         if child_conn:
             # Child Process -> write to Pipe
-            child_conn.send(ctx["rawio:out:changed"])
+            child_conn.send(text)
         else:
             # Master Process -> State not needed
-            return Delete()
+            return rs.Delete()

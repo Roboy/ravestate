@@ -1,0 +1,28 @@
+version: '2.1'
+
+services:
+  ravestate:
+    image: ravestate-ros2-image
+    container_name: ravestate-ros2-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host
+    volumes:
+      - .:/ravestate
+      # Change this path to where your ros2_speech_recognition is
+      - /home/roboy/ros2_speech_recognition:/ros2_speech_recognition
+    devices:
+      - /dev/snd:/dev/snd
+    ports:
+      - "10002:10002"
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - PYTHONPATH=$PYTHONPATH:/ravestate/modules
+      - PYTHONUNBUFFERED=1
+    # After starting container, attach console and enter python3 -m ravestate [...]
+    # This enables "hot reload" in the running container because the source directory is mounted
+    command: bash
+    tty: true
+    stdin_open: true

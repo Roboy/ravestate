@@ -1,9 +1,12 @@
 type: phrases
 name: "fillers"
 opts:
-- "Hm"
-- "Mm"
-- "Oh"
-- "Uhm"
+- "About that"
 - "Well"
+- "Oh well"
+- "Interesting"
+- "Let me think"
 - "So"
+- "On that point"
+- "Uhm"
+- "Give me a moment"

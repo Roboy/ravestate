@@ -1,20 +1,15 @@
 import logging
 
-import spacy
-
 import pytest
 
-from ravestate_nlp import Triple
+from ravestate_nlp import Triple, spacy_nlp_en
 from testfixtures import LogCapture
-
-
-nlp = spacy.load('en_core_web_sm')
 
 
 def create_token(text: str):
     if not text:
         return None
-    return nlp(text)[0]
+    return spacy_nlp_en(text)[0]
 
 
 def create_triple(subject: str = None, predicate: str = None, object: str = None):

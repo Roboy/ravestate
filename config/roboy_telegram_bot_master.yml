@@ -5,7 +5,7 @@
 #   config:
 #     telegram-token: <sexycactus>  # Your telegram token here
 #
-# Then, start `rasta` with `-f config/roboy_telegram_bot_master.yml -f config/keys.yml`
+# Then, start `python3 -m ravestate` with `-f config/roboy_telegram_bot_master.yml -f config/keys.yml`
 
 ---
 module: core

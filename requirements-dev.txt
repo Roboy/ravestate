@@ -5,3 +5,4 @@ pytest-cov
 codecov
 twine
 pydoc-markdown
+mkdocs-material

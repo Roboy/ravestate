@@ -1,15 +1,12 @@
-from ravestate.module import Module
-from ravestate.wrappers import ContextWrapper
-from ravestate.constraint import s
-from ravestate.state import state
+import ravestate as rs
 
-import ravestate_idle
-import ravestate_verbaliser
-import ravestate_phrases_basic_en
+from ravestate_idle import sig_impatient
+from ravestate_verbaliser import prop_intent
+import ravestate_phrases_basic_en as lang
 
 
-with Module(name="fillers"):
+with rs.Module(name="fillers"):
 
-    @state(cond=s("idle:impatient"), write=("verbaliser:intent",))
-    def impatient_fillers(ctx: ContextWrapper):
-        ctx["verbaliser:intent"] = "fillers"
+    @rs.state(cond=sig_impatient, write=prop_intent)
+    def impatient_fillers(ctx: rs.ContextWrapper):
+        ctx[prop_intent] = lang.intent_fillers

@@ -1,6 +1,6 @@
 from ravestate.iactivation import IActivation
 from ravestate.testfixtures import *
-from ravestate.constraint import s, Constraint, Disjunct, Conjunct
+from ravestate.constraint import Signal, Constraint, Disjunct, Conjunct
 from ravestate.spike import Spike
 
 
@@ -30,22 +30,23 @@ def test_parent(constraint_fixture, spike_fixture: Spike, activation_fixture: IA
                           "Don't call this method on the super class Constraint")
 
 
-def test_signal(activation_fixture):
-    sig = s("mysig")
+def test_signal(mocker, activation_fixture):
+    sig = SignalRef("mysig")
 
-    assert not sig.evaluate()
-    assert set(sig.signals()) == {s("mysig")}
-    sig.acquire(Spike(sig="notmysig"), activation_fixture)
-    assert not sig.evaluate()
-    sig.acquire(Spike(sig="mysig"), activation_fixture)
-    assert sig.evaluate()
+    with mocker.patch.object(activation_fixture, "resources", return_value=set()):
+        assert not sig.evaluate()
+        assert set(sig.signals()) == {SignalRef("mysig")}
+        sig.acquire(Spike(sig="notmysig"), activation_fixture)
+        assert not sig.evaluate()
+        sig.acquire(Spike(sig="mysig"), activation_fixture)
+        assert sig.evaluate()
 
-    sig_and_dis = s("sig") & (s("dis") | s("junct"))
-    assert not sig_and_dis.evaluate()
-    sig_and_dis.acquire(Spike(sig="sig"), activation_fixture)
-    assert not sig_and_dis.evaluate()
-    sig_and_dis.acquire(Spike(sig="junct"), activation_fixture)
-    assert sig_and_dis.evaluate()
+        sig_and_dis = SignalRef("sig") & (SignalRef("dis") | SignalRef("junct"))
+        assert not sig_and_dis.evaluate()
+        sig_and_dis.acquire(Spike(sig="sig"), activation_fixture)
+        assert not sig_and_dis.evaluate()
+        sig_and_dis.acquire(Spike(sig="junct"), activation_fixture)
+        assert sig_and_dis.evaluate()
 
     expected = [(sig, sig.spike)]
     return_value = list(sig.dereference())
@@ -60,9 +61,9 @@ def test_signal(activation_fixture):
 
 
 def test_signal_or(mocker):
-    sig = s("mysig")
+    sig = SignalRef("mysig")
     with mocker.patch('ravestate.constraint.Disjunct.__init__', return_value=None):
-        conjunct = s("sig1") & s("sig2")
+        conjunct = SignalRef("sig1") & SignalRef("sig2")
         with mocker.patch('ravestate.constraint.Conjunct.__init__', return_value=None):
             _ = sig | conjunct
             Conjunct.__init__.assert_called_once_with(sig)
@@ -70,15 +71,15 @@ def test_signal_or(mocker):
 
     with mocker.patch('ravestate.constraint.Disjunct.__init__', return_value=None):
         with mocker.patch('ravestate.constraint.Disjunct.__iter__', return_value=iter([1])):
-            disjunct = s("sig1") | s("sig2")
+            disjunct = SignalRef("sig1") | SignalRef("sig2")
             _ = sig | disjunct
             Disjunct.__init__.assert_called_with(sig, 1)
 
 
 def test_signal_and(mocker):
-    sig = s("mysig")
-    conjunct = s("sig1") & s("sig2")
-    disjunct = s("sig1") | s("sig2")
+    sig = SignalRef("mysig")
+    conjunct = SignalRef("sig1") & SignalRef("sig2")
+    disjunct = SignalRef("sig1") | SignalRef("sig2")
 
     with mocker.patch('ravestate.constraint.Conjunct.__init__', return_value=None):
         _ = sig & sig
@@ -96,38 +97,39 @@ def test_signal_and(mocker):
             Disjunct.__init__.assert_called_with()
 
 
-def test_conjunct(activation_fixture):
-    conjunct = s("sig1") & s("sig2") & s("sig3")
-    assert not conjunct.evaluate()
-    assert set(conjunct.signals()) == {s("sig1"), s("sig2"), s("sig3")}
-    conjunct.acquire(Spike(sig="sig1"), activation_fixture)
-    assert not conjunct.evaluate()
-    conjunct.acquire(Spike(sig="sig2"), activation_fixture)
-    assert not conjunct.evaluate()
-    conjunct.acquire(Spike(sig="sig2"), activation_fixture)
-    assert not conjunct.evaluate()
-    conjunct.acquire(Spike(sig="sig3"), activation_fixture)
-    assert conjunct.evaluate()
+def test_conjunct(mocker, activation_fixture):
+    conjunct = SignalRef("sig1") & SignalRef("sig2") & SignalRef("sig3")
+    with mocker.patch.object(activation_fixture, "resources", return_value=set()):
+        assert not conjunct.evaluate()
+        assert set(conjunct.signals()) == {SignalRef("sig1"), SignalRef("sig2"), SignalRef("sig3")}
+        conjunct.acquire(Spike(sig="sig1"), activation_fixture)
+        assert not conjunct.evaluate()
+        conjunct.acquire(Spike(sig="sig2"), activation_fixture)
+        assert not conjunct.evaluate()
+        conjunct.acquire(Spike(sig="sig2"), activation_fixture)
+        assert not conjunct.evaluate()
+        conjunct.acquire(Spike(sig="sig3"), activation_fixture)
+        assert conjunct.evaluate()
 
 
 def test_conjunct_or(mocker):
-    conjunct = s("sig1") & s("sig2") & s("sig3")
+    conjunct = SignalRef("sig1") & SignalRef("sig2") & SignalRef("sig3")
     with mocker.patch('ravestate.constraint.Disjunct.__init__', return_value=None):
-        conjunct2 = s("sig1") & s("sig2")
+        conjunct2 = SignalRef("sig1") & SignalRef("sig2")
         _ = conjunct | conjunct2
         Disjunct.__init__.assert_called_once_with(conjunct, conjunct2)
 
     with mocker.patch('ravestate.constraint.Disjunct.__init__', return_value=None):
         with mocker.patch('ravestate.constraint.Disjunct.__iter__', return_value=iter([1])):
-            disjunct = s("sig1") | s("sig2")
+            disjunct = SignalRef("sig1") | SignalRef("sig2")
             _ = conjunct | disjunct
             Disjunct.__init__.assert_called_with(conjunct, 1)
 
 
 def test_conjunct_and(mocker):
-    sig = s("mysig")
-    conjunct = s("sig1") & s("sig2")
-    disjunct = s("sig1") | s("sig2")
+    sig = SignalRef("mysig")
+    conjunct = SignalRef("sig1") & SignalRef("sig2")
+    disjunct = SignalRef("sig1") | SignalRef("sig2")
 
     with mocker.patch('ravestate.constraint.Conjunct.__init__', return_value=None):
         _ = conjunct & sig
@@ -145,27 +147,28 @@ def test_conjunct_and(mocker):
             Disjunct.__init__.assert_called_with()
 
 
-def test_disjunct(activation_fixture):
-    disjunct = (s("sig1") & s("sig2")) | s("sig3")
-    assert not disjunct.evaluate()
-    assert set(disjunct.signals()) == {s("sig1"), s("sig2"), s("sig3")}
-    disjunct.acquire(Spike(sig="sig1"), activation_fixture)
-    assert not disjunct.evaluate()
-    disjunct.acquire(Spike(sig="sig3"), activation_fixture)
-    assert disjunct.evaluate()
+def test_disjunct(mocker, activation_fixture):
+    disjunct = (SignalRef("sig1") & SignalRef("sig2")) | SignalRef("sig3")
+    with mocker.patch.object(activation_fixture, "resources", return_value=set()):
+        assert not disjunct.evaluate()
+        assert set(disjunct.signals()) == {SignalRef("sig1"), SignalRef("sig2"), SignalRef("sig3")}
+        disjunct.acquire(Spike(sig="sig1"), activation_fixture)
+        assert not disjunct.evaluate()
+        disjunct.acquire(Spike(sig="sig3"), activation_fixture)
+        assert disjunct.evaluate()
 
 
 def test_disjunct_or(mocker):
-    disjunct = (s("sig1") & s("sig2")) | s("sig3")
+    disjunct = (SignalRef("sig1") & SignalRef("sig2")) | SignalRef("sig3")
     with mocker.patch('ravestate.constraint.Disjunct.__iter__', return_value=iter([1])):
         with mocker.patch('ravestate.constraint.Disjunct.__init__', return_value=None):
-            conjunct = s("sig1") & s("sig2")
+            conjunct = SignalRef("sig1") & SignalRef("sig2")
             _ = disjunct | conjunct
             Disjunct.__init__.assert_called_with(1, conjunct)
 
     with mocker.patch('ravestate.constraint.Disjunct.__iter__', return_value=iter([1])):
         with mocker.patch('ravestate.constraint.Disjunct.__init__', return_value=None):
-            signal = s("sig1")
+            signal = SignalRef("sig1")
             with mocker.patch('ravestate.constraint.Conjunct.__init__', return_value=None):
                 _ = disjunct | signal
                 Conjunct.__init__.assert_called_once_with(signal)
@@ -173,15 +176,15 @@ def test_disjunct_or(mocker):
 
     with mocker.patch('ravestate.constraint.Disjunct.__init__', return_value=None):
         with mocker.patch('ravestate.constraint.Disjunct.__iter__', return_value=iter([1])):
-            disjunct2 = s("sig1") | s("sig2")
+            disjunct2 = SignalRef("sig1") | SignalRef("sig2")
             _ = disjunct | disjunct2
             Disjunct.__init__.assert_called_with(1)
 
 
 def test_disjunct_and(mocker):
-    sig = s("mysig")
-    conjunct = s("sig1") & s("sig2")
-    disjunct = s("sig1") | s("sig2")
+    sig = SignalRef("mysig")
+    conjunct = SignalRef("sig1") & SignalRef("sig2")
+    disjunct = SignalRef("sig1") | SignalRef("sig2")
 
     with mocker.patch('ravestate.constraint.Disjunct.__init__', return_value=None):
         with mocker.patch.object(disjunct, '_conjunctions', return_value={}):
@@ -201,4 +204,4 @@ def test_disjunct_and(mocker):
 
 def test_legal():
     with pytest.raises(ValueError):
-        _ = (s("i") | s("am")) & (s("also") | s("illegal"))
+        _ = (SignalRef("i") | SignalRef("am")) & (SignalRef("also") | SignalRef("illegal"))
