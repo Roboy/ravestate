@@ -1,8 +1,8 @@
 import ravestate as rs
 import ravestate_interloc as interloc
 import ravestate_ros2 as ros2
+import ravestate_rawio as rawio
 from unidecode import unidecode
-from time import sleep
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -51,7 +51,7 @@ if PYROBOY_AVAILABLE:
         #         if result:
         #             interloc.handle_single_interlocutor_input(ctx, result)
 
-        @rs.state(read="rawio:out")
+        @rs.state(read=rawio.prop_out)
         def roboy_output(ctx):
-            ret = say(unidecode(ctx["rawio:out:changed"]))
+            ret = say(unidecode(ctx[rawio.prop_out.changed()]))
             logger.info(f"pyroboy.say() -> {ret}")

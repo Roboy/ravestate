@@ -87,11 +87,11 @@ class Property:
         """
         if not self.parent_path:
             self.parent_path = path
-            self.changed_signal.module_name = path
-            self.pushed_signal.module_name = path
-            self.popped_signal.module_name = path
-            self.true_signal.module_name = path
-            self.false_signal.module_name = path
+            self.changed_signal.parent_path = path
+            self.pushed_signal.parent_path = path
+            self.popped_signal.parent_path = path
+            self.true_signal.parent_path = path
+            self.false_signal.parent_path = path
         else:
             logger.error(f'Tried to override parent_path of {self.id()}')
 

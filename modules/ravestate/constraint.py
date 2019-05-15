@@ -74,7 +74,7 @@ class Signal(Constraint):
     min_age_value: float
     max_age_value: float
     detached_value: bool
-    module_name: str
+    parent_path: str
 
     # tells whether this signal has been completed, and may therefore
     #  not introduce a new causal group into the parent conjunct.
@@ -99,7 +99,7 @@ class Signal(Constraint):
         self.completed_by = None
         self.is_completion = False
         self._min_age_ticks = 0
-        self.module_name = ""
+        self.parent_path = ""
         # TODO: Deal with ConfigurableAge
         # if min_age > max_age and max_age > .0:
         #     logger.warning(f"{self}: max_age={max_age} < min_age={min_age}!")
@@ -142,7 +142,7 @@ class Signal(Constraint):
         return self.id()
 
     def id(self):
-        return f'{self.module_name}:{self.name}'
+        return f'{self.parent_path}:{self.name}'
 
     def signals(self) -> Generator['Signal', None, None]:
         yield self

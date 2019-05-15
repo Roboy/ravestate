@@ -76,7 +76,7 @@ class Module:
             ownable.module_name = self.name
             self.states.append(ownable)
         elif isinstance(ownable, Signal):
-            ownable.module_name = self.name
+            ownable.parent_path = self.name
             self.signals.append(ownable)
         else:
             logger.error(f"Module.add() called with invalid argument {ownable}!")

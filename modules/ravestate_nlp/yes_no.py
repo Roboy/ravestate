@@ -25,6 +25,6 @@ def yes_no(doc):
                 return "pn"
             elif token in YES_SYNONYMS:
                 return "no"
-            elif token in DON_NOT_KNOW_SET:
+            elif token in DO_NOT_KNOW_SET:
                 return "idk"
     return "_"
