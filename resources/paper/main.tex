@@ -1,0 +1,88 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+
+\title{Multimodal Contextual Dialog State Tracking As Bayesian Specific Signal Transduction}
+\author{
+	Birkner, Joseph \\ \texttt{joseph.birkner@tum.de}
+	\and
+	Karimi, Negin \\ \texttt{negin.karimi@tum.de}
+	\and
+	Dolp, Andreas \\ \texttt{andreas.dolp@tum.de}
+	\and
+	Airiian, Wagram\\ \texttt{wagram.airiian@tum.de}
+	\and
+	Kharchenko, Alona \\ \texttt{unicorn@roboy.org}
+	\and
+	Hostettler, Rafael \\ \texttt{rh@gi.ai}
+}
+\date{April 2019}
+
+
+\begin{document}
+
+\maketitle
+
+\section{Abstract}
+
+A major challenge in the development of Natural Language Dialog Systems is to determine the intent of a user utterance, and to map the intent of an utterance U to a certain dialog application state T.
+While recent work in this area focuses on embedding these variables as Neural-Network generated latent representations, we hypothesize that a symbolic approach to Dialog State tracking might deliver higher utility with reduced development effort:
+By observing dialog system state as words out of a formal language over signals in the application context, with application states acting as contextual non-terminals, we set up a basic formal framework for dialog state propagation.
+Futhermore, we propose the notion of constraint-based Bayesian state specificity as utility to resolve conflicts between overlapping application states. We implement our system in the open-source library "Ravestate".
+Experiments with the implemented system both in text- and speech based scenarios with additional video input show very robust contextual behavior, while operating fully causally explainable and transparently.
+
+\section{Introduction}
+
+
+\section{Related Work}
+
+
+\section{State Tracking As Signal Transduction}
+
+
+\subsection{Terminology}
+
+States $t \in T$ (Processes, Transition Functions, Transducers, Non-Terminals)
+
+Properties $p \in P$  (Data, Channels)
+
+Signals $c \in C$ (Constraints, Chunks)
+
+Spikes $\hat{s_c} \in \hat{S}$
+
+Activations $\hat{a_t} \in \hat{A}$
+
+CausalGroup spike equivalence class $[\hat{s_c}]$.
+2
+\subsection{Simple Example}
+
+\subsection{Core Protocol}
+
+\subsubsection{$\text{EMIT} (G,C)$}
+
+\subsubsection{$\text{WIPE} (G,C)$}
+
+\subsubsection{$\text{ACQUIRE} (G,A, C)$}
+
+\subsubsection{$\text{WITHDRAW} (G,A, C)$}
+
+\subsubsection{•}
+
+
+
+\section{Bayesian Specificity As State Utility}
+
+
+\section{Experiments}
+
+
+\section{Conclusion}
+
+
+\section{Future Work}
+
+
+\section{References}
+
+
+\end{document}
