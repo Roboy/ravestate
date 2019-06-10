@@ -50,7 +50,7 @@ import ravestate_rawio as rawio
     read=nlp.prop_yesno,  # state is allowed to read the 'yesno' property
     write=rawio.prop_out)  # state is allowed to write to the output property
 def postive_chicken(ctx: ContextWrapper):
-    if ctx[nlp.prop_yesno] == "yes":
+    if ctx[nlp.prop_yesno].yes():
         ctx[rawio.prop_out] = "You seem to be a positive chicken!"
 
 ```

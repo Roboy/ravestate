@@ -4,7 +4,7 @@ import ravestate_rawio as rawio
 from ravestate_nlp.question_word import QuestionWord
 from ravestate_nlp.triple import Triple
 from ravestate_nlp.extract_triples import extract_triples
-from ravestate_nlp.yes_no import yes_no
+from ravestate_nlp.yes_no import yes_no, YesNoWrapper
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -48,7 +48,7 @@ with rs.Module(name="nlp"):
     prop_ner = rs.Property(name="ner", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
     prop_triples = rs.Property(name="triples", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
     prop_roboy = rs.Property(name="roboy", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
-    prop_yesno = rs.Property(name="yesno", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+    prop_yesno = rs.Property(name="yesno", default_value=YesNoWrapper(""), always_signal_changed=True, allow_pop=False, allow_push=False)
 
     sig_contains_roboy = rs.Signal(name="contains-roboy")
     sig_is_question = rs.Signal(name="is-question")

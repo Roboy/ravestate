@@ -76,7 +76,7 @@ with rs.Module(name="akinator", config={CERTAINTY: 90}):
         Output: First question
         """
         global akinator_api
-        if ctx[nlp.prop_yesno] == "yes":
+        if ctx[nlp.prop_yesno].yes():
             logger.info("Akinator session is started.")
             akinator_api = Api()
             ctx[prop_question] = True
@@ -105,7 +105,9 @@ with rs.Module(name="akinator", config={CERTAINTY: 90}):
         response = akinator_api.answer_to_int_str(ctx[nlp.prop_yesno])
         if not response == "-1":
             akinator_api.response_get_request(response)
-            if float(akinator_api.get_parameter('progression')) <= ctx.conf(key=CERTAINTY) and int(akinator_api.get_parameter('step')) <= 20:
+            if not akinator_api.is_complete():
+                wrong_input(ctx)
+            elif float(akinator_api.get_parameter('progression')) <= ctx.conf(key=CERTAINTY) and int(akinator_api.get_parameter('step')) <= 20:
                 ctx[prop_question] = True
                 ctx[rawio.prop_out] = "Question " + str(int(akinator_api.get_parameter('step')) + 1) \
                                    + ": " + akinator_api.get_parameter('question')
@@ -143,10 +145,10 @@ with rs.Module(name="akinator", config={CERTAINTY: 90}):
         Gets input from interlocutor on the "is it" question and posts the result
         Asks if the interlocutor wants to play again.
         """
-        if ctx[nlp.prop_yesno] == "yes":
+        if ctx[nlp.prop_yesno].yes():
             akinator_api.choice_get_request()
             out = "Yeah! I guessed right! Thanks for playing with me! Do you want to play again?"
-        elif ctx[nlp.prop_yesno] == "no":
+        elif ctx[nlp.prop_yesno].no():
             akinator_api.exclusion_get_request()
             out = "Oh no! I guessed wrong but do you want to play again?"
         else:
@@ -174,7 +176,7 @@ with rs.Module(name="akinator", config={CERTAINTY: 90}):
         read=nlp.prop_yesno,
         emit_detached=True)
     def exit_game_answered(ctx):
-        if ctx[nlp.prop_yesno] == "yes":
+        if ctx[nlp.prop_yesno].yes():
             ctx[rawio.prop_out] = "Thanks for playing with me!"
             return rs.Resign()
         else:

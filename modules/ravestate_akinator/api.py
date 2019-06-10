@@ -1,6 +1,8 @@
 import requests
 
 # put in config
+from ravestate_nlp.yes_no import YesNo, YesNoWrapper
+
 NEW_SESSION_URL = "https://srv11.akinator.com:9152/ws/new_session?callback=&partner=&player=website-desktop&uid_ext_session=&frontaddr=NDYuMTA1LjExMC40NQ==&constraint=ETAT<>'AV'"
 ANSWER_URL = "https://srv11.akinator.com:9152/ws/answer"
 GET_GUESS_URL = "https://srv11.akinator.com:9152/ws/list"
@@ -17,6 +19,9 @@ class Api:
         self.session = self.data['parameters']['identification']['session']
         self.signature = self.data['parameters']['identification']['signature']
         self.guess_data = None
+
+    def is_complete(self) -> bool:
+        return self.data['completion'] == 'OK'
 
     # get first question
     def get_parameter(self, parameter_type: str) -> str:
@@ -78,23 +83,23 @@ class Api:
             "session": self.session,
             "signature": self.signature,
             "step": self.get_parameter('step'),
-            "forward_answer": self.answer_to_int_str("no")
+            "forward_answer": self.answer_to_int_str(YesNoWrapper("yes"))
         }
         requests.get(EXCLUSION_URL, params=params)
 
-    def answer_to_int_str(self, answer: str):
+    def answer_to_int_str(self, answer):
         """
         String answer to an integer string which can be processed by akinator api
         """
-        if answer == "yes":
+        if answer.answer == YesNo.YES:
             return "0"
-        elif answer == "no":
+        elif answer.answer == YesNo.NO:
             return "1"
-        elif answer == "idk":
+        elif answer.answer == YesNo.DONT_KNOW:
             return "2"
-        elif answer == "p":
+        elif answer.answer == YesNo.PROBABLY:
             return "3"
-        elif answer == "pn":
+        elif answer.answer == YesNo.PROBABLY_NOT:
             return "4"
         else:
             return "-1"
