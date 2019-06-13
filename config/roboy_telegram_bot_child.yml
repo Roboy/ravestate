@@ -36,3 +36,12 @@ config:
 module: akinator
 config:
   certainty_percentage: 90
+---
+module: roboyqa
+config:
+  roboy_node_id: 356
+---
+module: idle
+config:
+  impatience_threshold: 4.0  # number of seconds of "pressure" after which a filler should be sent
+  bored_threshold: 8.0 # number of seconds of "no activity" after which active engagement should activate
