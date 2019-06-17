@@ -575,6 +575,7 @@ class Context(IContext):
                                 #  for the Spike with a certain minimum age. In place of the removed
                                 #  activation, if no activation with the same target state is left,
                                 #  a new Activation will be created.
+                                # TODO implications for visualization of partially fulfilled activations
                                 acts.remove(act)
                                 if len(acts) == 0:
                                     self._new_state_activation(state)

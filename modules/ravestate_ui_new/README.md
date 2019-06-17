@@ -17,5 +17,9 @@ To start development:
 
 To build a production version:
 - run `ng build --prod` in the root folder to build a bundle for the browser
-- the bundle is saved in the `dist` folder 
+- the bundle is saved in the `dist` folder
+
+Backend:
+- start a Flask server by running `python src/app/model`
+- view sample data structures under `http://localhost:5000/tick` and `http://localhost:5000/spike`
 
