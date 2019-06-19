@@ -1,6 +1,6 @@
 import ravestate as rs
 import ravestate_interloc as interloc
-import ravestate_ros2 as ros2
+#import ravestate_ros2 as ros2
 import ravestate_rawio as rawio
 from unidecode import unidecode
 
@@ -28,28 +28,17 @@ Please make sure to have the following items installed & sourced:
 
 if PYROBOY_AVAILABLE:
 
-    ros2.set_node_once(node)
+    #ros2.set_node_once(node)
 
     with rs.Module(name="roboyio"):
 
-        recognized_speech = ros2.Ros2SubProperty(
-            name="recognized_speech",
-            topic="/roboy/cognition/speech/recognition",
-            msg_type=RecognizedSpeech,
-            always_signal_changed=True)
-
-        @rs.state(cond=recognized_speech.changed(), read=(interloc.prop_all, recognized_speech))
+        @rs.state(cond=rs.sig_startup, read=interloc.prop_all)
         def roboy_input(ctx: rs.ContextWrapper):
-            result = ctx[recognized_speech]
-            if result:
-                interloc.handle_single_interlocutor_input(ctx, result.text)
-
-        # @rs.state(cond=startup(), read=interloc.prop_all)
-        # def roboy_input(ctx: ContextWrapper):
-        #     while not ctx.shutting_down():
-        #         result = listen()
-        #         if result:
-        #             interloc.handle_single_interlocutor_input(ctx, result)
+            while not ctx.shutting_down():
+                result = listen()
+                logger.info(f"pyroboy.listen() -> {result}")
+                if result:
+                    interloc.handle_single_interlocutor_input(ctx, result)
 
         @rs.state(read=rawio.prop_out)
         def roboy_output(ctx):
