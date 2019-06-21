@@ -1,0 +1,15 @@
+\BOOKMARK [1][-]{section.1}{Abstract}{}% 1
+\BOOKMARK [1][-]{section.2}{Introduction}{}% 2
+\BOOKMARK [1][-]{section.3}{Related Work}{}% 3
+\BOOKMARK [1][-]{section.4}{Signal Transduction}{}% 4
+\BOOKMARK [2][-]{subsection.4.1}{Formalising Causal Intuitions}{section.4}% 5
+\BOOKMARK [2][-]{subsection.4.2}{Signal Flow}{section.4}% 6
+\BOOKMARK [2][-]{subsection.4.3}{The Transduction Operation}{section.4}% 7
+\BOOKMARK [1][-]{section.5}{Conflict Resolution}{}% 8
+\BOOKMARK [2][-]{subsection.5.1}{Bayesian Specificity As State Utility}{section.5}% 9
+\BOOKMARK [2][-]{subsection.5.2}{Causal Groups and Constraint Completion}{section.5}% 10
+\BOOKMARK [2][-]{subsection.5.3}{Primary and Secondary Signals}{section.5}% 11
+\BOOKMARK [1][-]{section.6}{Experiments}{}% 12
+\BOOKMARK [1][-]{section.7}{Conclusion}{}% 13
+\BOOKMARK [1][-]{section.8}{Future Work}{}% 14
+\BOOKMARK [1][-]{section.9}{References}{}% 15
