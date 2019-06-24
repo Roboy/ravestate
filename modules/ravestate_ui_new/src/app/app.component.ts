@@ -7,6 +7,9 @@ import { Component } from '@angular/core';
             <h1>
                 Welcome to {{title}}!
             </h1>
+            
+            <svg-experiments></svg-experiments>
+            
         </div>
     `,
     styles: []
