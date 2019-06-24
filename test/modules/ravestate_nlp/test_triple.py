@@ -4,6 +4,7 @@ import pytest
 
 from ravestate_nlp import Triple, spacy_nlp_en, extract_triples
 from testfixtures import LogCapture
+from test.modules.ravestate_nlp.test_extract_triples import spacy_model
 
 
 def create_token(text: str):
@@ -17,15 +18,6 @@ def create_triple(subject: str = None, predicate: str = None, object: str = None
     p = create_token(predicate)
     o = create_token(object)
     return Triple(subject=s, predicate=p, object=o)
-
-
-@pytest.fixture
-def spacy_model():
-    nlp = spacy_nlp_en
-    from spacy.tokens import Doc
-    if not Doc.has_extension('triples'):
-        Doc.set_extension('triples', getter=extract_triples)
-    return nlp
 
 
 @pytest.fixture
@@ -125,6 +117,7 @@ def test_match_either_lemma_object_recognition(spacy_model, text_input, object):
                           ])
 def test_match_either_lemma_subject_recognition(spacy_model, text_input, subject):
     assert spacy_model(text_input)._.triples[0].match_either_lemma(subj={subject})
+
 
 @pytest.mark.parametrize('text_input, subject',
                          [("Umur's cats walks in the neighbourhood", 'Eva'),
