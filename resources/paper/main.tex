@@ -100,7 +100,7 @@ Experiments with the implemented system both in text- and speech based scenarios
 
 \subsection{Formalising Causal Intuitions}
 
-Any dialogue system $D: X,H_t \rightarrow Y,H_{t+1}$ is a function mapping input variables $X$ and a context $H_t$ at timestep $t$ to output variables $Y$ and a context $H_{t+1}$. For example, inputs may be a textual user utterance or visual stimuli, and outputs may be a textual response or a gesture. \rasta models these variables as so-called \textbf{Properties}:
+Any dialogue system $D: X,H_t \rightarrow Y,H_{t+1}$ is a function mapping input variables $X$ and a context $H_t$ at time-step $t$ to output variables $Y$ and a context $H_{t+1}$. For example, inputs may be a textual user utterance or visual stimuli, and outputs may be a textual response or a gesture. \rasta models these variables as so-called \textbf{Properties}:
 
 \begin{definition}[Property]
 A property $p^i \in P$ is a pair $\langle L^i, v^i \rangle$ containing a synchronisation primitive $L^i$ and a value $v^i$. It supports the operations $\mathsc{Read}(P^i) = v_i$ and $\mathsc{Write}(P^i, x) \rightarrow \mathsc{Read}(P^i) = x$.
@@ -111,6 +111,8 @@ An intuitive approach towards modelling a dialogue system is to articulate it's 
 \begin{definition}[Signal]
 A signal $c^i \in C = \langle \text{id}^i, \text{age}^i_\text{min} \in \mathbb{R}, \text{age}^i_\text{max} \in \mathbb{R} \rangle$ is a description of a specific event, which may be fulfilled by event instances in the form of \textit{spikes}. It consists of a name $\text{id}^i$, a minimum spike age $\text{age}^i_\text{min}$, and a maximum spike age $\text{age}^i_\text{max}$.
 \end{definition}
+
+Note, that the $\text{age}_\text{min}$ and $\text{age}_\text{max}$ parameters allow for specification of a delay or a time-out for reacting to a spike.
 
 \begin{definition}[Spike]
 A spike $s^i \in S$ is a triplet $\langle \text{id}^i, \text{age}^i \in \mathbb{R}, \text{cause} \subset S \rangle$ which corresponds to a real-world instance of any signal $c^\text{sig} \in C$ where $\mathsc{Eval}(s^i, c^\text{sig}) =  \mathsc{True}$. The function $\mathsc{Eval}: S, C \rightarrow \mathbb{B}$ is defined as follows: $\mathsc{Eval}(s^i, c^\text{sig}) := (\text{id}^i = \text{id}^\text{sig}) \land (\text{age}^\text{sig}_\text{min} \leq \text{age}^i \leq \text{age}^\text{sig}_\text{max})$
