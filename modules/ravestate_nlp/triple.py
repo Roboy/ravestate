@@ -69,10 +69,12 @@ class Triple:
     def match_either_lemma(self, pred: Optional[Set[str]] = None, subj: Optional[Set[str]] = None, obj: Optional[Set[str]] = None):
         if pred and (self._predicate.lemma_ in pred or self._predicate_aux.lemma_ in pred):
             return True
-        if subj and self._subject.lemma_ in subj:
-            return True
-        if obj and self._object.lemma_ in obj or self._object.lemma_ in [str(child) for child in self._object.children]:
-            return True
+        if subj:
+            if self._subject.lemma_ in subj or any(child.lemma_ in subj for child in self._subject.children):
+                return True
+        if obj:
+            if self._object.lemma_ in obj or any(child.lemma_ in obj for child in self._object.children):
+                return True
         return False
 
     def is_question(self, question_word: Optional[str] = None):
