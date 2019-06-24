@@ -8,6 +8,7 @@ This project is built with Angular 8 and TypeScript.
 
 Initial setup:
 - install Node.js and npm
+- install Angular CLI globally by running `npm install -g @angular/cli`
 - Install project dependencies by running `npm install` in the root folder (= folder with `package.json`) 
  
 To start development: 
