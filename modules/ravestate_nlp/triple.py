@@ -71,7 +71,7 @@ class Triple:
             return True
         if subj and self._subject.lemma_ in subj:
             return True
-        if obj and self._object.lemma_ in obj:
+        if obj and self._object.lemma_ in obj or self._object.lemma_ in [str(child) for child in self._object.children]:
             return True
         return False
 
