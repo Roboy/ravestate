@@ -102,4 +102,40 @@ def postive_chicken(ctx: ContextWrapper):
         ctx[rawio.prop_out] = "You said something about a chicken, i like chickens!"
 ```
 
+### Using User-defined Signals and Implementing Q/A-States
+A user can define signals as needed and implement states reacting on them. 
+If both a signal is emitted and something is written to `rawio` in one state, the state needs to be defined with `emit_detached=True`.
+
+#### React to User-defined States and Implement Q/A
+Example: In one state a question is asks and then a user-defined signal is emitted that shows that the question has been stated. The other states reacts on the answer to this question.
+```python
+import ravestate as rs
+import ravestate_nlp as nlp
+import ravestate_rawio as rawio
+    
+chicken_signal = rs.Signal("chicken signal")
+    
+@rs.state(
+    cond=nlp.prop_tokens.changed(),
+    write=rawio.prop_out,
+    signal=chicken_signal,
+    emit_detached=True
+)
+def ask_chicken_question(ctx: rs.ContextWrapper):
+    ctx[rawio.prop_out] = "Wanna know something awesome about chickens?"
+    return rs.Emit()
+    
+@rs.state(
+    cond=chicken_signal & nlp.prop_yesno.changed(),
+    read=nlp.prop_yesno,
+    write=rawio.prop_out
+)
+def answer_chicken_question(ctx: rs.ContextWrapper):
+    if ctx[nlp.prop_yesno] == "yes":
+        ctx[rawio.prop_out] = "Well, chicken's actually aren't that awesome."
+    elif ctx[nlp.prop_yesno] == "no":
+        ctx[rawio.prop_out] = "You're missing out on awesome chicken stories!"
+```
+
+
 #### Happy language processing to all chickens out there!
