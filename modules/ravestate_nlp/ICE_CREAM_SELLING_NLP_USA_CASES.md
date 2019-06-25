@@ -3,23 +3,6 @@
 This document discusses the possible sentence processing and feature extraction techniques 
 applied with NLP module of ravestate library for ice cream selling.
 
-#### NLP - Extracted Features
-
-| Feature                           | Ravestate Properties/Signals  | Description                                                 | Example Sentence: 'Revolutions need six fancy chickens!'|
-| -------------                     | --------------------          |-------------------------------                              | ------------------------------|
-| Tokenization                      | `nlp.prop_tokens`             | Segmenting text into words, punctuation marks etc.          | 'Revolutions', 'need', 'six', 'fancy', 'chickens', '!'|
-| Part-of-Speech (POS) Tagging      | `nlp.prop_postags`            | Assigning word types to tokens                              | 'NOUN', 'VERB', 'NUM', 'ADJ', 'NOUN', 'PUNCT' |
-| Detailed POS Tag                  | `nlp.prop_tags`               | Fine-grained part-of-speech                                 | 'Revolutions' has the tag: 'NNS', which stand for: noun, plural <br> 'need' has the tag: 'VBP', which stands for: verb, non-3rd person singular present <br> [List](https://spacy.io/api/annotation#pos-tagging) of POS tags|
-| Lemmatization                     | `nlp.prop_lemmas`             | Assigning the base forms of words                           | 'Revolutions' has the lemma: 'revolution' <br>  'was' would have the lemma: 'be'|
-| Named Entity Recognition (NER)    | `nlp.prop_ner`                | Labelling "real-world" objects ("NE"=Named Entity)          | 'six' has the NE: 'CARDINAL', which are numerals that do not fall under another type <br> [List](https://spacy.io/api/annotation#named-entities) of NEs|
-| Triple Extraction                 | `nlp.prop_triples`            | A triple consists of subject, predicate, object of sentence | Triple: subject: 'Revolutions', predicate: 'need', object: 'chickens' |
-| About Roboy                       | `nlp.prop_roboy`              | Detecting whether sentence is about Roboy                   | 'you', 'roboy', 'robot', 'roboboy', ... |
-| Yes-No                            | `nlp.prop_yesno`              | Detecting answers to yes-no questions                       | Checking for 'yes', 'no', 'i don't know', 'probably', 'probably not' and synonyms of these                           |
-| Sentence Type: Question           | `nlp.sig_is_question`         | Emitted if the input sentence is a question                 |                                                |
-| Play Game                         | `nlp.sig_intent_play`         | Emitted when the interlocutor wants to play a game          | input: "I want to play", "I like games" or something similar    |
-
-### Using the Features
-
 #### Yes-No Property
 
 This feature can be used to understand a given question's positive/negative answer to proceed such as:

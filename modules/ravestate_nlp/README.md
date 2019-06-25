@@ -103,3 +103,6 @@ def postive_chicken(ctx: ContextWrapper):
 ```
 
 #### Happy language processing to all chickens out there!
+
+Hands on how to use nlp features for selling ice cream
+[ICE_CREAM_SELLING_NLP_USA_CASES.md](ICE_CREAM_SELLING_NLP_USA_CASES.md)
