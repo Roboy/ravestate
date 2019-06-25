@@ -109,5 +109,6 @@ def spike_fixture():
 @pytest.fixture
 def triple_fixture(mocker):
     token_mock = mocker.Mock()
+    token_mock.children = ()
     from ravestate_nlp import Triple
     return Triple(token_mock, token_mock, token_mock, token_mock)
