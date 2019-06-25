@@ -1,6 +1,7 @@
 from spacy.tokens import Token
 from typing import Optional, Set, Union, Tuple
 from ravestate_nlp.question_word import QuestionWord
+from ravestate_nlp.triple_match_result import TripleMatchResult
 
 
 class Triple:
@@ -67,15 +68,23 @@ class Triple:
         return sub, pre, obj
 
     def match_either_lemma(self, pred: Optional[Set[str]] = None, subj: Optional[Set[str]] = None, obj: Optional[Set[str]] = None):
-        if pred and (self._predicate.lemma_ in pred or self._predicate_aux.lemma_ in pred):
-            return True
-        if subj:
-            if self._subject.lemma_ in subj or any(child.lemma_ in subj for child in self._subject.children):
-                return True
-        if obj:
-            if self._object.lemma_ in obj or any(child.lemma_ in obj for child in self._object.children):
-                return True
-        return False
+        result = TripleMatchResult()
+
+        def add_common_set(phrases: Optional[Set[str]], token):
+            matches = ()
+            if phrases:
+                if token.lemma_ in phrases:
+                    matches += (token.lemma_,)
+                for child in token.children:
+                    if child.lemma_ in phrases:
+                        matches += (child,)
+            return matches
+
+        result.preds += add_common_set(pred, self._predicate)
+        result.subs += add_common_set(subj, self._subject)
+        result.objs += add_common_set(obj, self._object)
+
+        return result
 
     def is_question(self, question_word: Optional[str] = None):
         if question_word:
