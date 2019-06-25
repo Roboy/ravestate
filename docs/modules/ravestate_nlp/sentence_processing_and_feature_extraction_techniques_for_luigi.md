@@ -41,7 +41,6 @@ import ravestate_rawio as rawio
 def customer_wants_ice_cream(ctx: ContextWrapper):
     if ctx[nlp.prop_yesno] == "yes":
         ctx[rawio.prop_out] = "Your ice cream is coming right up!"
-
 ```
 
 #### Lemmatization
@@ -102,7 +101,7 @@ def falvor_recognition_state(ctx: ContextWrapper):
     objects = triple_match_result.objs
     if objects:
         ctx[prop_flavor] = objects
-        ctx[rawio.prop_out] = "So you ordered... " # iterate over objects for a reasonable answer
+        return rs.Emit()
 ```
 
 or
@@ -128,7 +127,7 @@ def payment_recognition_state(ctx: ContextWrapper):
     objects = triple_match_result.objs
     if objects and len(objects) == 1:
         ctx[prop_payment] = objects[0] 
-        rs.Emit()
+        return rs.Emit()
 ```
 
 Alternatively by using triples, Roboy can understand whether the sentence is a request or not by only parsing the verb.
