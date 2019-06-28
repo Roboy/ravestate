@@ -7,8 +7,7 @@ Roboy ravestate UI module.
 This project is built with Angular 8 and TypeScript. 
 
 Initial setup:
-- install Node.js and npm
-- install Angular CLI globally by running `npm install -g @angular/cli`
+- install Angular CLI globally by running `npm install -g @angular/cli` (don't forget to add `<home>/.npm-global/bin` to your path)
 - Install project dependencies by running `npm install` in the root folder (= folder with `package.json`) 
  
 To start development: 
@@ -18,5 +17,9 @@ To start development:
 
 To build a production version:
 - run `ng build --prod` in the root folder to build a bundle for the browser
-- the bundle is saved in the `dist` folder 
+- the bundle is saved in the `dist` folder
+
+Backend:
+- start a Flask server by running `python src/app/model`
+- view sample data structures under `http://localhost:5000/tick` and `http://localhost:5000/spike`
 
