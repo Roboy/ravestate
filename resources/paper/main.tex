@@ -58,7 +58,7 @@
 \ignoretheorems{equ}
 
 % ==============================================================
-\title{Ravestate: Multimodal Contextual Dialog State Tracking As Bayesian Specific Signal Transduction}
+\title{Ravestate: A Production Framework For Contextual Dialog State Tracking As Bayesian Specific Signal Transduction}
 \author{
 	Birkner, Joseph \\ \texttt{joseph.birkner@tum.de}
 	\and
@@ -100,7 +100,7 @@ Experiments with the implemented system both in text- and speech based scenarios
 
 \subsection{Formalising Causal Intuitions}
 
-Any dialogue system $D: X,H_t \rightarrow Y,H_{t+1}$ is a function mapping input variables $X$ and a context $H_t$ at time-step $t$ to output variables $Y$ and a context $H_{t+1}$. For example, inputs may be a textual user utterance or visual stimuli, and outputs may be a textual response or a gesture. \rasta models these variables as so-called \textbf{Properties}:
+Any dialogue system $D: X,H_t \rightarrow Y,H_{t+1}$ is a function mapping input variables $X$ and a context $H_t$ at timestep $t$ to output variables $Y$ and a context $H_{t+1}$. For example, inputs may be a textual user utterance or visual stimuli, and outputs may be a textual response or a gesture. \rasta models these variables as so-called \textbf{Properties}:
 
 \begin{definition}[Property]
 A property $p^i \in P$ is a pair $\langle L^i, v^i \rangle$ containing a synchronisation primitive $L^i$ and a value $v^i$. It supports the operations $\mathsc{Read}(P^i) = v_i$ and $\mathsc{Write}(P^i, x) \rightarrow \mathsc{Read}(P^i) = x$.
@@ -109,13 +109,11 @@ A property $p^i \in P$ is a pair $\langle L^i, v^i \rangle$ containing a synchro
 An intuitive approach towards modelling a dialogue system is to articulate it's behaviour as a specifically conditioned reaction to certain events or \textit{signals} which are derived from it's inputs.
 
 \begin{definition}[Signal]
-A signal $c^i \in C = \langle \text{id}^i, \text{age}^i_\text{min} \in \mathbb{R}, \text{age}^i_\text{max} \in \mathbb{R} \rangle$ is a description of a specific event, which may be fulfilled by event instances in the form of \textit{spikes}. It consists of a name $\text{id}^i$, a minimum spike age $\text{age}^i_\text{min}$, and a maximum spike age $\text{age}^i_\text{max}$.
+A signal $s^i \in S = \langle \text{id}^i, \text{age}^i_\text{min} \in \mathbb{R}, \text{age}^i_\text{max} \in \mathbb{R} \rangle$ is a description of a specific event, which may be fulfilled by event instances in the form of \textit{spikes}. It consists of a name $\text{id}^i$, a minimum spike age $\text{age}^i_\text{min}$, and a maximum spike age $\text{age}^i_\text{max}$.
 \end{definition}
 
-Note, that the $\text{age}_\text{min}$ and $\text{age}_\text{max}$ parameters allow for specification of a delay or a time-out for reacting to a spike.
-
 \begin{definition}[Spike]
-A spike $s^i \in S$ is a triplet $\langle \text{id}^i, \text{age}^i \in \mathbb{R}, \text{cause} \subset S \rangle$ which corresponds to a real-world instance of any signal $c^\text{sig} \in C$ where $\mathsc{Eval}(s^i, c^\text{sig}) =  \mathsc{True}$. The function $\mathsc{Eval}: S, C \rightarrow \mathbb{B}$ is defined as follows: $\mathsc{Eval}(s^i, c^\text{sig}) := (\text{id}^i = \text{id}^\text{sig}) \land (\text{age}^\text{sig}_\text{min} \leq \text{age}^i \leq \text{age}^\text{sig}_\text{max})$
+A spike $\delta^i \in \Delta$ is a triplet $\langle \text{id}^i, \text{age}^i \in \mathbb{R}, \text{cause}^i \subset \Delta \rangle$ which corresponds to a real-world instance of any signal $s \in S$ where $\mathsc{Eval}(\{\lambda^i\}, s) = \mathsc{True}$. The function $\mathsc{Eval}: \mathcal{P}(\Delta), S \rightarrow \mathbb{B}$ is defined as follows: $\mathsc{Eval}(\Delta, s^\text{sig}) := \exists \delta^k \in \Delta ( (\text{id}^k = \text{id}^\text{sig}) \land (\text{age}^\text{sig}_\text{min} \leq \text{age}^k \leq \text{age}^\text{sig}_\text{max}) )$. The $\text{cause}^i$ spike subset refers to all spikes that caused the spike $\delta^i$. This is required for conflict resolution later on.
 \end{definition}
 
 Any specific reaction to a set of signal spikes is called a state. In cognitive systems theory, a condition-state pair is called a production. For example, an application state for answering personal questions about the agent may be seen as a reaction to a combination of two events/signals (see figure \ref{fig:ex1}):
@@ -134,7 +132,11 @@ Any specific reaction to a set of signal spikes is called a state. In cognitive 
 Such combinations of signals are modelled as \textbf{Conditions} in \rasta:
 
 \begin{definition}[Condition]
-The condition set $\mathsc{Cond}(C)$ is a boolean algebra over signals $C$: Let $\mathsc{Cond}(C) := \mathsc{Cond}(C \cup \bigcup_{(c_x, c_y) \in C \times C}{\{c_x \land c_y, c_x \lor c_y\}})$. The definition of the $\mathsc{Eval}$ function for conditions is extended as follows: 
+The condition set $\mathsc{Cond}(S)$ is a boolean algebra over signals $S$: Let $\mathsc{Cond}(\hat{S}) := \mathsc{Cond}(\hat{S} \cup \bigcup_{(s_L, s_R) \in \hat{S}^2}{\{s_L \land s_R, s_L \lor s_R\}})$. The definition of the $\mathsc{Eval}$ function for conditions is extended as follows: Let $c_\text{L}, c_\text{R} \in \mathsc{Cond}(S)$:
+\begin{itemize}
+    \item $\mathsc{Eval}(\Delta, c_\text{L} \lor c_\text{R}) := \text{max}( \mathsc{Eval}(\Delta, c_\text{L}), \mathsc{Eval}(\Delta, c_\text{R}) )$
+    \item $\mathsc{Eval}(\Delta, c_\text{L} \land c_\text{R}) := \text{min}( \mathsc{Eval}(\Delta, c_\text{L}), \mathsc{Eval}(\Delta, c_\text{R}) )$
+\end{itemize}
 \end{definition}
 
 In \rasta, productions are directly adapted into a generic state machine: 
@@ -181,7 +183,7 @@ The combination of States $T$, Activations $A$, Signals $C$, Spikes $\hat{S}$ an
 
 \subsection{Bayesian Specificity As State Utility}
 
-\subsection{Causal Groups and Constraint Completion}
+\subsection{Causal Groups and Constraint Backward Completion}
 
 \subsection{Primary and Secondary Signals}
 
