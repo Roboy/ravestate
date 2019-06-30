@@ -102,7 +102,9 @@ def postive_chicken(ctx: ContextWrapper):
         ctx[rawio.prop_out] = "You said something about a chicken, i like chickens!"
 ```
 
-#### Happy language processing to all chickens out there!
 
-Hands on how to use nlp features for selling ice cream
-[ICE_CREAM_SELLING_NLP_USA_CASES.md](ICE_CREAM_SELLING_NLP_USA_CASES.md)
+### Hands-on
+
+[How to use nlp features for selling ice cream.](ICE_CREAM_SELLING_NLP_USA_CASES.md)
+
+### Happy language processing to all chickens out there!
