@@ -62,24 +62,24 @@ This feature can be used to understand the requested flavors or payment options.
 Roboy's flavor and payment options are predefined so any match between our database and incoming token
 can help us to identify the requested options. Such as:
 
-- vanilla
-- chocolate
-- lemon
-- strawberry
+- *"vanilla"*
+- *"chocolate"*
+- *"lemon"*
+- *"strawberry"*
 
 ```python
 import ravestate as rs
 import ravestate_nlp as nlp
 import ravestate_rawio as rawio
 
-prop_flavor = rs.Property(name="scoops", allow_read=True, allow_write=True, always_signal_changed=True)
+prop_flavor = rs.Property(name="flavor", allow_read=True, allow_write=True, always_signal_changed=True)
 
 @rs.state(
     cond=nlp.prop_triples.changed(),  # state reacts to a change in the 'prop_triples' property
     read=nlp.prop_triples,  # state is allowed to read the 'prop_triples' property
     write=prop_flavor, # state is allowed to write to the 'prop_flavor' property
     signal=prop_flavor.changed_signal)  # state signals 'prop_flavor' change signal 
-def falvor_recognition_state(ctx: ContextWrapper):
+def flavor_recognition_state(ctx: ContextWrapper):
     triple_match_result = ctx[nlp.prop_triples][0].match_either_lemma(obj={"vanilla", "strawberry", "lemon", "chocolate"}):
     objects = triple_match_result.objs
     if objects:
@@ -87,18 +87,18 @@ def falvor_recognition_state(ctx: ContextWrapper):
         return rs.Emit()
 ```
 
-or
+or ...
 
-- credit card
-- cash
-- bitcoin
+- *"credit card"*
+- *"cash"*
+- *"bitcoin"*
 
 ```python
 import ravestate as rs
 import ravestate_nlp as nlp
 import ravestate_rawio as rawio
 
-prop_payment = rs.Property(name="scoops", allow_read=True, allow_write=True, always_signal_changed=True)
+prop_payment = rs.Property(name="payment", allow_read=True, allow_write=True, always_signal_changed=True)
 
 @rs.state(
     cond=nlp.prop_triples.changed(),  # state reacts to a change in the 'prop_triples' property
@@ -116,11 +116,11 @@ def payment_recognition_state(ctx: ContextWrapper):
 Alternatively by using triples, Roboy can understand whether the sentence is a request or not by only parsing the verb.
 For example if the customer uses one of the following phrases, it is easy to detect that customer has a request:
 
-- would like
-- can have
-- can get
-- will have
-- choose
-- wish
-- desire
-- prefer
+- *"would like"*
+- *"can have"*
+- *"can get"*
+- *"will have"*
+- *"choose"*
+- *"wish"*
+- *"desire"*
+- *"prefer"*
