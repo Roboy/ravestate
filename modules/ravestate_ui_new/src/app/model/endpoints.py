@@ -11,41 +11,25 @@ socketio = SocketIO(app)
 
 @app.route('/tick')
 def get_sample_tick_data():
-    sample_unfulfilled_activation_data = {}
 
+    sample_unfulfilled_activation_data = {}
     # activation id, unique through frontend & context
     sample_unfulfilled_activation_data['id'] = 0
-
     sample_unfulfilled_activation_data['name'] = 'sample activation 0'
-
     sample_unfulfilled_activation_data['specificity'] = 5
-
     sample_unfulfilled_activation_data['activated'] = False
 
-    sample_new_spike = {}
+    constraints = {}
+    constraints['sample spike 0'] = 0
+    constraints['sample nonexistent spike'] = -1
 
-    # spike id, unique through frontend & context
-    sample_new_spike['id'] = 0
+    sample_unfulfilled_activation_data["constraints"] = constraints
 
-    sample_new_spike['name'] = 'sample spike 0'
+    sample_all_activations_data = {}
+    sample_all_activations_data["activations"] = (sample_unfulfilled_activation_data, )
+    sample_all_activations_data["type"] = "tick"
 
-    # signal ids the activation is waiting to be satisfied, unique through frontend & context
-    sample_unfulfilled_activation_data['satisfied'] = (sample_new_spike)
-
-
-    sample_new_spike2 = {}
-
-    # spike id, unique through frontend & context
-    sample_new_spike2['id'] = -1
-
-    sample_new_spike2['name'] = 'sample nonexistent spike'
-
-    # signal ids the activation is waiting to be satisfied, unique through frontend & context
-    sample_unfulfilled_activation_data['unsatisfied'] = (sample_new_spike2)
-
-    sample_all_activations_data = (sample_unfulfilled_activation_data, )
-
-    return jsonify("tick", (sample_all_activations_data))
+    return jsonify(sample_all_activations_data)
 
 @app.route('/spike')
 def get_sample_spike_data():
@@ -53,6 +37,9 @@ def get_sample_spike_data():
 
     # spike id, unique through frontend & context
     sample_new_spike['id'] = 0
+    sample_new_spike['type'] = "spike"
+    sample_new_spike["property_value_at_creation"] = "whatever you want it to be"
+    sample_new_spike["parent"] = 1
 
     sample_new_spike['name'] = 'sample spike 0'
 
