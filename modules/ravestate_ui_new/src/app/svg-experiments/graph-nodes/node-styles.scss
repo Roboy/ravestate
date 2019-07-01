@@ -1,33 +1,39 @@
+$state-node-bg: darkgreen;
+$signal-node-bg: darkblue;
+$property-node-bg: darkred;
+
 .state-node {
-  fill: darkgreen;
+  fill: $state-node-bg;
   stroke: lightgreen;
   stroke-width: 1px;
 }
-
-.state-label {
-  fill: white;
-  font-size: 15px;
+.state-node:hover {
+  stroke-width: 3px;
+  fill: lighten($state-node-bg, 10%);
 }
 
-
 .signal-node {
-  fill: darkblue;
+  fill: $signal-node-bg;
   stroke: deepskyblue;
   stroke-width: 1px;
 }
-
-.signal-label {
-  fill: white;
-  font-size: 15px;
+.signal-node:hover {
+  stroke-width: 3px;
+  fill: lighten($signal-node-bg, 10%);
 }
 
-
 .property-node {
-  fill: darkred;
+  fill: $property-node-bg;
   stroke: lightcoral;
   stroke-width: 1px;
 }
-.property-label {
+.property-node:hover {
+  stroke-width: 3px;
+  fill: lighten($property-node-bg, 10%);
+}
+
+.node-label {
   fill: white;
   font-size: 15px;
+  pointer-events: none;
 }

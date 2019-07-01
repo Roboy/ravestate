@@ -19,11 +19,11 @@ export class CurveComponent {
         // bezier control points
         const c1 = {
             x: Math.round((this.fromX + this.toX * 2) / 3),
-            y: this.fromY
+            y: Math.round((this.fromY * 3 + this.toY) / 4),
         };
         const c2 = {
             x: Math.round((this.fromX * 2 + this.toX) / 3),
-            y: this.toY
+            y: Math.round((this.fromY + this.toY * 3) / 4),
         };
         return `M ${this.fromX} ${this.fromY} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${this.toX} ${this.toY}`;
     }

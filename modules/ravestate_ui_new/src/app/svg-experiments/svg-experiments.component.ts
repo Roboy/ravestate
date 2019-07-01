@@ -35,6 +35,6 @@ import { Component } from '@angular/core';
 })
 export class SvgExperimentsComponent {
 
-    spacing = 120;
+    spacing = 100;
 
 }

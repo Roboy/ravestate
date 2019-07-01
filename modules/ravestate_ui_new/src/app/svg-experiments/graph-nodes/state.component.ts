@@ -4,7 +4,7 @@ import { Component, Input } from '@angular/core';
     selector: '[state-node]',
     template: `
         <svg:circle class="state-node" [attr.cx]="x" [attr.cy]="y" r="30"/>
-        <svg:text class="state-label" [attr.x]="x" [attr.y]="y+4" text-anchor="middle">{{label}}</svg:text>
+        <svg:text class="node-label" [attr.x]="x" [attr.y]="y+4" text-anchor="middle">{{label}}</svg:text>
     `,
     styleUrls: ['./node-styles.scss']
 })
