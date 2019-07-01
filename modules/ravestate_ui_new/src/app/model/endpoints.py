@@ -22,15 +22,30 @@ def get_sample_tick_data():
 
     sample_unfulfilled_activation_data['activated'] = False
 
-    # signal ids the activation is waiting to be satisfied, unique through frontend & context
-    sample_unfulfilled_activation_data['unsatisfied'] = (0, 1)
+    sample_new_spike = {}
 
-    # satisfied spike ids, unique through frontend & context
-    sample_unfulfilled_activation_data['satisfied'] = (2, 3)
+    # spike id, unique through frontend & context
+    sample_new_spike['id'] = 0
+
+    sample_new_spike['name'] = 'sample spike 0'
+
+    # signal ids the activation is waiting to be satisfied, unique through frontend & context
+    sample_unfulfilled_activation_data['satisfied'] = (sample_new_spike)
+
+
+    sample_new_spike2 = {}
+
+    # spike id, unique through frontend & context
+    sample_new_spike2['id'] = -1
+
+    sample_new_spike2['name'] = 'sample nonexistent spike'
+
+    # signal ids the activation is waiting to be satisfied, unique through frontend & context
+    sample_unfulfilled_activation_data['unsatisfied'] = (sample_new_spike2)
 
     sample_all_activations_data = (sample_unfulfilled_activation_data, )
 
-    return jsonify(sample_all_activations_data)
+    return jsonify("tick", (sample_all_activations_data))
 
 @app.route('/spike')
 def get_sample_spike_data():
