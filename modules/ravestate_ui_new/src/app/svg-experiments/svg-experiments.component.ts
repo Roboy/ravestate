@@ -19,9 +19,9 @@ import { Component } from '@angular/core';
             <g curve-connector [fromX]="spacing" [fromY]="spacing * 3" [toX]="spacing * 3" [toY]="spacing * 2"></g>
 
             <!-- nodes -->
-            <g state-node [x]="spacing" [y]="spacing" [label]="'state 1'"></g>
-            <g state-node [x]="spacing" [y]="spacing * 2" [label]="'state 2'"></g>
-            <g state-node [x]="spacing" [y]="spacing * 3" [label]="'state 3'"></g>
+            <g state-node [x]="spacing" [y]="spacing" [label]="'state 1'" [rectShape]="true"></g>
+            <g state-node [x]="spacing" [y]="spacing * 2" [label]="'state 2'" [rectShape]="false"></g>
+            <g state-node [x]="spacing" [y]="spacing * 3" [label]="'state 3'" [rectShape]="true"></g>
 
             <g signal-node [x]="spacing * 2" [y]="spacing" [label]="'hello'"></g>
             <g signal-node [x]="spacing * 2" [y]="spacing * 2" [label]="'world'"></g>
