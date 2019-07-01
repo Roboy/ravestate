@@ -25,9 +25,15 @@ config:
     - ravestate_persqa
     - ravestate_wildtalk
     - ravestate_hibye
-    - ravestate_stalker
+    #- ravestate_stalker
     - ravestate_fillers
     #- ravestate_akinator
+
+---
+module: idle
+config:
+  impatience_threshold: 4.0  # number of seconds of "pressure" after which a filler should be sent
+  bored_threshold: 8.0 # number of seconds of "no activity" after which active engagement should activate
 
 ---
 module: genqa
@@ -36,6 +42,7 @@ config:
   roboy_answer_sanity: 1000
 
 ---
-module: akinator
+module: roboyqa
 config:
-  certainty_percentage: 90
+  roboy_node_id: 356
+
