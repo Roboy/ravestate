@@ -6,6 +6,7 @@ import { StateComponent } from './svg-experiments/graph-nodes/state.component';
 import { PropertyComponent } from './svg-experiments/graph-nodes/property.component';
 import { SignalComponent } from './svg-experiments/graph-nodes/signal.component';
 import { SvgExperimentsComponent } from './svg-experiments/svg-experiments.component';
+import { CurveComponent } from './svg-experiments/connectors/curve.component';
 
 @NgModule({
     declarations: [
@@ -13,7 +14,8 @@ import { SvgExperimentsComponent } from './svg-experiments/svg-experiments.compo
         StateComponent,
         PropertyComponent,
         SignalComponent,
-        SvgExperimentsComponent
+        SvgExperimentsComponent,
+        CurveComponent
     ],
     imports: [
         BrowserModule
