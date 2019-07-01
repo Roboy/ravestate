@@ -1,9 +1,33 @@
+.state-node {
+  fill: darkgreen;
+  stroke: lightgreen;
+  stroke-width: 1px;
+}
+
+.state-label {
+  fill: white;
+  font-size: 15px;
+}
+
+
 .signal-node {
-  fill: blue;
-  stroke-width: 10px;
+  fill: darkblue;
+  stroke: deepskyblue;
+  stroke-width: 1px;
 }
 
 .signal-label {
+  fill: white;
+  font-size: 15px;
+}
+
+
+.property-node {
+  fill: darkred;
+  stroke: lightcoral;
+  stroke-width: 1px;
+}
+.property-label {
   fill: white;
   font-size: 15px;
 }
