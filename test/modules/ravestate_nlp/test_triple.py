@@ -2,8 +2,9 @@ import logging
 
 import pytest
 
-from ravestate_nlp import Triple, spacy_nlp_en
+from ravestate_nlp import Triple, spacy_nlp_en, extract_triples
 from testfixtures import LogCapture
+from test.modules.ravestate_nlp.test_extract_triples import spacy_model
 
 
 def create_token(text: str):
@@ -100,3 +101,63 @@ def test_repr(triple, expected_log):
     with LogCapture() as log_capture:
         logging.info([triple])
         log_capture.check(('root', 'INFO', f'[{expected_log}]',))
+
+
+@pytest.mark.parametrize('text_input, object',
+                         [('I want vanilla ice cream', 'vanilla'),
+                          ('Can i have strawberry ice cream', 'strawberry')
+                          ])
+def test_match_either_lemma_object_recognition(spacy_model, text_input, object):
+    triple_match_result = spacy_model(text_input)._.triples[0].match_either_lemma(obj={object})
+    if triple_match_result.objs and \
+            len(triple_match_result.subs) == 0 and \
+            len(triple_match_result.preds) == 0:
+        assert True
+    else:
+        assert False
+
+
+@pytest.mark.parametrize('text_input, predicate',
+                         [("I love eating sushi", 'love')
+                          ])
+def test_match_either_lemma_predicate_recognition(spacy_model, text_input, predicate):
+    triple_match_result = spacy_model(text_input)._.triples[0].match_either_lemma(pred={predicate})
+    if triple_match_result.preds and \
+            len(triple_match_result.subs) == 0 and \
+            len(triple_match_result.objs) == 0:
+        assert True
+    else:
+        assert False
+
+
+@pytest.mark.parametrize('text_input, subject',
+                         [("Umur's cats walks in the neighbourhood", 'Umur'),
+                          ("Roboy's ice creams are delicious!", "Roboy")
+                          ])
+def test_match_either_lemma_subject_recognition(spacy_model, text_input, subject):
+    triple_match_result = spacy_model(text_input)._.triples[0].match_either_lemma(subj={subject})
+    if triple_match_result.subs and \
+            len(triple_match_result.preds) == 0 and \
+            len(triple_match_result.objs) == 0:
+        assert True
+    else:
+        assert False
+
+
+@pytest.mark.parametrize('text_input, predicate, subject, object',
+                         [("Umur's cats walks in the neighbourhood", 'runs', 'Eva', 'dogs'),
+                          ("Roboy's ice creams are delicious!", 'ice', 'delicious', 'ice')
+                          ])
+def test_match_either_lemma_subject_recognition_fail(spacy_model, text_input,  predicate, subject, object):
+    triple_match_result = spacy_model(text_input)._.triples[0].match_either_lemma(
+        pred={predicate},
+        subj={subject},
+        obj={object}
+    )
+    if len(triple_match_result.subs) == 0 and \
+            len(triple_match_result.preds) == 0 and \
+            len(triple_match_result.objs) == 0:
+        assert True
+    else:
+        assert False
+
