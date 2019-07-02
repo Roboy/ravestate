@@ -70,8 +70,8 @@ class Triple:
                     matches += (token.lemma_,)
                 for child in token.children:
                     if child.lemma_ in phrases and \
-                            not (dep_relationship_whitelist and child.dep_ in dep_relationship_whitelist) and \
-                            not (pos_relationship_whitelist and child.pos_ in pos_relationship_whitelist):
+                            (not dep_relationship_whitelist or child.dep_ in dep_relationship_whitelist) and \
+                            (not pos_relationship_whitelist or child.pos_ in pos_relationship_whitelist):
                         matches += (child,)
             return matches
 
