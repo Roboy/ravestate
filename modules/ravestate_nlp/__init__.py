@@ -103,7 +103,8 @@ with rs.Module(name="nlp"):
 
     @rs.state(signal=sig_is_question, read=(prop_triples, prop_tags))
     def nlp_is_question_signal(ctx):
-        if ctx[prop_triples][0].is_question() or prop_tags_indicates_question(ctx[prop_tags]):
+        ctx[prop_triples][0].set_yesno_question(detect_yesno_question(ctx[prop_tags]))
+        if ctx[prop_triples][0].is_question():
             return rs.Emit()
         return False
 
@@ -114,10 +115,9 @@ with rs.Module(name="nlp"):
             return rs.Emit()
         return False
 
-
-def prop_tags_indicates_question(tags):
-    """
-    tests whether the prop_tags indicate that a question was asked by the structure of the sentence
-    """
-    return tags[0] in {'VBP', 'VBD', 'VBZ', 'MD'} and tags[1] in {'PRP', 'DT'} or \
-        tags[0] in {'VBP', 'VBD', 'VBZ', 'MD'} and tags[1] == 'RB' and tags[2] in {'PRP', 'DT'}
+    def detect_yesno_question(tags):
+        """
+        tests whether the prop_tags indicate that a yesno-question was asked
+        """
+        return tags[0] in {'VBP', 'VBD', 'VBZ', 'MD'} and tags[1] in {'PRP', 'DT'} or \
+            tags[0] in {'VBP', 'VBD', 'VBZ', 'MD'} and tags[1] == 'RB' and tags[2] in {'PRP', 'DT'}

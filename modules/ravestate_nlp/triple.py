@@ -9,6 +9,7 @@ class Triple:
     _predicate: Token
     _predicate_aux: Token
     _object: Union[Token, QuestionWord]
+    _yesno_question: bool
 
     def __init__(self, subject: Token = None, predicate: Token = None, predicate_aux: Token=None, object: Token = None):
         self.set_subject(subject)
@@ -28,6 +29,9 @@ class Triple:
     def set_object(self, object: Union[Token, QuestionWord]):
         self._object = object
 
+    def set_yesno_question(self, is_yesno: bool):
+        self._yesno_question = is_yesno
+
     def get_subject(self) -> Union[Token, QuestionWord]:
         return self._subject
 
@@ -39,6 +43,9 @@ class Triple:
 
     def get_object(self) -> Union[Token, QuestionWord]:
         return self._object
+
+    def get_yesno_question(self) -> bool:
+        return self._yesno_question
 
     def has_subject(self) -> bool:
         return self._subject and len(self._subject.text.strip()) > 0
@@ -79,7 +86,9 @@ class Triple:
         if question_word:
             return self.match_either_lemma(obj={question_word}, subj={question_word})
         else:
-            return isinstance(self._subject, QuestionWord) or isinstance(self._object, QuestionWord)
+            return self._yesno_question \
+                   or isinstance(self._subject, QuestionWord) \
+                   or isinstance(self._object, QuestionWord)
 
     def ensure_notnull(self, empty_token):
         # do not allow empty entries in triple
