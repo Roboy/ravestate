@@ -84,7 +84,7 @@ with rs.Module(name="nlp"):
         logger.info(f"[NLP:ner]: {nlp_ner}")
 
         nlp_triples = nlp_doc._.triples
-        ctx[prop_triples][0].set_yesno_question(detect_yesno_question(nlp_postags))
+        nlp_triples[0].set_yesno_question(detect_yesno_question(nlp_postags))
         ctx[prop_triples] = nlp_triples
         logger.info(f"[NLP:triples]: {nlp_triples}")
 
