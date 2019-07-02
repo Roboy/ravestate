@@ -42,7 +42,7 @@ spacy_nlp_en = init_spacy()
 with rs.Module(name="nlp"):
 
     prop_tokens = rs.Property(name="tokens", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
-    porp_postags = rs.Property(name="postags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
+    prop_postags = rs.Property(name="postags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
     prop_lemmas = rs.Property(name="lemmas", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
     prop_tags = rs.Property(name="tags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
     prop_ner = rs.Property(name="ner", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
@@ -55,7 +55,7 @@ with rs.Module(name="nlp"):
     sig_intent_play = rs.Signal(name="intent-play")
 
 
-    @rs.state(read=rawio.prop_in, write=(prop_tokens, porp_postags, prop_lemmas, prop_tags, prop_ner, prop_triples, prop_roboy, prop_yesno))
+    @rs.state(read=rawio.prop_in, write=(prop_tokens, prop_postags, prop_lemmas, prop_tags, prop_ner, prop_triples, prop_roboy, prop_yesno))
     def nlp_preprocess(ctx):
         text = ctx[rawio.prop_in]
         if not text:
@@ -68,7 +68,7 @@ with rs.Module(name="nlp"):
         logger.info(f"[NLP:tokens]: {nlp_tokens}")
 
         nlp_postags = tuple(str(token.pos_) for token in nlp_doc)
-        ctx[porp_postags] = nlp_postags
+        ctx[prop_postags] = nlp_postags
         logger.info(f"[NLP:postags]: {nlp_postags}")
 
         nlp_lemmas = tuple(str(token.lemma_) for token in nlp_doc)
@@ -84,6 +84,7 @@ with rs.Module(name="nlp"):
         logger.info(f"[NLP:ner]: {nlp_ner}")
 
         nlp_triples = nlp_doc._.triples
+        nlp_triples[0].set_yesno_question(detect_yesno_question(nlp_postags))
         ctx[prop_triples] = nlp_triples
         logger.info(f"[NLP:triples]: {nlp_triples}")
 
@@ -101,7 +102,7 @@ with rs.Module(name="nlp"):
             return rs.Emit()
         return False
 
-    @rs.state(signal=sig_is_question, read=prop_triples)
+    @rs.state(signal=sig_is_question, read=(prop_triples, prop_tags))
     def nlp_is_question_signal(ctx):
         if ctx[prop_triples][0].is_question():
             return rs.Emit()
@@ -114,3 +115,9 @@ with rs.Module(name="nlp"):
             return rs.Emit()
         return False
 
+    def detect_yesno_question(tags):
+        """
+        tests whether the prop_tags indicate that a yesno-question was asked
+        """
+        return tags[0] in {'VBP', 'VBD', 'VBZ', 'MD'} and tags[1] in {'PRP', 'DT'} or \
+            tags[0] in {'VBP', 'VBD', 'VBZ', 'MD'} and tags[1] == 'RB' and tags[2] in {'PRP', 'DT'}
