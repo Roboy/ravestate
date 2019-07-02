@@ -139,3 +139,7 @@ def answer_chicken_question(ctx: rs.ContextWrapper):
 
 
 #### Happy language processing to all chickens out there!
+
+### Hands-on
+
+[How to use nlp features for selling ice cream.](ICE_CREAM_SELLING_NLP_USA_CASES.md)
