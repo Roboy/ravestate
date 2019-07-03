@@ -1,6 +1,5 @@
 import ravestate as rs
 import ravestate_interloc as interloc
-#import ravestate_ros2 as ros2
 import ravestate_rawio as rawio
 from unidecode import unidecode
 from threading import Lock
@@ -12,7 +11,7 @@ logger = get_logger(__name__)
 
 PYROBOY_AVAILABLE = False
 try:
-    from pyroboy import say, listen, node
+    from pyroboy import say, listen
     from roboy_cognition_msgs.msg import RecognizedSpeech
     from roboy_cognition_msgs.srv import RecognizeSpeech
     PYROBOY_AVAILABLE = True
@@ -30,7 +29,6 @@ Please make sure to have the following items installed & sourced:
 
 if PYROBOY_AVAILABLE:
 
-    #ros2.set_node_once(node)
     say_lock = Lock()
 
     with rs.Module(name="roboyio"):
