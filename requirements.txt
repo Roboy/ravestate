@@ -11,3 +11,4 @@ requests
 scientio>=0.9.1rc2
 redis
 face_recognition
+git+https://github.com/huggingface/pytorch-pretrained-BERT#egg=pytorch-pretrained-bert
