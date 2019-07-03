@@ -3,6 +3,8 @@ import ravestate_interloc as interloc
 #import ravestate_ros2 as ros2
 import ravestate_rawio as rawio
 from unidecode import unidecode
+from threading import Lock
+from time import sleep
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -29,6 +31,7 @@ Please make sure to have the following items installed & sourced:
 if PYROBOY_AVAILABLE:
 
     #ros2.set_node_once(node)
+    say_lock = Lock()
 
     with rs.Module(name="roboyio"):
 
@@ -39,8 +42,11 @@ if PYROBOY_AVAILABLE:
                 logger.info(f"pyroboy.listen() -> {result}")
                 if result:
                     interloc.handle_single_interlocutor_input(ctx, result)
+                sleep(1)  # LEDs are indicator of when roboy is listening
 
         @rs.state(read=rawio.prop_out)
         def roboy_output(ctx):
-            ret = say(unidecode(ctx[rawio.prop_out.changed()]))
+            # don't call say simultaneously in different threads
+            with say_lock:
+                ret = say(unidecode(ctx[rawio.prop_out.changed()]))
             logger.info(f"pyroboy.say() -> {ret}")

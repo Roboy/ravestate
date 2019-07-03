@@ -1,5 +1,10 @@
 FROM missxa/melodic-dashing-roboy
 
+# install pyroboy with melodic
+RUN cd ~/melodic_ws/src && git clone https://github.com/Roboy/pyroboy.git && \
+    cd ~/melodic_ws/src/pyroboy && git checkout melodic && cd ~/melodic_ws && \
+    . /opt/ros/melodic/setup.sh && catkin_make && . /opt/ros/melodic/setup.sh
+
 # install ravestate dependencies
 ADD requirements.txt /tmp/requirements.txt
 ADD requirements-dev.txt /tmp/requirements-dev.txt
