@@ -16,7 +16,7 @@
 ---
 module: core
 config:
-  tickrate: 10
+  tickrate: 5
   import:
     - ravestate_conio
     - ravestate_roboyio
@@ -32,8 +32,8 @@ config:
 ---
 module: idle
 config:
-  impatience_threshold: 4.0  # number of seconds of "pressure" after which a filler should be sent
-  bored_threshold: 8.0 # number of seconds of "no activity" after which active engagement should activate
+  impatience_threshold: 6.0  # number of seconds of "pressure" after which a filler should be sent
+  bored_threshold: 12.0 # number of seconds of "no activity" after which active engagement should activate
 
 ---
 module: genqa
