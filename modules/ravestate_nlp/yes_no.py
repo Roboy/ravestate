@@ -21,30 +21,47 @@ class YesNoWrapper:
 
     def __init__(self, input_text):
         nlp_tokens = tuple(str(token.text.lower()) for token in input_text)
-        if len(nlp_tokens) == 1:
-            if nlp_tokens[0] in YES_SYNONYMS:
-                self.answer = YesNo.YES
+        if not set(nlp_tokens).isdisjoint(NEGATION_TUPLE):
+            if not set(nlp_tokens).isdisjoint(PROBABLY_SYNONYMS):
+                self.answer = YesNo.PROBABLY_NOT
                 return
-            elif nlp_tokens[0] in NO_SYNONYMS:
+            elif not set(nlp_tokens).isdisjoint(DO_NOT_KNOW_SET):
+                self.answer = YesNo.DONT_KNOW
+                return
+            elif not set(nlp_tokens).isdisjoint(YES_SYNONYMS):
                 self.answer = YesNo.NO
                 return
-            elif nlp_tokens[0] in PROBABLY_SYNONYMS:
+        elif not set(nlp_tokens).isdisjoint(YES_SYNONYMS):
+            if not set(nlp_tokens).isdisjoint(PROBABLY_SYNONYMS):
                 self.answer = YesNo.PROBABLY
                 return
-
-        nlp_token_dep = tuple(str(token.dep_) for token in input_text)
-        if NEGATION_TUPLE[0] in nlp_token_dep or NEGATION_TUPLE[1] in nlp_tokens:
-            for token in nlp_tokens:
-                if token in PROBABLY_SYNONYMS:
-                    self.answer = YesNo.PROBABLY_NOT
+            elif not set(nlp_tokens).isdisjoint(NO_SYNONYMS):
+                if self._is_confusing(nlp_tokens):
+                    self.answer = None
                     return
-                elif token in YES_SYNONYMS:
-                    self.answer = YesNo.NO
-                    return
-                elif token in DO_NOT_KNOW_SET:
-                    self.answer = YesNo.DONT_KNOW
-                    return
+                self.answer = YesNo.YES
+                return
+            else:
+                self.answer = YesNo.YES
+                return
+        elif not set(nlp_tokens).isdisjoint(NO_SYNONYMS):
+            if not set(nlp_tokens).isdisjoint(DO_NOT_KNOW_SET):
+                self.answer = YesNo.DONT_KNOW
+                return
+            self.answer = YesNo.NO
+            return
+        elif not set(nlp_tokens).isdisjoint(PROBABLY_SYNONYMS):
+            self.answer = YesNo.PROBABLY
+            return
         self.answer = None
+
+    @staticmethod
+    def _is_confusing(tokens):
+        yes_index = tokens.index(set(tokens).intersection(YES_SYNONYMS).pop())
+        no_index = tokens.index(set(tokens).intersection(NO_SYNONYMS).pop())
+        if abs(yes_index - no_index) < 2:
+            return True
+        return False
 
     def yes(self):
         if isinstance(self.answer, YesNo):
