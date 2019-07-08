@@ -3,16 +3,19 @@ import { Component } from '@angular/core';
 @Component({
     selector: 'app-root',
     template: `
-        <div style="text-align:center">
-            <h1>
-                Welcome to {{title}}!
-            </h1>
-            
-            <svg-experiments></svg-experiments>
-            
+        <div class="root-container">
+            <div class="header">
+                Ravestate UI
+            </div>
+            <div class="main">
+                <svg-experiments class="graph-area"></svg-experiments>
+            </div>
+            <div class="side">
+                this is a cool little sidebar
+            </div>
         </div>
     `,
-    styles: []
+    styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
     title = 'ravestate-ui';
