@@ -16,7 +16,7 @@
 ---
 module: core
 config:
-  tickrate: 5
+  tickrate: 10
   import:
     - ravestate_conio
     - ravestate_roboyio
