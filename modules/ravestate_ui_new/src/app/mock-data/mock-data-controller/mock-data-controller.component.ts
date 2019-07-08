@@ -26,7 +26,6 @@ export class MockDataControllerComponent implements OnDestroy {
     constructor(public mockDataService: MockDataService) {
         this.dataSub = mockDataService.dataStream.subscribe(data => {
             this.lastData = data;
-            console.log(JSON.stringify(data, null, 2))
         });
     }
 

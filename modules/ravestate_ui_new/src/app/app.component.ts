@@ -8,7 +8,8 @@ import { Component } from '@angular/core';
                 Ravestate UI
             </div>
             <div class="main">
-                <svg-experiments class="graph-area"></svg-experiments>
+                <!-- <svg-experiments class="graph-area"></svg-experiments> -->
+                <app-activation-spike-graph class="graph-area"></app-activation-spike-graph>
             </div>
             <div class="side">
                 <app-mock-data-controller></app-mock-data-controller>
