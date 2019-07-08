@@ -11,7 +11,7 @@ import { Component } from '@angular/core';
                 <svg-experiments class="graph-area"></svg-experiments>
             </div>
             <div class="side">
-                this is a cool little sidebar
+                <app-mock-data-controller></app-mock-data-controller>
             </div>
         </div>
     `,

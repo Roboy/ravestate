@@ -7,6 +7,7 @@ import { PropertyComponent } from './svg-experiments/graph-nodes/property.compon
 import { SignalComponent } from './svg-experiments/graph-nodes/signal.component';
 import { SvgExperimentsComponent } from './svg-experiments/svg-experiments.component';
 import { CurveComponent } from './svg-experiments/connectors/curve.component';
+import { MockDataControllerComponent } from './mock-data/mock-data-controller/mock-data-controller.component';
 
 @NgModule({
     declarations: [
@@ -15,7 +16,8 @@ import { CurveComponent } from './svg-experiments/connectors/curve.component';
         PropertyComponent,
         SignalComponent,
         SvgExperimentsComponent,
-        CurveComponent
+        CurveComponent,
+        MockDataControllerComponent
     ],
     imports: [
         BrowserModule
