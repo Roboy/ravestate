@@ -1,39 +1,34 @@
 $state-node-bg: darkgreen;
 $signal-node-bg: darkblue;
-$property-node-bg: darkred;
 
-.state-node {
+.activation-node {
   fill: $state-node-bg;
   stroke: lightgreen;
   stroke-width: 1px;
 }
-.state-node:hover {
+.activation-node:hover {
   stroke-width: 3px;
   fill: lighten($state-node-bg, 10%);
 }
 
-.signal-node {
+.spike-node {
   fill: $signal-node-bg;
   stroke: deepskyblue;
   stroke-width: 1px;
 }
-.signal-node:hover {
+.spike-node:hover {
   stroke-width: 3px;
   fill: lighten($signal-node-bg, 10%);
-}
-
-.property-node {
-  fill: $property-node-bg;
-  stroke: lightcoral;
-  stroke-width: 1px;
-}
-.property-node:hover {
-  stroke-width: 3px;
-  fill: lighten($property-node-bg, 10%);
 }
 
 .node-label {
   fill: white;
   font-size: 15px;
   pointer-events: none;
+}
+
+.connector-line {
+  fill: transparent;
+  stroke: lightgray;
+  stroke-width: 2px;
 }

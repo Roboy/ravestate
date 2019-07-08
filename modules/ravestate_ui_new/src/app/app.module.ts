@@ -2,21 +2,17 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
-import { StateComponent } from './svg-experiments/graph-nodes/state.component';
-import { PropertyComponent } from './svg-experiments/graph-nodes/property.component';
-import { SignalComponent } from './svg-experiments/graph-nodes/signal.component';
+import { NodeComponent } from './svg-experiments/elements/node.component';
 import { SvgExperimentsComponent } from './svg-experiments/svg-experiments.component';
-import { CurveComponent } from './svg-experiments/connectors/curve.component';
+import { ConnectorComponent } from './svg-experiments/elements/connector.component';
 import { MockDataControllerComponent } from './mock-data/mock-data-controller/mock-data-controller.component';
 
 @NgModule({
     declarations: [
         AppComponent,
-        StateComponent,
-        PropertyComponent,
-        SignalComponent,
+        NodeComponent,
+        ConnectorComponent,
         SvgExperimentsComponent,
-        CurveComponent,
         MockDataControllerComponent
     ],
     imports: [

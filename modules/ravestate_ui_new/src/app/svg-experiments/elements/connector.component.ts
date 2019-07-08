@@ -1,13 +1,13 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-    selector: '[curve-connector]',
+    selector: '[connector]',
     template: `
         <svg:path class="connector-line" [attr.d]="pathD"/>
     `,
-    styleUrls: ['./connector-styles.scss']
+    styleUrls: ['./styles.scss']
 })
-export class CurveComponent {
+export class ConnectorComponent {
 
     @Input() fromX: number = 0;
     @Input() fromY: number = 0;
