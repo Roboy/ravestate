@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NodeType } from "./elements/node.component";
+import { NodeType } from "../elements/node.component";
 
 @Component({
     selector: 'svg-experiments',
@@ -32,12 +32,12 @@ import { NodeType } from "./elements/node.component";
 
         </svg>
     `,
-    styleUrls: ['./svg-experiments.component.scss']
+    styleUrls: ['./static-graph-example.component.scss']
 })
-export class SvgExperimentsComponent {
+export class StaticGraphExampleComponent {
 
     nodeType = NodeType;
 
-    spacing = 100;
+    spacing = 120;
 
 }
