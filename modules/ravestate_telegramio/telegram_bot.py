@@ -182,7 +182,7 @@ def telegram_run(ctx: rs.ContextWrapper):
         """
         Log Errors caused by Updates.
         """
-        logger.warning('Update "%s" caused error "%s"', update, error)
+        logger.warning(f'Update {update.effective_message} caused error {error.message}')
 
     def _manage_children(updater):
         """
