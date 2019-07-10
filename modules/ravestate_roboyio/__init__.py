@@ -47,4 +47,4 @@ if PYROBOY_AVAILABLE:
             # don't call say simultaneously in different threads
             with say_lock:
                 ret = say(unidecode(ctx[rawio.prop_out.changed()]))
-            logger.info(f"pyroboy.say() -> {ret}")
+            logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")
