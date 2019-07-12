@@ -168,7 +168,7 @@ with rs.Module(name="persqa") as mod:
         ctx.add_state(fup_react)
 
     @rs.state(
-        cond=rawio.prop_in.changed() & interloc.prop_all.pushed(),
+        cond=interloc.prop_all.pushed(),
         write=prop_inference_mutex,
         read=interloc.prop_all)
     def new_interloc(ctx: rs.ContextWrapper):
@@ -226,7 +226,7 @@ with rs.Module(name="persqa") as mod:
 
     @rs.state(
         cond=prop_answer.changed(),
-        write=(rawio.prop_out, prop_predicate),
+        write=(rawio.prop_out, prop_predicate, interloc.prop_persisted),
         read=(prop_predicate, prop_subject, prop_answer, interloc.prop_all))
     def react(ctx: rs.ContextWrapper):
         """
@@ -253,6 +253,7 @@ with rs.Module(name="persqa") as mod:
             #  picked up by persqa:new_interloc.
             subject_node.set_node(persistent_subject_node)
             sess.update(subject_node)
+            ctx[interloc.prop_persisted] = subject_node
         elif pred in PREDICATE_SET:
             relationship_type = onto.get_type(ONTOLOGY_TYPE_FOR_PRED[pred])
             relationship_node = Node(metatype=relationship_type)
@@ -266,5 +267,3 @@ with rs.Module(name="persqa") as mod:
             name=subject_node.get_name(),
             obj=inferred_answer)
         ctx[prop_predicate] = None
-
-

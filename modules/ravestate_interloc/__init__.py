@@ -11,14 +11,17 @@ from scientio.ontology.ontology import Ontology
 from reggol import get_logger
 logger = get_logger(__name__)
 
+ANON_INTERLOC_ID = "anonymous_interlocutor"
 
 with rs.Module(name="interloc"):
 
     # TODO: Make interloc:all a special property type, that only accepts ScientioNodeProperty as children
     prop_all = rs.Property(name="all", allow_read=True, allow_write=False, allow_push=True, allow_pop=True)
+    prop_persisted = rs.Property(name="persisted", allow_read=True, allow_write=True, allow_push=True, allow_pop=True,
+                                 always_signal_changed=True)
 
 
-def handle_single_interlocutor_input(ctx: rs.ContextWrapper, input_value: str, id="anonymous_interlocutor") -> None:
+def handle_single_interlocutor_input(ctx: rs.ContextWrapper, input_value: str, id=ANON_INTERLOC_ID) -> None:
     """
     Forwards input to `rawio:in` and manages creation/deletion of a singleton
      interlocutor. A new interlocutor node is pushed, when the input is a greeting,
