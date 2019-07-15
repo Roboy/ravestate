@@ -14,7 +14,7 @@ import { NodeType } from "../elements/node.component";
 })
 export class ActivationSpikeGraphComponent implements OnDestroy {
 
-    nodes: Array<{x: number, y: number, label: string}> = [];
+    nodes: Array<{x: number, y: number, label: string, type: NodeType}> = [];
 
     private dataSub: Subscription;
 
