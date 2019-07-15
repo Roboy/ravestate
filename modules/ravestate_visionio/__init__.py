@@ -76,7 +76,6 @@ if ROBOY_COGNITION_AVAILABLE:
                     person_node.set_properties({'name': name})
                     person_node = sess.retrieve(request=person_node)[0]
                 else:
-                    return
                     person_node.set_properties({'name': 'person_in_vision'})
                     person_query_result = sess.retrieve(request=person_node)
                     if person_query_result:
