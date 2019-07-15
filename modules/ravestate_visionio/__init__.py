@@ -72,11 +72,11 @@ if ROBOY_COGNITION_AVAILABLE:
                 sess: Session = mem.get_session()
 
                 person_node = Node(metatype=onto.get_type("Person"))
-                if confidence and confidence > ctx.conf(key=FACE_CONFIDENCE_THRESHOLD):
+                if confidence and confidence > 100:
                     person_node.set_properties({'name': name})
                     person_node = sess.retrieve(request=person_node)[0]
                 else:
-                    person_node.set_properties({'name': 'person_in_vision'})
+                    person_node.set_properties({'person_in_vision': True})
                     person_query_result = sess.retrieve(request=person_node)
                     if person_query_result:
                         person_node = person_query_result[0]
@@ -84,7 +84,7 @@ if ROBOY_COGNITION_AVAILABLE:
                         sess.update(person_node)
                     else:
                         person_node = Node(metatype=onto.get_type("Person"))
-                        person_node.set_properties({'face_vector': face_encodings, 'name': 'person_in_vision'})
+                        person_node.set_properties({'face_vector': face_encodings, 'person_in_vision': True})
                         sess.create(person_node)
                 if not person_node:
                     err_msg = "Person with name %s is not found in memory." % name
@@ -94,9 +94,10 @@ if ROBOY_COGNITION_AVAILABLE:
 
                 pushed = ctx.push(parent_property_or_path=interloc.prop_all,
                             child=rs.Property(name='persisted_node', default_value=person_node))
-                # print("pushed: " + str(pushed))
-                # print('name: '+ctx['interloc:all:persisted_node'].get_name())
-                # print('id: '+str(ctx['interloc:all:persisted_node'].get_id()))
+                print("pushed: " + str(pushed))
+                print('name: ' + ctx['interloc:all:persisted_node'].get_name())
+                print('id: ' + str(ctx['interloc:all:persisted_node'].get_id()))
+                print('person_in_vision: ' + str(ctx['interloc:all:persisted_node'].get_properties('person_in_vision')))
                 if pushed:
                     logger.debug(f"Pushed {person_node} to interloc:all")
                 else:
@@ -116,19 +117,16 @@ if ROBOY_COGNITION_AVAILABLE:
             node = ctx[interloc.prop_persisted]
 
             person_in_vision_node = Node(metatype=onto.get_type("Person"))
-            person_in_vision_node.set_name('person_in_vision')
+            person_in_vision_node.set_properties({'person_in_vision': True})
             person_in_vision_query = sess.retrieve(person_in_vision_node)
             if person_in_vision_query:
                 person_in_vision_node = person_in_vision_query[0]
                 encodings = person_in_vision_node.get_properties('face_vector')
-                deleted = sess.delete(person_in_vision_node)
-                if not deleted:
-                    logger.error(
-                        'Cannot find person_in_vision node. Make sure ravestate_visionio/recognize state is working correctly!'
-                    )
-                    return
-                else:
-                    logger.info('Deleted person_in_vision node')
+                person_in_vision_node.set_properties({
+                        'face_vector': None,
+                        # 'person_in_vision': False
+                })
+                sess.update(person_in_vision_node)
             else:
                 logger.error(
                     'Cannot find person_in_vision node. Make sure ravestate_visionio/recognize state is working correctly!'

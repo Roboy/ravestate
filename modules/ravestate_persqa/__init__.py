@@ -110,6 +110,11 @@ with rs.Module(name="persqa") as mod:
         def small_talk(ctx: rs.ContextWrapper):
             sess: Session = mem.get_session()
             interloc: Node = ctx[interloc_path]
+
+            print('interloc node:' + str(interloc))
+            print('interloc node name:' + str(interloc.get_name()))
+            print('interloc node id:' + str(interloc.get_id()))
+
             if interloc.get_id() < 0:  # ask for name, if the interlocutor is not (yet) a persistent instance
                 pred = "NAME"
             else:
@@ -241,6 +246,9 @@ with rs.Module(name="persqa") as mod:
         if not subject_path:
             return rs.Resign()
         subject_node: Node = ctx[subject_path]
+        print('subject node:' + str(subject_node))
+        print('subject node name:' + str(subject_node.get_name()))
+        print('subject node id:' + str(subject_node.get_id()))
         assert inferred_answer
 
         if pred == "NAME":
