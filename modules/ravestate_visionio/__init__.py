@@ -2,6 +2,7 @@ import ravestate as rs
 import ravestate_rawio as rawio
 import ravestate_interloc as interloc
 import ravestate_ontology as mem
+import ravestate_persqa as persqa
 import ravestate_ros1 as ros
 
 from scientio.session import Session
@@ -72,20 +73,12 @@ if ROBOY_COGNITION_AVAILABLE:
                 sess: Session = mem.get_session()
 
                 person_node = Node(metatype=onto.get_type("Person"))
-                if confidence and confidence > 100:
+
+                if confidence and confidence > ctx.conf(key=FACE_CONFIDENCE_THRESHOLD):
                     person_node.set_properties({'name': name})
                     person_node = sess.retrieve(request=person_node)[0]
                 else:
-                    person_node.set_properties({'person_in_vision': True})
-                    person_query_result = sess.retrieve(request=person_node)
-                    if person_query_result:
-                        person_node = person_query_result[0]
-                        person_node.set_properties({'face_vector': face_encodings})
-                        sess.update(person_node)
-                    else:
-                        person_node = Node(metatype=onto.get_type("Person"))
-                        person_node.set_properties({'face_vector': face_encodings, 'person_in_vision': True})
-                        sess.create(person_node)
+                    person_node.set_properties({'face_vector': face_encodings})
                 if not person_node:
                     err_msg = "Person with name %s is not found in memory." % name
                     logger.error(err_msg)
@@ -93,11 +86,7 @@ if ROBOY_COGNITION_AVAILABLE:
                     return
 
                 pushed = ctx.push(parent_property_or_path=interloc.prop_all,
-                            child=rs.Property(name='persisted_node', default_value=person_node))
-                print("pushed: " + str(pushed))
-                print('name: ' + ctx['interloc:all:persisted_node'].get_name())
-                print('id: ' + str(ctx['interloc:all:persisted_node'].get_id()))
-                print('person_in_vision: ' + str(ctx['interloc:all:persisted_node'].get_properties('person_in_vision')))
+                            child=rs.Property(name=interloc.ANON_INTERLOC_ID, default_value=person_node))
                 if pushed:
                     logger.debug(f"Pushed {person_node} to interloc:all")
                 else:
@@ -111,34 +100,19 @@ if ROBOY_COGNITION_AVAILABLE:
             read=interloc.prop_persisted
         )
         def save_person_in_vision(ctx: rs.ContextWrapper):
+            node: Node = ctx[interloc.prop_persisted]
+            encodings = node.get_properties('face_vector')
+
             sess: Session = mem.get_session()
-            onto: Ontology = mem.get_ontology()
-
-            node = ctx[interloc.prop_persisted]
-
-            person_in_vision_node = Node(metatype=onto.get_type("Person"))
-            person_in_vision_node.set_properties({'person_in_vision': True})
-            person_in_vision_query = sess.retrieve(person_in_vision_node)
-            if person_in_vision_query:
-                person_in_vision_node = person_in_vision_query[0]
-                encodings = person_in_vision_node.get_properties('face_vector')
-                person_in_vision_node.set_properties({
-                        'face_vector': None,
-                        # 'person_in_vision': False
-                })
-                sess.update(person_in_vision_node)
-            else:
-                logger.error(
-                    'Cannot find person_in_vision node. Make sure ravestate_visionio/recognize state is working correctly!'
-                )
-                return
+            node.set_properties({'face_vector': None})
+            sess.update(node)
 
             try:
                 redis_conn = redis.Redis(
                     host=ctx.conf(key=REDIS_HOST_CONF),
                     port=ctx.conf(key=REDIS_PORT_CONF),
                     password=ctx.conf(key=REDIS_PASS_CONF))
-                redis_conn.set(node.id, encodings)
+                redis_conn.set(node.get_id(), str(encodings))
             except redis.exceptions.ConnectionError as e:
                 err_msg = "Looks like the redis connection is unavailable :-("
                 logger.error(err_msg)
