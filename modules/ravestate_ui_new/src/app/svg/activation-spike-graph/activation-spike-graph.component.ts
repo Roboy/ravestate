@@ -21,7 +21,7 @@ import { NodeType } from "../elements/node.component";
 })
 export class ActivationSpikeGraphComponent implements OnDestroy {
 
-    private dataSub: Subscription;
+    private subscriptions: Subscription;
 
     // internal graph size, defines the SVG coordinate system using viewBox
     graphWidth = 1000;
@@ -33,7 +33,17 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
     containerPosX = 0;  // translate whole container with a nice transition animation
 
     constructor(private mockDataService: MockDataService) {
-        this.dataSub = mockDataService.dataStream.subscribe(data => {
+        this.subscriptions = new Subscription();
+
+        this.subscriptions.add(this.mockDataService.spikes.subscribe(spike => {
+            console.log(spike);
+        }));
+
+        this.subscriptions.add(this.mockDataService.ticks.subscribe(tick => {
+            console.log(tick);
+        }));
+
+        this.subscriptions.add(mockDataService.dataStream.subscribe(data => {
             const newNode = {
                 x: this.graphWidth - this.containerPosX,
                 y: Math.floor(Math.random() * this.graphHeight),
@@ -42,11 +52,11 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
             };
             this.nodes.push(newNode);
             this.containerPosX -= this.nodeSpacingX;
-        });
+        }));
     }
 
     ngOnDestroy(): void {
-        this.dataSub.unsubscribe();
+        this.subscriptions.unsubscribe();
     }
 
     clear() {
