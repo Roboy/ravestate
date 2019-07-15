@@ -21,6 +21,7 @@ $header-height: 50px;
 .main {
   grid-area: main;
   background: #373237;
+  overflow: hidden;
 }
 
 .graph-area {
