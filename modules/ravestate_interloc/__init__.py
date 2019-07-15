@@ -55,6 +55,9 @@ def handle_single_interlocutor_input(ctx: rs.ContextWrapper, input_value: str, i
 
     write_input(input_value)
 
+    if f'interloc:all:{prop_persisted.name}' in ctx.enum(prop_all):
+        return
+
     interloc_exists = f"interloc:all:{id}" in ctx.enum(prop_all)
 
     # push Node if you got a greeting

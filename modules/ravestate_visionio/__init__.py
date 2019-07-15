@@ -58,13 +58,13 @@ if ROBOY_COGNITION_AVAILABLE:
         @rs.state(
             cond=prop_subscribe_faces.changed().detached(),
             write=(rawio.prop_out, interloc.prop_all),
-            read=(prop_subscribe_faces, interloc.prop_all)
+            read=(prop_subscribe_faces, interloc.prop_all),
         )
         def recognize_faces(ctx: rs.ContextWrapper):
             if not ctx.properties[interloc.prop_all].prop.children:
                 faces: Faces = ctx[prop_subscribe_faces]
 
-                name = faces.names
+                name = faces.names[0]
                 confidence = faces.confidence[0]
                 face_encodings = faces.face_encodings
 
@@ -72,7 +72,7 @@ if ROBOY_COGNITION_AVAILABLE:
                 sess: Session = mem.get_session()
 
                 person_node = Node(metatype=onto.get_type("Person"))
-                if confidence and confidence > 0.9:
+                if confidence and confidence > ctx.conf(key=FACE_CONFIDENCE_THRESHOLD):
                     person_node.set_properties({'name': name})
                     person_node = sess.retrieve(request=person_node)[0]
                 else:
@@ -92,8 +92,12 @@ if ROBOY_COGNITION_AVAILABLE:
                     ctx[rawio.prop_out] = err_msg
                     return
 
-                if ctx.push(parent_property_or_path=interloc.prop_all,
-                            child=rs.Property(name='persisted_node', default_value=person_node)):
+                pushed = ctx.push(parent_property_or_path=interloc.prop_all,
+                            child=rs.Property(name='persisted_node', default_value=person_node))
+                # print("pushed: " + str(pushed))
+                # print('name: '+ctx['interloc:all:persisted_node'].get_name())
+                # print('id: '+str(ctx['interloc:all:persisted_node'].get_id()))
+                if pushed:
                     logger.debug(f"Pushed {person_node} to interloc:all")
                 else:
                     err_msg = "Looks like connection to pyroboy module is unavailable :-("
