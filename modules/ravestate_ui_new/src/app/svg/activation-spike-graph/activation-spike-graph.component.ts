@@ -14,7 +14,7 @@ import { NodeType } from "../elements/node.component";
             </g>
         </svg>
         <div class="controls">
-            <button>Clear</button>
+            <button (click)="clear()">Clear</button>
         </div>
     `,
     styleUrls: ['./activation-spike-graph.component.scss']
@@ -49,4 +49,8 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         this.dataSub.unsubscribe();
     }
 
+    clear() {
+        this.containerPosX = 0;
+        this.nodes = [];
+    }
 }
