@@ -1,0 +1,17 @@
+button {
+  color: white;
+  background: #222222;
+  border: 1px solid gray;
+  border-radius: 30px;
+  padding: 5px 10px;
+  margin: 1px
+}
+
+button:hover {
+  background: #333333;
+  border: 1px solid white;
+}
+
+button:active {
+  background: #444444;
+}

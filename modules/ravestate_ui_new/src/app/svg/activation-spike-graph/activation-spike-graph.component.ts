@@ -13,6 +13,9 @@ import { NodeType } from "../elements/node.component";
                    [nodeType]="node.type"></g>
             </g>
         </svg>
+        <div class="controls">
+            <button>Clear</button>
+        </div>
     `,
     styleUrls: ['./activation-spike-graph.component.scss']
 })
