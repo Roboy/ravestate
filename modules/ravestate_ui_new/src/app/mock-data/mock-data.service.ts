@@ -1,15 +1,41 @@
 import { Injectable } from '@angular/core';
-import { Subject } from "rxjs";
+import { Observable, Subject } from "rxjs";
+import { filter, map } from "rxjs/operators";
+
+export interface ActivationsTick {
+    type: 'tick';
+    activations: Array<{
+        activated: boolean,
+        constrains: {[name: string]: number},
+        id: number,
+        name: string,
+        specificity: number
+    }>;
+}
+
+export interface Spike {
+    type: 'spike';
+    id: number;
+    name: string;
+    parent: number;
+    propertyValueAtCreation: any;
+}
+
 
 @Injectable({
     providedIn: 'root'
 })
 export class MockDataService {
 
-    dataStream: Subject<any>;
+    dataStream: Subject<{type: 'tick' | 'spike', [others: string]: any}>;
+
+    ticks: Observable<ActivationsTick>;
+    spikes: Observable<Spike>;
 
     constructor() {
         this.dataStream = new Subject();
+        this.ticks = this.dataStream.pipe(filter(data => data.type === 'tick'), map(data => data as ActivationsTick));
+        this.spikes = this.dataStream.pipe(filter(data => data.type === 'spike'), map( data => data as Spike));
     }
 
     public sendActivations() {
