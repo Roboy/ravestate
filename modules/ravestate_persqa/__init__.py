@@ -50,24 +50,21 @@ with rs.Module(name="persqa") as mod:
         default_value="",
         always_signal_changed=True,
         allow_pop=False,
-        allow_push=False,
-        is_flag_property=True)
+        allow_push=False)
 
     prop_predicate = rs.Property(
         name="predicate",
         default_value="",
         always_signal_changed=True,
         allow_pop=False,
-        allow_push=False,
-        is_flag_property=True)
+        allow_push=False)
 
     prop_answer = rs.Property(
         name="answer",
         default_value="",
         always_signal_changed=True,
         allow_pop=False,
-        allow_push=False,
-        is_flag_property=True)
+        allow_push=False)
 
     prop_follow_up_prop = rs.Property(
         name="follow_up",

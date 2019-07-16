@@ -3,6 +3,7 @@ from ravestate.constraint import SignalRef
 from ravestate.icontext import IContext
 from ravestate.state import State
 from ravestate.property import Property
+from ravestate.flag_property import FlagProperty
 from ravestate.wrappers import PropertyWrapper, ContextWrapper
 
 DEFAULT_MODULE_NAME = 'module'
@@ -107,7 +108,7 @@ def test_property_write(under_test_read_write: PropertyWrapper, default_property
 
 
 def test_flag_property(context_mock):
-    prop_base = Property(name="flag_prop", is_flag_property=True)
+    prop_base = FlagProperty(name="flag_prop")
     prop_base.set_parent_path(DEFAULT_MODULE_NAME)
     prop_wrapper = PropertyWrapper(prop=prop_base, ctx=context_mock, allow_read=True, allow_write=True)
     assert (prop_base._lock.locked())

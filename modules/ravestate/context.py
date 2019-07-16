@@ -47,20 +47,15 @@ with Module(name="core", config=CORE_MODULE_CONFIG):
     """
     sig_shutdown = Signal("shutdown")
 
-    prop_pressure = Property(
+    prop_pressure = FlagProperty(
         name="pressure",
-        allow_read=True,
-        allow_write=True,
         allow_push=False,
         allow_pop=False,
         default_value=False,
-        always_signal_changed=False,
-        is_flag_property=True)
+        always_signal_changed=False)
 
     prop_activity = Property(
         name="activity",
-        allow_read=True,
-        allow_write=True,
         allow_push=False,
         allow_pop=False,
         default_value=0,
