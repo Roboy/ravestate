@@ -21,7 +21,9 @@ logger = get_logger(__name__)
 import ravestate_rawio as rawio
 import ravestate_interloc as interloc
 import ravestate_ontology
+import ravestate_ravebot as ravebot
 
+import telegram
 
 MODULE_NAME: str = 'telegramio'
 TOKEN_CONFIG_KEY: str = "telegram-token"
@@ -153,6 +155,7 @@ def telegram_run(ctx: rs.ContextWrapper):
         if update.effective_chat.id not in active_chats:
             add_new_child_process(update.effective_chat.id)
         # write (bot, update) to Pipe
+        bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
         active_chats[update.effective_chat.id][0].update()
         active_chats[update.effective_chat.id][1].send((bot, update))
 
@@ -194,14 +197,41 @@ def telegram_run(ctx: rs.ContextWrapper):
         while not ctx.shutting_down():
             removable_chats = set()
             removable_users = set()
+
             # wait for children to write to Pipe and then send message to chat
             tick_interval = 1. / ctx.conf(mod=rs.CORE_MODULE_NAME, key=rs.TICK_RATE_CONFIG_KEY)
             time.sleep(tick_interval)
             for chat_id, (last_msg_timestamp, parent_pipe) in active_chats.items():
                 if parent_pipe.poll():
                     msg = parent_pipe.recv()
-                    if isinstance(msg, str):
-                        updater.bot.send_message(chat_id=chat_id, text=msg)
+                    # logger.info("msg: "+ msg)
+                    # import pdb; pdb.set_trace()
+                    if isinstance(msg, list):
+                        logger.info("it's a list!")
+                        for m in msg:
+                            if m.startswith("gif:"):
+                                with open(m.split(":")[1], 'rb') as f:
+                                    updater.bot.send_animation(chat_id=chat_id, animation=f)
+                            elif m.startswith("sticker:"):
+                                updater.bot.send_sticker(chat_id=chat_id, sticker=m.split(":")[1])
+                            elif m.startswith("voice:"):
+                                with open(m.split(":")[1], 'rb') as f:
+                                    updater.bot.send_voice(chat_id=chat_id, voice=f)
+                            else:
+                                m = m.lower().strip()
+                                updater.bot.send_message(chat_id=chat_id, text=m)
+                    elif isinstance(msg, str):
+                        if msg.startswith("gif:"):
+                            with open(msg.split(":")[1], 'rb') as f:
+                                updater.bot.send_animation(chat_id=chat_id, animation=f)
+                        elif msg.startswith("sticker:"):
+                            updater.bot.send_sticker(chat_id=chat_id, sticker=msg.split(":")[1])
+                        elif msg.startswith("voice:"):
+                            with open(msg.split(":")[1], 'rb') as f:
+                                updater.bot.send_voice(chat_id=chat_id, voice=f)
+                        else:
+                            msg = msg.lower().strip()
+                            updater.bot.send_message(chat_id=chat_id, text=msg)
                     else:
                         logger.error(f'Tried sending non-str object as telegram message: {str(msg)}')
                 # remove chat from active_chats if inactive for too long
@@ -288,9 +318,13 @@ def telegram_output(ctx: rs.ContextWrapper):
     Otherwise it only sends output using the Pipe if it is a child process
     """
     text = ctx[rawio.prop_out.changed()]
-    if not text or not isinstance(text, str):
-        return rs.Resign()
-    text = text.lower().strip()
+    logger.info(text)
+    # sticker = ctx[ravebot.prop_sticker.changed()]
+    # logger.info("type "+str(type(text)))
+    # if not text or not isinstance(text, str) or not isinstance(text, list):
+    #     logger.info("resigned")
+    #     return rs.Resign()
+    # text = text.lower().strip()
     if ctx.conf(key=ALL_IN_ONE_CONTEXT_CONFIG_KEY):
         # TODO don't instantiate the updater every time
         token = ctx.conf(key=TOKEN_CONFIG_KEY)

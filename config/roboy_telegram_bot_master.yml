@@ -18,5 +18,5 @@ config:
 module: telegramio
 config:
   child_config_files:
-    - /Users/joseph/ravestate/config/roboy_telegram_bot_child.yml
-    - /Users/joseph/ravestate/config/keys.yml
+    - /home/missxa/workspace/ravestate/config/roboy_telegram_bot_child.yml
+    - /home/missxa/workspace/ravestate/config/keys.yml

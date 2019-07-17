@@ -14,16 +14,18 @@
 ---
 module: core
 config:
-  tickrate: 10
+  tickrate: 20
   import:
+    - ravestate_ravebot
     - ravestate_telegramio
-    - ravestate_fillers
-    - ravestate_wildtalk
+    # - ravestate_fillers
+    # - ravestate_wildtalk
     - ravestate_hibye
-    - ravestate_roboyqa
-    - ravestate_genqa
-    - ravestate_persqa
-    - ravestate_sendpics
+    # - ravestate_stickerbot
+    # - ravestate_roboyqa
+    # - ravestate_genqa
+    # - ravestate_persqa
+    # - ravestate_sendpics
     #- ravestate_akinator
 
 ---
@@ -31,8 +33,3 @@ module: genqa
 config:
   drqa_server_address: http://35.246.158.89:5000
   roboy_answer_sanity: 1000
-
----
-module: akinator
-config:
-  certainty_percentage: 90

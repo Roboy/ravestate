@@ -290,4 +290,3 @@ class ContextWrapper:
             return self.properties[property_or_path].enum()
         else:
             logger.error(f"State {self.state.name} attempted to enumerate property {property_or_path} without permission!")
-
