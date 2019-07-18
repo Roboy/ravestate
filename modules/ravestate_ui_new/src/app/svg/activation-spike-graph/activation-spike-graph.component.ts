@@ -70,6 +70,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     clear() {
         this.containerPosX = 0;
+        this.lastX = this.graphWidth + this.nodeSpacingX;
         this.nodes = [];
         this.connectors = [];
     }
