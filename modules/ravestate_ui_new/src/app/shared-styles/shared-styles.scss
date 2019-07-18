@@ -1,10 +1,14 @@
+$min-button-size: 32px;
+
 button {
   color: white;
   background: #222222;
   border: 1px solid gray;
   border-radius: 30px;
   padding: 5px 10px;
-  margin: 1px
+  margin: 1px;
+  min-height: $min-button-size;
+  min-width: $min-button-size;
 }
 
 button:hover {
@@ -14,4 +18,10 @@ button:hover {
 
 button:active {
   background: #444444;
+}
+
+button.round {
+  max-height: $min-button-size;
+  max-width: $min-button-size;
+  text-align: center;
 }
