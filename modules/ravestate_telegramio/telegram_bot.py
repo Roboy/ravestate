@@ -188,13 +188,12 @@ def telegram_run(ctx: rs.ContextWrapper):
 
 
     def start(bot: Bot, update: Update):
-        keyboard = [[InlineKeyboardButton("\U0001F525", callback_data='1')],
-                     [InlineKeyboardButton("CAADAgADkAAD5dCAEGMfygavvZSZAg", callback_data='2')],
 
-                    [InlineKeyboardButton("Option 3", callback_data='3')]]
-
-        reply_markup = InlineKeyboardMarkup(keyboard, one_time_keyboard=True)
-        update.message.reply_text('davai davai', reply_markup=reply_markup)
+        with open("/home/missxa/Documents/readytoparty.mp3", 'rb') as f:
+            bot.send_voice(chat_id=update.message.chat_id, voice=f)
+        bot.send_sticker(chat_id=update.message.chat_id, sticker="CAADAgADjwAD5dCAEA26JXGqLEGhAg")
+        update.message.reply_text("The story starts with /whoopwhoop")
+        # update.message.reply_text('davai davai', reply_markup=reply_markup)
 
     def button(bot: Bot, update: Update):
         query = update.callback_query
@@ -211,6 +210,31 @@ def telegram_run(ctx: rs.ContextWrapper):
 
         # query.edit_message_text(text="Selected option: {}".format(query.data))
 
+    def whoopwhoop(bot: Bot, update: Update):
+        # rainbow 1F308
+        # beer 1F37B
+        # martini U+1F378
+        # cocktail U+1F379
+        # sekt U+1F37E
+        # carousel horse 1F3A0
+        # dog U+1F415
+        # zebra U+1F993
+        # octopus U+1F419
+        # bomb U+1F4A3
+        # pushpin U+1F4CD
+        # fire U+1F525
+        # sparkles U+2728
+        # dizzy face
+        # robot U+1F916
+        # surfing U+1F3C4
+        
+        keyboard = [[InlineKeyboardButton("\U0001F525", callback_data='1')],
+                     [InlineKeyboardButton("\U0001F680", callback_data='2')], # rocket
+
+                    [InlineKeyboardButton("Option 3", callback_data='3')]]
+
+        reply_markup = InlineKeyboardMarkup(keyboard, one_time_keyboard=True)
+        update.message.reply_text('davai davai', reply_markup=reply_markup)
 
     def help(bot: Bot, update: Update):
         update.message.reply_text("Use /start to test this bot.")
@@ -316,6 +340,7 @@ def telegram_run(ctx: rs.ContextWrapper):
         dispatcher.add_handler(CommandHandler('start', start))
         dispatcher.add_handler(CallbackQueryHandler(button))
         dispatcher.add_handler(CommandHandler('help', help))
+        dispatcher.add_handler(CommandHandler('whoopwhoop', whoopwhoop))
         if ctx.conf(key=ALL_IN_ONE_CONTEXT_CONFIG_KEY):
             # handle noncommand-messages with the matching handler
             dispatcher.add_handler(MessageHandler(Filters.text, handle_text))

@@ -31,7 +31,7 @@ with rs.Module(name="ravebot") as mod:
     # Create an application state which reacts to the `:startup` signal,
     # and writes a string to raw:out. Note: State functions are
     # always run asynchronously!
-    @rs.state(cond=rawio.prop_in.changed().max_age(-1.), read=rawio.prop_in, write=rawio.prop_out)
+    @rs.state(cond=rawio.prop_in.changed(), read=rawio.prop_in, write=rawio.prop_out)
     def hello_world(ctx: rs.ContextWrapper):
         # ctx[rawio.prop_out] = "ravebot"
         # ctx[rawio.prop_out] = ["ravebot", "sticker:CAADAgADsgAD5dCAEBmMXCCt4Sh6Ag","voice:/home/missxa/Documents/infineon-dresden/voice.ogg"]
