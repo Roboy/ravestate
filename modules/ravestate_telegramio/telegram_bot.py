@@ -9,8 +9,11 @@ import requests
 import ravestate as rs
 
 from telegram import Bot, Update, TelegramError
-from telegram.ext import Updater, MessageHandler, Filters, Dispatcher
+from telegram.ext import Updater, MessageHandler, Filters, Dispatcher, CommandHandler, CallbackQueryHandler
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+
+# from ravestate_telegramio.inline_keyboard import start, button, help
 from scientio.ontology.node import Node
 from scientio.session import Session
 from scientio.ontology.ontology import Ontology
@@ -152,10 +155,12 @@ def telegram_run(ctx: rs.ContextWrapper):
         """
         Handle incoming messages
         """
+        # logger.info("update:" + update)
         if update.effective_chat.id not in active_chats:
             add_new_child_process(update.effective_chat.id)
         # write (bot, update) to Pipe
         bot.send_chat_action(chat_id=update.effective_chat.id, action=telegram.ChatAction.TYPING)
+
         active_chats[update.effective_chat.id][0].update()
         active_chats[update.effective_chat.id][1].send((bot, update))
 
@@ -180,6 +185,35 @@ def telegram_run(ctx: rs.ContextWrapper):
                                kwargs={'runtime_overrides': [(MODULE_NAME, CHILD_CONN_CONFIG_KEY, child_conn)]})
         p.start()
         active_chats[chat_id] = (Timestamp(), parent_conn)
+
+
+    def start(bot: Bot, update: Update):
+        keyboard = [[InlineKeyboardButton("\U0001F525", callback_data='1')],
+                     [InlineKeyboardButton("CAADAgADkAAD5dCAEGMfygavvZSZAg", callback_data='2')],
+
+                    [InlineKeyboardButton("Option 3", callback_data='3')]]
+
+        reply_markup = InlineKeyboardMarkup(keyboard, one_time_keyboard=True)
+        update.message.reply_text('davai davai', reply_markup=reply_markup)
+
+    def button(bot: Bot, update: Update):
+        query = update.callback_query
+
+
+        # update.message.reply_text(text="Selected option: {}".format(query.data))
+        if query.data == '3':
+            bot.send_sticker(chat_id=update.callback_query.message.chat_id, sticker="CAADAgADkAAD5dCAEGMfygavvZSZAg")
+        elif query.data == '1':
+            bot.send_sticker(chat_id=update.callback_query.message.chat_id, sticker="CAADAgADsgAD5dCAEBmMXCCt4Sh6Ag")
+        elif query.data == '2':
+            bot.send_sticker(chat_id=update.callback_query.message.chat_id, sticker="CAADAgADVQAD5dCAEHTBjm9cSbBTAg")
+        bot.answer_callback_query(update.callback_query.id, text='')
+
+        # query.edit_message_text(text="Selected option: {}".format(query.data))
+
+
+    def help(bot: Bot, update: Update):
+        update.message.reply_text("Use /start to test this bot.")
 
     def error(bot: Bot, update: Update, error: TelegramError):
         """
@@ -206,12 +240,17 @@ def telegram_run(ctx: rs.ContextWrapper):
                     msg = parent_pipe.recv()
                     # logger.info("msg: "+ msg)
                     # import pdb; pdb.set_trace()
+                    logger.info("type:" + str(type(msg)))
                     if isinstance(msg, list):
-                        logger.info("it's a list!")
                         for m in msg:
                             if m.startswith("gif:"):
                                 with open(m.split(":")[1], 'rb') as f:
                                     updater.bot.send_animation(chat_id=chat_id, animation=f)
+                            elif m.startswith("location:"):
+                                latlong = m.split(":")[1]
+                                lat = latlong.split(",")[0]
+                                long = latlong.split(",")[1]
+                                updater.bot.send_location(chat_id=chat_id, latitude=lat, longitude=long)
                             elif m.startswith("sticker:"):
                                 updater.bot.send_sticker(chat_id=chat_id, sticker=m.split(":")[1])
                             elif m.startswith("voice:"):
@@ -224,6 +263,11 @@ def telegram_run(ctx: rs.ContextWrapper):
                         if msg.startswith("gif:"):
                             with open(msg.split(":")[1], 'rb') as f:
                                 updater.bot.send_animation(chat_id=chat_id, animation=f)
+                        elif msg.startswith("location:"):
+                            latlong = msg.split(":")[1]
+                            lat = latlong.split(",")[0]
+                            long = latlong.split(",")[1]
+                            updater.bot.send_location(chat_id=chat_id, latitude=lat, longitude=long)
                         elif msg.startswith("sticker:"):
                             updater.bot.send_sticker(chat_id=chat_id, sticker=msg.split(":")[1])
                         elif msg.startswith("voice:"):
@@ -269,12 +313,16 @@ def telegram_run(ctx: rs.ContextWrapper):
         updater: Updater = Updater(token)
         # Get the dispatcher to register handlers
         dispatcher: Dispatcher = updater.dispatcher
+        dispatcher.add_handler(CommandHandler('start', start))
+        dispatcher.add_handler(CallbackQueryHandler(button))
+        dispatcher.add_handler(CommandHandler('help', help))
         if ctx.conf(key=ALL_IN_ONE_CONTEXT_CONFIG_KEY):
             # handle noncommand-messages with the matching handler
             dispatcher.add_handler(MessageHandler(Filters.text, handle_text))
             dispatcher.add_handler(MessageHandler(Filters.photo, handle_photo))
         else:
-            dispatcher.add_handler(MessageHandler(Filters.text | Filters.photo, handle_input_multiprocess))
+            dispatcher.add_handler(MessageHandler(Filters.text | Filters.photo , handle_input_multiprocess))
+
         # log all errors
         dispatcher.add_error_handler(error)
         # Start the Bot

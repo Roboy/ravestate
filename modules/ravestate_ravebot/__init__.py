@@ -36,4 +36,5 @@ with rs.Module(name="ravebot") as mod:
         # ctx[rawio.prop_out] = "ravebot"
         # ctx[rawio.prop_out] = ["ravebot", "sticker:CAADAgADsgAD5dCAEBmMXCCt4Sh6Ag","voice:/home/missxa/Documents/infineon-dresden/voice.ogg"]
         # ctx[prop_sticker] = "CAADAgADsgAD5dCAEBmMXCCt4Sh6Ag"
-        ctx[rawio.prop_out] = "voice:/home/missxa/Documents/readytoparty.mp3"
+        ctx[rawio.prop_out] = "location:48.263390,11.668413"
+        # ctx[rawio.prop_out] = "voice:/home/missxa/Documents/readytoparty.mp3"
