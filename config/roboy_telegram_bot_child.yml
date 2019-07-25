@@ -16,11 +16,11 @@ module: core
 config:
   tickrate: 20
   import:
-    - ravestate_ravebot
+    # - ravestate_ravehi
+    # - ravestate_ravebot
     - ravestate_telegramio
     # - ravestate_fillers
-    # - ravestate_wildtalk
-    - ravestate_hibye
+    - ravestate_wildtalk
     # - ravestate_stickerbot
     # - ravestate_roboyqa
     # - ravestate_genqa

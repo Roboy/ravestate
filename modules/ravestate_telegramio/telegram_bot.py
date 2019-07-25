@@ -24,9 +24,10 @@ logger = get_logger(__name__)
 import ravestate_rawio as rawio
 import ravestate_interloc as interloc
 import ravestate_ontology
-import ravestate_ravebot as ravebot
 
 import telegram
+
+import random
 
 MODULE_NAME: str = 'telegramio'
 TOKEN_CONFIG_KEY: str = "telegram-token"
@@ -57,6 +58,20 @@ active_chats: Dict[int, Tuple[Timestamp, Optional[mp.connection.Connection]]] = 
 # At the same time a User can talk to the bot in personal and group chats but only is in active_users once.
 # A user_id is mapped to a set containing the chat_id of every Chat that the User is involved in
 active_users: Dict[int, Set[int]] = dict()
+
+mediapath = "/home/missxa/workspace/ravestate/media"
+partygifs = ["avocado.gif", "catrave.gif", "crazygirl.gif", "frog.gif", "glittertoss.gif", "lemon.gif", "parrot.gif", "rave.gif"]
+
+stickers: Dict = {"explosion": "CAADAgADsgAD5dCAEBmMXCCt4Sh6Ag",
+                    "dance": "CAADAgADrwAD5dCAELOikjem6GCQAg",
+                    "kenny": "CAADAgADkAAD5dCAEGMfygavvZSZAg",
+                    "beer": "CAADAgADKQAD5dCAEFX3hCMAAfM_awI",
+                    "happy": "CAADAgADRgAD5dCAEJV_o50ekE5HAg",
+                    "hearts": "CAADAgADSQAD5dCAEN9n0g-x5va8Ag",
+                    "roboyrick": "CAADAgADjwAD5dCAEA26JXGqLEGhAg",
+                    "sunglasses": "CAADAgADLwAD5dCAENTFuFLbW8-XAg",
+                    "rainbow": "CAADAgADVQAD5dCAEHTBjm9cSbBTAg",
+                    "pickle": "CAADAgADwgAD5dCAEKjfQCRuUDfYAg"}
 
 
 @rs.state(cond=rs.sig_startup)
@@ -189,23 +204,34 @@ def telegram_run(ctx: rs.ContextWrapper):
 
     def start(bot: Bot, update: Update):
 
-        with open("/home/missxa/Documents/readytoparty.mp3", 'rb') as f:
+        with open(mediapath + "/gif/roboyrave.gif", 'rb') as f:
+            bot.send_animation(chat_id=update.message.chat_id, animation=f)
+        with open(mediapath + "/voice/readytoparty.mp3", 'rb') as f:
             bot.send_voice(chat_id=update.message.chat_id, voice=f)
-        bot.send_sticker(chat_id=update.message.chat_id, sticker="CAADAgADjwAD5dCAEA26JXGqLEGhAg")
-        update.message.reply_text("The story starts with /whoopwhoop")
+        # bot.send_sticker(chat_id=update.message.chat_id, sticker="CAADAgADjwAD5dCAEA26JXGqLEGhAg")
+        update.message.reply_text("/whoopwhoop")
         # update.message.reply_text('davai davai', reply_markup=reply_markup)
 
     def button(bot: Bot, update: Update):
         query = update.callback_query
-
-
+        chat_id = update.callback_query.message.chat_id
         # update.message.reply_text(text="Selected option: {}".format(query.data))
-        if query.data == '3':
-            bot.send_sticker(chat_id=update.callback_query.message.chat_id, sticker="CAADAgADkAAD5dCAEGMfygavvZSZAg")
-        elif query.data == '1':
-            bot.send_sticker(chat_id=update.callback_query.message.chat_id, sticker="CAADAgADsgAD5dCAEBmMXCCt4Sh6Ag")
-        elif query.data == '2':
-            bot.send_sticker(chat_id=update.callback_query.message.chat_id, sticker="CAADAgADVQAD5dCAEHTBjm9cSbBTAg")
+        if query.data == 'location':
+            bot.send_location(chat_id=chat_id, latitude=48.263390, longitude=11.668413)
+            bot.send_message(chat_id=chat_id, text="be there or be square. Friday 7 pm")
+            # bot.send_sticker(chat_id=update.callback_query.message.chat_id, sticker="CAADAgADkAAD5dCAEGMfygavvZSZAg")
+        elif query.data == 'drinks':
+            m = "i have ordered some beers and prosecco for the rave, so we all have a good time ;) but feel free to bring more booze"
+            bot.send_message(chat_id=chat_id, text=m)
+            bot.send_sticker(chat_id=chat_id, sticker=random.choice(list(stickers.values())))
+        elif query.data == 'gif':
+            m = "LETS PARTEEEY!!11!!"
+            bot.send_message(chat_id=chat_id, text=m)
+            with open(mediapath + "/gif/" + random.choice(partygifs), 'rb') as f:
+                bot.send_animation(chat_id=chat_id, animation=f)
+        elif query.data == 'tune':
+            m = "https://soundcloud.com/mira_kater/mira_garbicz-festival-2018_seebuhne_2018_03_08#t=32:23"
+            bot.send_message(chat_id=chat_id, text=m)
         bot.answer_callback_query(update.callback_query.id, text='')
 
         # query.edit_message_text(text="Selected option: {}".format(query.data))
@@ -227,14 +253,16 @@ def telegram_run(ctx: rs.ContextWrapper):
         # dizzy face
         # robot U+1F916
         # surfing U+1F3C4
-        
-        keyboard = [[InlineKeyboardButton("\U0001F525", callback_data='1')],
-                     [InlineKeyboardButton("\U0001F680", callback_data='2')], # rocket
 
-                    [InlineKeyboardButton("Option 3", callback_data='3')]]
+        drinks = InlineKeyboardButton("\U0001F37B \U0001F379 \U0001F37E", callback_data='drinks')
+        location = InlineKeyboardButton("\U0001F4CD", callback_data='location')
+        gif = InlineKeyboardButton("\U0001F308", callback_data='gif')
+        tune = InlineKeyboardButton("\U0001F419", callback_data='tune')
+
+        keyboard = [[location, gif, drinks]]
 
         reply_markup = InlineKeyboardMarkup(keyboard, one_time_keyboard=True)
-        update.message.reply_text('davai davai', reply_markup=reply_markup)
+        update.message.reply_text('buttons are basic, check them out. i also like to talk', reply_markup=reply_markup)
 
     def help(bot: Bot, update: Update):
         update.message.reply_text("Use /start to test this bot.")
@@ -265,6 +293,7 @@ def telegram_run(ctx: rs.ContextWrapper):
                     # logger.info("msg: "+ msg)
                     # import pdb; pdb.set_trace()
                     logger.info("type:" + str(type(msg)))
+                    logger.info("incoming :" + msg)
                     if isinstance(msg, list):
                         for m in msg:
                             if m.startswith("gif:"):
