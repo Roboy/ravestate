@@ -106,7 +106,7 @@ class FaceOracleFilter:
         """
         strangers = [person_id for person_id in self.messages_per_person if not person_id.is_known]
         if strangers:
-            _, ids, face_vecs = zip(*)
+            _, ids, face_vecs = zip(*strangers)
             return ids, face_vecs
         return tuple(), tuple()
 
@@ -118,7 +118,17 @@ class FaceOracleFilter:
         :return: True if self.current_best_guess has changed. Note: current_best_guess
          might also change to None if no interlocutor with sufficient messages was found.
         """
-        pass
+        best_guess = None
+        best_guess_count = 0
+        for person, msgs in self.messages_per_person.items():
+            assert len(msgs) > 0
+            if len(msgs) > best_guess_count:
+                best_guess = person
+                best_guess_count = len(msgs)
+        if best_guess != self.current_best_guess:
+            self.current_best_guess = best_guess
+            return True
+        return False
 
 
     def convert_current_anonymous_to_known(self, primary_key):
