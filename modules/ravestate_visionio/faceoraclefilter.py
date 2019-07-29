@@ -1,11 +1,27 @@
 from collections import defaultdict, namedtuple
 from numpy import ndarray
 from typing import Dict, Tuple, List, Set
-from roboy_cognition_msgs.msg import Faces
-from pyroboy.face_recognition import FaceRec
+
+from reggol import get_logger
+logger = get_logger(__name__)
+
+try:
+    from pyroboy.face_recognition import FaceRec
+except ImportError as e:
+    import face_recognition as fr
+
+try:
+    from roboy_cognition_msgs.msg import Faces, FacialFeatures
+except ImportError as e:
+    logger.error(f"""
+--------
+An exception occurred during `from roboy_cognition_msgs.msg import Faces`: {e}
+Roboy will not comment on recognized faces!
+--------
+""")
 
 
-PersonId = namedtuple('PersonId', ['is_known', 'id', 'face_vector'])
+Person = namedtuple('Person', ['is_known', 'id', 'face_vector'])
 
 
 # Keep the last 10 messages
@@ -25,7 +41,12 @@ class FaceOracleFilter:
           1. ... a bool indicating whether the person is known or not.
           2. ... a Scientio primary key for known people, OR an unknown person index otherwise.
         """
-        self.messages_per_person: Dict[PersonId, Set[Faces]] = defaultdict(set)
+        self.messages_per_person: Dict[int, List[Faces]] = defaultdict(list)
+
+        """
+        We need to keep track of person objects.
+        """
+        self.people: Dict[int, Person] = dict()
 
         """
         We need IDs for anonymous people.
@@ -40,8 +61,7 @@ class FaceOracleFilter:
         """
         Tuple of known-flag, primary key/anonymous-index, face vector.
         """
-        self.current_best_guess: PersonId = None
-
+        self.current_best_guess: Person = None
 
     def push_message(self, msg: Faces) -> bool:
         """
@@ -63,7 +83,8 @@ class FaceOracleFilter:
 
             # Remove message from each person that might reference it
             for _, messages in self.messages_per_person.items():
-                messages.discard(message_to_forget)
+                if message_to_forget in messages:
+                    messages.remove(message_to_forget)
 
             # Filter people that are out of messages
             for person_id in list(self.messages_per_person.keys()):
@@ -71,11 +92,11 @@ class FaceOracleFilter:
                     del self.messages_per_person[person_id]
 
         # Determine who gets the new message ...
-        person_id: PersonId = None
+        person: Person = None
         if msg.confidence[0] > CONFIDENCE_THRESHOLD:
 
             # There is a good database match
-            person_id = PersonId(True, msg.ids[0], msg.face_encodings)
+            person = Person(True, msg.ids[0], msg.face_encodings)
 
         else:
 
@@ -87,29 +108,29 @@ class FaceOracleFilter:
                 idx, conf = FaceRec.match_face(msg.face_encodings, face_vecs)
                 if conf > CONFIDENCE_THRESHOLD:
                     # Stranger matched
-                    person_id = PersonId(False, ids[idx], msg.face_encodings)
+                    person = Person(False, ids[idx], msg.face_encodings)
 
-            if not person_id:
+            if not person:
                 # Create new stranger
-                person_id = PersonId(False, self.next_unknown_index, msg.face_encodings)
+                person = Person(False, self.next_unknown_index, msg.face_encodings)
                 self.next_unknown_index += 1
 
-        assert person_id is not None
-        self.messages_per_person[person_id].add(msg)
+        assert person is not None
+        self.messages_per_person[person.id].append(msg)
+        self.people[person.id] = person
 
         return self.recalculate_best_guess()
-
 
     def unknown_people_face_vecs_and_ids(self) -> Tuple[Tuple[ndarray], Tuple[int]]:
         """
         Get same-length lists of unknown person ids and respective face vectors.
         """
-        strangers = [person_id for person_id in self.messages_per_person if not person_id.is_known]
+        print(self.people)
+        strangers = [person for person_id, person in self.people.keys() if not person_id.is_known]
         if strangers:
             _, ids, face_vecs = zip(*strangers)
             return ids, face_vecs
         return tuple(), tuple()
-
 
     def recalculate_best_guess(self) -> bool:
         """
@@ -120,20 +141,25 @@ class FaceOracleFilter:
         """
         best_guess = None
         best_guess_count = 0
-        for person, msgs in self.messages_per_person.items():
+        for person_id, msgs in self.messages_per_person.items():
             assert len(msgs) > 0
             if len(msgs) > best_guess_count:
-                best_guess = person
+                best_guess = self.people[person_id]
                 best_guess_count = len(msgs)
         if best_guess != self.current_best_guess:
             self.current_best_guess = best_guess
+            logger.info(f'Current best guess changed. Person id: {best_guess.id}')
             return True
         return False
-
 
     def convert_current_anonymous_to_known(self, primary_key):
         """
         If the current best guess is an anonymous interlocutor, convert it to
          a known interlocutor with the given primary key.
         """
-        pass
+        person = self.people[primary_key]._replace(is_known=True)
+
+        self.people[primary_key] = person
+
+        if self.current_best_guess.id == primary_key:
+            self.current_best_guess = person

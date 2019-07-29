@@ -4,6 +4,7 @@ import ravestate_interloc as interloc
 import ravestate_ontology as mem
 import ravestate_persqa as persqa
 import ravestate_ros1 as ros
+from ravestate_visionio.faceoraclefilter import FaceOracleFilter, Person
 
 from scientio.session import Session
 from scientio.ontology.ontology import Ontology
@@ -22,7 +23,7 @@ except ImportError as e:
 
 ROBOY_COGNITION_AVAILABLE = False
 try:
-    from roboy_cognition_msgs.msg import Faces
+    from roboy_cognition_msgs.msg import Faces, FacialFeatures
     ROBOY_COGNITION_AVAILABLE = True
 except ImportError as e:
     logger.error(f"""
@@ -54,45 +55,81 @@ if ROBOY_COGNITION_AVAILABLE:
             "face_names",
             topic="/roboy/cognition/vision/visible_face_names",
             msg_type=Faces,
-            always_signal_changed=False)
+            always_signal_changed=False
+        )
+
+        prop_face_filter = rs.Property(
+            name="face_frequencies",
+            default_value=FaceOracleFilter(),
+            always_signal_changed=True,
+            allow_write=True
+        )
 
         @rs.state(
             cond=prop_subscribe_faces.changed().detached(),
-            write=(rawio.prop_out, interloc.prop_all),
-            read=(prop_subscribe_faces, interloc.prop_all),
+            write=(rawio.prop_out, interloc.prop_all, prop_face_filter),
+            read=(prop_subscribe_faces, interloc.prop_all, prop_face_filter),
         )
         def recognize_faces(ctx: rs.ContextWrapper):
-            if not ctx.properties[interloc.prop_all].prop.children:
-                faces: Faces = ctx[prop_subscribe_faces]
+            face_filter = ctx[prop_face_filter]
 
-                name = faces.names[0]
-                confidence = faces.confidence[0]
-                face_encodings = faces.face_encodings
+            faces: Faces = ctx[prop_subscribe_faces]
+
+            # Push faces to face filter
+            best_guess_changed = face_filter.push_message(faces)
+
+            if best_guess_changed:
+                current_best_guess: Person = face_filter.current_best_guess
 
                 onto: Ontology = mem.get_ontology()
                 sess: Session = mem.get_session()
 
                 person_node = Node(metatype=onto.get_type("Person"))
 
-                if confidence and confidence > ctx.conf(key=FACE_CONFIDENCE_THRESHOLD):
-                    person_node.set_properties({'name': name})
-                    person_node = sess.retrieve(request=person_node)[0]
+                if current_best_guess.is_known:
+                    person_node.set_id(current_best_guess.id)
+                    person_node_query = sess.retrieve(request=person_node)
+                    logger.info('RECOGNIZED')
+                    if person_node_query:
+                        person_node=person_node_query[0]
+                        logger.info('FIRST TIME')
+                    else:
+                        err_msg = "Person with id %s is not found in memory." % current_best_guess.id
+                        logger.error(err_msg)
+                        ctx[rawio.prop_out] = err_msg
+                        return
                 else:
-                    person_node.set_properties({'face_vector': face_encodings})
-                if not person_node:
-                    err_msg = "Person with name %s is not found in memory." % name
-                    logger.error(err_msg)
-                    ctx[rawio.prop_out] = err_msg
-                    return
+                    person_node.set_properties({'face_vector': current_best_guess.face_vector})
 
-                pushed = ctx.push(parent_property_or_path=interloc.prop_all,
-                            child=rs.Property(name=interloc.ANON_INTERLOC_ID, default_value=person_node))
-                if pushed:
-                    logger.debug(f"Pushed {person_node} to interloc:all")
+                push = False
+
+                if any(ctx.enum(interloc.prop_all)):
+                    interloc_node: Node = ctx[f'interloc:all:{interloc.ANON_INTERLOC_ID}']
+
+                    if not (interloc_node.get_id() == person_node.get_id()) or interloc_node.get_id() < 0:
+                        interloc.prop_all.pop(interloc.ANON_INTERLOC_ID)
+                        push = True
+                    else:
+                        try:
+                            redis_conn = redis.Redis(
+                                host=ctx.conf(key=REDIS_HOST_CONF),
+                                port=ctx.conf(key=REDIS_PORT_CONF),
+                                password=ctx.conf(key=REDIS_PASS_CONF))
+                            redis_conn.set(interloc_node.get_id(), str(current_best_guess.face_vector))
+                            logger.info('Saving familiar person face')
+                        except redis.exceptions.ConnectionError as e:
+                            err_msg = "Looks like the redis connection is unavailable :-("
+                            logger.error(err_msg)
                 else:
-                    err_msg = "Looks like connection to pyroboy module is unavailable :-("
-                    logger.error(err_msg)
-                    ctx[rawio.prop_out] = err_msg
+                    push = True
+
+                if push and ctx.push(parent_property_or_path=interloc.prop_all,
+                            child=rs.Property(name=interloc.ANON_INTERLOC_ID, default_value=person_node)):
+                    logger.debug(f"Pushed {person_node} to interloc:all")
+                # else:
+                #     err_msg = "Looks like connection to pyroboy module is unavailable :-("
+                #     logger.error(err_msg)
+                #     ctx[rawio.prop_out] = err_msg
 
 
         @rs.state(
@@ -107,12 +144,15 @@ if ROBOY_COGNITION_AVAILABLE:
             node.set_properties({'face_vector': None})
             sess.update(node)
 
+            save_face(ctx, node.get_id(), encodings)
+
+        def save_face(ctx: rs.ContextWrapper, id, face_vector):
             try:
                 redis_conn = redis.Redis(
                     host=ctx.conf(key=REDIS_HOST_CONF),
                     port=ctx.conf(key=REDIS_PORT_CONF),
                     password=ctx.conf(key=REDIS_PASS_CONF))
-                redis_conn.set(node.get_id(), str(encodings))
+                redis_conn.set(id, str(face_vector))
             except redis.exceptions.ConnectionError as e:
                 err_msg = "Looks like the redis connection is unavailable :-("
                 logger.error(err_msg)
