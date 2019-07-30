@@ -107,8 +107,8 @@ if ROBOY_COGNITION_AVAILABLE:
 
                         # Remove the current interloc
                         logger.info('Popping current interlocutor')
-                        popped_node = interloc.prop_all.pop(interloc.ANON_INTERLOC_ID)
-                        print('popped_node: ' + str(popped_node))
+                        popped_node = ctx.pop(f'interloc:all:{interloc.ANON_INTERLOC_ID}')
+                        assert popped_node == True
                         push = True
 
                     else:
@@ -119,7 +119,7 @@ if ROBOY_COGNITION_AVAILABLE:
                                 port=ctx.conf(key=REDIS_PORT_CONF),
                                 password=ctx.conf(key=REDIS_PASS_CONF))
                             redis_conn.set(interloc_node.get_id(), str(current_best_guess.face_vector))
-                            logger.info('Saving familiar person face')
+                            logger.info('Updating familiar person face')
                         except redis.exceptions.ConnectionError as e:
                             err_msg = "Looks like the redis connection is unavailable :-("
                             logger.error(err_msg)
