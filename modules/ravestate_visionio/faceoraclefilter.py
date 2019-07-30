@@ -1,4 +1,5 @@
 from collections import defaultdict, namedtuple
+import numpy as np
 from numpy import ndarray
 from typing import Dict, Tuple, List, Set
 
@@ -92,7 +93,7 @@ class FaceOracleFilter:
         if msg.confidence[0] > CONFIDENCE_THRESHOLD:
 
             # There is a good database match
-            person = Person(True, msg.ids[0], msg.face_encodings)
+            person = Person(True, msg.ids[0], msg.face_encodings[0].ff)
 
         else:
 
@@ -101,14 +102,14 @@ class FaceOracleFilter:
             if ids:
                 assert len(ids) == len(face_vecs)
                 # Match face vector among current strangers
-                idx, conf = FaceRec.match_face(msg.face_encodings, face_vecs)
+                idx, conf = FaceRec.match_face(np.array(msg.face_encodings[0].ff), face_vecs)
                 if conf > CONFIDENCE_THRESHOLD:
                     # Stranger matched
-                    person = Person(False, ids[idx], msg.face_encodings)
+                    person = Person(False, ids[idx], msg.face_encodings[0].ff)
 
             if not person:
                 # Create new stranger
-                person = Person(False, self.next_unknown_index, msg.face_encodings)
+                person = Person(False, self.next_unknown_index, msg.face_encodings[0].ff)
                 self.next_unknown_index += 1
 
         assert person is not None
@@ -117,15 +118,18 @@ class FaceOracleFilter:
 
         return self.recalculate_best_guess()
 
-    def unknown_people_face_vecs_and_ids(self) -> Tuple[Tuple[ndarray], Tuple[int]]:
+    def unknown_people_face_vecs_and_ids(self) -> Tuple[List[int], List[ndarray]]:
         """
         Get same-length lists of unknown person ids and respective face vectors.
         """
-        strangers = [person for person_id, person in self.people.items() if not person.is_known]
-        if strangers:
-            _, ids, face_vecs = zip(*strangers)
-            return ids, face_vecs
-        return tuple(), tuple()
+        ids = list()
+        face_vectors = list()
+
+        for person_id, person in self.people.items():
+            if not person.is_known:
+                ids.append(person.id)
+                face_vectors.append(np.array(person.face_vector))
+        return ids, face_vectors
 
     def recalculate_best_guess(self) -> bool:
         """
@@ -141,7 +145,7 @@ class FaceOracleFilter:
             if len(msgs) > best_guess_count:
                 best_guess = self.people[person_id]
                 best_guess_count = len(msgs)
-        if best_guess != self.current_best_guess:
+        if not self.current_best_guess or best_guess.id != self.current_best_guess.id:
             self.current_best_guess = best_guess
             logger.info(f'Current best guess changed. Person id: {best_guess.id}')
             return True

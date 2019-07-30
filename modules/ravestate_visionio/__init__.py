@@ -5,7 +5,6 @@ import ravestate_ontology as mem
 import ravestate_persqa as persqa
 import ravestate_ros1 as ros
 from ravestate_visionio.faceoraclefilter import FaceOracleFilter, Person
-
 from scientio.session import Session
 from scientio.ontology.ontology import Ontology
 from scientio.ontology.node import Node
@@ -79,29 +78,41 @@ if ROBOY_COGNITION_AVAILABLE:
 
                 person_node = Node(metatype=onto.get_type("Person"))
 
+                best_guess_id = current_best_guess.id
+                face_vector = current_best_guess.face_vector
+
                 if current_best_guess.is_known:
-                    person_node.set_id(current_best_guess.id)
+
+                    person_node.set_id(best_guess_id)
                     person_node_query = sess.retrieve(request=person_node)
                     if person_node_query:
-                        person_node=person_node_query[0]
+                        person_node = person_node_query[0]
                     else:
-                        err_msg = "Person with id %s is not found in memory." % current_best_guess.id
+                        err_msg = "Person with id %s is not found in memory." % best_guess_id
                         logger.error(err_msg)
                         ctx[rawio.prop_out] = err_msg
                         return
                 else:
-                    person_node.set_properties({'face_vector': current_best_guess.face_vector})
+                    person_node.set_properties({'face_vector': face_vector})
 
                 push = False
 
+                # Check if there is any interlocutor. If necessary and pop the current node and push person node
+                # instead.
                 if any(ctx.enum(interloc.prop_all)):
                     interloc_node: Node = ctx[f'interloc:all:{interloc.ANON_INTERLOC_ID}']
 
                     # If interloc and the person nodes are not same pop and push person node.
                     if not (interloc_node.get_id() == person_node.get_id()) or interloc_node.get_id() < 0:
-                        interloc.prop_all.pop(interloc.ANON_INTERLOC_ID)
+
+                        # Remove the current interloc
+                        logger.info('Popping current interlocutor')
+                        popped_node = interloc.prop_all.pop(interloc.ANON_INTERLOC_ID)
+                        print('popped_node: ' + str(popped_node))
                         push = True
+
                     else:
+                        # Update the face vector of the person already familiar with
                         try:
                             redis_conn = redis.Redis(
                                 host=ctx.conf(key=REDIS_HOST_CONF),
@@ -115,13 +126,15 @@ if ROBOY_COGNITION_AVAILABLE:
                 else:
                     push = True
 
-                if push and ctx.push(parent_property_or_path=interloc.prop_all,
+                if push:
+                    # Push the new interlocutor
+                    if ctx.push(parent_property_or_path=interloc.prop_all,
                             child=rs.Property(name=interloc.ANON_INTERLOC_ID, default_value=person_node)):
-                    logger.debug(f"Pushed {person_node} to interloc:all")
-                # else:
-                #     err_msg = "Looks like connection to pyroboy module is unavailable :-("
-                #     logger.error(err_msg)
-                #     ctx[rawio.prop_out] = err_msg
+                        logger.info(f"Pushed {person_node} to interloc:all")
+                    else:
+                        err_msg = "Interlocutor push is unsuccessful!"
+                        logger.error(err_msg)
+                        ctx[rawio.prop_out] = err_msg
 
 
         @rs.state(
