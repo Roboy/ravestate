@@ -125,8 +125,7 @@ class FaceOracleFilter:
         """
         Get same-length lists of unknown person ids and respective face vectors.
         """
-        print(self.people)
-        strangers = [person for person_id, person in self.people.keys() if not person_id.is_known]
+        strangers = [person for person_id, person in self.people.items() if not person.is_known]
         if strangers:
             _, ids, face_vecs = zip(*strangers)
             return ids, face_vecs
