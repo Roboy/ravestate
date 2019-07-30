@@ -14,13 +14,6 @@ import redis
 from reggol import get_logger
 logger = get_logger(__name__)
 
-PYROBOY_AVAILABLE = False
-try:
-    from pyroboy.face_recognition import FaceRec
-    PYROBOY_AVAILABLE = True
-except ImportError as e:
-    import face_recognition as fr
-
 ROBOY_COGNITION_AVAILABLE = False
 try:
     from roboy_cognition_msgs.msg import Faces, FacialFeatures
@@ -89,10 +82,8 @@ if ROBOY_COGNITION_AVAILABLE:
                 if current_best_guess.is_known:
                     person_node.set_id(current_best_guess.id)
                     person_node_query = sess.retrieve(request=person_node)
-                    logger.info('RECOGNIZED')
                     if person_node_query:
                         person_node=person_node_query[0]
-                        logger.info('FIRST TIME')
                     else:
                         err_msg = "Person with id %s is not found in memory." % current_best_guess.id
                         logger.error(err_msg)
@@ -106,6 +97,7 @@ if ROBOY_COGNITION_AVAILABLE:
                 if any(ctx.enum(interloc.prop_all)):
                     interloc_node: Node = ctx[f'interloc:all:{interloc.ANON_INTERLOC_ID}']
 
+                    # If interloc and the person nodes are not same pop and push person node.
                     if not (interloc_node.get_id() == person_node.get_id()) or interloc_node.get_id() < 0:
                         interloc.prop_all.pop(interloc.ANON_INTERLOC_ID)
                         push = True

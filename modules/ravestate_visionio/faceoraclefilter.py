@@ -5,11 +5,7 @@ from typing import Dict, Tuple, List, Set
 from reggol import get_logger
 logger = get_logger(__name__)
 
-try:
-    from pyroboy.face_recognition import FaceRec
-except ImportError as e:
-    import face_recognition as fr
-
+from pyroboy.face_recognition import FaceRec
 try:
     from roboy_cognition_msgs.msg import Faces, FacialFeatures
 except ImportError as e:
