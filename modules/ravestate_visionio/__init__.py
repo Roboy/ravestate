@@ -9,6 +9,7 @@ from scientio.session import Session
 from scientio.ontology.ontology import Ontology
 from scientio.ontology.node import Node
 import redis
+import pickle
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -104,25 +105,14 @@ if ROBOY_COGNITION_AVAILABLE:
 
                     # If interloc and the person nodes are not same pop and push person node.
                     if not (interloc_node.get_id() == person_node.get_id()) or interloc_node.get_id() < 0:
-
                         # Remove the current interloc
                         logger.info('Popping current interlocutor')
                         popped_node = ctx.pop(f'interloc:all:{interloc.ANON_INTERLOC_ID}')
                         assert popped_node == True
                         push = True
-
                     else:
                         # Update the face vector of the person already familiar with
-                        try:
-                            redis_conn = redis.Redis(
-                                host=ctx.conf(key=REDIS_HOST_CONF),
-                                port=ctx.conf(key=REDIS_PORT_CONF),
-                                password=ctx.conf(key=REDIS_PASS_CONF))
-                            redis_conn.set(interloc_node.get_id(), str(current_best_guess.face_vector))
-                            logger.info('Updating familiar person face')
-                        except redis.exceptions.ConnectionError as e:
-                            err_msg = "Looks like the redis connection is unavailable :-("
-                            logger.error(err_msg)
+                        save_face(ctx, interloc_node.get_id(), current_best_guess.face_vector)
                 else:
                     push = True
 
@@ -130,7 +120,7 @@ if ROBOY_COGNITION_AVAILABLE:
                     # Push the new interlocutor
                     if ctx.push(parent_property_or_path=interloc.prop_all,
                             child=rs.Property(name=interloc.ANON_INTERLOC_ID, default_value=person_node)):
-                        logger.info(f"Pushed {person_node} to interloc:all")
+                        logger.info(f"Pushed node with id:{person_node.id} to interloc:all")
                     else:
                         err_msg = "Interlocutor push is unsuccessful!"
                         logger.error(err_msg)
@@ -139,16 +129,19 @@ if ROBOY_COGNITION_AVAILABLE:
 
         @rs.state(
             cond=interloc.prop_persisted.changed(),
-            read=interloc.prop_persisted
+            read=(interloc.prop_persisted, prop_face_filter)
         )
         def save_person_in_vision(ctx: rs.ContextWrapper):
             node: Node = ctx[interloc.prop_persisted]
             encodings = node.get_properties('face_vector')
 
+            face_filter = ctx[prop_face_filter]
+
             sess: Session = mem.get_session()
             node.set_properties({'face_vector': None})
             sess.update(node)
 
+            face_filter.convert_current_anonymous_to_known(node.get_id())
             save_face(ctx, node.get_id(), encodings)
 
         def save_face(ctx: rs.ContextWrapper, id, face_vector):
@@ -157,7 +150,7 @@ if ROBOY_COGNITION_AVAILABLE:
                     host=ctx.conf(key=REDIS_HOST_CONF),
                     port=ctx.conf(key=REDIS_PORT_CONF),
                     password=ctx.conf(key=REDIS_PASS_CONF))
-                redis_conn.set(id, str(face_vector))
+                redis_conn.set(id, pickle.dumps(face_vector))
             except redis.exceptions.ConnectionError as e:
                 err_msg = "Looks like the redis connection is unavailable :-("
                 logger.error(err_msg)

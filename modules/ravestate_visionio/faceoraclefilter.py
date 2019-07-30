@@ -110,7 +110,7 @@ class FaceOracleFilter:
             if not person:
                 # Create new stranger
                 person = Person(False, self.next_unknown_index, msg.face_encodings[0].ff)
-                self.next_unknown_index += 1
+                self.next_unknown_index -= 1
 
         assert person is not None
         self.messages_per_person[person.id].append(msg)
@@ -151,14 +151,17 @@ class FaceOracleFilter:
             return True
         return False
 
-    def convert_current_anonymous_to_known(self, primary_key):
+    def convert_current_anonymous_to_known(self, registered_primary_key):
         """
         If the current best guess is an anonymous interlocutor, convert it to
          a known interlocutor with the given primary key.
         """
-        person = self.people[primary_key]._replace(is_known=True)
+        assert registered_primary_key > 0
+        unregistered_primary_key = self.current_best_guess.id
 
-        self.people[primary_key] = person
+        assert not (registered_primary_key in self.people.keys())
+        person_to_save = self.people[unregistered_primary_key]._replace(is_known=True, id=registered_primary_key)
+        del self.people[unregistered_primary_key]
 
-        if self.current_best_guess.id == primary_key:
-            self.current_best_guess = person
+        self.people[registered_primary_key] = person_to_save
+        self.current_best_guess = person_to_save
