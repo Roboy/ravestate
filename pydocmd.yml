@@ -48,3 +48,7 @@ site_dir: docs
 # directory here.
 additional_search_paths:
 - modules
+
+# Extension for code highliting
+markdown_extensions:
+  - codehilite

@@ -6,3 +6,4 @@ codecov
 twine
 pydoc-markdown
 mkdocs-material
+pygments

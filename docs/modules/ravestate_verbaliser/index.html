@@ -504,14 +504,14 @@
                 
                   <h1>Verbaliser</h1>
                 
-                <pre><code>                   _           _  _                  
-                  | |         | |(_)                 
- _   _ _____  ____| |__  _____| | _  ___ _____  ____ 
-| | | | ___ |/ ___)  _ \(____ | || |/___) ___ |/ ___)
- \ V /| ____| |   | |_) ) ___ | || |___ | ____| |    
-  \_/ |_____)_|   |____/\_____|\_)_(___/|_____)_|    
+                <div class="codehilite"><pre><span></span>                   <span class="n">_</span>           <span class="n">_</span>  <span class="n">_</span>                  
+                  <span class="o">|</span> <span class="o">|</span>         <span class="o">|</span> <span class="o">|</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>                 
+ <span class="n">_</span>   <span class="n">_</span> <span class="n">_____</span>  <span class="n">____</span><span class="o">|</span> <span class="o">|</span><span class="n">__</span>  <span class="n">_____</span><span class="o">|</span> <span class="o">|</span> <span class="n">_</span>  <span class="n">___</span> <span class="n">_____</span>  <span class="n">____</span> 
+<span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="n">___</span> <span class="o">|/</span> <span class="n">___</span><span class="p">)</span>  <span class="n">_</span> <span class="err">\</span><span class="p">(</span><span class="n">____</span> <span class="o">|</span> <span class="o">||</span> <span class="o">|/</span><span class="n">___</span><span class="p">)</span> <span class="n">___</span> <span class="o">|/</span> <span class="n">___</span><span class="p">)</span>
+ <span class="err">\</span> <span class="n">V</span> <span class="o">/|</span> <span class="n">____</span><span class="o">|</span> <span class="o">|</span>   <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="p">)</span> <span class="p">)</span> <span class="n">___</span> <span class="o">|</span> <span class="o">||</span> <span class="o">|</span><span class="n">___</span> <span class="o">|</span> <span class="n">____</span><span class="o">|</span> <span class="o">|</span>    
+  <span class="err">\</span><span class="n">_</span><span class="o">/</span> <span class="o">|</span><span class="n">_____</span><span class="p">)</span><span class="n">_</span><span class="o">|</span>   <span class="o">|</span><span class="n">____</span><span class="o">/</span><span class="err">\</span><span class="n">_____</span><span class="o">|</span><span class="err">\</span><span class="n">_</span><span class="p">)</span><span class="n">_</span><span class="p">(</span><span class="n">___</span><span class="o">/|</span><span class="n">_____</span><span class="p">)</span><span class="n">_</span><span class="o">|</span>    
+</pre></div>
 
-</code></pre>
 
 <h2 id="verbaliser">Verbaliser</h2>
 <p>The Verbaliser produces Roboy's utterances. 
@@ -523,24 +523,25 @@ In other words: they store everything Roboy can vocalise.
 To diversify his remarks the Verbaliser randomises similar outputs.</p>
 <p>The class <a href="qa_phrases.py">QAPhrases</a> retrieves the values from a YAML file and parses the containing phrases. 
 Here is a template for such a YAML file:</p>
-<pre><code>type: qa                                    # remark types: question answering (qa), phrases
-name: &quot;INTENT&quot;                              # intent or topic
-Q:                                          # possible questions
-- &quot;Question phrasing 1&quot;
-- &quot;Question phrasing 2&quot;
-- &quot;Question phrasing 3&quot;
-A:                                          # answers 
-  SUCCESS:
-  - &quot;Possible answer on success 1&quot;
-  - &quot;Possible answer on success 2&quot;
-  FAILURE:
-  - &quot;Possible answer on failure&quot;
-FUP:                                        # follow up questions (for interlocutors that are already known to Roboy)
-  Q:
-  - &quot;Possible follow up question&quot;
-  A:
-  - &quot;Possible follow up answer&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="nv">type</span>: <span class="nv">qa</span>                                    # <span class="nv">remark</span> <span class="nv">types</span>: <span class="nv">question</span> <span class="nv">answering</span> <span class="ss">(</span><span class="nv">qa</span><span class="ss">)</span>, <span class="nv">phrases</span>
+<span class="nv">name</span>: <span class="s2">&quot;</span><span class="s">INTENT</span><span class="s2">&quot;</span>                              # <span class="nv">intent</span> <span class="nv">or</span> <span class="nv">topic</span>
+<span class="nv">Q</span>:                                          # <span class="nv">possible</span> <span class="nv">questions</span>
+<span class="o">-</span> <span class="s2">&quot;</span><span class="s">Question phrasing 1</span><span class="s2">&quot;</span>
+<span class="o">-</span> <span class="s2">&quot;</span><span class="s">Question phrasing 2</span><span class="s2">&quot;</span>
+<span class="o">-</span> <span class="s2">&quot;</span><span class="s">Question phrasing 3</span><span class="s2">&quot;</span>
+<span class="nv">A</span>:                                          # <span class="nv">answers</span> 
+  <span class="nv">SUCCESS</span>:
+  <span class="o">-</span> <span class="s2">&quot;</span><span class="s">Possible answer on success 1</span><span class="s2">&quot;</span>
+  <span class="o">-</span> <span class="s2">&quot;</span><span class="s">Possible answer on success 2</span><span class="s2">&quot;</span>
+  <span class="nv">FAILURE</span>:
+  <span class="o">-</span> <span class="s2">&quot;</span><span class="s">Possible answer on failure</span><span class="s2">&quot;</span>
+<span class="nv">FUP</span>:                                        # <span class="nv">follow</span> <span class="nv">up</span> <span class="nv">questions</span> <span class="ss">(</span><span class="k">for</span> <span class="nv">interlocutors</span> <span class="nv">that</span> <span class="nv">are</span> <span class="nv">already</span> <span class="nv">known</span> <span class="nv">to</span> <span class="nv">Roboy</span><span class="ss">)</span>
+  <span class="nv">Q</span>:
+  <span class="o">-</span> <span class="s2">&quot;</span><span class="s">Possible follow up question</span><span class="s2">&quot;</span>
+  <span class="nv">A</span>:
+  <span class="o">-</span> <span class="s2">&quot;</span><span class="s">Possible follow up answer</span><span class="s2">&quot;</span>
+</pre></div>
+
 
 <p>See more examples <a href="../../resources/sentences">here</a>.</p>
 <h4 id="example-for-answering-the-question-what-happened-to-the-dinosaurs">Example for Answering the Question: What happened to the Dinosaurs?</h4>
@@ -548,18 +549,19 @@ FUP:                                        # follow up questions (for interlocu
 <li>Creating the YAML file:</li>
 </ul>
 <p>Fill in all the possible answers.  </p>
-<pre><code>type: qa
-name: &quot;DINO&quot;
-A:
-  SUCCESS:
-  - &quot;I am sure it was a mind-boggingly huge meteorite!&quot;
-  - &quot;They smoked too much ash!&quot;
-  - &quot;A vulcano had flatulences.&quot;
-  - &quot;The chicken were stronger.&quot;
-  FAILURE:
-  - &quot;I have no idea what you just said.&quot;
-  - &quot;Sorry, I am only interested in dinosaurs.&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">type</span><span class="o">:</span> <span class="n">qa</span>
+<span class="n">name</span><span class="o">:</span> <span class="s2">&quot;DINO&quot;</span>
+<span class="n">A</span><span class="o">:</span>
+  <span class="n">SUCCESS</span><span class="o">:</span>
+  <span class="o">-</span> <span class="s2">&quot;I am sure it was a mind-boggingly huge meteorite!&quot;</span>
+  <span class="o">-</span> <span class="s2">&quot;They smoked too much ash!&quot;</span>
+  <span class="o">-</span> <span class="s2">&quot;A vulcano had flatulences.&quot;</span>
+  <span class="o">-</span> <span class="s2">&quot;The chicken were stronger.&quot;</span>
+  <span class="n">FAILURE</span><span class="o">:</span>
+  <span class="o">-</span> <span class="s2">&quot;I have no idea what you just said.&quot;</span>
+  <span class="o">-</span> <span class="s2">&quot;Sorry, I am only interested in dinosaurs.&quot;</span>
+</pre></div>
+
 
 <ul>
 <li>Adding this file to the Verbaliser:</li>
@@ -567,69 +569,74 @@ A:
 <p>In this case the file is going to be located in a folder of important facts.
 However, the single file can similarly be added by itself.
 The folder is in the same path as the python file adding it.</p>
-<pre><code class="python">from ravestate_verbaliser import verbaliser
-from os.path import realpath, dirname, join
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">ravestate_verbaliser</span> <span class="kn">import</span> <span class="n">verbaliser</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">realpath</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">join</span>
 
-verbaliser.add_folder(join(dirname(realpath(__file__)), &quot;important_facts_folder&quot;))
-</code></pre>
+<span class="n">verbaliser</span><span class="o">.</span><span class="n">add_folder</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span> <span class="s2">&quot;important_facts_folder&quot;</span><span class="p">))</span>
+</pre></div>
+
 
 <ul>
 <li>Using the Verbaliser for fancy outputs:</li>
 </ul>
 <p>This outputs an answer to the question.
 To understand how to analyse the context of the question have a look at the <a href="../ravestate_nlp/">Natural Language Processing README</a></p>
-<pre><code class="python">if input_had_something_to_do_with_dinos and was_a_question:
-    ctx[&quot;rawio:out&quot;] = verbaliser.get_random_successful_answer(&quot;DINO&quot;)
-else:
-    ctx[&quot;rawio:out&quot;] = verbaliser.get_random_failure_answer(&quot;DINO&quot;)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="k">if</span> <span class="n">input_had_something_to_do_with_dinos</span> <span class="ow">and</span> <span class="n">was_a_question</span><span class="p">:</span>
+    <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;rawio:out&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">verbaliser</span><span class="o">.</span><span class="n">get_random_successful_answer</span><span class="p">(</span><span class="s2">&quot;DINO&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;rawio:out&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">verbaliser</span><span class="o">.</span><span class="n">get_random_failure_answer</span><span class="p">(</span><span class="s2">&quot;DINO&quot;</span><span class="p">)</span>
+</pre></div>
+
 
 <ul>
 <li>Possible conversation flow:</li>
 </ul>
-<pre><code>Interlocutor: &quot;What happend to the Dinosaurs?&quot;
-Roboy: &quot;The chicken were stronger.&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Interlocutor</span><span class="p">:</span> <span class="ss">&quot;What happend to the Dinosaurs?&quot;</span>
+<span class="n">Roboy</span><span class="p">:</span> <span class="ss">&quot;The chicken were stronger.&quot;</span>
+</pre></div>
+
 
 <h4 id="example-for-extracting-phrase-lists">Example for Extracting Phrase Lists</h4>
 <p>The Verbaliser can also be used to get all the imported phrases for a specific intent as a list. </p>
 <ul>
 <li>Creating the phrases.yml:</li>
 </ul>
-<pre><code>type: phrases
-name: &quot;dino&quot;
-opts:
-- &quot;Dinos can not scratch their backs.&quot;
-- &quot;Once upon a time these mind-bogglingly huge creatures wandered the earth.&quot;
-- &quot;The longest Dinosaur was the Argentiosaurus.&quot;
----
-type: phrases
-name: &quot;chicken&quot;
-opts:
-- &quot; Chickens are not completely flightless.&quot;
-- &quot; There are more chickens out there than programmers.&quot;
-- &quot; If I were a chicken for one day I would say: 'Puk Puk Pukaaak'. 
+<div class="codehilite"><pre><span></span><span class="nv">type</span>: <span class="nv">phrases</span>
+<span class="nv">name</span>: <span class="s2">&quot;</span><span class="s">dino</span><span class="s2">&quot;</span>
+<span class="nv">opts</span>:
+<span class="o">-</span> <span class="s2">&quot;</span><span class="s">Dinos can not scratch their backs.</span><span class="s2">&quot;</span>
+<span class="o">-</span> <span class="s2">&quot;</span><span class="s">Once upon a time these mind-bogglingly huge creatures wandered the earth.</span><span class="s2">&quot;</span>
+<span class="o">-</span> <span class="s2">&quot;</span><span class="s">The longest Dinosaur was the Argentiosaurus.</span><span class="s2">&quot;</span>
+<span class="o">---</span>
+<span class="nv">type</span>: <span class="nv">phrases</span>
+<span class="nv">name</span>: <span class="s2">&quot;</span><span class="s">chicken</span><span class="s2">&quot;</span>
+<span class="nv">opts</span>:
+<span class="o">-</span> <span class="s2">&quot;</span><span class="s"> Chickens are not completely flightless.</span><span class="s2">&quot;</span>
+<span class="o">-</span> <span class="s2">&quot;</span><span class="s"> There are more chickens out there than programmers.</span><span class="s2">&quot;</span>
+<span class="o">-</span> <span class="s2">&quot;</span><span class="s"> If I were a chicken for one day I would say: &#39;Puk Puk Pukaaak&#39;. </span>
+</pre></div>
 
-</code></pre>
 
 <ul>
 <li>Adding the file to the Verbaliser:</li>
 </ul>
 <p>The YAML file is assumed to be located in the important_phrases folder. 
 The folder is again in the same path as this python script: </p>
-<pre><code class="python">from ravestate_verbaliser import verbaliser
-from os.path import realpath, dirname, join
+<div class="codehilite"><pre><span></span><span class="kn">from</span> <span class="nn">ravestate_verbaliser</span> <span class="kn">import</span> <span class="n">verbaliser</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">realpath</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">join</span>
 
-verbaliser.add_file(join(dirname(realpath(__file__)), &quot;important_phrases&quot;, &quot;phrases.yml&quot;))
-</code></pre>
+<span class="n">verbaliser</span><span class="o">.</span><span class="n">add_file</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span> <span class="s2">&quot;important_phrases&quot;</span><span class="p">,</span> <span class="s2">&quot;phrases.yml&quot;</span><span class="p">))</span>
+</pre></div>
+
 
 <ul>
 <li>Using the Verbaliser to get a list of phrases:</li>
 </ul>
 <p>Given a specific intent the Verbaliser can be used to return a list of phrases.</p>
-<pre><code class="python">import ravestate_verbaliser
-dino_list = ravestate_verbaliser.verbaliser.get_phrase_list('dino')
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">ravestate_verbaliser</span>
+<span class="n">dino_list</span> <span class="o">=</span> <span class="n">ravestate_verbaliser</span><span class="o">.</span><span class="n">verbaliser</span><span class="o">.</span><span class="n">get_phrase_list</span><span class="p">(</span><span class="s1">&#39;dino&#39;</span><span class="p">)</span>
+</pre></div>
+
 
 <h4 id="the-verbaliserintent-property">The verbaliser:intent Property</h4>
 <p>The <a href="__init__.py">verbaliser:react_to_intent</a> state produces a random phrase output for a given intent. 
@@ -638,10 +645,10 @@ All the possible intents are specified in YAML files that are located in the
 <p>The state reads the verbaliser:intent property and outputs one random phrase in the list with that specific intent. 
 It can therefor be triggered as follows:</p>
 <p>Let's assume that phrases.yml is now located in avestate_phrases_basic_en.</p>
-<pre><code class="python">@state(cond=s(&quot;triggered_by_some_signal&quot;), write=&quot;verbaliser:intent&quot;)
-def say_some_nice_chicken_suff(ctx: ContextWrapper):
-    ctx[&quot;verbaliser:intent&quot;] = &quot;chicken&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="nd">@state</span><span class="p">(</span><span class="n">cond</span><span class="o">=</span><span class="n">s</span><span class="p">(</span><span class="s2">&quot;triggered_by_some_signal&quot;</span><span class="p">),</span> <span class="n">write</span><span class="o">=</span><span class="s2">&quot;verbaliser:intent&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">say_some_nice_chicken_suff</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ContextWrapper</span><span class="p">):</span>
+    <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;verbaliser:intent&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;chicken&quot;</span>
+</pre></div>
                 
                   
                 
