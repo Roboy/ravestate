@@ -10,7 +10,7 @@
 ---
 module: core
 config:
-  tickrate: 2
+  tickrate: 10
   import:
     - ravestate_telegramio
 

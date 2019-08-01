@@ -18,16 +18,22 @@ module: core
 config:
   tickrate: 10
   import:
-    - ravestate_conio
+      #- ravestate_conio
     - ravestate_roboyio
     - ravestate_roboyqa
     - ravestate_genqa
     - ravestate_persqa
     - ravestate_wildtalk
     - ravestate_hibye
-    - ravestate_stalker
+    #- ravestate_stalker
     - ravestate_fillers
     #- ravestate_akinator
+
+---
+module: idle
+config:
+  impatience_threshold: 6.0  # number of seconds of "pressure" after which a filler should be sent
+  bored_threshold: 12.0 # number of seconds of "no activity" after which active engagement should activate
 
 ---
 module: genqa
@@ -36,6 +42,7 @@ config:
   roboy_answer_sanity: 1000
 
 ---
-module: akinator
+module: roboyqa
 config:
-  certainty_percentage: 90
+  roboy_node_id: 356
+

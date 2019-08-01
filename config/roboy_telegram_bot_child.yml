@@ -23,7 +23,7 @@ config:
     - ravestate_roboyqa
     - ravestate_genqa
     - ravestate_persqa
-    - ravestate_sendpics
+    #- ravestate_sendpics
     #- ravestate_akinator
 
 ---
@@ -36,3 +36,12 @@ config:
 module: akinator
 config:
   certainty_percentage: 90
+---
+module: roboyqa
+config:
+  roboy_node_id: 356
+---
+module: idle
+config:
+  impatience_threshold: 6.0  # number of seconds of "pressure" after which a filler should be sent
+  bored_threshold: 12.0 # number of seconds of "no activity" after which active engagement should activate
