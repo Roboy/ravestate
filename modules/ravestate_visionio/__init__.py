@@ -33,13 +33,15 @@ if ROBOY_COGNITION_AVAILABLE:
     REDIS_PASS_CONF = "redis_pass"
     ROS1_FACE_TOPIC_CONFIG = "ros1-node"
     FACE_CONFIDENCE_THRESHOLD = "min-confidence"
+    PERSON_DISAPPEARED_THRESHOLD = "person-disappeared-treshold"
 
     CONFIG = {
         REDIS_HOST_CONF: "localhost",
         REDIS_PORT_CONF: 6379,
         REDIS_PASS_CONF: None,
         ROS1_FACE_TOPIC_CONFIG: "/roboy/cognition/vision/visible_face_names",
-        FACE_CONFIDENCE_THRESHOLD: 0.85
+        FACE_CONFIDENCE_THRESHOLD: 0.85,
+        PERSON_DISAPPEARED_THRESHOLD: 4
     }
 
     with rs.Module(name="visionio", config=CONFIG) as mod:
@@ -64,6 +66,12 @@ if ROBOY_COGNITION_AVAILABLE:
             read=(prop_subscribe_faces, interloc.prop_all, prop_face_filter),
         )
         def recognize_faces(ctx: rs.ContextWrapper):
+            """
+            Activates with each incoming face data served by face oracle. Responsible for synchronizing the node of
+            person in vision with the anonymous interlocutor node. Uses face oracle filter to organize the incoming data
+            and find out the right person.
+            """
+
             face_filter = ctx[prop_face_filter]
 
             faces: Faces = ctx[prop_subscribe_faces]
@@ -132,6 +140,11 @@ if ROBOY_COGNITION_AVAILABLE:
             read=(interloc.prop_persisted, prop_face_filter)
         )
         def save_person_in_vision(ctx: rs.ContextWrapper):
+            """
+            Activates if the anonymous interlocutor's name is given and saved to database. Responsible for saving the
+            current interlocutor's face vector to redis and setting the current anonymous person in face filter to known
+            """
+
             node: Node = ctx[interloc.prop_persisted]
             encodings = node.get_properties('face_vector')
 
@@ -154,3 +167,24 @@ if ROBOY_COGNITION_AVAILABLE:
             except redis.exceptions.ConnectionError as e:
                 err_msg = "Looks like the redis connection is unavailable :-("
                 logger.error(err_msg)
+
+
+        @rs.state(
+            cond=prop_subscribe_faces.changed().min_age(rs.ConfigurableAge(key=PERSON_DISAPPEARED_THRESHOLD)).max_age(-1),
+            read=(rs.prop_activity, interloc.prop_all, interloc.prop_persisted),
+            write=(prop_face_filter, interloc.prop_all)
+        )
+        def lost_visual_contact(ctx: rs.ContextWrapper):
+            """
+            If there is no call for given seconds, removes the interlocutor node and initializes face oracle filter
+            from scratch.
+            """
+
+            # Remove interloc if present
+            if any(ctx.enum(interloc.prop_all)):
+                popped_node = ctx.pop(f'interloc:all:{interloc.ANON_INTERLOC_ID}')
+                if popped_node:
+                    logger.info("Visual contact is broken, removed the interlocutor node")
+
+            # Initialize a new FaceOracleFilter
+            ctx[prop_face_filter] = FaceOracleFilter()
