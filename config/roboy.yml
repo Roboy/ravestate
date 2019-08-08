@@ -46,3 +46,14 @@ module: roboyqa
 config:
   roboy_node_id: 356
 
+---
+module: roboyio
+config:
+  head_axis0_lower_limit: -0.3  # minimum lean left
+  head_axis0_upper_limit: 0.3   # maximum lean right
+  head_axis1_lower_limit: -0.3  # minimum lean forwards
+  head_axis1_upper_limit: 0.3   # maximum lean backwards
+  head_axis2_lower_limit: -0.3  # minimum turn right
+  head_axis2_upper_limit: 0.3   # maximum turn left
+  movement_probability: 0.5     # probability for an axis to moves; decided separately for each axis
+

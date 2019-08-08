@@ -59,10 +59,7 @@ def sync_ros_properties(ctx: rs.ContextWrapper):
         removed_props = current_props.keys() - global_prop_set
         for prop_hash in removed_props:
             item = current_props[prop_hash]
-            if isinstance(item, rospy.Subscriber):
-                item.subscriber.unregister()
-            elif isinstance(item, rospy.Publisher):
-                item.publisher.unregister()
+            item.unregister()
             current_props.pop(prop_hash)
 
         # add new props
