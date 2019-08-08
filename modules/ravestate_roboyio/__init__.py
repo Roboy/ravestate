@@ -3,6 +3,7 @@ import random
 import ravestate as rs
 import ravestate_interloc as interloc
 import ravestate_rawio as rawio
+import ravestate_idle as idle
 from unidecode import unidecode
 from threading import RLock
 
@@ -76,7 +77,7 @@ if PYROBOY_AVAILABLE:
                 ret = say(unidecode(ctx[rawio.prop_out.changed()]))
             logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")
 
-        @rs.state(cond=rawio.prop_in.changed(), write=(neck_axis0_pub_prop, neck_axis1_pub_prop, neck_axis2_pub_prop))
+        @rs.state(cond=rawio.prop_in.changed() | idle.sig_bored, write=(neck_axis0_pub_prop, neck_axis1_pub_prop, neck_axis2_pub_prop))
         def move_head(ctx: rs.ContextWrapper):
             for axis, lower, upper in [(neck_axis0_pub_prop, ctx.conf(key=AXIS0_LOWER_LIMIT_KEY), ctx.conf(key=AXIS0_UPPER_LIMIT_KEY)),
                                        (neck_axis1_pub_prop, ctx.conf(key=AXIS1_LOWER_LIMIT_KEY), ctx.conf(key=AXIS1_UPPER_LIMIT_KEY)),
