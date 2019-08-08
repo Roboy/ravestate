@@ -154,6 +154,7 @@ def telegram_run(ctx: rs.ContextWrapper):
             add_new_child_process(update.effective_chat.id)
         # write (bot, update) to Pipe
         active_chats[update.effective_chat.id][0].update()
+        logger.info(f"INPUT: {update.effective_message.text}")
         active_chats[update.effective_chat.id][1].send((bot, update))
 
     def add_new_child_process(chat_id):
@@ -182,7 +183,7 @@ def telegram_run(ctx: rs.ContextWrapper):
         """
         Log Errors caused by Updates.
         """
-        logger.warning('Update "%s" caused error "%s"', update, error)
+        logger.warning(f'Update {update.effective_message} caused error {error.message}')
 
     def _manage_children(updater):
         """
@@ -201,6 +202,7 @@ def telegram_run(ctx: rs.ContextWrapper):
                 if parent_pipe.poll():
                     msg = parent_pipe.recv()
                     if isinstance(msg, str):
+                        logger.info(f"OUTPUT: {msg}")
                         updater.bot.send_message(chat_id=chat_id, text=msg)
                     else:
                         logger.error(f'Tried sending non-str object as telegram message: {str(msg)}')

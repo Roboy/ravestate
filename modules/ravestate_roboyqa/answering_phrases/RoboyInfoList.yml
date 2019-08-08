@@ -1,4 +1,13 @@
 ---
+type: phrases
+name: "roboyqa-prompt"
+opts:
+- "Ask me something about myself!"
+- "If you want to know something about me, just ask!"
+- "Don't be shy, ask me something about myself!"
+- "Is there anything you want to know about me?"
+- "You can ask me anything you want about me!"
+---
 type: qa
 name: "roboy_full_name"
 A:
