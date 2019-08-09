@@ -42,15 +42,15 @@ if PYROBOY_AVAILABLE:
 
     CONFIG = {
         # Directions out of Roboy's perspective
-        # Axis 0: >0 lean head right; <0 lean head left
+        # Axis 0: <0 lean head backwards; >0 lean head forwards
         AXIS0_LOWER_LIMIT_KEY: -0.3,  # lower limit for movement on axis 0
         AXIS0_UPPER_LIMIT_KEY: 0.3,  # upper limit for movement on axis 0
 
-        # Axis 1: >0 lean head backward; <0 lean head forward
+        # Axis 1: <0 lean head right; >0 lean head left
         AXIS1_LOWER_LIMIT_KEY: -0.3,  # lower limit for movement on axis 1
         AXIS1_UPPER_LIMIT_KEY: 0.3,  # upper limit for movement on axis 1
 
-        # Axis 2: >0 turn head left; <0 turn head right
+        # Axis 2: <0 turn head right; >0 turn head left
         AXIS2_LOWER_LIMIT_KEY: -0.3,  # lower limit for movement on axis 2
         AXIS2_UPPER_LIMIT_KEY: 0.3,  # upper limit for movement on axis 2
 
@@ -59,9 +59,9 @@ if PYROBOY_AVAILABLE:
 
     with rs.Module(name="roboyio", config=CONFIG):
 
-        neck_axis0_pub_prop = Ros1PubProperty(name="neck_axis0", topic="/neck_axis0/neck_axis0/target", msg_type=Float32)
-        neck_axis1_pub_prop = Ros1PubProperty(name="neck_axis1", topic="/neck_axis1/neck_axis1/target", msg_type=Float32)
-        neck_axis2_pub_prop = Ros1PubProperty(name="neck_axis2", topic="/neck_axis2/neck_axis2/target", msg_type=Float32)
+        prop_head_axis0 = Ros1PubProperty(name="head_axis0", topic="/sphere_head_axis0/sphere_head_axis0/target", msg_type=Float32)
+        prop_head_axis1 = Ros1PubProperty(name="head_axis1", topic="/sphere_head_axis1/sphere_head_axis1/target", msg_type=Float32)
+        prop_head_axis2 = Ros1PubProperty(name="head_axis2", topic="/sphere_head_axis2/sphere_head_axis2/target", msg_type=Float32)
 
         @rs.state(cond=rs.sig_startup, read=interloc.prop_all)
         def roboy_input(ctx: rs.ContextWrapper):
@@ -77,11 +77,11 @@ if PYROBOY_AVAILABLE:
                 ret = say(unidecode(ctx[rawio.prop_out.changed()]))
             logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")
 
-        @rs.state(cond=rawio.prop_in.changed() | idle.sig_bored, write=(neck_axis0_pub_prop, neck_axis1_pub_prop, neck_axis2_pub_prop))
+        @rs.state(cond=rawio.prop_in.changed() | idle.sig_bored, write=(prop_head_axis0, prop_head_axis1, prop_head_axis2))
         def move_head(ctx: rs.ContextWrapper):
-            for axis, lower, upper in [(neck_axis0_pub_prop, ctx.conf(key=AXIS0_LOWER_LIMIT_KEY), ctx.conf(key=AXIS0_UPPER_LIMIT_KEY)),
-                                       (neck_axis1_pub_prop, ctx.conf(key=AXIS1_LOWER_LIMIT_KEY), ctx.conf(key=AXIS1_UPPER_LIMIT_KEY)),
-                                       (neck_axis2_pub_prop, ctx.conf(key=AXIS2_LOWER_LIMIT_KEY), ctx.conf(key=AXIS2_UPPER_LIMIT_KEY))]:
+            for axis, lower, upper in [(prop_head_axis0, ctx.conf(key=AXIS0_LOWER_LIMIT_KEY), ctx.conf(key=AXIS0_UPPER_LIMIT_KEY)),
+                                       (prop_head_axis1, ctx.conf(key=AXIS1_LOWER_LIMIT_KEY), ctx.conf(key=AXIS1_UPPER_LIMIT_KEY)),
+                                       (prop_head_axis2, ctx.conf(key=AXIS2_LOWER_LIMIT_KEY), ctx.conf(key=AXIS2_UPPER_LIMIT_KEY))]:
                 data = random.uniform(lower, upper)
                 if random.random() < ctx.conf(key=MOVEMENT_PROBABILITY_KEY):  # move or don't move axis with probability
                     logger.info(f"Publishing {data} to {axis.topic}")
