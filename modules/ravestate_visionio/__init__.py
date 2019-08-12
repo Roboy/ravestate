@@ -50,20 +50,46 @@ if ROBOY_COGNITION_AVAILABLE:
             "face_names",
             topic="/roboy/cognition/vision/visible_face_names",
             msg_type=Faces,
-            always_signal_changed=False
+            always_signal_changed=True
         )
 
         prop_face_filter = rs.Property(
             name="face_frequencies",
-            default_value=FaceOracleFilter(),
+            default_value=None,
             always_signal_changed=True,
             allow_write=True
         )
 
         @rs.state(
-            cond=prop_subscribe_faces.changed().detached(),
-            write=(rawio.prop_out, interloc.prop_all, prop_face_filter),
+            cond=rs.sig_startup | prop_subscribe_faces \
+                .changed() \
+                .detached() \
+                .min_age(rs.ConfigurableAge(key=PERSON_DISAPPEARED_THRESHOLD)) \
+                .max_age(-1),
+            read=(rs.prop_activity, interloc.prop_all, interloc.prop_persisted),
+            write=(prop_face_filter, interloc.prop_all),
+            boring=True
+        )
+        def reset(ctx: rs.ContextWrapper):
+            """
+            If there is no call for given seconds, removes the interlocutor node and initializes face oracle filter
+            from scratch.
+            """
+
+            # Remove interloc if present
+            if any(ctx.enum(interloc.prop_all)):
+                popped_node = ctx.pop(f'interloc:all:{interloc.ANON_INTERLOC_ID}')
+                if popped_node:
+                    logger.info("Visual contact is broken, removed the interlocutor node")
+
+            # Install a new FaceOracleFilter
+            ctx[prop_face_filter] = FaceOracleFilter()
+
+        @rs.state(
+            cond=prop_subscribe_faces.changed(),
+            write=interloc.prop_all,
             read=(prop_subscribe_faces, interloc.prop_all, prop_face_filter),
+            boring=True
         )
         def recognize_faces(ctx: rs.ContextWrapper):
             """
@@ -72,8 +98,7 @@ if ROBOY_COGNITION_AVAILABLE:
             and find out the right person.
             """
 
-            face_filter = ctx[prop_face_filter]
-
+            face_filter: FaceOracleFilter = ctx[prop_face_filter]
             faces: Faces = ctx[prop_subscribe_faces]
 
             # Push faces to face filter
@@ -99,10 +124,12 @@ if ROBOY_COGNITION_AVAILABLE:
                     else:
                         err_msg = "Person with id %s is not found in memory." % best_guess_id
                         logger.error(err_msg)
-                        ctx[rawio.prop_out] = err_msg
                         return
                 else:
-                    person_node.set_properties({'face_vector': face_vector})
+                    person_node.set_properties({
+                        'face_vector': face_vector,
+                        'name': interloc.ANON_INTERLOC_ID
+                    })
 
                 push = False
 
@@ -126,13 +153,12 @@ if ROBOY_COGNITION_AVAILABLE:
 
                 if push:
                     # Push the new interlocutor
-                    if ctx.push(parent_property_or_path=interloc.prop_all,
-                            child=rs.Property(name=interloc.ANON_INTERLOC_ID, default_value=person_node)):
-                        logger.info(f"Pushed node with id:{person_node.id} to interloc:all")
-                    else:
-                        err_msg = "Interlocutor push is unsuccessful!"
-                        logger.error(err_msg)
-                        ctx[rawio.prop_out] = err_msg
+                    ctx.push(
+                        parent_property_or_path=interloc.prop_all,
+                        child=rs.Property(
+                            name=interloc.ANON_INTERLOC_ID,
+                            default_value=person_node))
+                    logger.info(f"Pushed node with id:{person_node.id} to interloc:all")
 
 
         @rs.state(
@@ -167,24 +193,3 @@ if ROBOY_COGNITION_AVAILABLE:
             except redis.exceptions.ConnectionError as e:
                 err_msg = "Looks like the redis connection is unavailable :-("
                 logger.error(err_msg)
-
-
-        @rs.state(
-            cond=prop_subscribe_faces.changed().min_age(rs.ConfigurableAge(key=PERSON_DISAPPEARED_THRESHOLD)).max_age(-1),
-            read=(rs.prop_activity, interloc.prop_all, interloc.prop_persisted),
-            write=(prop_face_filter, interloc.prop_all)
-        )
-        def lost_visual_contact(ctx: rs.ContextWrapper):
-            """
-            If there is no call for given seconds, removes the interlocutor node and initializes face oracle filter
-            from scratch.
-            """
-
-            # Remove interloc if present
-            if any(ctx.enum(interloc.prop_all)):
-                popped_node = ctx.pop(f'interloc:all:{interloc.ANON_INTERLOC_ID}')
-                if popped_node:
-                    logger.info("Visual contact is broken, removed the interlocutor node")
-
-            # Initialize a new FaceOracleFilter
-            ctx[prop_face_filter] = FaceOracleFilter()

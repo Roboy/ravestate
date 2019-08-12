@@ -109,8 +109,8 @@ class FaceOracleFilter:
 
             if not person:
                 # Create new stranger
-                person = Person(False, self.next_unknown_index, msg.face_encodings[0].ff)
                 self.next_unknown_index -= 1
+                person = Person(False, self.next_unknown_index, msg.face_encodings[0].ff)
 
         assert person is not None
         self.messages_per_person[person.id].append(msg)
