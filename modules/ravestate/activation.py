@@ -186,6 +186,17 @@ class Activation(IActivation):
         """
         return any(self.spikes())
 
+    def boring(self) -> bool:
+        """
+        Returns True, if the activation's state is boring. Called by
+         context, to figure out whether this activation counts towards
+         the system not setting the `idle:bored` property  to True.
+
+        **Returns:** True, if the state assigned to this activation has
+         the `boring` field set to true, False otherwise.
+        """
+        return self.state_to_activate.boring
+
     def spikes(self) -> Generator[Spike, None, None]:
         """
         Returns iterable for all the spikes currently acquired by the activation.
@@ -301,7 +312,7 @@ class Activation(IActivation):
     def run(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
-        logger.info(f"Activating {self}")
+        logger.debug(f"Activating {self}")
         Thread(target=self._run_private).start()
 
     def _reset_death_clock(self):

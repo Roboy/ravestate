@@ -74,6 +74,7 @@ class State:
     cooldown: float
     weight: float
     is_receptor: bool
+    is_boring: bool
 
     module_name: str                  # The module which this state belongs to
     completed_constraint: Constraint  # Updated by context, to add constraint causes to constraint
@@ -94,7 +95,8 @@ class State:
                  is_receptor: bool = False,
                  emit_detached: bool = False,
                  weight: float = 1.,
-                 cooldown: float = 0.):
+                 cooldown: float = 0.,
+                 boring: bool = False):
 
         assert(callable(action))
         self.name = action.__name__
@@ -142,6 +144,7 @@ class State:
         self.cooldown = cooldown
         self.is_receptor = is_receptor
         self.lock = Lock()
+        self.boring = boring
 
         # add state to module in current `with Module(...)` clause
         module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
@@ -216,7 +219,8 @@ def state(*,
           cond: Constraint = None,
           emit_detached: bool = False,
           weight: float = 1.,
-          cooldown: float = 0.):
+          cooldown: float = 0.,
+          boring: bool = False):
 
     """
     Decorator to declare a new state, which may emit a certain signal,
@@ -241,5 +245,6 @@ def state(*,
             action=action,
             emit_detached=emit_detached,
             weight=weight,
-            cooldown=cooldown)
+            cooldown=cooldown,
+            boring=boring)
     return state_decorator

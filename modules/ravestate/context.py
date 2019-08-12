@@ -754,7 +754,7 @@ class Context(IContext):
                 if prop_activity.changed() not in set(act.constraint.signals()):
                     if act.is_pressured():
                         pressured_acts.append(act.id)
-                    if act.spiky():
+                    if not act.boring() and act.spiky():
                         partially_fulfilled_acts.append(act)
         PropertyWrapper(
             prop=prop_pressure,
