@@ -11,7 +11,7 @@ verbaliser.add_folder(join(dirname(realpath(__file__)), "en"))
 
 with rs.Module(name="hibye"):
 
-    @rs.state(cond=interloc.prop_all.pushed(), write=(verbaliser.prop_intent, rawio.prop_out),
+    @rs.state(cond=interloc.prop_all.pushed(), write=rawio.prop_out,
               read=interloc.prop_all)
     def greeting(ctx: rs.ContextWrapper):
         interloc_node: Node = ctx[f'interloc:all:{interloc.ANON_INTERLOC_ID}']
@@ -20,8 +20,8 @@ with rs.Module(name="hibye"):
             phrase = verbaliser.get_random_phrase('greeting-with-name')
             ctx[rawio.prop_out] = phrase.format(name=name)
         else:
-            ctx[verbaliser.prop_intent] = lang.intent_greeting
+            ctx[rawio.prop_out] = verbaliser.get_random_phrase(lang.intent_greeting)
 
-    @rs.state(cond=interloc.prop_all.popped() & prop_in.changed(), write=verbaliser.prop_intent)
+    @rs.state(cond=interloc.prop_all.popped(), write=verbaliser.prop_intent)
     def farewell(ctx: rs.ContextWrapper):
         ctx[verbaliser.prop_intent] = lang.intent_farewells
