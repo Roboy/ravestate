@@ -15,10 +15,9 @@ with rs.Module(name="hibye"):
               read=interloc.prop_all)
     def greeting(ctx: rs.ContextWrapper):
         interloc_node: Node = ctx[f'interloc:all:{interloc.ANON_INTERLOC_ID}']
-        name = interloc_node.get_name()
-        if name:
+        if interloc_node.get_id() > 0:
             phrase = verbaliser.get_random_phrase('greeting-with-name')
-            ctx[rawio.prop_out] = phrase.format(name=name)
+            ctx[rawio.prop_out] = phrase.format(name=interloc_node.get_name())
         else:
             ctx[rawio.prop_out] = verbaliser.get_random_phrase(lang.intent_greeting)
 
