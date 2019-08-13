@@ -49,14 +49,22 @@ config:
 ---
 module: roboyio
 config:
-  head_axis0_lower_limit: -0.3  # minimum lean backwards
-  head_axis0_upper_limit: 0.3   # maximum lean forwards
-  head_axis1_lower_limit: -0.3  # minimum lean right
-  head_axis1_upper_limit: 0.3   # maximum lean left
-  head_axis2_lower_limit: -0.3  # minimum turn right
-  head_axis2_upper_limit: 0.3   # maximum turn left
-  movement_probability: 0.5     # probability for an axis to moves; decided separately for each axis
+  head_axis0_lower_limit: -0.3    # minimum lean backwards
+  head_axis0_upper_limit: 0.3     # maximum lean forwards
+  head_axis1_lower_limit: -0.3    # minimum lean right
+  head_axis1_upper_limit: 0.3     # maximum lean left
+  head_axis2_lower_limit: -0.3    # minimum turn right
+  head_axis2_upper_limit: 0.3     # maximum turn left
+  head_movement_probability: 0.5  # probability for a head axis to move on input/bored; decided separately for each axis
+  eye_movement_probability: 0.5   # probability for eyes to look left/right/down/up on input/bored
 
+---
+module: emotion
+config:
+  shy_probability: 0.2            # Probability for being shy when input is about Roboy
+  surprise_probability: 0.1       # Probability for being surprised when input is question
+  happy_probability: 0.1          # Probability for being happy when output is generated
+  affectionate_probability: 0.5   # Probability for being affectionate when keyword is in input and input is about Roboy
 ---
 module: wildtalk
 config:

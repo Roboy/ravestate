@@ -46,6 +46,13 @@ config:
   impatience_threshold: 6.0  # number of seconds of "pressure" after which a filler should be sent
   bored_threshold: 12.0 # number of seconds of "no activity" after which active engagement should activate
 ---
+module: emotion
+config:
+  shy_probability: 0.2  # Probability for being shy when input is about Roboy
+  surprise_probability: 0.1  # Probability for being surprised when input is question
+  happy_probability: 0.1  # Probability for being happy when output is generated
+  affectionate_probability: 0.5  # Probability for being affectionate when keyword is in input and input is about Roboy
+---
 module: wildtalk
 config:
   model: "convai_gpt" # one of "convai_gpt", "gpt2", "parlai"

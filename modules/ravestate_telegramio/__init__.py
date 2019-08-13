@@ -20,3 +20,7 @@ with Module(name=telegram_bot.MODULE_NAME, config=CONFIG) as mod:
 
     mod.add(telegram_bot.telegram_run)
     mod.add(telegram_bot.telegram_output)
+    mod.add(telegram_bot.show_shy)
+    mod.add(telegram_bot.show_surprise)
+    mod.add(telegram_bot.show_happy)
+    mod.add(telegram_bot.show_affectionate)
