@@ -9,7 +9,7 @@ import requests
 
 import ravestate as rs
 
-from telegram import Bot, Update, TelegramError
+from telegram import Bot, Update, TelegramError, ChatAction
 from telegram.ext import Updater, MessageHandler, Filters, Dispatcher
 
 from scientio.ontology.node import Node
@@ -163,6 +163,8 @@ def telegram_run(ctx: rs.ContextWrapper):
         active_chats[update.effective_chat.id][0].update()
         logger.info(f"INPUT: {update.effective_message.text}")
         active_chats[update.effective_chat.id][1].send((bot, update))
+        # send typing symbol
+        bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
     def add_new_child_process(chat_id):
         """
