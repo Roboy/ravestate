@@ -48,7 +48,7 @@ with rs.Module(name="wildtalk", config=CONFIG):
             server.run(port=ctx.conf(key=SERVER_PORT_KEY), model=model)  # start server
             server_started = False
 
-    @rs.state(read=rawio.prop_in, write=rawio.prop_out)
+    @rs.state(cond=rawio.prop_in.changed().max_age(-1), read=rawio.prop_in, write=rawio.prop_out)
     def wildtalk_state(ctx):
         """
         Wildtalk using a HTTP server.
