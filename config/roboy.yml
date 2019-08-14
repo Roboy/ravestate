@@ -56,7 +56,7 @@ config:
   head_axis2_lower_limit: -0.3    # minimum turn right
   head_axis2_upper_limit: 0.3     # maximum turn left
   head_movement_probability: 0.5  # probability for a head axis to move on input/bored; decided separately for each axis
-  eye_movement_probability: 0.5   # probability for eyes to look left/right/down/up on input/bored
+  eye_movement_probability: 0.5   # probability for eyes to look left/right on input/bored
 
 ---
 module: emotion
@@ -76,4 +76,3 @@ config:
   top_k: 0          # convai_gpt, gpt2: <=0: no filtering, >0: keep only top k tokens with highest probability.
   top_p: 0.9        # convai_gpt: <=0.0 no filtering, >0.0: keep smallest subset whose total probability mass >= top_p
   max_history: 4    # convai_gpt: maximal number of previous dialog turns to be used for output generation
-
