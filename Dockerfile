@@ -18,4 +18,8 @@ RUN pip3 install -r /tmp/requirements-dev.txt
 
 # download wildtalk and spacy models here instead of during container creation
 RUN python3 -c "from roboy_parlai import wildtalk"
+RUN python3 -c "from pytorch_pretrained_bert import cached_path; \
+    cached_path('https://s3.amazonaws.com/models.huggingface.co/transfer-learning-chatbot/finetuned_chatbot_gpt.tar.gz')"
+RUN python3 -c "from pytorch_transformers import GPT2Tokenizer, GPT2LMHeadModel; \
+    GPT2Tokenizer.from_pretrained('gpt2-medium'); GPT2LMHeadModel.from_pretrained('gpt2-medium')"
 RUN python3 -c "from spacy.cli import download as spacy_download; spacy_download('en_core_web_sm')"
