@@ -32,21 +32,21 @@ with rs.Module(name="emotion", config=CONFIG):
         if random.random() < ctx.conf(key=SHY_PROB_KEY):
             logger.debug(f"Emitting {sig_shy.name}")
             return rs.Emit()
-        return False
+        return rs.Resign()
 
     @rs.state(signal=sig_surprise, cond=nlp.sig_is_question)
     def is_surprised(ctx: rs.ContextWrapper):
         if random.random() < ctx.conf(key=SURPRISED_PROB_KEY):
             logger.debug(f"Emitting {sig_surprise.name}")
             return rs.Emit()
-        return False
+        return rs.Resign()
 
     @rs.state(signal=sig_happy, cond=rawio.prop_out.changed())
     def is_happy(ctx: rs.ContextWrapper):
         if random.random() < ctx.conf(key=HAPPY_PROB_KEY):
             logger.debug(f"Emitting {sig_happy.name}")
             return rs.Emit()
-        return False
+        return rs.Resign()
 
     @rs.state(cond=nlp.prop_lemmas.changed() & nlp.sig_contains_roboy, signal=sig_affectionate, read=nlp.prop_lemmas)
     def is_affectionate(ctx: rs.ContextWrapper):
@@ -54,5 +54,5 @@ with rs.Module(name="emotion", config=CONFIG):
                 random.random() < ctx.conf(key=AFFECTIONATE_PROB_KEY):
             logger.debug(f"Emitting {sig_affectionate.name}")
             return rs.Emit()
-        return False
+        return rs.Resign()
 

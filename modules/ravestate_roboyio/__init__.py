@@ -75,6 +75,7 @@ if PYROBOY_AVAILABLE:
         prop_head_axis2 = Ros1PubProperty(name="head_axis2", topic="/sphere_head_axis2/sphere_head_axis2/target", msg_type=Float32)
 
         prop_show_emotion = Ros1PubProperty(name="show_emotion", topic="/roboy/cognition/face/show_emotion", msg_type=String)
+        prop_move_eyes = Ros1PubProperty(name="move_eyes", topic="/roboy/cognition/face/show_emotion", msg_type=String)
 
 
         @rs.state(cond=rs.sig_startup, read=interloc.prop_all)
@@ -101,15 +102,15 @@ if PYROBOY_AVAILABLE:
                     logger.info(f"Publishing {data} to {axis.topic}")
                     ctx[axis] = Float32(data=data)
 
-        @rs.state(cond=rawio.prop_in.changed() | idle.sig_bored, write=prop_show_emotion)
+        @rs.state(cond=rawio.prop_in.changed() | idle.sig_bored, write=prop_move_eyes)
         def move_eyes(ctx: rs.ContextWrapper):
             if random.random() < ctx.conf(key=EYE_MOVEMENT_PROBABILITY_KEY):
                 if random.random() < 0.5:
-                    logger.info(f"Publishing {LOOK_LEFT_EMOTION} to {prop_show_emotion.topic}")
-                    ctx[prop_show_emotion] = String(data=LOOK_LEFT_EMOTION)
+                    logger.info(f"Publishing {LOOK_LEFT_EMOTION} to {prop_move_eyes.topic}")
+                    ctx[prop_move_eyes] = String(data=LOOK_LEFT_EMOTION)
                 else:
-                    logger.info(f"Publishing {LOOK_RIGHT_EMOTION} to {prop_show_emotion.topic}")
-                    ctx[prop_show_emotion] = String(data=LOOK_RIGHT_EMOTION)
+                    logger.info(f"Publishing {LOOK_RIGHT_EMOTION} to {prop_move_eyes.topic}")
+                    ctx[prop_move_eyes] = String(data=LOOK_RIGHT_EMOTION)
 
         @rs.state(cond=emotion.sig_shy, write=prop_show_emotion)
         def show_shy(ctx: rs.ContextWrapper):
