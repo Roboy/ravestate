@@ -47,8 +47,11 @@ def sync_ros_properties(ctx: rs.ContextWrapper):
     else:
         spin_sleep_time = 1 / spin_frequency
 
+    # Use same node_name if ROS1 was already initialized (i.e. by importing pyroboy)
+    if rospy.get_name():
+        node_name = rospy.get_name()[1:]  # cut off leading /
     # init ROS1
-    rospy.init_node(node_name, disable_signals=True)
+    rospy.init_node(node_name)
     global global_prop_set
     # current_props: hash -> Subscriber/Publisher/ServiceProxy
     current_props: Dict = dict()
