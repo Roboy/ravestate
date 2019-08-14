@@ -69,7 +69,7 @@ config:
 module: wildtalk
 config:
   model: "convai_gpt" # one of "convai_gpt", "gpt2", "parlai"
-  server_address: "http://localhost"  # can be changed if server is running on its own on a separate machine
+  server_address: "http://35.246.158.89"  # can be changed if server is running on its own on a separate machine
   server_port: 5100
   temperature: 0.7  # convai_gpt, gpt2: higher value -> more variation in output
   max_length: 20    # convai_gpt, gpt2: maximal length of generated output
