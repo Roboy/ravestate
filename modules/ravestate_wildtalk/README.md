@@ -68,6 +68,6 @@ This can be configured with the following options:
 
 To start a standalone server for wildtalk generation, execute this in the /modules folder of ravestate:
 
-`python -c "from ravestate_gpt2 import server; server.run(port=<PORTNUMBER>, model=<MODELNAME>)`
+`python -c "from ravestate_wildtalk import server; server.run(port=<PORTNUMBER>, model=<MODELNAME>)`
 
 Note that the model used on server startup will be the model used when accessed from ravestate. 
