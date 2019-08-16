@@ -7,6 +7,7 @@ import ravestate_idle as idle
 import ravestate_emotion as emotion
 from unidecode import unidecode
 from threading import RLock
+import time
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -32,6 +33,9 @@ Please make sure to have the following items installed & sourced:
 if PYROBOY_AVAILABLE:
 
     say_lock = RLock()
+    listen_start = 0
+    global say_end
+    say_end = 0
 
     AXIS0_LOWER_LIMIT_KEY = "head_axis0_lower_limit"
     AXIS0_UPPER_LIMIT_KEY = "head_axis0_upper_limit"
@@ -81,15 +85,23 @@ if PYROBOY_AVAILABLE:
         @rs.state(cond=rs.sig_startup, read=interloc.prop_all)
         def roboy_input(ctx: rs.ContextWrapper):
             while not ctx.shutting_down():
+                listen_start = time.time()
                 result = listen()
                 logger.info(f"pyroboy.listen() -> {result}")
-                interloc.handle_single_interlocutor_input(ctx, result)
+                global say_end
+                logger.info(f"listen_start: {listen_start}; say_end: {say_end}")
+                if result and listen_start > say_end:
+                    interloc.handle_single_interlocutor_input(ctx, result)
+                else:
+                    logger.info(f"Discarded {result}")
 
         @rs.state(read=rawio.prop_out)
         def roboy_output(ctx):
             # don't call say simultaneously in different threads
             with say_lock:
                 ret = say(unidecode(ctx[rawio.prop_out.changed()]))
+                global say_end
+                say_end = time.time()
             logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")
 
         @rs.state(cond=rawio.prop_in.changed() | idle.sig_bored, write=(prop_head_axis0, prop_head_axis1, prop_head_axis2))
