@@ -48,12 +48,12 @@ class YesNoWrapper:
 
     def yes(self):
         if isinstance(self.answer, YesNo):
-            return self.answer.value
+            return self.answer.value if self.answer.value > 0 else False
         return None
 
     def no(self):
         if isinstance(self.answer, YesNo):
-            return -self.answer.value
+            return -self.answer.value if self.answer.value < 0 else False
         return None
 
     def unk(self):
