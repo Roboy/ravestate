@@ -12,3 +12,5 @@ scientio>=0.9.1rc2
 redis
 face_recognition
 numpy
+pytorch-pretrained-bert
+pytorch_transformers
