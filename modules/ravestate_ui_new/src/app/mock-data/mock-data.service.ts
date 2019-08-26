@@ -261,43 +261,51 @@ const MOCK_MESSAGES: Array<SpikeUpdate | ActivationUpdate> = [
 })
 export class MockDataService {
 
-    dataStream: Subject<{type: 'tick' | 'spike', [others: string]: any}>;
+    dataStream: Subject<SpikeUpdate | ActivationUpdate>;
 
-    ticks: Observable<ActivationsTick>;
-    spikes: Observable<Spike>;
+    activations: Observable<ActivationUpdate>;
+    spikes: Observable<SpikeUpdate>;
+
+    private randomIDCounter: number = 100;
+    private mockMessageCounter: number = 0;
 
     constructor() {
         this.dataStream = new Subject();
-        this.ticks = this.dataStream.pipe(filter(data => data.type === 'tick'), map(data => data as ActivationsTick));
-        this.spikes = this.dataStream.pipe(filter(data => data.type === 'spike'), map( data => data as Spike));
+        this.activations = this.dataStream.pipe(filter(data => data.type === 'activation'), map(data => data as ActivationUpdate));
+        this.spikes = this.dataStream.pipe(filter(data => data.type === 'spike'), map( data => data as SpikeUpdate));
     }
 
-    public sendActivations() {
+    public sendNextMockMessage() {
+        if (this.mockMessageCounter < MOCK_MESSAGES.length) {
+            this.dataStream.next(MOCK_MESSAGES[this.mockMessageCounter]);
+            this.mockMessageCounter++;
+        } else {
+            this.sendSpike();
+        }
+    }
+
+    public sendActivation() {
         this.dataStream.next({
-            activations: [
-                {
-                    activated: false,
-                    constraints: {
-                        'sample nonexistent spike': -1,
-                        'sample spike 0': 0
-                    },
-                    id: 0,
-                    name: 'sample activation 0',
-                    specificity: 5
-                }
-            ],
-            type: 'tick'
+            type: 'activation',
+            id: this.randomIDCounter,
+            state: 'random state',
+            specificity: Math.random(),
+            status: 'ready',
+            spikes: [{
+                'random spike': 100
+            }]
         });
+        this.randomIDCounter++;
     }
 
     public sendSpike() {
         this.dataStream.next({
-            id: 0,
-            name: 'sample spike 0',
-            parent: 1,
-            propertyValueAtCreation: 'whatever you want it to be',
-            type: 'spike'
+            type: 'spike',
+            id: this.randomIDCounter,
+            signal: 'random spike',
+            parents: []
         });
+        this.randomIDCounter++;
     }
 
 }

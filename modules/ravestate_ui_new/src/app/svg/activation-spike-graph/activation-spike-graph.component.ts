@@ -55,7 +55,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
         }));
 
-        this.subscriptions.add(this.mockDataService.ticks.subscribe(tick => {
+        this.subscriptions.add(this.mockDataService.activations.subscribe(activation => {
             const x = this.lastX;
             const y = (Math.random() * 2 - 1) * 200;
             const lastNode = this.nodes.length > 0 ? this.nodes[this.nodes.length - 1] : null;
