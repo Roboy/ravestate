@@ -307,7 +307,7 @@ export class MockDataService {
             type: 'spike',
             id: this.randomIDCounter,
             signal: 'random spike',
-            parents: [this.randomIDCounter - 8]
+            parents: [this.randomIDCounter - 8, this.randomIDCounter - 14]
         });
         this.randomIDCounter++;
     }

@@ -15,6 +15,7 @@ export class Node {
     x: number;
     y: number;
     label: string;
+    nodeType: NodeType;
 
     constructor(element: SpikeUpdate | ActivationUpdate) {
         this.element = element;
@@ -22,9 +23,11 @@ export class Node {
         if (element.type === 'activation') {
             this.label = `${element.state} [${element.id}]`;
             this.id = Node.activationID(element.id);
+            this.nodeType = NodeType.ACTIVATION;
         } else {
             this.label = `${element.signal} [${element.id}]`;
             this.id = Node.spikeID(element.id);
+            this.nodeType = NodeType.SPIKE;
         }
     }
 
@@ -40,7 +43,7 @@ export class Node {
 @Component({
     selector: 'app-activation-spike-graph',
     template: `
-        <svg [attr.viewBox]="'0 0 ' + graphWidth + ' 1'" preserveAspectRatio="xMidYMid meet">
+        <svg [attr.viewBox]="'0 0 1000 1'" preserveAspectRatio="xMidYMid meet">
             <g class="moving-container" [style.transform]="getTransform()">
 
                 <!-- connectors for every node -->
@@ -50,12 +53,9 @@ export class Node {
 
                 <!-- all nodes on top of connectors -->
                 <ng-container *ngFor="let node of allNodes.values()">
-                    <g node [x]="node.x" [y]="node.y" [label]="node.label" [nodeType]="0"></g>
+                    <g node [x]="node.x" [y]="node.y" [label]="node.label" [nodeType]="node.nodeType"></g>
                 </ng-container>
-                
-                <g connector *ngFor="let c of connectors" [fromX]="c.fromX" [toX]="c.toX" [fromY]="c.fromY" [toY]="c.toY"></g>
-                <g node *ngFor="let node of nodes" [x]="node.x" [y]="node.y" [label]="node.label" [nodeType]="node.type"></g>
-                
+                                
             </g>
         </svg>
         <div class="controls">
@@ -73,43 +73,28 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     private subscriptions: Subscription;
 
-    // internal graph size, defines the SVG coordinate system using viewBox
-    graphWidth = 1000;
-
     // distance between two nodes (x-axis)
     nodeSpacingX = 150;
+    ySpacing = 70;
 
-    nodes: Array<{x: number, y: number, label: string, type: NodeType}> = [];
-    connectors: Array<{fromX: number, toX: number, fromY: number, toY: number}> = [];
-    containerPosX = 0;  // translate whole container with a nice transition animation
     scale = 1;
 
-    lastX = 900;
+    // receivedSpikes: Map<number, SpikeUpdate> = new Map();
+    //receivedActivations: Map<number, ActivationUpdate> = new Map();
 
-
-    // buckets of activations and spikes: horizontal ordering
-
-    receivedSpikes: Map<number, SpikeUpdate> = new Map();
     allNodes: Map<number, Node> = new Map();
-
     columns: Array<Set<Node>> = [new Set()];
-
-
-
-
-    receivedActivations: Map<number, ActivationUpdate> = new Map();
-
 
     constructor(private mockDataService: MockDataService, private sanitizer: DomSanitizer) {
         this.subscriptions = new Subscription();
 
         this.subscriptions.add(this.mockDataService.spikes.subscribe(spike => {
-            this.receivedSpikes.set(spike.id, spike);
+            // this.receivedSpikes.set(spike.id, spike);
 
             const node = new Node(spike);
             this.allNodes.set(node.id, node);
 
-            // find all node parents
+            // find all spike parents
             let parentInLastCol = false;
             for (const parentID of spike.parents) {
                 const nodeID = Node.spikeID(parentID);
@@ -121,7 +106,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
                     node.parents.push(parent);
                 }
             }
-            const lastColumnFull =  this.columns[this.columns.length - 1].size > 5;
+            const lastColumnFull = this.columns[this.columns.length - 1].size > 5;
 
             // create new column if necessary
             if (parentInLastCol || lastColumnFull) {
@@ -133,35 +118,76 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
             this.columns[lastColID].add(node);
             node.column = lastColID;
 
-            // reposition all nodes in that column
-            const ySpacing = 70;
-            let y = - (this.columns[lastColID].size - 1) / 2 * ySpacing;
-            for (const node of this.columns[lastColID].values()) {
-                node.x = this.columns.length * this.nodeSpacingX;
-                node.y = y;
-                y += ySpacing;
-            }
-
-
-            /*const x = this.lastX;
-            const y = (Math.random() * 2 - 1) * 200;
-            const lastNode = this.nodes.length > 0 ? this.nodes[this.nodes.length - 1] : null;
-            this.addNode(x, y, NodeType.SPIKE, 'spike', lastNode);
-            this.containerPosX -= this.nodeSpacingX;
-            this.lastX += this.nodeSpacingX;*/
+            this.repositionColumn(lastColID);  // reposition all nodes in that column
 
         }));
 
         this.subscriptions.add(this.mockDataService.activations.subscribe(activation => {
-            /*const x = this.lastX;
-            const y = (Math.random() * 2 - 1) * 200;
-            const lastNode = this.nodes.length > 0 ? this.nodes[this.nodes.length - 1] : null;
-            this.addNode(x, y - 70, NodeType.ACTIVATION, 'activation 1', lastNode);
-            this.addNode(x, y, NodeType.ACTIVATION, 'activation 2', lastNode);
-            this.addNode(x, y + 70, NodeType.ACTIVATION, 'activation 3', lastNode);
-            this.containerPosX -= this.nodeSpacingX;
-            this.lastX += this.nodeSpacingX;*/
+
+            // create a new node for incoming activation
+            const newNode = new Node(activation);
+
+            // find all activation parents, determine lowest allowed column id
+            let highestParentColumn = -1;
+            for (const spikeMap of activation.spikes) {
+                for (const spikeID of Object.values(spikeMap)) {
+                    const nodeID = Node.spikeID(spikeID);
+                    const parent = this.allNodes.get(nodeID);
+                    if (parent) {
+                        highestParentColumn = Math.max(highestParentColumn, parent.column);
+                        newNode.parents.push(parent);
+                    }
+                }
+            }
+
+            // check if node with same activation id already exists,
+            const prevNode = this.allNodes.get(newNode.id);
+
+            let targetColumnID;
+            if (prevNode && prevNode.column > highestParentColumn) {
+                // replace prev with new node, in the same column
+                targetColumnID = prevNode.column;
+
+                // create new set to keep order, replace prev node
+                const newColSet: Set<Node> = new Set();
+                for (const colNode of this.columns[targetColumnID]) {
+                    newColSet.add(colNode != prevNode ? colNode : newNode);
+                }
+                this.columns[targetColumnID] = newColSet;
+
+            } else {
+                // new must go to new column
+                if (prevNode) { // delete prev
+                    this.columns[prevNode.column].delete(prevNode);
+                }
+
+                // need to insert new into last column
+                if (highestParentColumn >= this.columns.length - 1 || this.columns[this.columns.length - 1].size > 5) {
+                    // last column not ok (full or has parents)
+                    this.columns.push(new Set());
+                }
+                targetColumnID = this.columns.length - 1;
+
+                this.columns[targetColumnID].add(newNode);
+
+            }
+
+            newNode.column = targetColumnID;
+            this.repositionColumn(targetColumnID);  // reposition column
+            this.allNodes.set(newNode.id, newNode); // will also replace prevNode if it was there
+
         }));
+    }
+
+    private repositionColumn(targetColumnID: number) {
+        // reposition column
+        let y = - (this.columns[targetColumnID].size - 1) / 2 * this.ySpacing;
+        for (const node of this.columns[targetColumnID].values()) {
+            node.x = this.columns.length * this.nodeSpacingX;
+            node.y = y;
+            y += this.ySpacing;
+        }
+
     }
 
     ngOnDestroy(): void {
@@ -169,10 +195,8 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
     }
 
     clear() {
-        this.containerPosX = 0;
-        this.lastX = 900;
-        this.nodes = [];
-        this.connectors = [];
+        this.allNodes.clear();
+        this.columns = [new Set()];
     }
 
     scaleUp() {
@@ -193,13 +217,4 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         return this.sanitizer.bypassSecurityTrustStyle(transform);
     }
 
-    addNode(x: number, y: number, type: NodeType, label: string, connectTo?: {x: number, y: number}) {
-        this.nodes.push({x, y, label, type});
-        if (connectTo) {
-            this.connectors.push({
-                fromX: connectTo.x, toX: x,
-                fromY: connectTo.y, toY: y
-            });
-        }
-    }
 }
