@@ -159,6 +159,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
                 // new must go to new column
                 if (prevNode) { // delete prev
                     this.columns[prevNode.column].delete(prevNode);
+                    this.repositionColumn(prevNode.column);  // reposition column where prev node was deleted
                 }
 
                 // need to insert new into last column
@@ -175,7 +176,6 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
             newNode.column = targetColumnID;
             this.repositionColumn(targetColumnID);  // reposition column
             this.allNodes.set(newNode.id, newNode); // will also replace prevNode if it was there
-
         }));
     }
 
@@ -183,7 +183,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         // reposition column
         let y = - (this.columns[targetColumnID].size - 1) / 2 * this.ySpacing;
         for (const node of this.columns[targetColumnID].values()) {
-            node.x = this.columns.length * this.nodeSpacingX;
+            node.x = targetColumnID * this.nodeSpacingX;
             node.y = y;
             y += this.ySpacing;
         }
