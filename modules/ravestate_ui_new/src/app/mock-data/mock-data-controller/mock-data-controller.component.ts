@@ -8,6 +8,8 @@ import { Subscription } from "rxjs";
         Mock Data Controller
         <br>
         <button (click)="mockDataService.sendNextMockMessage()">Send mock message</button>
+        <button (click)="mockDataService.resetMockData()">Reset mock messages</button>
+        <br>
         <button (click)="mockDataService.sendActivation()">Send activation</button>
         <button (click)="mockDataService.sendSpike()">Send spike</button>
         <br><br>

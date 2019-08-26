@@ -284,12 +284,16 @@ export class MockDataService {
         }
     }
 
+    resetMockData() {
+        this.mockMessageCounter = 0;
+    }
+
     public sendActivation() {
         this.dataStream.next({
             type: 'activation',
             id: this.randomIDCounter,
             state: 'random state',
-            specificity: Math.random(),
+            specificity: Math.floor(Math.random() * 100) / 100,
             status: 'ready',
             spikes: [{
                 'random spike': 100
@@ -303,7 +307,7 @@ export class MockDataService {
             type: 'spike',
             id: this.randomIDCounter,
             signal: 'random spike',
-            parents: []
+            parents: [this.randomIDCounter - 8]
         });
         this.randomIDCounter++;
     }
