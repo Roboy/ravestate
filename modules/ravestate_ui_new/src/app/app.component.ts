@@ -8,16 +8,25 @@ import { Component } from '@angular/core';
                 Ravestate UI
             </div>
             <div class="main">
-                <!-- <svg-experiments class="graph-area"></svg-experiments> -->
                 <app-activation-spike-graph class="graph-area"></app-activation-spike-graph>
             </div>
             <div class="side">
                 <app-mock-data-controller></app-mock-data-controller>
+                <br>
+                <div>
+                    TODOs:
+                    <ul>
+                        <li>add border to ready and running activations</li>
+                        <li>remove activations that have no parent spikes</li>
+                        <li>adapt node shapes to fit larger labels</li>
+                        <li>allow to move columns up and down (to a certain degree)</li>
+                    </ul>
+                </div>
+                
             </div>
         </div>
     `,
     styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-    title = 'ravestate-ui';
 }
