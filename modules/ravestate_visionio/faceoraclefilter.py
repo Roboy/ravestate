@@ -90,10 +90,18 @@ class FaceOracleFilter:
 
         # Determine who gets the new message ...
         person: Person = None
-        if msg.confidence[0] > CONFIDENCE_THRESHOLD:
+
+        focus = None
+
+        if self.current_best_guess.id in msg.ids:
+            focus = msg.index(self.current_best_guess.id)
+        else:
+            focus = msg.confidence.index(max(msg.confidence))
+
+        if msg.confidence[focus] > CONFIDENCE_THRESHOLD:
 
             # There is a good database match
-            person = Person(True, msg.ids[0], msg.face_encodings[0].ff)
+            person = Person(True, msg.ids[focus], msg.face_encodings[focus].ff)
 
         else:
 
@@ -102,15 +110,15 @@ class FaceOracleFilter:
             if ids:
                 assert len(ids) == len(face_vecs)
                 # Match face vector among current strangers
-                idx, conf = FaceRec.match_face(np.array(msg.face_encodings[0].ff), face_vecs)
+                idx, conf = FaceRec.match_face(np.array(msg.face_encodings[focus].ff), face_vecs)
                 if conf > CONFIDENCE_THRESHOLD:
                     # Stranger matched
-                    person = Person(False, ids[idx], msg.face_encodings[0].ff)
+                    person = Person(False, ids[idx], msg.face_encodings[focus].ff)
 
             if not person:
                 # Create new stranger
                 self.next_unknown_index -= 1
-                person = Person(False, self.next_unknown_index, msg.face_encodings[0].ff)
+                person = Person(False, self.next_unknown_index, msg.face_encodings[focus].ff)
 
         assert person is not None
         self.messages_per_person[person.id].append(msg)
