@@ -51,7 +51,7 @@ def sync_ros_properties(ctx: rs.ContextWrapper):
     if rospy.get_name():
         node_name = rospy.get_name()[1:]  # cut off leading /
     # init ROS1
-    rospy.init_node(node_name)
+    rospy.init_node(node_name, disable_signals = True)
     global global_prop_set
     # current_props: hash -> Subscriber/Publisher/ServiceProxy
     current_props: Dict = dict()
