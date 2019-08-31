@@ -95,12 +95,14 @@ if PYROBOY_AVAILABLE:
         def roboy_input(ctx: rs.ContextWrapper):
 
             # global say_end_timestamp
+            logger.info("in roboy_input  again")
+            # logger.warn("kjlkj")
             result = ctx[recognized_speech.id()]
             # listen_start_timestamp = result.start_timestamp
             # if say_end_timestamp >= listen_start_timestamp:
-            #     logger.info("Discarded: " + str(result.text))
-            #     result = None
-            #     interloc.handle_single_interlocutor_input(ctx, "")
+                # logger.info("Discarded: " + str(result.text))
+                # result = None
+                # interloc.handle_single_interlocutor_input(ctx, "")
             # else:
             if result.text:
                     logger.info(result.text)
@@ -123,11 +125,12 @@ if PYROBOY_AVAILABLE:
         def roboy_output(ctx):
             # don't call say simultaneously in different threads
             global say_end_timestamp
-            logger.warn(unidecode(ctx[rawio.prop_out.changed()]))
+
             with say_lock:
+                # logger.warn(unidecode(ctx[rawio.prop_out.changed()]))
                 ret = say(unidecode(ctx[rawio.prop_out.changed()]))
             say_end_timestamp = time.time()
-            logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")\
+            # logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")\
 
 
         @rs.state(cond=rawio.prop_in.changed() | idle.sig_bored, write=(prop_head_axis0, prop_head_axis1, prop_head_axis2))
