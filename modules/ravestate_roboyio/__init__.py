@@ -27,7 +27,11 @@ Please make sure to have the following items installed & sourced:
 3. pyroboy
 --------
     """)
-
+import time
+global listen_start_timestamp
+global say_end_timestamp
+listen_start_timestamp = 0
+say_end_timestamp = 0
 
 if PYROBOY_AVAILABLE:
 
@@ -68,6 +72,8 @@ if PYROBOY_AVAILABLE:
     LUCKY_EMOTION = "lucky"
     KISS_EMOTION = "kiss"
 
+
+
     with rs.Module(name="roboyio", config=CONFIG):
 
         prop_head_axis0 = Ros1PubProperty(name="head_axis0", topic="/sphere_head_axis0/sphere_head_axis0/target", msg_type=Float32)
@@ -80,17 +86,30 @@ if PYROBOY_AVAILABLE:
 
         @rs.state(cond=rs.sig_startup, read=interloc.prop_all)
         def roboy_input(ctx: rs.ContextWrapper):
+            global say_end_timestamp
             while not ctx.shutting_down():
-                result = listen()
+                print('Starting...')
+                listen_start_timestamp = time.time()
+                result = listen(discard_on_say=False)
+                print(result)
                 logger.info(f"pyroboy.listen() -> {result}")
-                interloc.handle_single_interlocutor_input(ctx, result)
+                if say_end_timestamp >= listen_start_timestamp:
+                    logger.info("Discarded: " + str(result))
+                    result = None
+                    interloc.handle_single_interlocutor_input(ctx, "")
+                else:
+                    if result:
+                        interloc.handle_single_interlocutor_input(ctx, result)
 
         @rs.state(read=rawio.prop_out)
         def roboy_output(ctx):
             # don't call say simultaneously in different threads
+            global say_end_timestamp
             with say_lock:
                 ret = say(unidecode(ctx[rawio.prop_out.changed()]))
-            logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")
+            say_end_timestamp = time.time()
+            logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")\
+
 
         @rs.state(cond=rawio.prop_in.changed() | idle.sig_bored, write=(prop_head_axis0, prop_head_axis1, prop_head_axis2))
         def move_head(ctx: rs.ContextWrapper):
