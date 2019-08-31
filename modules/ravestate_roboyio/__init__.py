@@ -18,6 +18,7 @@ try:
     from roboy_cognition_msgs.msg import RecognizedSpeech
     from pyroboy import say, listen
     PYROBOY_AVAILABLE = True
+    import rospy
 except ImportError as e:
     logger.error(f"""
 --------
@@ -127,8 +128,10 @@ if PYROBOY_AVAILABLE:
             global say_end_timestamp
 
             with say_lock:
+                rospy.set_param('talking', True)
                 # logger.warn(unidecode(ctx[rawio.prop_out.changed()]))
                 ret = say(unidecode(ctx[rawio.prop_out.changed()]))
+            rospy.set_param('talking', False)
             say_end_timestamp = time.time()
             # logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")\
 
