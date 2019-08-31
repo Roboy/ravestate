@@ -94,7 +94,7 @@ class FaceOracleFilter:
         focus = None
 
         if self.current_best_guess and self.current_best_guess.id in msg.ids:
-            focus = msg.index(self.current_best_guess.id)
+            focus = msg.ids.index(self.current_best_guess.id)
         else:
             focus = msg.confidence.index(max(msg.confidence))
 

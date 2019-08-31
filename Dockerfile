@@ -7,7 +7,9 @@ RUN cd ~/melodic_ws/src && git clone https://github.com/Roboy/pyroboy.git && \
 
 # install ravestate dependencies
 ADD requirements.txt /tmp/requirements.txt
+ADD requirements2.txt /tmp/requirements2.txt
 ADD requirements-dev.txt /tmp/requirements-dev.txt
+RUN pip install -r /tmp/requirements2.txt
 RUN pip3 install -r /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements-dev.txt
 
