@@ -543,23 +543,25 @@ class Context(IContext):
             # ----------- For every state, compress it's activations -----------
 
             for st, acts in self._activations_per_state.items():
-                assert len(acts) > 0
-                if len(acts) > 1:
-                    # We could do some fancy merge of partially fulfilled activations,
-                    #  but for now let's just remove all completely unfulfilled
-                    #  ones apart from one.
-                    allowed_unfulfilled: Optional[Activation] = None
-                    for act in acts.copy():
-                        if not act.spiky():
-                            if allowed_unfulfilled:
-                                for signal in act.constraint.signals():
-                                    if signal in self._needy_acts_per_state_per_signal and \
-                                            act in self._needy_acts_per_state_per_signal[signal][act.state_to_activate]:
-                                        self._needy_acts_per_state_per_signal[
-                                            signal][act.state_to_activate].remove(act)
-                                acts.remove(act)
-                            else:
-                                allowed_unfulfilled = act
+                # print(st)
+                if len(acts) > 0:
+                # assert len(acts) > 0
+                    if len(acts) > 1:
+                        # We could do some fancy merge of partially fulfilled activations,
+                        #  but for now let's just remove all completely unfulfilled
+                        #  ones apart from one.
+                        allowed_unfulfilled: Optional[Activation] = None
+                        for act in acts.copy():
+                            if not act.spiky():
+                                if allowed_unfulfilled:
+                                    for signal in act.constraint.signals():
+                                        if signal in self._needy_acts_per_state_per_signal and \
+                                                act in self._needy_acts_per_state_per_signal[signal][act.state_to_activate]:
+                                            self._needy_acts_per_state_per_signal[
+                                                signal][act.state_to_activate].remove(act)
+                                    acts.remove(act)
+                                else:
+                                    allowed_unfulfilled = act
 
             # --------- Acquire new state activations for every spike ----------
 
