@@ -13,8 +13,9 @@ logger = get_logger(__name__)
 
 PYROBOY_AVAILABLE = False
 try:
-    from ravestate_ros1 import Ros1PubProperty
+    from ravestate_ros1 import Ros1PubProperty, Ros1SubProperty
     from std_msgs.msg import Float32, String
+    from roboy_cognition_msgs.msg import RecognizedSpeech
     from pyroboy import say, listen
     PYROBOY_AVAILABLE = True
 except ImportError as e:
@@ -74,6 +75,7 @@ if PYROBOY_AVAILABLE:
 
 
 
+
     with rs.Module(name="roboyio", config=CONFIG):
 
         prop_head_axis0 = Ros1PubProperty(name="head_axis0", topic="/sphere_head_axis0/sphere_head_axis0/target", msg_type=Float32)
@@ -83,28 +85,45 @@ if PYROBOY_AVAILABLE:
         prop_show_emotion = Ros1PubProperty(name="show_emotion", topic="/roboy/cognition/face/show_emotion", msg_type=String)
         prop_move_eyes = Ros1PubProperty(name="move_eyes", topic="/roboy/cognition/face/show_emotion", msg_type=String)
 
+        recognized_speech = Ros1SubProperty(
+            name="recognized_speech",
+            topic="/roboy/cognition/speech/recognition",
+            msg_type=RecognizedSpeech,
+            always_signal_changed=True)
 
-        @rs.state(cond=rs.sig_startup, read=interloc.prop_all)
+        @rs.state(cond=recognized_speech.changed(), read=(interloc.prop_all,recognized_speech.id()) )
         def roboy_input(ctx: rs.ContextWrapper):
-            global say_end_timestamp
-            while not ctx.shutting_down():
-                print('Starting...')
-                listen_start_timestamp = time.time()
-                result = listen(discard_on_say=False)
-                print(result)
-                logger.info(f"pyroboy.listen() -> {result}")
-                if say_end_timestamp >= listen_start_timestamp:
-                    logger.info("Discarded: " + str(result))
-                    result = None
-                    interloc.handle_single_interlocutor_input(ctx, "")
-                else:
-                    if result:
-                        interloc.handle_single_interlocutor_input(ctx, result)
+
+            # global say_end_timestamp
+            result = ctx[recognized_speech.id()]
+            # listen_start_timestamp = result.start_timestamp
+            # if say_end_timestamp >= listen_start_timestamp:
+            #     logger.info("Discarded: " + str(result.text))
+            #     result = None
+            #     interloc.handle_single_interlocutor_input(ctx, "")
+            # else:
+            if result.text:
+                    logger.info(result.text)
+                    interloc.handle_single_interlocutor_input(ctx, result.text)
+
+            # while not ctx.shutting_down():
+            #     listen_start_timestamp = time.time()
+            #     result = result = ctx[recognized_speech.id()]
+            #     print(result)
+            #     logger.info(f"pyroboy.listen() -> {result}")
+            #     if say_end_timestamp >= listen_start_timestamp:
+            #         logger.info("Discarded: " + str(result))
+            #         result = None
+            #         interloc.handle_single_interlocutor_input(ctx, "")
+            #     else:
+            #         if result:
+            #             interloc.handle_single_interlocutor_input(ctx, result)
 
         @rs.state(read=rawio.prop_out)
         def roboy_output(ctx):
             # don't call say simultaneously in different threads
             global say_end_timestamp
+            logger.warn(unidecode(ctx[rawio.prop_out.changed()]))
             with say_lock:
                 ret = say(unidecode(ctx[rawio.prop_out.changed()]))
             say_end_timestamp = time.time()
