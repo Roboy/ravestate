@@ -1,5 +1,7 @@
 import random
 
+import os
+
 import ravestate as rs
 import ravestate_interloc as interloc
 import ravestate_rawio as rawio
@@ -16,9 +18,8 @@ try:
     from ravestate_ros1 import Ros1PubProperty, Ros1SubProperty
     from std_msgs.msg import Float32, String
     from roboy_cognition_msgs.msg import RecognizedSpeech
-    from pyroboy import say, listen
+    from pyroboy import say, listen, leds
     PYROBOY_AVAILABLE = True
-    import rospy
 except ImportError as e:
     logger.error(f"""
 --------
@@ -96,8 +97,7 @@ if PYROBOY_AVAILABLE:
         def roboy_input(ctx: rs.ContextWrapper):
 
             # global say_end_timestamp
-            logger.info("in roboy_input  again")
-            # logger.warn("kjlkj")
+            logger.info("in roboy_input again")
             result = ctx[recognized_speech.id()]
             # listen_start_timestamp = result.start_timestamp
             # if say_end_timestamp >= listen_start_timestamp:
@@ -126,13 +126,18 @@ if PYROBOY_AVAILABLE:
         def roboy_output(ctx):
             # don't call say simultaneously in different threads
             global say_end_timestamp
-
+            try:
+                os.system('/raveskills/off.sh')
+            except:
+                logger.info("does /raveskills/off.sh exist?")
             with say_lock:
-                rospy.set_param('talking', True)
                 # logger.warn(unidecode(ctx[rawio.prop_out.changed()]))
                 ret = say(unidecode(ctx[rawio.prop_out.changed()]))
-            rospy.set_param('talking', False)
             say_end_timestamp = time.time()
+            try:
+                os.system('/raveskills/rainbow.sh')
+            except:
+                logger.info("does /raveskills/rainbow.sh exist?")
             # logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")\
 
 
