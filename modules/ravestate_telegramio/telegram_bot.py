@@ -283,7 +283,7 @@ def telegram_run(ctx: rs.ContextWrapper):
                 if update.effective_message.photo:
                     handle_photo(bot, update)
                 elif update.effective_message.text:
-                    if update.effective_message.text.strip() in verbaliser.get_phrase_list("farewells"):
+                    if update.effective_message.text.strip().lower() in verbaliser.get_phrase_list("farewells"):
                         send_on_telegram(ctx, verbaliser.get_random_phrase("farewells"))
                         logger.info("Shutting down child process")
                         ctx.shutdown()
