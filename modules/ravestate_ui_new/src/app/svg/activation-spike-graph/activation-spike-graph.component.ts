@@ -57,7 +57,7 @@ export class Node {
 
                 <!-- all nodes on top of connectors -->
                 <ng-container *ngFor="let node of allNodes.values()">
-                    <g node *ngIf="node.visible" [x]="node.x" [y]="node.y" [label]="node.label" [nodeType]="node.nodeType"></g>
+                    <g node *ngIf="node.visible" [x]="node.x" [y]="node.y" [label]="node.label" [nodeType]="node.nodeType" [nodeStatus]="node.element.status"></g>
                 </ng-container>
                                 
             </g>
@@ -80,6 +80,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
     // distance between two nodes (x-axis)
     nodeSpacingX = 150;
     ySpacing = 70;
+    maxNodesPerColumn = 5;
 
     scale = 1;
 
@@ -106,7 +107,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
                     node.parents.push(parent);
                 }
             }
-            const lastColumnFull = this.columns[this.columns.length - 1].size > 5;
+            const lastColumnFull = this.columns[this.columns.length - 1].size > this.maxNodesPerColumn;
 
             // create new column if necessary
             if (parentInLastCol || lastColumnFull) {
@@ -165,7 +166,8 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
                 }
 
                 // need to insert new into last column
-                if (highestParentColumn >= this.columns.length - 1 || this.columns[this.columns.length - 1].size > 5) {
+                if (highestParentColumn >= this.columns.length - 1
+                    || this.columns[this.columns.length - 1].size > this.maxNodesPerColumn) {
                     // last column not ok (full or has parents)
                     this.columns.push(new Set());
                 }

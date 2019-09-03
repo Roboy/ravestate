@@ -3,13 +3,35 @@ $signal-node-bg: darkblue;
 
 .activation-node {
   fill: $state-node-bg;
-  stroke: lightgreen;
+  //stroke: lightgreen;
   stroke-width: 1px;
 }
 .activation-node:hover {
   stroke-width: 3px;
   fill: lighten($state-node-bg, 10%);
 }
+.activation-node.wait {
+  //stroke: gray;
+}
+.activation-node.ready {
+  stroke: lightgreen;
+}
+.activation-node.run {
+  stroke: lightgreen;
+  animation: runningActivation 700ms ease infinite;
+  animation-direction: alternate;
+}
+@keyframes runningActivation {
+  from {
+    stroke-width: 1;
+    fill: $state-node-bg;
+  }
+  to {
+    stroke-width: 5;
+    fill: lighten($state-node-bg, 10%);
+  }
+}
+
 
 .spike-node {
   fill: $signal-node-bg;

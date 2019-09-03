@@ -30,12 +30,17 @@ export class NodeComponent {
     @Input() y: number = 0;
     @Input() label: string = 'state';
     @Input() nodeType: NodeType = NodeType.ACTIVATION;
+    @Input() nodeStatus: string = null;  // null for spike;  'wait' | 'ready' | 'run' for activation
 
     get rectangular(): boolean {
         return this.nodeType == NodeType.ACTIVATION;
     };
 
     get shapeClass(): string {
-        return this.nodeType == NodeType.ACTIVATION ? 'activation-node' : 'spike-node';
+        let cls = this.nodeType == NodeType.ACTIVATION ? 'activation-node' : 'spike-node';
+        if (this.nodeStatus) {
+            cls += ' ' + this.nodeStatus;
+        }
+        return cls;
     }
 }
