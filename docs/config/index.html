@@ -352,8 +352,9 @@
 
 <h2 id="ravestate.argparser.handle_args">handle_args</h2>
 
-<pre><code class="python">handle_args(*args) -&gt; Tuple[List[str], List[Tuple[str, str, Any]], List[str]]
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">handle_args</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+</pre></div>
+
 
 <p>Runs an argument parser for the given args. Returns modules-to-load,
 config value-overrides and config file-pathes.
@@ -370,8 +371,9 @@ help will be printed to the console and the program will abort.</p>
 
 <h2 id="ravestate.config.Configuration">Configuration</h2>
 
-<pre><code class="python">Configuration(self, paths: List[str])
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Configuration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">paths</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span>
+</pre></div>
+
 
 <p>The Configuration class maintains a dictionary of key-value stores, which
 represent configuration entries for specific named modules. The key-value
@@ -386,8 +388,9 @@ yaml document has the following content:</p>
 <hr />
 <h3 id="ravestate.config.Configuration.add_conf">add_conf</h3>
 
-<pre><code class="python">Configuration.add_conf(self, mod: ravestate.module.Module)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Configuration</span><span class="o">.</span><span class="n">add_conf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mod</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Register a set of allowed config entries for a specific module.
 Correctly typed values for allowed keys, that were previously
@@ -398,8 +401,9 @@ immediately.</p>
 </ul>
 <h3 id="ravestate.config.Configuration.get_conf">get_conf</h3>
 
-<pre><code class="python">Configuration.get_conf(self, module_name: str)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Configuration</span><span class="o">.</span><span class="n">get_conf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Retrieve updated config values for a module that was previously
 registered with add_conf.</p>
@@ -411,8 +415,9 @@ the module configuration dictionary during add_conf, or an empty dictionary
 if the module name is unknown.</p>
 <h3 id="ravestate.config.Configuration.get">get</h3>
 
-<pre><code class="python">Configuration.get(self, module_name: str, key: str) -&gt; Any
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Configuration</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span>
+</pre></div>
+
 
 <p>Get the current value of a config entry.</p>
 <ul>
@@ -426,8 +431,9 @@ if the module name is unknown.</p>
 <p><strong>Returns:</strong> The current value, or None, if the entry does not exist.</p>
 <h3 id="ravestate.config.Configuration.set">set</h3>
 
-<pre><code class="python">Configuration.set(self, module_name: str, key: str, value: Any)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Configuration</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Set the current value of a config entry.</p>
 <ul>
@@ -444,8 +450,9 @@ if the module name is unknown.</p>
 </ul>
 <h3 id="ravestate.config.Configuration.write">write</h3>
 
-<pre><code class="python">Configuration.write(self, path: str)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Configuration</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Write all current config entries to a yaml file.</p>
 <ul>
@@ -453,8 +460,9 @@ if the module name is unknown.</p>
 </ul>
 <h3 id="ravestate.config.Configuration.read">read</h3>
 
-<pre><code class="python">Configuration.read(self, path: str)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Configuration</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Loads all documents from a yaml file and tries to interpret them
 as configuration objects as described above.</p>

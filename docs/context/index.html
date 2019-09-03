@@ -352,19 +352,22 @@
 
 <h2 id="ravestate.context.create_and_run_context">create_and_run_context</h2>
 
-<pre><code class="python">create_and_run_context(*args, runtime_overrides=None)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">create_and_run_context</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">runtime_overrides</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Creates a new Context with the given parameters and runs it</p>
 <h2 id="ravestate.context.Context">Context</h2>
 
-<pre><code class="python">Context(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arguments</span><span class="p">,</span> <span class="n">runtime_overrides</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span>
+</pre></div>
+
 
 <h3 id="ravestate.context.Context.emit">emit</h3>
 
-<pre><code class="python">Context.emit(self, signal: ravestate.constraint.Signal, parents: Set[ravestate.spike.Spike] = None, wipe: bool = False, payload: Any = None) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">,</span> <span class="n">parents</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">spike</span><span class="o">.</span><span class="n">Spike</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">wipe</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Emit a signal to the signal processing loop. <em>Note:</em>
  The signal will only be processed if <code>run()</code> has been called!</p>
@@ -385,8 +388,9 @@
 </ul>
 <h3 id="ravestate.context.Context.wipe">wipe</h3>
 
-<pre><code class="python">Context.wipe(self, signal: ravestate.constraint.Signal)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">wipe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Delete all spikes for the given signal. Partially fulfilled states
  that have acquired an affected spike will be forced to reject it.
@@ -397,26 +401,30 @@ Wiping a parent spike will also wipe all child spikes.</p>
 </ul>
 <h3 id="ravestate.context.Context.run">run</h3>
 
-<pre><code class="python">Context.run(self) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Creates a signal processing thread, starts it, and emits the core:startup signal.</p>
 <h3 id="ravestate.context.Context.shutting_down">shutting_down</h3>
 
-<pre><code class="python">Context.shutting_down(self) -&gt; bool
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">shutting_down</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
+
 
 <p>Retrieve the shutdown flag value, which indicates whether shutdown() has been called.</p>
 <h3 id="ravestate.context.Context.shutdown">shutdown</h3>
 
-<pre><code class="python">Context.shutdown(self) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Sets the shutdown flag and waits for the signal processing thread to join.</p>
 <h3 id="ravestate.context.Context.add_module">add_module</h3>
 
-<pre><code class="python">Context.add_module(self, module_name: str) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">add_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Add a module by python module folder name, or by ravestate module name.</p>
 <ul>
@@ -427,8 +435,9 @@ Wiping a parent spike will also wipe all child spikes.</p>
 </ul>
 <h3 id="ravestate.context.Context.add_state">add_state</h3>
 
-<pre><code class="python">Context.add_state(self, *, st: ravestate.state.State) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">add_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">st</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Add a state to this context. It will be indexed wrt/ the properties/signals
  it depends on. Error messages will be generated for unknown signals/properties.</p>
@@ -437,8 +446,9 @@ Wiping a parent spike will also wipe all child spikes.</p>
 </ul>
 <h3 id="ravestate.context.Context.rm_state">rm_state</h3>
 
-<pre><code class="python">Context.rm_state(self, *, st: ravestate.state.State) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">rm_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">st</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Remove a state from this context. Note, that any state which is constrained
  on the signal that is emitted by the deleted state will also be deleted.</p>
@@ -448,8 +458,9 @@ Wiping a parent spike will also wipe all child spikes.</p>
 </ul>
 <h3 id="ravestate.context.Context.add_prop">add_prop</h3>
 
-<pre><code class="python">Context.add_prop(self, *, prop: ravestate.property.Property) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">add_prop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">prop</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">property</span><span class="o">.</span><span class="n">Property</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Add a copy of a property to this context. An error message will be generated, if a property with
  the same name has already been added previously. Note: Context will adopt a <strong>copy</strong>
@@ -459,8 +470,9 @@ Wiping a parent spike will also wipe all child spikes.</p>
 </ul>
 <h3 id="ravestate.context.Context.rm_prop">rm_prop</h3>
 
-<pre><code class="python">Context.rm_prop(self, *, prop: ravestate.property.Property) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">rm_prop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">prop</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">property</span><span class="o">.</span><span class="n">Property</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Remove a property from this context.
 Generates error message, if the property was not added with add_prop() to the context previously</p>
@@ -469,8 +481,9 @@ Generates error message, if the property was not added with add_prop() to the co
 </ul>
 <h3 id="ravestate.context.Context.conf">conf</h3>
 
-<pre><code class="python">Context.conf(self, *, mod: str, key: Union[str, NoneType] = None) -&gt; Any
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">conf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">mod</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span>
+</pre></div>
+
 
 <p>Get a single config value, or all config values for a particular module.</p>
 <ul>
@@ -487,8 +500,9 @@ Generates error message, if the property was not added with add_prop() to the co
  module name is specified (and valid).</p>
 <h3 id="ravestate.context.Context.signal_specificity">signal_specificity</h3>
 
-<pre><code class="python">Context.signal_specificity(self, sig: ravestate.constraint.Signal) -&gt; float
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">signal_specificity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
+</pre></div>
+
 
 <p>Called by state activation to determine it's constraint's specificity.</p>
 <ul>
@@ -497,8 +511,9 @@ Generates error message, if the property was not added with add_prop() to the co
 <p><strong>Returns:</strong> The given signal's specificity.</p>
 <h3 id="ravestate.context.Context.reacquire">reacquire</h3>
 
-<pre><code class="python">Context.reacquire(self, act: ravestate.iactivation.IActivation, sig: ravestate.constraint.Signal)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">reacquire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">act</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">iactivation</span><span class="o">.</span><span class="n">IActivation</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Called by activation, to indicate, that it needs a new Spike
  for the specified signal, and should for this purpose be referenced by context.
@@ -513,8 +528,9 @@ Note: Not thread-safe, sync must be guaranteed by caller.</p>
 </ul>
 <h3 id="ravestate.context.Context.withdraw">withdraw</h3>
 
-<pre><code class="python">Context.withdraw(self, act: ravestate.iactivation.IActivation, sig: ravestate.constraint.Signal)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">withdraw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">act</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">iactivation</span><span class="o">.</span><span class="n">IActivation</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Called by activation to make sure that it isn't referenced
  anymore as looking for the specified signal.
@@ -533,8 +549,9 @@ Note: Not thread-safe, sync must be guaranteed by caller.</p>
 </ul>
 <h3 id="ravestate.context.Context.secs_to_ticks">secs_to_ticks</h3>
 
-<pre><code class="python">Context.secs_to_ticks(self, seconds: float) -&gt; int
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">secs_to_ticks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span>
+</pre></div>
+
 
 <p>Convert seconds to an equivalent integer number of ticks,
  given this context's tick rate.</p>
@@ -544,8 +561,9 @@ Note: Not thread-safe, sync must be guaranteed by caller.</p>
 <p><strong>Returns:</strong> An integer tick count.</p>
 <h3 id="ravestate.context.Context.possible_signals">possible_signals</h3>
 
-<pre><code class="python">Context.possible_signals(self, state: ravestate.state.State) -&gt; Generator[ravestate.constraint.Signal, NoneType, NoneType]
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">possible_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>
+</pre></div>
+
 
 <p>Yields all signals, for which spikes may be created if
  the given state is executed.</p>
@@ -555,8 +573,9 @@ Note: Not thread-safe, sync must be guaranteed by caller.</p>
 </ul>
 <h3 id="ravestate.context.Context.run_once">run_once</h3>
 
-<pre><code class="python">Context.run_once(self, seconds_passed=1.0, debug=False) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">run_once</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds_passed</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Run a single update for this context, which will ...<br>
 (0) progress cooled down state weights.<br>
@@ -573,31 +592,35 @@ Note: Not thread-safe, sync must be guaranteed by caller.</p>
 </ul>
 <h3 id="ravestate.context.Context.test">test</h3>
 
-<pre><code class="python">Context.test(self) -&gt; bool
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
+
 
 <p>Execute internal integrity checks.</p>
 <h1 id="ravestate.spike">ravestate.spike</h1>
 
 <h2 id="ravestate.spike.Spike">Spike</h2>
 
-<pre><code class="python">Spike(self, *, sig: str, parents: Set[ForwardRef('Spike')] = None, consumable_resources: Set[str] = None, payload: Any = None)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parents</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">ForwardRef</span><span class="p">(</span><span class="s1">&#39;Spike&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">consumable_resources</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span>
+</pre></div>
+
 
 <p>This class encapsulates a single spike, to track ... <br>
 ... it's consumption for different output properties (through <code>CausalGroup</code>). <br>
 ... it's offspring instances (causal group -&gt; spikes caused by this spike)</p>
 <h3 id="ravestate.spike.Spike.causal_group">causal_group</h3>
 
-<pre><code class="python">Spike.causal_group(self) -&gt; ravestate.causal.CausalGroup
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">causal_group</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">causal</span><span class="o">.</span><span class="n">CausalGroup</span>
+</pre></div>
+
 
 <p>Get this spike's causal group.</p>
 <p><strong>Returns:</strong> This instances causal group. Should never be None.</p>
 <h3 id="ravestate.spike.Spike.adopt">adopt</h3>
 
-<pre><code class="python">Spike.adopt(self, child: 'Spike') -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">adopt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="s1">&#39;Spike&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Called in spike constructor, for instances which claim to be
  caused by this spike.</p>
@@ -606,8 +629,9 @@ Note: Not thread-safe, sync must be guaranteed by caller.</p>
 </ul>
 <h3 id="ravestate.spike.Spike.wiped">wiped</h3>
 
-<pre><code class="python">Spike.wiped(self, child: 'ISpike') -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">wiped</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="s1">&#39;ISpike&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Called by an offspring signal, to notify the spike
  that it was wiped, and should therefore be removed from the children set.</p>
@@ -616,8 +640,9 @@ Note: Not thread-safe, sync must be guaranteed by caller.</p>
 </ul>
 <h3 id="ravestate.spike.Spike.wipe">wipe</h3>
 
-<pre><code class="python">Spike.wipe(self, already_wiped_in_causal_group: bool = False) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">wipe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">already_wiped_in_causal_group</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Called either in Context run loop when the spike is found to be stale
  (with wiped_in_causal_group=True), or in Context.wipe(spike),
@@ -630,61 +655,70 @@ After this function is called, the spike should be cleaned up by GC.</p>
 </ul>
 <h3 id="ravestate.spike.Spike.has_offspring">has_offspring</h3>
 
-<pre><code class="python">Spike.has_offspring(self)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">has_offspring</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Called by CausalGroup.stale(spike).</p>
 <p><strong>Returns:</strong> True if the spike has active offspring, false otherwise.</p>
 <h3 id="ravestate.spike.Spike.tick">tick</h3>
 
-<pre><code class="python">Spike.tick(self) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">tick</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Increment this spike's age by 1.</p>
 <h3 id="ravestate.spike.Spike.age">age</h3>
 
-<pre><code class="python">Spike.age(self) -&gt; int
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">age</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span>
+</pre></div>
+
 
 <p>Obtain this spike's age (in ticks).</p>
 <h3 id="ravestate.spike.Spike.offspring">offspring</h3>
 
-<pre><code class="python">Spike.offspring(self) -&gt; Generator[ForwardRef('Spike'), NoneType, NoneType]
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">offspring</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">ForwardRef</span><span class="p">(</span><span class="s1">&#39;Spike&#39;</span><span class="p">),</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>
+</pre></div>
+
 
 <p>Recursively yields this spike's offspring and it's children's offspring.</p>
 <p><strong>Returns:</strong> All of this spike's offspring spikes.</p>
 <h3 id="ravestate.spike.Spike.is_wiped">is_wiped</h3>
 
-<pre><code class="python">Spike.is_wiped(self)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">is_wiped</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Check, whether this spike has been wiped, and should therefore not be acquired anymore.</p>
 <h3 id="ravestate.spike.Spike.payload">payload</h3>
 
-<pre><code class="python">Spike.payload(self) -&gt; Any
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">payload</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span>
+</pre></div>
+
 
 <p>Get payload for this spike. The payload is an arbitrary value passed in <code>Context.emit()</code>.</p>
 <h1 id="ravestate.activation">ravestate.activation</h1>
 
 <h2 id="ravestate.activation.Activation">Activation</h2>
 
-<pre><code class="python">Activation(self, st: ravestate.state.State, ctx: ravestate.icontext.IContext)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">st</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">State</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">icontext</span><span class="o">.</span><span class="n">IContext</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Encapsulates the potential activation of a state. Tracks the collection
  of Spikes to fulfill of the state-defined activation constraints.</p>
 <h3 id="ravestate.activation.Activation.resources">resources</h3>
 
-<pre><code class="python">Activation.resources(self) -&gt; Set[str]
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">resources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</pre></div>
+
 
 <p>Return's the set of the activation's write-access property names.</p>
 <h3 id="ravestate.activation.Activation.specificity">specificity</h3>
 
-<pre><code class="python">Activation.specificity(self) -&gt; float
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">specificity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span>
+</pre></div>
+
 
 <p>Returns the lowest specificity among the specificity values of the
  activation's conjunct constraints. The specificity for a single conjunction
@@ -692,8 +726,9 @@ After this function is called, the spike should be cleaned up by GC.</p>
  which in turn is calculated as one over the signal's subscriber count.</p>
 <h3 id="ravestate.activation.Activation.dereference">dereference</h3>
 
-<pre><code class="python">Activation.dereference(self, *, spike: Union[ravestate.iactivation.ISpike, NoneType] = None, reacquire: bool = False, reject: bool = False, pressured: bool = False) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">dereference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">spike</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">iactivation</span><span class="o">.</span><span class="n">ISpike</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">reacquire</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">reject</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">pressured</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Notify the activation, that a single or all spike(s) are not available
  anymore, and should therefore not be referenced anymore by the activation.
@@ -723,8 +758,9 @@ This is called by ... <br>
 </ul>
 <h3 id="ravestate.activation.Activation.acquire">acquire</h3>
 
-<pre><code class="python">Activation.acquire(self, spike: ravestate.spike.Spike) -&gt; bool
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spike</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">spike</span><span class="o">.</span><span class="n">Spike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
+
 
 <p>Let the activation acquire a signal it is registered to be interested in.</p>
 <ul>
@@ -740,8 +776,9 @@ This is called by ... <br>
     offer all of this activation's state's write-props.</p>
 <h3 id="ravestate.activation.Activation.secs_to_ticks">secs_to_ticks</h3>
 
-<pre><code class="python">Activation.secs_to_ticks(self, seconds: float) -&gt; int
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">secs_to_ticks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span>
+</pre></div>
+
 
 <p>Convert seconds to an equivalent integer number of ticks,
  given this activation's tick rate.</p>
@@ -751,8 +788,9 @@ This is called by ... <br>
 <p><strong>Returns:</strong> An integer tick count.</p>
 <h3 id="ravestate.activation.Activation.pressure">pressure</h3>
 
-<pre><code class="python">Activation.pressure(self, give_me_up: ravestate.iactivation.ICausalGroup)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">pressure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">give_me_up</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">iactivation</span><span class="o">.</span><span class="n">ICausalGroup</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Called by CausalGroup, to pressure the activation to
  make a decision on whether it is going to retain a reference
@@ -763,36 +801,41 @@ This is called by ... <br>
 </ul>
 <h3 id="ravestate.activation.Activation.is_pressured">is_pressured</h3>
 
-<pre><code class="python">Activation.is_pressured(self)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">is_pressured</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Called by context, to figure out whether the activation is pressured,
  and therefore the idle:bored signal should be emitted.</p>
 <h3 id="ravestate.activation.Activation.spiky">spiky</h3>
 
-<pre><code class="python">Activation.spiky(self) -&gt; bool
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">spiky</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
+
 
 <p>Returns true, if the activation has acquired any spikes at all.</p>
 <p><strong>Returns:</strong> True, if any of this activation's constraint's
  signal is referencing a spike.</p>
 <h3 id="ravestate.activation.Activation.spikes">spikes</h3>
 
-<pre><code class="python">Activation.spikes(self) -&gt; Generator[ravestate.spike.Spike, NoneType, NoneType]
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">spikes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">spike</span><span class="o">.</span><span class="n">Spike</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>
+</pre></div>
+
 
 <p>Returns iterable for all the spikes currently acquired by the activation.</p>
 <h3 id="ravestate.activation.Activation.possible_signals">possible_signals</h3>
 
-<pre><code class="python">Activation.possible_signals(self) -&gt; Generator[ForwardRef('Signal'), NoneType, NoneType]
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">possible_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">ForwardRef</span><span class="p">(</span><span class="s1">&#39;Signal&#39;</span><span class="p">),</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>
+</pre></div>
+
 
 <p>Yields all signals, for which spikes may be created if
  this activation's state is executed.</p>
 <h3 id="ravestate.activation.Activation.effect_not_caused">effect_not_caused</h3>
 
-<pre><code class="python">Activation.effect_not_caused(self, group: ravestate.iactivation.ICausalGroup, effect: str) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">effect_not_caused</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">iactivation</span><span class="o">.</span><span class="n">ICausalGroup</span><span class="p">,</span> <span class="n">effect</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Notify the activation, that a follow-up signal will not be produced
  by the given causal group. The activation will go through it's constraint,
@@ -804,8 +847,9 @@ This is called by ... <br>
 </ul>
 <h3 id="ravestate.activation.Activation.update">update</h3>
 
-<pre><code class="python">Activation.update(self) -&gt; bool
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
+
 
 <p>Called once per tick on this activation, to give it a chance to activate
  itself, or auto-eliminate, or reject spikes which have become too old.</p>
@@ -815,8 +859,9 @@ This is called by ... <br>
 
 <h2 id="ravestate.causal.CausalGroup">CausalGroup</h2>
 
-<pre><code class="python">CausalGroup(self, resources: Set[str])
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">CausalGroup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span>
+</pre></div>
+
 
 <p>Class which represents a causal group graph of spike parent/offspring
  spikes (a "superspike"). These must synchronize wrt/ their (un)written
@@ -825,8 +870,9 @@ This is called by ... <br>
  Otherwise, undefined behavior may occur due to race conditions.</p>
 <h3 id="ravestate.causal.CausalGroup.merge">merge</h3>
 
-<pre><code class="python">CausalGroup.merge(self, other: 'CausalGroup')
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">CausalGroup</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s1">&#39;CausalGroup&#39;</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Merge this causal group with another. Unwritten props will become
  the set intersection of this group's unwritten props and
@@ -835,8 +881,9 @@ This is called by ... <br>
 Afterwards, other's member objects will be set to this's.</p>
 <h3 id="ravestate.causal.CausalGroup.acquired">acquired</h3>
 
-<pre><code class="python">CausalGroup.acquired(self, spike: 'ISpike', acquired_by: ravestate.iactivation.IActivation, detached: bool) -&gt; bool
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">CausalGroup</span><span class="o">.</span><span class="n">acquired</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spike</span><span class="p">:</span> <span class="s1">&#39;ISpike&#39;</span><span class="p">,</span> <span class="n">acquired_by</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">iactivation</span><span class="o">.</span><span class="n">IActivation</span><span class="p">,</span> <span class="n">detached</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
+
 
 <p>Called by Activation to notify the causal group, that
  it is being referenced by an activation constraint for a certain member spike.</p>
@@ -858,8 +905,9 @@ Afterwards, other's member objects will be set to this's.</p>
  free, and the group now refs. the activation, False otherwise.</p>
 <h3 id="ravestate.causal.CausalGroup.rejected">rejected</h3>
 
-<pre><code class="python">CausalGroup.rejected(self, spike: 'ISpike', rejected_by: ravestate.iactivation.IActivation, reason: int) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">CausalGroup</span><span class="o">.</span><span class="n">rejected</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spike</span><span class="p">:</span> <span class="s1">&#39;ISpike&#39;</span><span class="p">,</span> <span class="n">rejected_by</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">iactivation</span><span class="o">.</span><span class="n">IActivation</span><span class="p">,</span> <span class="n">reason</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Called by a state activation, to notify the group that a member spike
  is no longer being referenced for the given state's write props.
@@ -881,8 +929,9 @@ This may be because ... <br>
 </ul>
 <h3 id="ravestate.causal.CausalGroup.consent">consent</h3>
 
-<pre><code class="python">CausalGroup.consent(self, ready_suitor: ravestate.iactivation.IActivation) -&gt; bool
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">CausalGroup</span><span class="o">.</span><span class="n">consent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ready_suitor</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">iactivation</span><span class="o">.</span><span class="n">IActivation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
+
 
 <p>Called by constraint, to inquire whether this causal group would happily
  be consumed for the given state activation's properties.
@@ -897,8 +946,9 @@ This will be called periodically on the group by state activations
  for the consumer's write props, False otherwise.</p>
 <h3 id="ravestate.causal.CausalGroup.activated">activated</h3>
 
-<pre><code class="python">CausalGroup.activated(self, act: ravestate.iactivation.IActivation)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">CausalGroup</span><span class="o">.</span><span class="n">activated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">act</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">iactivation</span><span class="o">.</span><span class="n">IActivation</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Called by activation which previously received a go-ahead
  from consent(), when it is truly proceeding with
@@ -909,8 +959,9 @@ This will be called periodically on the group by state activations
 </ul>
 <h3 id="ravestate.causal.CausalGroup.resigned">resigned</h3>
 
-<pre><code class="python">CausalGroup.resigned(self, act: ravestate.iactivation.IActivation) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">CausalGroup</span><span class="o">.</span><span class="n">resigned</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">act</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">iactivation</span><span class="o">.</span><span class="n">IActivation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Called by activation, to let the causal group know that it failed,
  and a less specific activation may now be considered for
@@ -921,8 +972,9 @@ This will be called periodically on the group by state activations
 </ul>
 <h3 id="ravestate.causal.CausalGroup.consumed">consumed</h3>
 
-<pre><code class="python">CausalGroup.consumed(self, resources: Set[str]) -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">CausalGroup</span><span class="o">.</span><span class="n">consumed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Called by activation to notify the group, that it has been
  consumed for the given set of properties.</p>
@@ -931,8 +983,9 @@ This will be called periodically on the group by state activations
 </ul>
 <h3 id="ravestate.causal.CausalGroup.wiped">wiped</h3>
 
-<pre><code class="python">CausalGroup.wiped(self, spike: 'ISpike') -&gt; None
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">CausalGroup</span><span class="o">.</span><span class="n">wiped</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spike</span><span class="p">:</span> <span class="s1">&#39;ISpike&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+</pre></div>
+
 
 <p>Called by a spike, to notify the causal group that
  the instance was wiped and should no longer be remembered.</p>
@@ -941,8 +994,9 @@ This will be called periodically on the group by state activations
 </ul>
 <h3 id="ravestate.causal.CausalGroup.stale">stale</h3>
 
-<pre><code class="python">CausalGroup.stale(self, spike: 'ISpike') -&gt; bool
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">CausalGroup</span><span class="o">.</span><span class="n">stale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spike</span><span class="p">:</span> <span class="s1">&#39;ISpike&#39;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
+
 
 <p>Determine, whether a spike is stale (has no
 remaining interested activations and no children).</p>
@@ -950,8 +1004,9 @@ remaining interested activations and no children).</p>
  spike for any unwritten property. False otherwise.</p>
 <h3 id="ravestate.causal.CausalGroup.check_reference_sanity">check_reference_sanity</h3>
 
-<pre><code class="python">CausalGroup.check_reference_sanity(self) -&gt; bool
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">CausalGroup</span><span class="o">.</span><span class="n">check_reference_sanity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
+
 
 <p>Make sure, that the refcount-per-act-per-spike-per-resource value sum
  is equal to the number of spikes from this causal group acquired per activation

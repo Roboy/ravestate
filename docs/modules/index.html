@@ -352,16 +352,18 @@
 
 <h2 id="ravestate.module.Module">Module</h2>
 
-<pre><code class="python">Module(self, *, name: str, config: Dict[str, Any] = None)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Atomic class, which encapsulates a named set of states, properties and config entries,
 which form a coherent bundle.</p>
 <p><em>Example:</em></p>
-<pre><code class="python">with Module(name=&quot;my_module&quot;, config={&quot;paramA&quot;: 42}):
-    # define properties
-    # define states
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="k">with</span> <span class="n">Module</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_module&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;paramA&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">}):</span>
+    <span class="c1"># define properties</span>
+    <span class="c1"># define states</span>
+</pre></div>
+
 
 <h3 id="ravestate.module.Module.registered_modules">registered_modules</h3>
 
@@ -375,8 +377,9 @@ dict(iterable) -&gt; new dictionary initialized as if via:
 dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
     in the keyword argument list.  For example:  dict(one=1, two=2)
 <h2 id="ravestate.module.import_module">import_module</h2></p>
-<pre><code class="python">import_module(*, module_name: str, callback)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">import_module</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">callback</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Called by context to import a particular ravestate python module.</p>
 <ul>
@@ -389,8 +392,9 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 </ul>
 <h2 id="ravestate.module.has_module">has_module</h2>
 
-<pre><code class="python">has_module(module_name: str)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">has_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Check whether a module with a particular name has been registered.</p>
 <ul>
@@ -399,8 +403,9 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <p><strong>Returns:</strong> True if a module with the given name has been registered, false otherwise.</p>
 <h2 id="ravestate.module.get_module">get_module</h2>
 
-<pre><code class="python">get_module(module_name: str)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">get_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Get a registered module with a particular name</p>
 <ul>
