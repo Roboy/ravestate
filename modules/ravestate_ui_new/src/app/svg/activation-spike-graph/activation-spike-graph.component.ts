@@ -16,11 +16,13 @@ export class Node {
     y: number;
     label: string;
     visible: boolean;
+    transparent: boolean;
     nodeType: NodeType;
 
     constructor(element: SpikeUpdate | ActivationUpdate) {
         this.element = element;
         this.visible = true;
+        this.transparent = false;
         this.parents = [];
         if (element.type === 'activation') {
             this.label = `${element.state} [${element.id}]`;
@@ -51,13 +53,18 @@ export class Node {
                 <!-- connectors for every node -->
                 <ng-container *ngFor="let node of allNodes.values()">
                     <ng-container *ngIf="node.visible">
-                        <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y" [toY]="node.y"></g>                        
+                        <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y" [toY]="node.y" 
+                           [style.opacity]="hoveredNode && hoveredNode != node ? .1 : 1"></g>                        
                     </ng-container>
                 </ng-container>
 
                 <!-- all nodes on top of connectors -->
                 <ng-container *ngFor="let node of allNodes.values()">
-                    <g node *ngIf="node.visible" [x]="node.x" [y]="node.y" [label]="node.label" [nodeType]="node.nodeType" [nodeStatus]="node.element.status"></g>
+                    <g node *ngIf="node.visible"
+                       (mouseenter)="hoverStart(node)" (mouseleave)="hoverEnd(node)"  
+                       [x]="node.x" [y]="node.y" [label]="node.label" 
+                       [nodeType]="node.nodeType" [nodeStatus]="node.element.status" 
+                       [style.opacity]="node.transparent ? .2 : 1"></g>
                 </ng-container>
                                 
             </g>
@@ -86,6 +93,8 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     allNodes: Map<number, Node> = new Map();
     columns: Array<Set<Node>> = [new Set()];
+
+    hoveredNode: Node;
 
     constructor(private mockDataService: MockDataService, private sanitizer: DomSanitizer) {
         this.subscriptions = new Subscription();
@@ -229,6 +238,26 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         const containerPosX = 800 - this.columns.length * this.nodeSpacingX;
         const transform = `translateX(900px) scale(${this.scale.toFixed(2)}) translateX(-900px) translateX(${containerPosX}px)`;
         return this.sanitizer.bypassSecurityTrustStyle(transform);
+    }
+
+    hoverStart(hoveredNode: Node) {
+        for (const node of this.allNodes.values()) {
+            node.transparent = true;
+        }
+        hoveredNode.transparent = false;
+        for (const parent of hoveredNode.parents) {
+            parent.transparent = false;
+        }
+
+
+        this.hoveredNode = hoveredNode;
+    }
+
+    hoverEnd(node: Node) {
+        for (const node of this.allNodes.values()) {
+            node.transparent = false;
+        }
+        this.hoveredNode = null;
     }
 
 }
