@@ -3,32 +3,29 @@ $signal-node-bg: darkblue;
 
 .activation-node {
   fill: $state-node-bg;
-  //stroke: lightgreen;
+  stroke: lightgreen;
   stroke-width: 1px;
 }
 .activation-node:hover {
-  stroke-width: 3px;
   fill: lighten($state-node-bg, 10%);
 }
 .activation-node.wait {
-  //stroke: gray;
+  stroke-width: 1px;
 }
 .activation-node.ready {
-  stroke: lightgreen;
+  stroke-width: 3px;
 }
 .activation-node.run {
   stroke: lightgreen;
-  animation: runningActivation 700ms ease infinite;
+  animation: runningActivation 500ms ease infinite;
   animation-direction: alternate;
 }
 @keyframes runningActivation {
   from {
     stroke-width: 1;
-    fill: $state-node-bg;
   }
   to {
     stroke-width: 5;
-    fill: lighten($state-node-bg, 10%);
   }
 }
 
@@ -39,13 +36,12 @@ $signal-node-bg: darkblue;
   stroke-width: 1px;
 }
 .spike-node:hover {
-  stroke-width: 3px;
   fill: lighten($signal-node-bg, 10%);
 }
 
 .node-label {
   fill: white;
-  font-size: 15px;
+  font-size: 12px;
   pointer-events: none;
 }
 

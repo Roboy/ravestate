@@ -78,9 +78,9 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
     private subscriptions: Subscription;
 
     // distance between two nodes (x-axis)
-    nodeSpacingX = 150;
-    ySpacing = 70;
-    maxNodesPerColumn = 5;
+    nodeSpacingX = 180;
+    ySpacing = 100;
+    maxNodesPerColumn = 4;
 
     scale = 1;
 

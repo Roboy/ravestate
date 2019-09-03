@@ -21,7 +21,7 @@ export enum NodeType {
 export class NodeComponent {
 
     // shape params
-    readonly rectWidth = 80;
+    readonly rectWidth = 120;
     readonly rectHeight = 40;
     readonly rectCornerRounding = 5;
     readonly circleRadius = 30;
@@ -33,7 +33,7 @@ export class NodeComponent {
     @Input() nodeStatus: string = null;  // null for spike;  'wait' | 'ready' | 'run' for activation
 
     get rectangular(): boolean {
-        return this.nodeType == NodeType.ACTIVATION;
+        return true; // this.nodeType == NodeType.ACTIVATION;
     };
 
     get shapeClass(): string {
