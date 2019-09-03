@@ -16,10 +16,8 @@ import { Component } from '@angular/core';
                 <div>
                     TODOs:
                     <ul>
-                        <li>add border to ready and running activations</li>
-                        <li>remove activations that have no parent spikes</li>
-                        <li>adapt node shapes to fit larger labels</li>
                         <li>allow to move columns up and down (to a certain degree)</li>
+                        <li>connect to real data</li>
                     </ul>
                 </div>
                 

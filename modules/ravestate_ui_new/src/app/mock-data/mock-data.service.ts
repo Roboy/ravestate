@@ -269,6 +269,8 @@ export class MockDataService {
     private randomIDCounter: number = 100;
     private mockMessageCounter: number = 0;
 
+    private lastRandomSpikeID: number = -1;
+
     constructor() {
         this.dataStream = new Subject();
         this.activations = this.dataStream.pipe(filter(data => data.type === 'activation'), map(data => data as ActivationUpdate));
@@ -296,7 +298,10 @@ export class MockDataService {
             specificity: Math.floor(Math.random() * 100) / 100,
             status: 'ready',
             spikes: [{
-                'random spike': 100
+                'random spike 1': this.randomIDCounter - 1,
+                'random spike 2': this.randomIDCounter - 2,
+                'random spike 4': this.randomIDCounter - 4,
+                'another random spike': this.lastRandomSpikeID,
             }]
         });
         this.randomIDCounter++;
@@ -309,6 +314,7 @@ export class MockDataService {
             signal: 'random spike',
             parents: [this.randomIDCounter - 8, this.randomIDCounter - 14]
         });
+        this.lastRandomSpikeID = this.randomIDCounter;
         this.randomIDCounter++;
     }
 
