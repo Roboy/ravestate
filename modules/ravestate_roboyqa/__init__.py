@@ -23,9 +23,9 @@ ROBOY_NODE_PROP_CONF_KEY = "roboy_node_properties"
 
 with rs.Module(name="roboyqa", config={ROBOY_NODE_PROP_CONF_KEY: {"name": "roboy two"}}):
 
-    @rs.state(cond=idle.sig_bored, write=rawio.prop_out, weight=0.6, cooldown=30.)
+    @rs.state(cond=idle.sig_bored, write=rawio.prop_out, weight=1.2, cooldown=30.)
     def hello_world_roboyqa(ctx):
-       ctx[rawio.prop_out] = "Ask me something about myself!"
+       ctx[rawio.prop_out] = verbaliser.get_random_phrase("roboyqa-prompt")
 
     @rs.state(cond=nlp.sig_contains_roboy & nlp.sig_is_question, read=nlp.prop_triples, write=rawio.prop_out)
     def roboyqa(ctx):

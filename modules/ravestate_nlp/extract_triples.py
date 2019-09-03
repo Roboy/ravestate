@@ -63,8 +63,6 @@ def triple_search(triple: Triple, token: Token):
             triple.set_object(word)
         if word.dep_ in SUBJECT_SET:
             triple.set_subject(word)
-        if word.dep_ in PREDICATE_AUX_SET and word.pos_ in VERB_AUX_SET:
-            triple.set_predicate_aux(word)
         if isinstance(word, Token) and word.dep_ not in RECURSION_BLACKLIST:
             triple = triple_search(triple, word)
     if not triple.get_subject() and question_word:

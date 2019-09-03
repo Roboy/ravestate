@@ -27,3 +27,4 @@ class QuestionWord:
         self.pos_ = self.question_pos
         self.dep_ = token.dep_
         self.is_space = False
+        self.children = list()
