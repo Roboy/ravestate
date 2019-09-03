@@ -19,7 +19,7 @@ Roboy will not comment on recognized faces!
 
 
 Person = namedtuple('Person', ['is_known', 'id', 'face_vector'])
-
+Face = namedtuple('Face', ['id', 'confidence', 'face_encodings'])
 
 # Keep the last 10 messages
 FACE_MESSAGE_WINDOW_SIZE = 10
@@ -38,7 +38,7 @@ class FaceOracleFilter:
           1. ... a bool indicating whether the person is known or not.
           2. ... a Scientio primary key for known people, OR an unknown person index otherwise.
         """
-        self.messages_per_person: Dict[int, List[Faces]] = defaultdict(list)
+        self.messages_per_person: Dict[int, List[Face]] = defaultdict(list)
 
         """
         We need to keep track of person objects.
@@ -53,7 +53,7 @@ class FaceOracleFilter:
         """
         Keep a history of previous faces messages
         """
-        self.message_buffer: List[Faces] = []
+        self.message_buffer: List[Face] = []
 
         """
         Tuple of known-flag, primary key/anonymous-index, face vector.
@@ -69,60 +69,68 @@ class FaceOracleFilter:
         :return: True if the current best interlocutor match changed, false otherwise.
         """
 
-        # Remember the new message
-        self.message_buffer.append(msg)
+        for index in range(msg.ids):
+            face: Face = Face(msg.ids[index], msg.confidence[index], msg.face_encodings[index])
 
-        # Remove old messages if necessary
-        if len(self.message_buffer) > FACE_MESSAGE_WINDOW_SIZE:
+            # Remember the new message
+            self.message_buffer.append(face)
 
-            message_to_forget = self.message_buffer[0]
-            self.message_buffer = self.message_buffer[1:]
+            # Remove old messages if necessary
+            if len(self.message_buffer) > FACE_MESSAGE_WINDOW_SIZE:
 
-            # Remove message from each person that might reference it
-            for _, messages in self.messages_per_person.items():
-                if message_to_forget in messages:
-                    messages.remove(message_to_forget)
+                message_to_forget = self.message_buffer[0]
+                self.message_buffer = self.message_buffer[1:]
 
-            # Filter people that are out of messages
-            for person_id in list(self.messages_per_person.keys()):
-                if len(self.messages_per_person[person_id]) == 0:
-                    del self.messages_per_person[person_id]
+                # Remove message from each person that might reference it
+                for _, messages in self.messages_per_person.items():
+                    if message_to_forget in messages:
+                        messages.remove(message_to_forget)
 
-        # Determine who gets the new message ...
-        person: Person = None
+                # Filter people that are out of messages
+                for person_id in list(self.messages_per_person.keys()):
+                    if len(self.messages_per_person[person_id]) == 0:
+                        del self.messages_per_person[person_id]
 
-        focus = None
+            # Determine who gets the new message ...
+            person: Person = None
 
-        if self.current_best_guess and self.current_best_guess.id in msg.ids:
-            focus = msg.ids.index(self.current_best_guess.id)
-        else:
-            focus = msg.confidence.index(max(msg.confidence))
+            # focus = None
 
-        if msg.confidence[focus] > CONFIDENCE_THRESHOLD:
+            # if self.current_best_guess and self.current_best_guess.id < 0:
+            #     current_face_vec = np.array(self.people[self.current_best_guess.id].face_vector)
+            #     incoming_face_vecs = [np.array(encoding.ff) for encoding in msg.face_encodings]
+            #     idx, conf = FaceRec.match_face(current_face_vec, incoming_face_vecs)
+            #     focus = idx
+            # elif self.current_best_guess and self.current_best_guess.id in msg.ids:
+            #     focus = msg.ids.index(self.current_best_guess.id)
+            # else:
+            #     focus = msg.confidence.index(max(msg.confidence))
 
-            # There is a good database match
-            person = Person(True, msg.ids[focus], msg.face_encodings[focus].ff)
+            if face.confidence > CONFIDENCE_THRESHOLD:
 
-        else:
+                # There is a good database match
+                person = Person(True, face.id, face.face_encodings.ff)
 
-            # There is no good database match -> match or create anonymous interloc.
-            ids, face_vecs = self.unknown_people_face_vecs_and_ids()
-            if ids:
-                assert len(ids) == len(face_vecs)
-                # Match face vector among current strangers
-                idx, conf = FaceRec.match_face(np.array(msg.face_encodings[focus].ff), face_vecs)
-                if conf > CONFIDENCE_THRESHOLD:
-                    # Stranger matched
-                    person = Person(False, ids[idx], msg.face_encodings[focus].ff)
+            else:
 
-            if not person:
-                # Create new stranger
-                self.next_unknown_index -= 1
-                person = Person(False, self.next_unknown_index, msg.face_encodings[focus].ff)
+                # There is no good database match -> match or create anonymous interloc.
+                ids, face_vecs = self.unknown_people_face_vecs_and_ids()
+                if ids:
+                    assert len(ids) == len(face_vecs)
+                    # Match face vector among current strangers
+                    idx, conf = FaceRec.match_face(np.array(face.face_encodings.ff), face_vecs)
+                    if conf > CONFIDENCE_THRESHOLD:
+                        # Stranger matched
+                        person = Person(False, ids[idx], face.face_encodings.ff)
 
-        assert person is not None
-        self.messages_per_person[person.id].append(msg)
-        self.people[person.id] = person
+                if not person:
+                    # Create new stranger
+                    self.next_unknown_index -= 1
+                    person = Person(False, self.next_unknown_index, face.face_encodings.ff)
+
+            assert person is not None
+            self.messages_per_person[person.id].append(face)
+            self.people[person.id] = person
 
         return self.recalculate_best_guess()
 
@@ -173,3 +181,8 @@ class FaceOracleFilter:
 
         self.people[registered_primary_key] = person_to_save
         self.current_best_guess = person_to_save
+
+    def print_people(self):
+        print_str = ''
+        for person in self.people:
+            print_str += str(person)
