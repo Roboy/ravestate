@@ -15,10 +15,12 @@ export class Node {
     x: number;
     y: number;
     label: string;
+    visible: boolean;
     nodeType: NodeType;
 
     constructor(element: SpikeUpdate | ActivationUpdate) {
         this.element = element;
+        this.visible = true;
         this.parents = [];
         if (element.type === 'activation') {
             this.label = `${element.state} [${element.id}]`;
@@ -48,12 +50,14 @@ export class Node {
 
                 <!-- connectors for every node -->
                 <ng-container *ngFor="let node of allNodes.values()">
-                    <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y" [toY]="node.y"></g>
+                    <ng-container *ngIf="node.visible">
+                        <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y" [toY]="node.y"></g>                        
+                    </ng-container>
                 </ng-container>
 
                 <!-- all nodes on top of connectors -->
                 <ng-container *ngFor="let node of allNodes.values()">
-                    <g node [x]="node.x" [y]="node.y" [label]="node.label" [nodeType]="node.nodeType"></g>
+                    <g node *ngIf="node.visible" [x]="node.x" [y]="node.y" [label]="node.label" [nodeType]="node.nodeType"></g>
                 </ng-container>
                                 
             </g>
@@ -79,9 +83,6 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     scale = 1;
 
-    // receivedSpikes: Map<number, SpikeUpdate> = new Map();
-    //receivedActivations: Map<number, ActivationUpdate> = new Map();
-
     allNodes: Map<number, Node> = new Map();
     columns: Array<Set<Node>> = [new Set()];
 
@@ -89,7 +90,6 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         this.subscriptions = new Subscription();
 
         this.subscriptions.add(this.mockDataService.spikes.subscribe(spike => {
-            // this.receivedSpikes.set(spike.id, spike);
 
             const node = new Node(spike);
             this.allNodes.set(node.id, node);
@@ -139,6 +139,8 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
                     }
                 }
             }
+            // activations are only visible if they have parent spikes
+            newNode.visible = newNode.parents.length > 0;
 
             // check if node with same activation id already exists,
             const prevNode = this.allNodes.get(newNode.id);
@@ -180,9 +182,19 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
     }
 
     private repositionColumn(targetColumnID: number) {
-        // reposition column
-        let y = - (this.columns[targetColumnID].size - 1) / 2 * this.ySpacing;
+        let visibleNodes = 0;
         for (const node of this.columns[targetColumnID].values()) {
+            if (node.visible) {
+                visibleNodes++;
+            }
+        }
+
+        // reposition column
+        let y = - (visibleNodes - 1) / 2 * this.ySpacing;
+        for (const node of this.columns[targetColumnID].values()) {
+            if (!node.visible) {
+                continue;
+            }
             node.x = targetColumnID * this.nodeSpacingX;
             node.y = y;
             y += this.ySpacing;
