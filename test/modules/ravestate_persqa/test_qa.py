@@ -12,7 +12,7 @@ from reggol import get_logger, set_default_loglevel
 logger = get_logger(__name__)
 
 
-@pytest.mark.skip(reason="Might interfere with visionIO tests.")
+#@pytest.mark.skip(reason="Might interfere with visionIO tests.")
 def test_run_qa():
     last_output = ""
 

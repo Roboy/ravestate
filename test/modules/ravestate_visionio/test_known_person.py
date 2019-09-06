@@ -74,6 +74,7 @@ def test_known_person():
 
         ctx[visionio.prop_subscribe_faces] = faces
 
+    mem.initialized.clear()
     ctx.emit(rs.sig_startup)
     ctx.run_once()
     assert mem.initialized.wait()

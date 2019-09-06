@@ -30,19 +30,19 @@ def test_unknown_person():
             last_output = ctx[rawio.prop_out]
             logger.info(f"Output: {ctx[rawio.prop_out]}")
 
-        ctx = rs.Context(
-            "rawio",
-            "ontology",
-            "verbaliser",
-            "idle",
-            "interloc",
-            "nlp",
-            "persqa",
-            "hibye",
-            "visionio",
-            "visionio_test",
-            "-d", "ontology", "neo4j_pw", "test"
-        )
+    ctx = rs.Context(
+        "rawio",
+        "ontology",
+        "verbaliser",
+        "idle",
+        "interloc",
+        "nlp",
+        "persqa",
+        "hibye",
+        "visionio",
+        "visionio_test",
+        "-d", "ontology", "neo4j_pw", "test"
+    )
 
     @rs.receptor(ctx_wrap=ctx, write=visionio.prop_subscribe_faces)
     def unknown_person_approaches(ctx: rs.ContextWrapper):
@@ -56,6 +56,7 @@ def test_unknown_person():
 
         ctx[visionio.prop_subscribe_faces] = faces
 
+    mem.initialized.clear()
     ctx.emit(rs.sig_startup)
     ctx.run_once()
     assert mem.initialized.wait()
