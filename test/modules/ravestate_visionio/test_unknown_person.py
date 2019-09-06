@@ -30,23 +30,25 @@ def test_unknown_person():
             last_output = ctx[rawio.prop_out]
             logger.info(f"Output: {ctx[rawio.prop_out]}")
 
-    ctx = rs.Context(
-        "rawio",
-        "ontology",
-        "idle",
-        "interloc",
-        "nlp",
-        "persqa",
-        "hibye",
-        "visionio",
-        "visionio_test"
-    )
+        ctx = rs.Context(
+            "rawio",
+            "ontology",
+            "verbaliser",
+            "idle",
+            "interloc",
+            "nlp",
+            "persqa",
+            "hibye",
+            "visionio",
+            "visionio_test",
+            "-d", "ontology", "neo4j_pw", "test"
+        )
 
     @rs.receptor(ctx_wrap=ctx, write=visionio.prop_subscribe_faces)
     def unknown_person_approaches(ctx: rs.ContextWrapper):
         faces = Faces()
         faces.confidence = [0.5]
-        faces.ids = [12]
+        faces.ids = [42]
 
         facial_features = FacialFeatures()
         facial_features.ff = np.zeros(128)
@@ -56,6 +58,7 @@ def test_unknown_person():
 
     ctx.emit(rs.sig_startup)
     ctx.run_once()
+    assert mem.initialized.wait()
 
     # Vision io is started
     assert visionio.reset.wait()
@@ -63,12 +66,16 @@ def test_unknown_person():
     unknown_person_approaches()
 
     # Wait until greeted
-    while not raw_out.wait(.1):
-        ctx.run_once(debug=True)
-        ctx.test()
+    counter = 0
+    while not raw_out.wait(.1) and counter < 100:
+        ctx.run_once()
+        counter += 1
     assert last_output in verbaliser.get_phrase_list("greeting")
 
     assert visionio.recognize_faces.wait(0)
+
+    # Unfortunately needed until Context adopts Properties as clones.
+    interloc.prop_all.children.clear()
 
 
 if __name__ == "__main__":

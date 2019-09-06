@@ -69,7 +69,7 @@ class FaceOracleFilter:
         :return: True if the current best interlocutor match changed, false otherwise.
         """
 
-        for index in range(msg.ids):
+        for index in range(len(msg.ids)):
             face: Face = Face(msg.ids[index], msg.confidence[index], msg.face_encodings[index])
 
             # Remember the new message

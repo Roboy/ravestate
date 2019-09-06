@@ -1,7 +1,6 @@
 import ravestate as rs
 import ravestate_interloc as interloc
 import ravestate_rawio as rawio
-import ravestate_persqa as persqa
 import ravestate_idle as idle
 import ravestate_ontology as mem
 import ravestate_verbaliser as verbaliser
@@ -24,26 +23,25 @@ def test_known_person():
 
     with rs.Module(name="visionio_test"):
 
-        @rs.state(cond=rs.sig_startup)
-        def initialize_ontology(ctx: rs.ContextWrapper):
-            mem.initialized.wait()
-
         @rs.state(read=rawio.prop_out)
         def raw_out(ctx: rs.ContextWrapper):
             nonlocal last_output
             last_output = ctx[rawio.prop_out]
             logger.info(f"Output: {ctx[rawio.prop_out]}")
 
+    # Unfortunately needed until Context adopts Properties as clones.
+    interloc.prop_all.children.clear()
     ctx = rs.Context(
         "rawio",
         "ontology",
+        "verbaliser",
         "idle",
         "interloc",
         "nlp",
-        "persqa",
         "hibye",
         "visionio",
-        "visionio_test"
+        "visionio_test",
+        "-d", "ontology", "neo4j_pw", "test"
     )
 
     def register_dummy_known_person_to_db():
@@ -78,8 +76,7 @@ def test_known_person():
 
     ctx.emit(rs.sig_startup)
     ctx.run_once()
-
-    assert initialize_ontology.wait()
+    assert mem.initialized.wait()
 
     # Vision io is started
     assert visionio.reset.wait()
@@ -87,15 +84,18 @@ def test_known_person():
     known_person_approaches()
 
     # Wait until greeted
-    while not raw_out.wait(.1):
-        ctx.run_once(debug=True)
-        ctx.test()
+    counter = 0
+    while not raw_out.wait(.1) and counter < 100:
+        ctx.run_once()
+        counter += 1
     greeting_phrases = [phrase.replace('{name}', 'visionio_test_person') for phrase in verbaliser.get_phrase_list("greeting-with-name")]
     assert last_output in greeting_phrases
 
     assert visionio.recognize_faces.wait(0)
 
     delete_dummy_people()
+    # Unfortunately needed until Context adopts Properties as clones.
+    interloc.prop_all.children.clear()
 
 
 if __name__ == "__main__":

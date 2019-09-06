@@ -18,7 +18,7 @@ with rs.Module(name="hibye"):
         pushed_node_path: str = ctx[interloc.prop_all.pushed()]
         interloc_node: Node = ctx[pushed_node_path]
         # interloc_node: Node = ctx[f'interloc:all:{interloc.ANON_INTERLOC_ID}']
-        if interloc_node and interloc_node.get_id() > 0:
+        if interloc_node and interloc_node.get_id() >= 0:
             phrase = verbaliser.get_random_phrase('greeting-with-name')
             ctx[rawio.prop_out] = phrase.format(name=interloc_node.get_name())
             print('here1')

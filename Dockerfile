@@ -1,9 +1,17 @@
 FROM missxa/melodic-dashing-roboy
 
+# instal neo4j
+RUN wget -O - https://debian.neo4j.org/neotechnology.gpg.key | apt-key add -
+RUN echo 'deb https://debian.neo4j.org/repo stable/' | tee /etc/apt/sources.list.d/neo4j.list
+RUN apt-get update
+RUN apt-get install -y neo4j
+RUN neo4j-admin set-initial-password test
+
 # install pyroboy with melodic
 RUN cd ~/melodic_ws/src && git clone https://github.com/Roboy/pyroboy.git && \
-    cd ~/melodic_ws/src/pyroboy && git checkout melodic && cd ~/melodic_ws && \
-    . /opt/ros/melodic/setup.sh && catkin_make && . /opt/ros/melodic/setup.sh
+    cd ~/melodic_ws/src/pyroboy && git checkout melodic && \
+    cd ~/melodic_ws/src/roboy_communication && git pull && \
+    cd ~/melodic_ws && . /opt/ros/melodic/setup.sh && catkin_make && . /opt/ros/melodic/setup.sh
 
 # install ravestate dependencies
 ADD requirements.txt /tmp/requirements.txt

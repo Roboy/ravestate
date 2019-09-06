@@ -117,8 +117,7 @@ if ROBOY_COGNITION_AVAILABLE:
                 print('best_guess_id:' + str(best_guess_id))
                 if current_best_guess.is_known:
 
-                    person_node.set_id(best_guess_id)
-                    person_node_query = sess.retrieve(request=person_node)
+                    person_node_query = sess.retrieve(node_id=best_guess_id)
                     if person_node_query:
                         person_node = person_node_query[0]
                     else:
