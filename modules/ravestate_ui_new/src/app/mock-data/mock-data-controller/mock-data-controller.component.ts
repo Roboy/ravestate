@@ -12,6 +12,8 @@ import { Subscription } from "rxjs";
         <br>
         <button (click)="mockDataService.sendActivation()">Send activation</button>
         <button (click)="mockDataService.sendSpike()">Send spike</button>
+        <br>
+        <button (click)="mockDataService.websocketTest(getI())">connect to web socket</button>
         <br><br>
         Recent data
         <br>
@@ -25,6 +27,11 @@ export class MockDataControllerComponent implements OnDestroy {
 
     lastData: any;
     dataSub: Subscription;
+
+    i = 0;
+    getI() {
+        return this.i++;
+    }
 
     constructor(public mockDataService: MockDataService) {
         this.dataSub = mockDataService.dataStream.subscribe(data => {

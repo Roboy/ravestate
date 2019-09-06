@@ -5,6 +5,7 @@ from typing import Any, Tuple, List
 
 import websockets
 import asyncio
+import time
 from threading import Thread, Lock
 
 from reggol import get_logger
@@ -21,14 +22,20 @@ class UIContext(Context):
         def run_serve_async():
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            async_serve = websockets.serve(self.serve_events, "localhost", 5000)
+            async_serve = websockets.serve(self.serve_events, "localhost", 5042)
+            print("Running event loop")
             loop.run_until_complete(async_serve)
+            print("Done")
+            loop.run_forever()
         Thread(target=run_serve_async).start()
 
     async def serve_events(self, ws, path):
-        await self.msgs_sem.acquire()
-        with self.msgs_lock:
-            await ws.send("Test")
+        x = 0
+        while True:
+            x += 1
+            print("Sending", x)
+            await ws.send('{"x": ' + str(x) + '}')
+            time.sleep(1.)
 
     def emit(self, signal, parents=None, wipe: bool=False, payload=None) -> None:
         # Copy instead of calling super to obtain reference to created spike.

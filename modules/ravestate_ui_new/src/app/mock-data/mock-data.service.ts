@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
+import {webSocket} from "rxjs/webSocket";
 
 export interface ActivationsTick {
     type: 'tick';
@@ -275,6 +276,19 @@ export class MockDataService {
         this.dataStream = new Subject();
         this.activations = this.dataStream.pipe(filter(data => data.type === 'activation'), map(data => data as ActivationUpdate));
         this.spikes = this.dataStream.pipe(filter(data => data.type === 'spike'), map( data => data as SpikeUpdate));
+   }
+
+    public websocketTest(i) {
+        console.log('start connect', i);
+
+        const subject = webSocket("ws://localhost:5042");
+
+        subject.subscribe(
+            msg => console.log('message received: ', i, msg), // Called whenever there is a message from the server.
+            err => console.log('ERROR', i, err), // Called if at any point WebSocket API signals some kind of error.
+            () => console.log('complete') // Called when connection is closed (for whatever reason).
+        );
+
     }
 
     public sendNextMockMessage() {
