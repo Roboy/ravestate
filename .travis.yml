@@ -2,13 +2,6 @@ language: python
 os: linux
 python:
   - "3.6"
-  
-services:
-  - docker
-
-before_install:
-  - docker build -t ravestate .
-  - docker run -t -v $(pwd):/ravestate -w /ravestate ravestate ./run_tests.sh
 
 # Enable 3.7 without globally enabling sudo and dist: xenial for other build jobs
 matrix:
@@ -16,6 +9,11 @@ matrix:
     - python: 3.7
       dist: xenial
       sudo: true
+  
+services: docker
 
-after_success:
-  - codecov
+before_install: docker build -t ravestate .
+
+script: docker run -t -v $(pwd):/ravestate -w /ravestate ravestate ./run_tests.sh
+
+after_success: codecov
