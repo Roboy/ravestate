@@ -1,3 +1,0 @@
-face_recognition
-websocket_client
-opencv-python
