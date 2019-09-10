@@ -33,6 +33,7 @@ pages:
   - NLP: modules/ravestate_nlp/README.md << modules/ravestate_nlp/README.md
   - Verbaliser: modules/ravestate_verbaliser/README.md << modules/ravestate_verbaliser/README.md
   - TelegramIO: modules/ravestate_telegramio/README.md << modules/ravestate_telegramio/README.md
+  - VisionIO: modules/ravestate_visionio/README.md << modules/ravestate_visionio/README.md
   - Akinator: modules/ravestate_akinator/README.md << modules/ravestate_akinator/README.md
 - API:
   - Modules: modules.md

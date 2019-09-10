@@ -244,7 +244,7 @@ External (Red) and Skills (Green):
 
 There is a Dockerfile for ROS, ROS2 and Face Recognition support, which can be built with
 ```bash
-docker build -t ravestate-ros2-image .
+docker build -t ravestate .
 ```
 The image contains ROS, ROS2 and a ROS Bridge to connect ROS with ROS2.
 Furthermore the roboy_communication message and service types are installed.
@@ -257,7 +257,7 @@ docker-compose up --detach ravestate-{linux|macos}
 The container is now running and a connection into the container can be
 established with:
 ```bash
-docker exec -it ravestate-ros2-container bash
+docker exec -it ravestate-container bash
 ```
 
 Inside the container, first source the ROS2 setups. Then 
@@ -272,9 +272,9 @@ python3 -m ravestate [...]
 If you have built the ravestate docker image as described above,
 you may run the test suite as follows:
 
-``
+```bash
 docker run -t -v $(pwd):/ravestate -w /ravestate ravestate-ros2-image ./run_tests.sh
-``
+```
 
 ## Building/maintaining the docs
 
