@@ -32,7 +32,7 @@
         <meta name="lang:search.tokenizer" content="[\s\-]+">
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.2.0">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.4.2">
     
     
       
@@ -40,7 +40,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/application.750b69bd.css">
+      <link rel="stylesheet" href="../assets/stylesheets/application.30686662.css">
       
       
     
@@ -50,7 +50,7 @@
     
       
         <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono&display=fallback">
         <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
       
     
@@ -96,7 +96,9 @@
               Ravestate
             </span>
             <span class="md-header-nav__topic">
-              Context
+              
+                Context
+              
             </span>
           
         </div>
@@ -139,7 +141,7 @@
         
       
       
-      <main class="md-main">
+      <main class="md-main" role="main">
         <div class="md-main__inner md-grid" data-md-component="container">
           
             
@@ -221,6 +223,18 @@
   <li class="md-nav__item">
     <a href="../modules/ravestate_telegramio/" title="TelegramIO" class="md-nav__link">
       TelegramIO
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_visionio/" title="VisionIO" class="md-nav__link">
+      VisionIO
     </a>
   </li>
 
@@ -816,6 +830,17 @@ This is called by ... <br>
 <p>Returns true, if the activation has acquired any spikes at all.</p>
 <p><strong>Returns:</strong> True, if any of this activation's constraint's
  signal is referencing a spike.</p>
+<h3 id="ravestate.activation.Activation.boring">boring</h3>
+
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">boring</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
+
+
+<p>Returns True, if the activation's state is boring. Called by
+ context, to figure out whether this activation counts towards
+ the system not setting the <code>idle:bored</code> property  to True.</p>
+<p><strong>Returns:</strong> True, if the state assigned to this activation has
+ the <code>boring</code> field set to true, False otherwise.</p>
 <h3 id="ravestate.activation.Activation.spikes">spikes</h3>
 
 <div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">spikes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">spike</span><span class="o">.</span><span class="n">Spike</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>
@@ -1081,7 +1106,7 @@ remaining interested activations and no children).</p>
       
     </div>
     
-      <script src="../assets/javascripts/application.39abc4af.js"></script>
+      <script src="../assets/javascripts/application.c648116f.js"></script>
       
       <script>app.initialize({version:"1.0.4",url:{base:".."}})</script>
       
