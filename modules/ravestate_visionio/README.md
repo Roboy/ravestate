@@ -10,7 +10,7 @@
 
 ## VisionIO
 
-The TelegramIO module enables ravestate to connect to a Face Vector/Recognition
+The VisionIO module enables ravestate to connect to a Face Recognition
 ROS topic provided by `face_oracle`, based on which conversations can be initiated.
 
 ## Architecture
