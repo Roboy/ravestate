@@ -21,61 +21,44 @@ class YesNoWrapper:
 
     def __init__(self, input_text):
         nlp_tokens = tuple(str(token.text.lower()) for token in input_text)
-<<<<<<< HEAD
-        if not set(nlp_tokens).isdisjoint(NEGATION_TUPLE):
-            if not set(nlp_tokens).isdisjoint(PROBABLY_SYNONYMS):
+        nlp_token_set = set(nlp_tokens)
+
+        has_negation = not nlp_token_set.isdisjoint(NEGATION_TUPLE)
+        has_probably = not nlp_token_set.isdisjoint(PROBABLY_SYNONYMS)
+        has_dontknow = not nlp_token_set.isdisjoint(DO_NOT_KNOW_SET)
+        has_yes = not nlp_token_set.isdisjoint(YES_SYNONYMS)
+        has_no = not nlp_token_set.isdisjoint(NO_SYNONYMS)
+
+        if has_negation:
+            if has_probably:
                 self.answer = YesNo.PROBABLY_NOT
                 return
-            elif not set(nlp_tokens).isdisjoint(DO_NOT_KNOW_SET):
+            elif has_dontknow:
                 self.answer = YesNo.DONT_KNOW
                 return
-            elif not set(nlp_tokens).isdisjoint(YES_SYNONYMS):
+            elif has_yes:
                 self.answer = YesNo.NO
                 return
-        elif not set(nlp_tokens).isdisjoint(YES_SYNONYMS):
-            if not set(nlp_tokens).isdisjoint(PROBABLY_SYNONYMS):
+        if has_yes:
+            if has_probably:
                 self.answer = YesNo.PROBABLY
                 return
-            elif not set(nlp_tokens).isdisjoint(NO_SYNONYMS):
+            elif has_no:
                 if self._is_confusing(nlp_tokens):
                     self.answer = None
-=======
-        nlp_token_dep = tuple(str(token.dep_) for token in input_text)
-        for token in nlp_tokens:
-            if token in PROBABLY_SYNONYMS:
-                if NEGATION_TUPLE[0] in nlp_token_dep or NEGATION_TUPLE[1] in nlp_tokens:
-                    self.answer = YesNo.PROBABLY_NOT
-                    return
-                else:
-                    self.answer = YesNo.PROBABLY
-                    return
-            elif token in YES_SYNONYMS:
-                if NEGATION_TUPLE[0] in nlp_token_dep or NEGATION_TUPLE[1] in nlp_tokens:
-                    self.answer = YesNo.NO
-                    return
-                else:
-                    self.answer = YesNo.YES
-                    return
-            elif token in NO_SYNONYMS:
-                self.answer = YesNo.NO
-                return
-            elif token in DO_NOT_KNOW_SET:
-                if NEGATION_TUPLE[0] in nlp_token_dep or NEGATION_TUPLE[1] in nlp_tokens:
-                    self.answer = YesNo.DONT_KNOW
->>>>>>> 6464ba6593850af750914eece5c109b6a3ce1cb1
                     return
                 self.answer = YesNo.YES
                 return
             else:
                 self.answer = YesNo.YES
                 return
-        elif not set(nlp_tokens).isdisjoint(NO_SYNONYMS):
-            if not set(nlp_tokens).isdisjoint(DO_NOT_KNOW_SET):
+        if has_no:
+            if has_dontknow:
                 self.answer = YesNo.DONT_KNOW
                 return
             self.answer = YesNo.NO
             return
-        elif not set(nlp_tokens).isdisjoint(PROBABLY_SYNONYMS):
+        if has_probably:
             self.answer = YesNo.PROBABLY
             return
         self.answer = None
