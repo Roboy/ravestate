@@ -750,41 +750,43 @@
 <a href="https://travis-ci.org/Roboy/ravestate"><img alt="Build Status" src="https://travis-ci.org/Roboy/ravestate.svg?branch=master" /></a>
 <a href="https://codecov.io/gh/Roboy/ravestate"><img alt="codecov" src="https://codecov.io/gh/Roboy/ravestate/branch/master/graph/badge.svg" /></a></p>
 <h2 id="about">About</h2>
-<pre><code>   ____                          __      __        _____       _____   
-  / _  \____  __  ______  ______/ /_____/ /___    /_   _\     /_   _\  
- / /_/ / __ \/ / / / __ \/ ___\, / __ \, / __ \    0&gt;  0&gt;     &lt;0  &lt;0   
-/ ,\ ,/ /_/ /\ \/ / /_/ /\__, / / /_/ / / /_/ /   \__⊽__/     \__⊽__/  
-\/  \/\__/\/  \__/ ,___/\____/\/\__/\/\/ ,___/       ⋂  - Hey!   ⋂     
-                 \____/                \____/             Olà! -       
-</code></pre>
+<div class="codehilite"><pre><span></span>   <span class="n">____</span>                          <span class="n">__</span>      <span class="n">__</span>        <span class="n">_____</span>       <span class="n">_____</span>   
+  <span class="o">/</span> <span class="n">_</span>  <span class="err">\</span><span class="n">____</span>  <span class="n">__</span>  <span class="n">______</span>  <span class="n">______</span><span class="o">/</span> <span class="o">/</span><span class="n">_____</span><span class="o">/</span> <span class="o">/</span><span class="n">___</span>    <span class="o">/</span><span class="n">_</span>   <span class="n">_</span><span class="err">\</span>     <span class="o">/</span><span class="n">_</span>   <span class="n">_</span><span class="err">\</span>  
+ <span class="o">/</span> <span class="o">/</span><span class="n">_</span><span class="o">/</span> <span class="o">/</span> <span class="n">__</span> <span class="err">\</span><span class="o">/</span> <span class="o">/</span> <span class="o">/</span> <span class="o">/</span> <span class="n">__</span> <span class="err">\</span><span class="o">/</span> <span class="n">___</span><span class="err">\</span><span class="p">,</span> <span class="o">/</span> <span class="n">__</span> <span class="err">\</span><span class="p">,</span> <span class="o">/</span> <span class="n">__</span> <span class="err">\</span>    <span class="mi">0</span><span class="o">&gt;</span>  <span class="mi">0</span><span class="o">&gt;</span>     <span class="o">&lt;</span><span class="mi">0</span>  <span class="o">&lt;</span><span class="mi">0</span>   
+<span class="o">/</span> <span class="p">,</span><span class="err">\</span> <span class="p">,</span><span class="o">/</span> <span class="o">/</span><span class="n">_</span><span class="o">/</span> <span class="o">/</span><span class="err">\</span> <span class="err">\</span><span class="o">/</span> <span class="o">/</span> <span class="o">/</span><span class="n">_</span><span class="o">/</span> <span class="o">/</span><span class="err">\</span><span class="n">__</span><span class="p">,</span> <span class="o">/</span> <span class="o">/</span> <span class="o">/</span><span class="n">_</span><span class="o">/</span> <span class="o">/</span> <span class="o">/</span> <span class="o">/</span><span class="n">_</span><span class="o">/</span> <span class="o">/</span>   <span class="err">\</span><span class="n">__</span><span class="err">⊽</span><span class="n">__</span><span class="o">/</span>     <span class="err">\</span><span class="n">__</span><span class="err">⊽</span><span class="n">__</span><span class="o">/</span>  
+<span class="err">\</span><span class="o">/</span>  <span class="err">\</span><span class="o">/</span><span class="err">\</span><span class="n">__</span><span class="o">/</span><span class="err">\</span><span class="o">/</span>  <span class="err">\</span><span class="n">__</span><span class="o">/</span> <span class="p">,</span><span class="n">___</span><span class="o">/</span><span class="err">\</span><span class="n">____</span><span class="o">/</span><span class="err">\</span><span class="o">/</span><span class="err">\</span><span class="n">__</span><span class="o">/</span><span class="err">\</span><span class="o">/</span><span class="err">\</span><span class="o">/</span> <span class="p">,</span><span class="n">___</span><span class="o">/</span>       <span class="err">⋂</span>  <span class="o">-</span> <span class="n">Hey</span><span class="o">!</span>   <span class="err">⋂</span>     
+                 <span class="err">\</span><span class="n">____</span><span class="o">/</span>                <span class="err">\</span><span class="n">____</span><span class="o">/</span>             <span class="n">Olà</span><span class="o">!</span> <span class="o">-</span>       
+</pre></div>
+
 
 <p>Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events. You may find a short introductory video <a href="http://www.youtube.com/watch?v=6GMmY-xvA_Y" title="Introduction to Ravestate">here</a>.</p>
 <h3 id="reactive-hello-world">Reactive Hello World</h3>
-<pre><code class="python">import ravestate as rs
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">ravestate</span> <span class="kn">as</span> <span class="nn">rs</span>
 
-# We want to write some text output, so we
-# need the raw:out context property from ravestate_rawio.
-import ravestate_rawio as rawio
+<span class="c1"># We want to write some text output, so we</span>
+<span class="c1"># need the raw:out context property from ravestate_rawio.</span>
+<span class="kn">import</span> <span class="nn">ravestate_rawio</span> <span class="kn">as</span> <span class="nn">rawio</span>
 
-# Make sure that we use some i/o implementation,
-# so we can actually see stuff that is written to rawio:out.
-import ravestate_conio
+<span class="c1"># Make sure that we use some i/o implementation,</span>
+<span class="c1"># so we can actually see stuff that is written to rawio:out.</span>
+<span class="kn">import</span> <span class="nn">ravestate_conio</span>
 
-# Ravestate applications should always be wrapped in a Module.
-# This allows easier scoping, and enables separation of concerns
-# beyond states.
-with rs.Module(name=&quot;hi!&quot;):
+<span class="c1"># Ravestate applications should always be wrapped in a Module.</span>
+<span class="c1"># This allows easier scoping, and enables separation of concerns</span>
+<span class="c1"># beyond states.</span>
+<span class="k">with</span> <span class="n">rs</span><span class="o">.</span><span class="n">Module</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;hi!&quot;</span><span class="p">):</span>
 
-    # Create an application state which reacts to the `:startup` signal,
-    # and writes a string to raw:out. Note: State functions are
-    # always run asynchronously!
-    @rs.state(cond=rs.sig_startup, write=rawio.prop_out)
-    def hello_world(context):
-        context[rawio.prop_out] = &quot;Waddup waddup waddup!&quot;
+    <span class="c1"># Create an application state which reacts to the `:startup` signal,</span>
+    <span class="c1"># and writes a string to raw:out. Note: State functions are</span>
+    <span class="c1"># always run asynchronously!</span>
+    <span class="nd">@rs.state</span><span class="p">(</span><span class="n">cond</span><span class="o">=</span><span class="n">rs</span><span class="o">.</span><span class="n">sig_startup</span><span class="p">,</span> <span class="n">write</span><span class="o">=</span><span class="n">rawio</span><span class="o">.</span><span class="n">prop_out</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
+        <span class="n">context</span><span class="p">[</span><span class="n">rawio</span><span class="o">.</span><span class="n">prop_out</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Waddup waddup waddup!&quot;</span>
 
-# Run context with console input/output and our 'hi!' module.
-rs.Context(&quot;conio&quot;, &quot;hi!&quot;).run()
-</code></pre>
+<span class="c1"># Run context with console input/output and our &#39;hi!&#39; module.</span>
+<span class="n">rs</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s2">&quot;conio&quot;</span><span class="p">,</span> <span class="s2">&quot;hi!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+
 
 <h3 id="visualization">Visualization</h3>
 <p>Ravestate has a <a href="https://d3js.org">d3.js</a>-based visualization. When using <code>ravestate_ui.UIContext</code> instead of <code>Context</code>, or <code>python3 -m ravestate_ui</code> instead of <code>python3 -m ravestate</code>, a real-time visualization of all states/properties/signals in the state machine will be hosted on port 5001. Here is the view of <code>http://localhost:5001</code> after launching <code>python3 ravestate_ui -f generic.yml</code>:</p>
@@ -802,53 +804,57 @@ or <a href="https://conda.io/en/latest/">conda</a>.</p>
 <h3 id="for-developers">For developers</h3>
 <h4 id="initial-configuration-and-setup">Initial configuration and setup</h4>
 <p>Clone the repository and install dependencies:</p>
-<pre><code class="bash"># Create a virtual python environment to not pollute the global setup
+<div class="codehilite"><pre><span></span><span class="c1"># Create a virtual python environment to not pollute the global setup</span>
 python3 -m virtualenv python-ravestate
 
-# Source the virtual environment
+<span class="c1"># Source the virtual environment</span>
 . python-ravestate/bin/activate
 
-# Clone the repo
-git clone git@github.com:roboy/ravestate &amp;&amp; cd ravestate
+<span class="c1"># Clone the repo</span>
+git clone git@github.com:roboy/ravestate <span class="o">&amp;&amp;</span> <span class="nb">cd</span> ravestate
 
-# Install normal requirements
+<span class="c1"># Install normal requirements</span>
 pip install -r requirements.txt
 
-# To run tests &amp; build docs, install pytest, mocking, fixtures, pydoc, ...
+<span class="c1"># To run tests &amp; build docs, install pytest, mocking, fixtures, pydoc, ...</span>
 pip install -r requirements-dev.txt
 
-# Link your local ravestate clone into your virtualenv
+<span class="c1"># Link your local ravestate clone into your virtualenv</span>
 pip install -e .
-</code></pre>
+</pre></div>
+
 
 <p>Now, launch a Neo4j docker instance to serve <a href="https://github.com/roboy/scientio">Scientio</a>, so the dialog system has a memory:</p>
-<pre><code class="bash">docker run \
-    --publish=7474:7474 --publish=7687:7687 \
-    --volume=$HOME/neo4j/data:/data \
-    --volume=$HOME/neo4j/logs:/logs \
+<div class="codehilite"><pre><span></span>docker run <span class="se">\</span>
+    --publish<span class="o">=</span><span class="m">7474</span>:7474 --publish<span class="o">=</span><span class="m">7687</span>:7687 <span class="se">\</span>
+    --volume<span class="o">=</span><span class="nv">$HOME</span>/neo4j/data:/data <span class="se">\</span>
+    --volume<span class="o">=</span><span class="nv">$HOME</span>/neo4j/logs:/logs <span class="se">\</span>
     neo4j:latest
 
-# Open the address localhost:7474 in a browser, and enter the
-# credentials `neo4j`/`neo4j`. You will then be prompted to enter
-# your own password. Remember this password.
-</code></pre>
+<span class="c1"># Open the address localhost:7474 in a browser, and enter the</span>
+<span class="c1"># credentials `neo4j`/`neo4j`. You will then be prompted to enter</span>
+<span class="c1"># your own password. Remember this password.</span>
+</pre></div>
+
 
 <p>In the <code>config</code> folder, create a file called <code>keys.yml</code>. It should have the following content:</p>
-<pre><code class="yaml">module: telegramio
-config:
-  telegram-token: &lt;sexycactus&gt;  # This is where your own telegram bot token
-                                # will go later
----
-module: ontology
-config:
-  neo4j_address: bolt://localhost:7687  # Your neo4j server uri here
-  neo4j_username: neo4j                 # Your neo4j user here
-  neo4j_pw: test                        # Your neo4j pw here
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">telegramio</span>
+<span class="nt">config</span><span class="p">:</span>
+  <span class="nt">telegram-token</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;sexycactus&gt;</span>  <span class="c1"># This is where your own telegram bot token</span>
+                                <span class="c1"># will go later</span>
+<span class="nn">---</span>
+<span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ontology</span>
+<span class="nt">config</span><span class="p">:</span>
+  <span class="nt">neo4j_address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bolt://localhost:7687</span>  <span class="c1"># Your neo4j server uri here</span>
+  <span class="nt">neo4j_username</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">neo4j</span>                 <span class="c1"># Your neo4j user here</span>
+  <span class="nt">neo4j_pw</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">test</span>                        <span class="c1"># Your neo4j pw here</span>
+</pre></div>
+
 
 <p>You may now conduct your first conversation with ravestate:</p>
-<pre><code class="bash">python3 -m ravestate -f config/generic.yml -f config/keys.yml
-</code></pre>
+<div class="codehilite"><pre><span></span>python3 -m ravestate -f config/generic.yml -f config/keys.yml
+</pre></div>
+
 
 <p>After the conversation, check the Neo4j interface under <code>localhost:7474</code>. It should now contain some nodes!</p>
 <p><strong>Reminder: Whenever you use ravestate from the command line, source the virtual environment first!</strong></p>
@@ -858,8 +864,9 @@ just run <code>telegram_test.yml</code> instead of <code>generic.yml</code>. Thi
 <h4 id="setting-up-pycharm">Setting up PyCharm</h4>
 <ol>
 <li>Open your local ravestate clone as a project in pycharm.</li>
+<li>Under <code>Project Preferences &gt; Python interpreter</code>, set your virtual environment.</li>
 <li>Mark the <code>modules</code> folder as sources root via the right-click context menu.</li>
-<li>Create a run config alà the "Edit configurations menu":<br>
+<li>Create a run config via the "Edit configurations menu":<br>
    • Create a new Python configuration.<br>
    • Set <code>modules/ravestate/__main__.py</code> as the script to execute<br>
    • Set the working directory to the git clone directory.<br>
@@ -874,30 +881,33 @@ with a config file or command line arguments:</p>
 <h3 id="running-with-command-line-spec">Running with command line spec</h3>
 <p>You can easily run a combination of ravestate modules in a shared context,
 by listing them as arguments to <code>python3 -m ravestate</code>:</p>
-<pre><code class="bash">python3 -m ravestate \
-    ravestate_wildtalk \
-    ravestate_conio \
-    ravestate_hibye \
+<div class="codehilite"><pre><span></span>python3 -m ravestate <span class="se">\</span>
+    ravestate_wildtalk <span class="se">\</span>
+    ravestate_conio <span class="se">\</span>
+    ravestate_hibye <span class="se">\</span>
     ravestate_persqa
-</code></pre>
+</pre></div>
+
 
 <p>Run <code>python3 -m ravestate -h</code> to see more options!</p>
 <h3 id="running-with-config-files">Running with config file(s)</h3>
 <p>You may specify a series of config files to configure ravestate context,
 when specifying everything through the command line becomes too laborious:</p>
-<pre><code class="yaml"># In file hello_world.yml
-module: core
-config:
-  import:
-    - ravestate_wildtalk
-    - ravestate_conio
-    - ravestate_hibye
-    - ravestate_persqa
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="c1"># In file hello_world.yml</span>
+<span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">core</span>
+<span class="nt">config</span><span class="p">:</span>
+  <span class="nt">import</span><span class="p">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ravestate_wildtalk</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ravestate_conio</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ravestate_hibye</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">ravestate_persqa</span>
+</pre></div>
+
 
 <p>Then, run <code>ravestate</code> with this config file:</p>
-<pre><code class="bash">python3 -m ravestate -f hello_world.yml
-</code></pre>
+<div class="codehilite"><pre><span></span>python3 -m ravestate -f hello_world.yml
+</pre></div>
+
 
 <h2 id="module-overview">Module overview</h2>
 <p>Ravestate offers a landscape of fine-grained modules
@@ -1013,6 +1023,10 @@ External (Red) and Skills (Green):</p>
 <td>ravestate_stalker</td>
 <td>Uses <code>facial feature &lt;-&gt; person</code> tuples generated by sendpics, to surprise people in front of a camera with knowledge of their names.</td>
 </tr>
+<tr>
+<td>ravestate_fillers</td>
+<td>Recognize when the dialog context is taking a long time to produce an answer, and voice a filler like <strong>"Uhm"</strong> or <strong>"Let's see..."</strong>.</td>
+</tr>
 </tbody>
 </table>
 <h2 id="running-tests">Running tests</h2>
@@ -1021,47 +1035,53 @@ may run the ravestate test suite as follows:</p>
 <p><code>./run_tests.sh</code></p>
 <h2 id="docker-for-ros-and-ros2">Docker for ROS and ROS2</h2>
 <p>There is a Dockerfile for ROS and ROS2 support which can be built with</p>
-<pre><code class="bash">docker build -t ravestate-ros2-image .
-</code></pre>
+<div class="codehilite"><pre><span></span>docker build -t ravestate-ros2-image .
+</pre></div>
+
 
 <p>The image contains ROS, ROS2 and a ROS Bridge to connect ROS with ROS2.
 Furthermore the roboy_communication message and service types are installed.</p>
 <p>A container can then be created with the docker-compose.yml:</p>
-<pre><code class="bash">docker-compose up --detach ravestate
-</code></pre>
+<div class="codehilite"><pre><span></span>docker-compose up --detach ravestate
+</pre></div>
+
 
 <p>The container is now running and a connection into the container can be
 established with:</p>
-<pre><code class="bash">docker exec -it ravestate-ros2-container bash
-</code></pre>
+<div class="codehilite"><pre><span></span>docker <span class="nb">exec</span> -it ravestate-ros2-container bash
+</pre></div>
+
 
 <p>Inside the container, first source the ROS2 setups and then 
 ravestate can be run with ROS2 and rclpy available.</p>
-<pre><code class="bash">source ~/ros2_ws/install/setup.sh
-python3 -m ravestate [...]
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="nb">source</span> ~/ros2_ws/install/setup.sh
+python3 -m ravestate <span class="o">[</span>...<span class="o">]</span>
+</pre></div>
+
 
 <h3 id="start-ros-bridge">Start ROS Bridge</h3>
 <p>In order to start ROS Bridge, the image and container have to be set up
 as above. After connecting into the container run from inside the container:</p>
-<pre><code class="bash">export ROS_IP=192.168.0.105
-source ~/melodic_ws/devel/setup.sh
-source ~/ros2_ws/install/setup.sh
-source ~/ros1_bridge_ws/install/setup.sh
+<div class="codehilite"><pre><span></span><span class="nb">export</span> <span class="nv">ROS_IP</span><span class="o">=</span><span class="m">192</span>.168.0.105
+<span class="nb">source</span> ~/melodic_ws/devel/setup.sh
+<span class="nb">source</span> ~/ros2_ws/install/setup.sh
+<span class="nb">source</span> ~/ros1_bridge_ws/install/setup.sh
 ros2 run ros1_bridge dynamic_bridge
-</code></pre>
+</pre></div>
+
 
 <h2 id="buildingmaintaining-the-docs">Building/maintaining the docs</h2>
 <p>If you have installed the dependencies from <code>requirements-dev.txt</code>,
 generate the docs by running this command at project root:</p>
-<pre><code class="bash">export PYTHONPATH=$PYTHONPATH:$(pwd)/modules
+<div class="codehilite"><pre><span></span><span class="nb">export</span> <span class="nv">PYTHONPATH</span><span class="o">=</span><span class="nv">$PYTHONPATH</span>:<span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/modules
 git rm -rf docs
 rm -rf _build docs
 pydocmd build
-mkdir -p docs/resources/docs &amp;&amp; cp resources/docs/*.png docs/resources/docs &amp;&amp; cp resources/docs/*.gif docs/resources/docs
+mkdir -p docs/resources/docs <span class="o">&amp;&amp;</span> cp resources/docs/*.png docs/resources/docs <span class="o">&amp;&amp;</span> cp resources/docs/*.gif docs/resources/docs
 git add docs/*
-# For inspection: python3 -m http.server --directory docs
-</code></pre>
+<span class="c1"># For inspection: python3 -m http.server --directory docs</span>
+</pre></div>
+
 
 <p>The structure and content of the docs are defined in the file <code>pydocmd.yml</code>.</p>
                 

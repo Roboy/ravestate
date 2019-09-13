@@ -11,11 +11,11 @@ def create_doc(text: str):
 
 @pytest.mark.parametrize("test_input, expected_value",
                          [("yeah", 2),
-                          ("nope", -2),
+                          ("nope", False),
                           ("probably", 1),
-                          ("not certainly", -2),
-                          ("probably not", -1),
-                          ("i do not know", 0),
+                          ("not certainly", False),
+                          ("probably not", False),
+                          ("i do not know", False),
                           ("Hey ho!", None)])
 def test_yes(test_input, expected_value):
     assert expected_value == yes_no(create_doc(test_input)).yes()
@@ -33,12 +33,12 @@ def test_yes_sentence(test_input, expected_value):
 
 
 @pytest.mark.parametrize("test_input, expected_value",
-                         [("yeah", -2),
+                         [("yeah", False),
                           ("nope", 2),
-                          ("probably", -1),
+                          ("probably", False),
                           ("not certainly", 2),
                           ("probably not", 1),
-                          ("i do not know", 0),
+                          ("i do not know", False),
                           ("Hey ho!", None)])
 def test_no(test_input, expected_value):
     assert expected_value == yes_no(create_doc(test_input)).no()

@@ -11,3 +11,5 @@ requests
 scientio>=0.9.1rc2
 redis
 face_recognition
+pytorch-pretrained-bert
+pytorch_transformers

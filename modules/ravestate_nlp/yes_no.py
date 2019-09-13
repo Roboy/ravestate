@@ -21,6 +21,7 @@ class YesNoWrapper:
 
     def __init__(self, input_text):
         nlp_tokens = tuple(str(token.text.lower()) for token in input_text)
+<<<<<<< HEAD
         if not set(nlp_tokens).isdisjoint(NEGATION_TUPLE):
             if not set(nlp_tokens).isdisjoint(PROBABLY_SYNONYMS):
                 self.answer = YesNo.PROBABLY_NOT
@@ -38,6 +39,30 @@ class YesNoWrapper:
             elif not set(nlp_tokens).isdisjoint(NO_SYNONYMS):
                 if self._is_confusing(nlp_tokens):
                     self.answer = None
+=======
+        nlp_token_dep = tuple(str(token.dep_) for token in input_text)
+        for token in nlp_tokens:
+            if token in PROBABLY_SYNONYMS:
+                if NEGATION_TUPLE[0] in nlp_token_dep or NEGATION_TUPLE[1] in nlp_tokens:
+                    self.answer = YesNo.PROBABLY_NOT
+                    return
+                else:
+                    self.answer = YesNo.PROBABLY
+                    return
+            elif token in YES_SYNONYMS:
+                if NEGATION_TUPLE[0] in nlp_token_dep or NEGATION_TUPLE[1] in nlp_tokens:
+                    self.answer = YesNo.NO
+                    return
+                else:
+                    self.answer = YesNo.YES
+                    return
+            elif token in NO_SYNONYMS:
+                self.answer = YesNo.NO
+                return
+            elif token in DO_NOT_KNOW_SET:
+                if NEGATION_TUPLE[0] in nlp_token_dep or NEGATION_TUPLE[1] in nlp_tokens:
+                    self.answer = YesNo.DONT_KNOW
+>>>>>>> 6464ba6593850af750914eece5c109b6a3ce1cb1
                     return
                 self.answer = YesNo.YES
                 return
@@ -65,12 +90,12 @@ class YesNoWrapper:
 
     def yes(self):
         if isinstance(self.answer, YesNo):
-            return self.answer.value
+            return self.answer.value if self.answer.value > 0 else False
         return None
 
     def no(self):
         if isinstance(self.answer, YesNo):
-            return -self.answer.value
+            return -self.answer.value if self.answer.value < 0 else False
         return None
 
     def unk(self):

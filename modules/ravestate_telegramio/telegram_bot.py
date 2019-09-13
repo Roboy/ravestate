@@ -1,5 +1,6 @@
 import os
 import multiprocessing as mp
+import random
 from multiprocessing.connection import Connection
 import time
 from typing import Set, Dict, Optional, Tuple
@@ -8,7 +9,7 @@ import requests
 
 import ravestate as rs
 
-from telegram import Bot, Update, TelegramError
+from telegram import Bot, Update, TelegramError, ChatAction
 from telegram.ext import Updater, MessageHandler, Filters, Dispatcher
 
 from scientio.ontology.node import Node
@@ -20,7 +21,8 @@ logger = get_logger(__name__)
 
 import ravestate_rawio as rawio
 import ravestate_interloc as interloc
-import ravestate_ontology
+import ravestate_ontology as ontology
+import ravestate_emotion as emotion
 
 
 MODULE_NAME: str = 'telegramio'
@@ -52,6 +54,11 @@ active_chats: Dict[int, Tuple[Timestamp, Optional[mp.connection.Connection]]] = 
 # At the same time a User can talk to the bot in personal and group chats but only is in active_users once.
 # A user_id is mapped to a set containing the chat_id of every Chat that the User is involved in
 active_users: Dict[int, Set[int]] = dict()
+
+SHY_EMOJIS = ["\U0000263A"]
+SURPRISE_EMOJIS = ["\U0001F914"]
+HAPPY_EMOJIS = ["\U0001F60A", "\U0001F603"]
+AFFECTIONATE_EMOJIS = ["\U0001F618", "\U0001F970"]
 
 
 @rs.state(cond=rs.sig_startup)
@@ -93,9 +100,9 @@ def telegram_run(ctx: rs.ContextWrapper):
             active_users[update.effective_user.id].add(update.effective_chat.id)
         else:
             # set up scientio
-            if ravestate_ontology.initialized.wait():
-                sess: Session = ravestate_ontology.get_session()
-                onto: Ontology = ravestate_ontology.get_ontology()
+            if ontology.initialized.wait():
+                sess: Session = ontology.get_session()
+                onto: Ontology = ontology.get_ontology()
 
                 # create scientio Node of type TelegramPerson
                 query = Node(metatype=onto.get_type("TelegramPerson"))
@@ -154,7 +161,10 @@ def telegram_run(ctx: rs.ContextWrapper):
             add_new_child_process(update.effective_chat.id)
         # write (bot, update) to Pipe
         active_chats[update.effective_chat.id][0].update()
+        logger.info(f"INPUT: {update.effective_message.text}")
         active_chats[update.effective_chat.id][1].send((bot, update))
+        # send typing symbol
+        bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
     def add_new_child_process(chat_id):
         """
@@ -182,7 +192,7 @@ def telegram_run(ctx: rs.ContextWrapper):
         """
         Log Errors caused by Updates.
         """
-        logger.warning('Update "%s" caused error "%s"', update, error)
+        logger.warning(f'Update {update.effective_message} caused error {error.message}')
 
     def _manage_children(updater):
         """
@@ -201,6 +211,7 @@ def telegram_run(ctx: rs.ContextWrapper):
                 if parent_pipe.poll():
                     msg = parent_pipe.recv()
                     if isinstance(msg, str):
+                        logger.info(f"OUTPUT: {msg}")
                         updater.bot.send_message(chat_id=chat_id, text=msg)
                     else:
                         logger.error(f'Tried sending non-str object as telegram message: {str(msg)}')
@@ -281,16 +292,14 @@ def telegram_run(ctx: rs.ContextWrapper):
         _bootstrap_telegram_child()
 
 
-@rs.state(read=rawio.prop_out)
-def telegram_output(ctx: rs.ContextWrapper):
+def send_on_telegram(ctx: rs.ContextWrapper, text: str):
     """
-    If all telegram chats should be in the same context, sends the content of rawio:out to every currently active chat.
+    If all telegram chats should be in the same context, sends the text to every currently active chat.
     Otherwise it only sends output using the Pipe if it is a child process
     """
-    text = ctx[rawio.prop_out.changed()]
     if not text or not isinstance(text, str):
         return rs.Resign()
-    text = text.lower().strip()
+
     if ctx.conf(key=ALL_IN_ONE_CONTEXT_CONFIG_KEY):
         # TODO don't instantiate the updater every time
         token = ctx.conf(key=TOKEN_CONFIG_KEY)
@@ -308,3 +317,36 @@ def telegram_output(ctx: rs.ContextWrapper):
         else:
             # Master Process -> State not needed
             return rs.Delete()
+
+
+@rs.state(read=rawio.prop_out)
+def telegram_output(ctx: rs.ContextWrapper):
+    """
+    Sends the content of rawio:out on telegram
+    """
+    text = ctx[rawio.prop_out.changed()]
+    return send_on_telegram(ctx=ctx, text=text.lower().strip())
+
+
+@rs.state(cond=emotion.sig_shy)
+def show_shy(ctx: rs.ContextWrapper):
+    logger.info("Sending shy emoji on telegram")
+    send_on_telegram(ctx=ctx, text=random.choice(SHY_EMOJIS))
+
+
+@rs.state(cond=emotion.sig_surprise)
+def show_surprise(ctx: rs.ContextWrapper):
+    logger.info("Sending surprise emoji on telegram")
+    send_on_telegram(ctx=ctx, text=random.choice(SURPRISE_EMOJIS))
+
+
+@rs.state(cond=emotion.sig_happy)
+def show_happy(ctx: rs.ContextWrapper):
+    logger.info("Sending happy emoji on telegram")
+    send_on_telegram(ctx=ctx, text=random.choice(HAPPY_EMOJIS))
+
+
+@rs.state(cond=emotion.sig_affectionate)
+def show_affectionate(ctx: rs.ContextWrapper):
+    logger.info("Sending affectionate emoji on telegram")
+    send_on_telegram(ctx=ctx, text=random.choice(AFFECTIONATE_EMOJIS))

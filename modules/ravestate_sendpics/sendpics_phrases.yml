@@ -1,0 +1,8 @@
+type: phrases
+name: "sendpics-prompt"
+opts:
+- "Why don't you send me a picture? I'm really good at recognizing faces!"
+- "Send me a selfie of you, so that I can remember your face!"
+- "If you want me to remember your face, send me a picture of you!"
+- "You look good today, send me a picture so I can remember your face!"
+- "If you send me a picture, I will be able to remember the face!"
