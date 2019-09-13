@@ -13,8 +13,7 @@ import { Subscription } from "rxjs";
         <button (click)="mockDataService.sendActivation()">Send activation</button>
         <button (click)="mockDataService.sendSpike()">Send spike</button>
         <br>
-        <button (click)="mockDataService.websocketTest(getI())">connect to web socket</button>
-        <br><br>
+        <br>
         Recent data
         <br>
         <div class="data-json">

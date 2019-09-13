@@ -1,9 +1,11 @@
 import { Component, OnDestroy } from '@angular/core';
 import { Subscription } from "rxjs";
 
-import { ActivationUpdate, MockDataService, SpikeUpdate } from "../../mock-data/mock-data.service";
+import { MockDataService } from "../../mock-data/mock-data.service";
+import { ActivationUpdate, SpikeUpdate } from "../../model/model";
 import { NodeType } from "../elements/node.component";
 import { DomSanitizer } from "@angular/platform-browser";
+import { SocketIOService } from "../../socketio/socketio.service";
 
 export class Node {
     id: number;
@@ -96,10 +98,11 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     hoveredNode: Node;
 
-    constructor(private mockDataService: MockDataService, private sanitizer: DomSanitizer) {
+    constructor(private mockDataService: MockDataService, private socketIoService: SocketIOService, private sanitizer: DomSanitizer)
+    {
         this.subscriptions = new Subscription();
 
-        this.subscriptions.add(this.mockDataService.spikes.subscribe(spike => {
+        this.subscriptions.add(this.socketIoService.spikes.subscribe(spike => {
 
             const node = new Node(spike);
             this.allNodes.set(node.id, node);
@@ -132,7 +135,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
         }));
 
-        this.subscriptions.add(this.mockDataService.activations.subscribe(activation => {
+        this.subscriptions.add(this.socketIoService.activations.subscribe(activation => {
 
             // create a new node for incoming activation
             const newNode = new Node(activation);

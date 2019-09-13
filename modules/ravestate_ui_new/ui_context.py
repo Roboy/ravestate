@@ -56,9 +56,6 @@ class UIContext(Context):
         # -- determine whether the UI should be concerned with this
         #  activation at all.
         act_model = self.ui_model(act)
-        is_spiky = act.spiky()
-        if not is_spiky and act_model.status == "wait":
-            return
         update_needed = False
 
         # -- determine status transition
@@ -69,6 +66,9 @@ class UIContext(Context):
             act_is_ready = act.constraint.evaluate()
             if act_is_ready and act_model.status is "wait":
                 act_model.status = "ready"
+                update_needed = True
+            elif not act_is_ready and act_model.status is "ready":
+                act_model.status = "wait"
                 update_needed = True
 
         # -- build spike reference structure, while

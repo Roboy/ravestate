@@ -20,6 +20,6 @@ To build a production version:
 - the bundle is saved in the `dist` folder
 
 Backend:
-- start a Flask server by running `python src/app/model`
-- view sample data structures under `http://localhost:5000/tick` and `http://localhost:5000/spike`
+- Start ravestate as `ravestate_ui_new`. Spike/Activation updates will be
+  served on port 4242.
 
