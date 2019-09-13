@@ -13,3 +13,4 @@ redis
 face_recognition
 pytorch-pretrained-bert
 pytorch_transformers
+python-socketio
