@@ -27,7 +27,10 @@
 
     socket.on('spike', spike => {
         console.log('got spike', spike);
-    })
+    });
+    socket.on('activation', act => {
+        console.log('got activation', act);
+    });
 
 </script>
 </body>
