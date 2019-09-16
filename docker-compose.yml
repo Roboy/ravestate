@@ -25,6 +25,10 @@ services:
       - "9001:9001"
       - "8088:8088"
       - "5000:5000"
+      - "4200:4200"
+      - "4242:4242"
+      - "7687:7687"
+      - "7474:7474"
     environment:
       - PYTHONPATH=$PYTHONPATH:/ravestate/modules
       - PYTHONUNBUFFERED=1
@@ -58,6 +62,10 @@ services:
       - "9001:9001"
       - "8088:8088"
       - "5000:5000"
+      - "4200:4200"
+      - "4242:4242"
+      - "7687:7687"
+      - "7474:7474"
     environment:
       - PYTHONPATH=$PYTHONPATH:/ravestate/modules
       - PYTHONUNBUFFERED=1

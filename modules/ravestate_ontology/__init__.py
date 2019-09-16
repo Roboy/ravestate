@@ -60,6 +60,7 @@ with Module(name="ontology", config=CONFIG):
 
 
 def get_session():
+    initialized.wait()
     if not sess:
         logger.error("get_session() called before hello_world_ontology was invoked by context.")
         return None
@@ -67,6 +68,7 @@ def get_session():
 
 
 def get_ontology():
+    initialized.wait()
     if not onto:
         logger.error("get_ontology() called before hello_world_ontology was invoked by context.")
         return None

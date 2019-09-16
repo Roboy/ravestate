@@ -61,10 +61,10 @@ if ROBOY_COGNITION_AVAILABLE:
         )
 
         @rs.state(
-            cond=rs.sig_startup | prop_subscribe_faces \
-                .changed() \
-                .detached() \
-                .min_age(rs.ConfigurableAge(key=PERSON_DISAPPEARED_THRESHOLD)) \
+            cond=rs.sig_startup | prop_subscribe_faces
+                .changed()
+                .detached()  # detached, because recognize_faces is also listening.
+                .min_age(rs.ConfigurableAge(key=PERSON_DISAPPEARED_THRESHOLD))
                 .max_age(-1),
             read=(rs.prop_activity, interloc.prop_all, interloc.prop_persisted),
             write=(prop_face_filter, interloc.prop_all),
@@ -103,7 +103,6 @@ if ROBOY_COGNITION_AVAILABLE:
 
             # Push faces to face filter
             best_guess_changed = face_filter.push_message(faces)
-            print('best_guess_changed:' + str(best_guess_changed))
             if best_guess_changed:
                 current_best_guess: Person = face_filter.current_best_guess
 
@@ -114,7 +113,6 @@ if ROBOY_COGNITION_AVAILABLE:
 
                 best_guess_id = current_best_guess.id
                 face_vector = current_best_guess.face_vector
-                print('best_guess_id:' + str(best_guess_id))
                 if current_best_guess.is_known:
 
                     person_node_query = sess.retrieve(node_id=best_guess_id)
@@ -129,7 +127,7 @@ if ROBOY_COGNITION_AVAILABLE:
                         'face_vector': face_vector,
                         'name': interloc.ANON_INTERLOC_ID
                     })
-                print('person_node:' + str(person_node))
+
                 push = False
 
                 # Check if there is any interlocutor. If necessary and pop the current node and push person node
@@ -149,7 +147,6 @@ if ROBOY_COGNITION_AVAILABLE:
                         save_face(ctx, interloc_node.get_id(), current_best_guess.face_vector)
                 else:
                     push = True
-                print('PUSH: ' + str(push))
                 if push:
                     # Push the new interlocutor
                     ctx.push(
@@ -157,8 +154,7 @@ if ROBOY_COGNITION_AVAILABLE:
                         child=rs.Property(
                             name=interloc.ANON_INTERLOC_ID,
                             default_value=person_node))
-                    print('PUSHING NODE')
-                    logger.info(f"Pushed node with id:{person_node.id} to interloc:all")
+                    logger.info(f"Pushed node with id {person_node.id} to interloc:all")
 
 
         @rs.state(
