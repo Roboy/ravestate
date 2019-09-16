@@ -1,4 +1,4 @@
-from ravestate.context import Context
+from ravestate.context import Context, core_module
 from ravestate.spike import Spike
 from ravestate.activation import Activation
 from .ui_model import UIActivationModel, UISpikeModel
@@ -12,10 +12,15 @@ from collections import namedtuple, defaultdict
 from reggol import get_logger
 logger = get_logger(__name__)
 
+PORT_CONFIG_KEY = "raveboard_port"
+DEFAULT_PORT = 4242
+
 
 class UIContext(Context):
 
     def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None):
+        # Monkey-patch core config before it is parsed. Clean enough?
+        core_module.conf[PORT_CONFIG_KEY] = 4242
         super().__init__(*arguments, runtime_overrides=runtime_overrides)
         self.msgs_lock = Lock()
         self.sio = socketio.Server(cors_allowed_origins="*", async_mode="threading")
@@ -24,9 +29,10 @@ class UIContext(Context):
         Thread(target=self.ui_serve_events_async).start()
 
     def ui_serve_events_async(self):
-        app = flask.Flask(__name__)
+        app = flask.Flask(__name__, static_folder="dist/ravestate")
+        # app.static_url_path = "/"
         app.wsgi_app = socketio.Middleware(self.sio, app.wsgi_app)
-        app.run(port=4242, threaded=True)
+        app.run(port=self.conf(mod=core_module.name, key=PORT_CONFIG_KEY), threaded=True)
 
     def ui_model(self, spike_or_act: Union[Spike, Activation], parent_spikes=()) -> Union[UIActivationModel, UISpikeModel]:
         if spike_or_act in self.ui_objects:
@@ -53,8 +59,6 @@ class UIContext(Context):
             return new_obj
 
     def ui_update_act(self, act: Activation, is_running=False):
-        # -- determine whether the UI should be concerned with this
-        #  activation at all.
         act_model = self.ui_model(act)
         update_needed = False
 
@@ -120,9 +124,10 @@ class UIContext(Context):
 
     def run_once(self, seconds_passed=1., debug=False):
         super(UIContext, self).run_once(seconds_passed, debug)
-        acts_to_update = (
-            {act for act in self.ui_objects if isinstance(act, Activation)} |
-            self._state_activations())
+        with self._lock:
+            acts_to_update = (
+                {act for act in self.ui_objects if isinstance(act, Activation)} |
+                self._state_activations())
         for act in acts_to_update:
             self.ui_update_act(act)
 

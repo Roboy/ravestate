@@ -31,7 +31,7 @@ CORE_MODULE_CONFIG = {
     TICK_RATE_CONFIG_KEY: 20
 }
 
-with Module(name="core", config=CORE_MODULE_CONFIG):
+with Module(name="core", config=CORE_MODULE_CONFIG) as core_module:
 
     """
     The startup signal, which is fired once when `Context.run()` is executed.<br>
