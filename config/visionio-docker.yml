@@ -1,0 +1,37 @@
+# This configuration is designed to be used with ravestate inside
+#  the ravestate docker container, run with docker-compose
+#  as described in README.md.
+
+---
+module: core
+config:
+  tickrate: 10
+  import:
+    - ravestate_conio
+    - ravestate_visionio
+    - ravestate_fillers
+    - ravestate_wildtalk
+    - ravestate_hibye
+    - ravestate_genqa
+    - ravestate_roboyqa
+    - ravestate_persqa
+  ros2-node-name: "ros2-node-name"
+
+---
+module: genqa
+config:
+  drqa_server_address: http://35.246.158.89:5000
+  roboy_answer_sanity: 1000
+
+---
+module: ontology
+config:
+  neo4j_address: bolt://localhost:7687
+  neo4j_username: neo4j
+  neo4j_pw: test
+
+---
+module: visionio
+config:
+  redis_host: localhost
+  redis_pass: ""
