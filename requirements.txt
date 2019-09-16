@@ -14,3 +14,4 @@ face_recognition
 numpy
 pytorch-pretrained-bert
 pytorch_transformers
+python-socketio

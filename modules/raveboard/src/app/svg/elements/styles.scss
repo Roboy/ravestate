@@ -1,0 +1,52 @@
+$state-node-bg: darkgreen;
+$signal-node-bg: darkblue;
+
+.activation-node {
+  fill: $state-node-bg;
+  stroke: lightgreen;
+  stroke-width: 1px;
+}
+.activation-node:hover {
+  fill: lighten($state-node-bg, 10%);
+}
+.activation-node.wait {
+  stroke-width: 1px;
+}
+.activation-node.ready {
+  stroke-width: 3px;
+}
+.activation-node.run {
+  stroke: lightgreen;
+  animation: runningActivation 500ms ease infinite;
+  animation-direction: alternate;
+}
+@keyframes runningActivation {
+  from {
+    stroke-width: 1;
+  }
+  to {
+    stroke-width: 5;
+  }
+}
+
+
+.spike-node {
+  fill: $signal-node-bg;
+  stroke: deepskyblue;
+  stroke-width: 1px;
+}
+.spike-node:hover {
+  fill: lighten($signal-node-bg, 10%);
+}
+
+.node-label {
+  fill: white;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.connector-line {
+  fill: transparent;
+  stroke: lightgray;
+  stroke-width: 2px;
+}
