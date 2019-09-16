@@ -5,7 +5,7 @@ import { Component } from '@angular/core';
     template: `
         <div class="root-container">
             <div class="header">
-                Ravestate UI
+                Raveboard &#127940;
             </div>
             <div class="main">
                 <app-activation-spike-graph class="graph-area"></app-activation-spike-graph>

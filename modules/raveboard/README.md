@@ -1,6 +1,18 @@
-# Ravestate UI
+# Raveboard
 
 Roboy ravestate UI module. 
+
+## Usage
+
+Substitute `ravestate` with `raveboard` when launching your module config. E.g.
+
+```bash
+python3 -m raveboard ravestate_wildtalk ravestate_hibye
+```
+
+If you did not override the `raveboard_port` config for the `core` module, you may
+access the UI in any browser under [localhost:4242/ravestate/index.html](http://localhost:4242/ravestate/index.html)
+Otherwise, just substite 4242 with your configured port.
 
 ## Setup, Development and Building
 
@@ -19,7 +31,4 @@ To build a production version:
 - run `ng build --prod` in the root folder to build a bundle for the browser
 - the bundle is saved in the `dist` folder
 
-Backend:
-- Start ravestate as `ravestate_ui_new`. Spike/Activation updates will be
-  served on port 4242.
 
