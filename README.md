@@ -251,13 +251,13 @@ Furthermore the roboy_communication message and service types are installed.
 
 A container can then be created with docker-compose.yml. Choose `linux` or `macos` as fit for your platform:
 ```bash
-docker-compose up --detach ravestate-{linux|macos}
+docker-compose up --detach rs-{linux|macos}
 ```
 
 The container is now running and a connection into the container can be
 established with:
 ```bash
-docker exec -it ravestate-container bash
+docker exec -it rs bash
 ```
 
 Inside the container, first source the ROS2 setups. Then 

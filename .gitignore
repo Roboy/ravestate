@@ -17,3 +17,4 @@ ros2/install
 ros2/log
 venv/*
 mkdocs.yml
+db/*
