@@ -1,0 +1,17 @@
+[run]
+omit =
+    # exclude roboyio, too volatile
+    */ravestate_roboyio/*
+    # exclude ui
+	*/raveboard/*
+	*/ravestate_ui/*
+    # exclude akinator
+	*/ravestate_akinator/*
+    # exlude interfaces
+	*/ravestate/i*
+    # exlude ros1 abstraction
+	*/ravestate_ros1/*
+    # exlude ros2 abstraction 
+	*/ravestate_ros2/*
+    # exclude sendpics, nobody cares
+	*/ravestate_sendpics/*

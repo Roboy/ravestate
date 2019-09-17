@@ -1,6 +1,5 @@
 *.key
 *.default
-.coverage
 .pytest_cache
 .idea
 __pycache__

@@ -212,6 +212,7 @@ External (Red) and Skills (Green):
   | ravestate_idle       | Provides `bored` and `impatient` signals, as specified [here](https://github.com/Roboy/ravestate/issues/12).
   | ravestate_verbaliser | Utilities for easy management of conversational text, documented [here](modules/ravestate_verbaliser/README.md).
   | ravestate_nlp        | Spacy-based NLP properties and signals, documented [here](modules/ravestate_nlp/README.md).
+  | ravestate_emotion    | Generates signals for, and recognizes specific emotions (`sig_shy`, `sig_surprise`, `sig_happy`, `sig_affectionate`).
   | ravestate_ros1       | Provides specific `Ros1PubProperty`, `Ros1SubProperty` and `Ros1CallProperty` context properties, which greatly simplify working with ROS1 in ravestate. Documentation [here](modules/ravestate_ros1/README.md).
   | ravestate_ros2       | Provides specific `Ros2PubProperty`, `Ros2SubProperty` and `Ros2CallProperty` context properties, which greatly simplify working with ROS2 in ravestate.
 
@@ -230,14 +231,16 @@ External (Red) and Skills (Green):
 
   | Module name          | Description |
   |----------------------|-------------|
-  | ravestate_wildtalk   | [ParlAI](https://github.com/roboy/parlai) -based generative conversational module. 
+  | ravestate_wildtalk   | See docs [here](modules/ravestate_wildtalk/README.md) - runs generative language models (GPT-2, ConvAi, ParlAi)!
   | ravestate_hibye      | Simply voices __Hi!__ (or the likes thereof) when an interlocutor is added, and __Bye__ when one is removed.
   | ravestate_persqa     | Conducts personalized smalltalk with interlocutors, interacts with Scientio to persist trivia.
   | ravestate_genqa      | [DrQA](https://github.com/roboy/drqa) -based general question answering module.
   | ravestate_roboyqa    | QA module which provides answers to questions about Roboy, such as __Who is your dad?__
-  | ravestate_akinator   | Enables dialog-based play of [Akinator!](modules/ravestate_akinator/README.md)
-  | ravestate_sendpics   | Uses face recognition to extract facial features and an assiciated Person with `pic_in` and ontology, which are then persisted in Redis and Scientio.
+  | ravestate_akinator __(*)__ | Enables dialog-based play of [Akinator!](modules/ravestate_akinator/README.md)
+  | ravestate_sendpics __(*)__ | Uses face recognition to extract facial features and an assiciated Person with `pic_in` and ontology, which are then persisted in Redis and Scientio.
   | ravestate_fillers    | Recognize when the dialog context is taking a long time to produce an answer, and voice a filler like __"Uhm"__ or __"Let's see..."__.
+
+**Note:** __(*)__ = deprecated.
 
 
 ## Docker for ROS and ROS2
@@ -251,7 +254,7 @@ Furthermore the roboy_communication message and service types are installed.
 
 A container can then be created with docker-compose.yml. Choose `linux` or `macos` as fit for your platform:
 ```bash
-docker-compose up --detach rs-{linux|macos}
+docker-compose up -d rs-{linux|macos}
 ```
 
 The container is now running and a connection into the container can be
@@ -260,12 +263,22 @@ established with:
 docker exec -it rs bash
 ```
 
-Inside the container, first source the ROS2 setups. Then 
+Inside the container, first source the ROS/ROS2 setups. Then 
 ravestate can be run with `rclpy` (ROS2) and `rospy` (ROS) available.
 ```bash
-source ~/ros2_ws/install/setup.sh
+# Source ROS2 setup if needed
+. ~/ros2_ws/install/setup.bash
+
+# Source ROS1 setup if needed
+. ~/melodic_ws/idevel/setup.bash
+
+# Start ravestate or raveboard to run your modules.
 python3 -m ravestate [...]
 ```
+
+**Note:** The ravestate docker container contains both `redis` and `neo4j`
+databases, which are automatically started and mapped into folders at
+`ravestate/db/{redis|neo4j}`.
 
 ## Running tests
 
@@ -273,7 +286,7 @@ If you have built the ravestate docker image as described above,
 you may run the test suite as follows:
 
 ```bash
-docker run -t -v $(pwd):/ravestate -w /ravestate ravestate-ros2-image ./run_tests.sh
+docker run -t -v $(pwd):/ravestate -w /ravestate ravestate ./run_tests.sh
 ```
 
 ## Building/maintaining the docs

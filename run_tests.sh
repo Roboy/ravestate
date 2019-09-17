@@ -4,10 +4,12 @@
 
 export PYTHONPATH=$PYTHONPATH:$(pwd)/modules
 neo4j start
+
+. ~/melodic_ws/devel/setup.bash
 roscore &
+
 echo "-----------------------------------------------"
 echo "Sleeping 10 s to wait for neo4j and roscore ..."
 echo "-----------------------------------------------"
 sleep 10
-. ~/melodic_ws/devel/setup.sh
 pytest --cov=modules -p no:warnings test
