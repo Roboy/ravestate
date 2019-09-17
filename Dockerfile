@@ -32,7 +32,8 @@ RUN python3 -c "from spacy.cli import download as spacy_download; spacy_download
 # ------------------------------------------------------
 # install pyroboy with melodic
 # add github repo metadata to bust cache when repo is updated
-ADD https://api.github.com/repos/roboy/pyroboy/git/refs/heads/melodic pyroboy_version.json
+# => bad idea due to github API rate limit, fails Travis builds now and then.
+# ADD https://api.github.com/repos/roboy/pyroboy/git/refs/heads/melodic pyroboy_version.json
 RUN cd ~/melodic_ws/src && git clone https://github.com/Roboy/pyroboy.git && \
     cd ~/melodic_ws/src/pyroboy && git checkout melodic && \
     cd ~/melodic_ws/src/roboy_communication && git pull && \
@@ -43,7 +44,8 @@ RUN cd ~/melodic_ws/src && git clone https://github.com/Roboy/pyroboy.git && \
 RUN pip3 install ecdsa
 RUN pip install -U face_recognition websocket_client pillow opencv-python numpy
 # add github repo metadata to bust cache when repo is updated
-ADD https://api.github.com/repos/roboy/face_oracle/git/refs/heads/visionio_messages faceoracle_version.json
+# => bad idea due to github API rate limit, fails Travis builds now and then.
+# ADD https://api.github.com/repos/roboy/face_oracle/git/refs/heads/visionio_messages faceoracle_version.json
 RUN cd ~/melodic_ws/src && git clone https://github.com/Roboy/face_oracle.git && \
     cd ~/melodic_ws/src/face_oracle && git checkout visionio_messages && git pull && cd ~/melodic_ws && \
     . /opt/ros/melodic/setup.sh && catkin_make && . /opt/ros/melodic/setup.sh
