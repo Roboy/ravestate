@@ -75,10 +75,10 @@ export class NodeData {
             <span class="percentage-label">{{(scale * 100).toFixed(0)}} %</span> 
             <button (click)="scaleDown()" class="round">-</button>
             <button (click)="scaleUp()" class="round">+</button>
-            <button (click)="scale = 1">100%</button>
+            <button (click)="scale = 1" [disabled]="scale == 1">100%</button>
             <span class="separator">|</span>
             <button (click)="moveLeft()" class="round">&lt;</button>
-            <button (click)="resetOffset()">Reset Offset</button>
+            <button (click)="resetOffset()" [disabled]="xOffset == 0">Reset Offset</button>
             <button (click)="moveRight()" class="round">&gt;</button>
             <span class="separator">|</span>
             <button (click)="clear()">Clear Graph</button>
