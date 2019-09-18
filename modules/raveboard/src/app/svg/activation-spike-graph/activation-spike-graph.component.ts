@@ -1,5 +1,5 @@
 import { Component, OnDestroy } from '@angular/core';
-import { Subscription } from "rxjs";
+import { merge, Subscription } from "rxjs";
 
 import { MockDataService } from "../../mock-data/mock-data.service";
 import { ActivationUpdate, SpikeUpdate } from "../../model/model";
@@ -63,7 +63,7 @@ export class Node {
                 <!-- all nodes on top of connectors -->
                 <ng-container *ngFor="let node of allNodes.values()">
                     <g node *ngIf="node.visible"
-                       (mouseenter)="hoverStart(node)" (mouseleave)="hoverEnd(node)"  
+                       (mouseenter)="hoverStart(node)" (mouseleave)="hoverEnd()"  
                        [x]="node.x" [y]="node.y" [label]="node.label" 
                        [nodeType]="node.nodeType" [nodeStatus]="node.element.status" 
                        [style.opacity]="node.transparent ? .2 : 1"></g>
@@ -100,9 +100,14 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     constructor(private mockDataService: MockDataService, private socketIoService: SocketIOService, private sanitizer: DomSanitizer)
     {
+
+        // allow to mix real and mock data for development
+        const mergedSpikes = merge(mockDataService.spikes, socketIoService.spikes);
+        const mergedActs = merge(mockDataService.activations, socketIoService.activations);
+
         this.subscriptions = new Subscription();
 
-        this.subscriptions.add(this.socketIoService.spikes.subscribe(spike => {
+        this.subscriptions.add(mergedSpikes.subscribe(spike => {
 
             const node = new Node(spike);
             this.allNodes.set(node.id, node);
@@ -135,7 +140,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
         }));
 
-        this.subscriptions.add(this.socketIoService.activations.subscribe(activation => {
+        this.subscriptions.add(mergedActs.subscribe(activation => {
 
             // create a new node for incoming activation
             const newNode = new Node(activation);
@@ -256,7 +261,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         this.hoveredNode = hoveredNode;
     }
 
-    hoverEnd(node: Node) {
+    hoverEnd() {
         for (const node of this.allNodes.values()) {
             node.transparent = false;
         }
