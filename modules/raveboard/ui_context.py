@@ -1,6 +1,6 @@
-from ravestate.context import Context, core_module
-from ravestate.spike import Spike
-from ravestate.activation import Activation
+import ravestate as rs
+import ravestate_rawio as rawio
+
 from .ui_model import UIActivationModel, UISpikeModel
 
 from typing import Any, Tuple, List, Union, Dict
@@ -13,40 +13,54 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 PORT_CONFIG_KEY = "raveboard_port"
+URL_PREFIX_KEY = "raveboard_host_prefix"
 DEFAULT_PORT = 4242
 
 
-class UIContext(Context):
+class UIContext(rs.Context):
 
     def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None):
-        # Monkey-patch core config before it is parsed. Clean enough?
-        core_module.conf[PORT_CONFIG_KEY] = 4242
+
+        # Monkey-patch core module before it is loaded. Clean enough?
+        rs.core_module.conf[PORT_CONFIG_KEY] = 4242
+        rs.core_module.conf[URL_PREFIX_KEY] = "http://localhost"
+
         super().__init__(*arguments, runtime_overrides=runtime_overrides)
+        self._add_url_announce_state()
+
         self.msgs_lock = Lock()
         self.sio = socketio.Server(cors_allowed_origins="*", async_mode="threading")
         self.next_id_for_object = defaultdict(int)
-        self.ui_objects: Dict[Union[Spike, Activation], Union[UISpikeModel, UIActivationModel]] = dict()
+        self.ui_objects: Dict[Union[rs.Spike, rs.Activation], Union[UISpikeModel, UIActivationModel]] = dict()
         Thread(target=self.ui_serve_events_async).start()
 
     def ui_serve_events_async(self):
         app = flask.Flask(__name__, static_folder="dist/ravestate")
         # app.static_url_path = "/"
         app.wsgi_app = socketio.Middleware(self.sio, app.wsgi_app)
-        app.run(port=self.conf(mod=core_module.name, key=PORT_CONFIG_KEY), threaded=True)
+        app.run(port=self.conf(mod=rs.core_module.name, key=PORT_CONFIG_KEY), threaded=True)
 
-    def ui_model(self, spike_or_act: Union[Spike, Activation], parent_spikes=()) -> Union[UIActivationModel, UISpikeModel]:
+    def _add_url_announce_state(self):
+        import ravestate_rawio as rawio
+        if
+
+        @rs.state(cond=rs.sig_startup.detached().min_age(1.), write=)
+        def announce_ui_url(ctx):
+
+
+    def ui_model(self, spike_or_act: Union[rs.Spike, rs.Activation], parent_spikes=()) -> Union[UIActivationModel, UISpikeModel]:
         if spike_or_act in self.ui_objects:
             return self.ui_objects[spike_or_act]
         else:
             new_id = self.next_id_for_object[spike_or_act.__class__]
             self.next_id_for_object[spike_or_act.__class__] += 1
             new_obj = None
-            if isinstance(spike_or_act, Spike):
+            if isinstance(spike_or_act, rs.Spike):
                 new_obj = UISpikeModel(
                     id=new_id,
                     signal=spike_or_act.id(),
                     parents=tuple(self.ui_model(parent).id for parent in parent_spikes))
-            elif isinstance(spike_or_act, Activation):
+            elif isinstance(spike_or_act, rs.Activation):
                 new_obj = UIActivationModel(
                     id=new_id,
                     state=spike_or_act.state_to_activate.name,
@@ -58,7 +72,7 @@ class UIContext(Context):
             self.ui_objects[spike_or_act] = new_obj
             return new_obj
 
-    def ui_update_act(self, act: Activation, is_running=False):
+    def ui_update_act(self, act: rs.Activation, is_running=False):
         act_model = self.ui_model(act)
         update_needed = False
 
@@ -112,7 +126,7 @@ class UIContext(Context):
         if wipe:
             self.wipe(signal)
         with self._lock:
-            new_spike = Spike(
+            new_spike = rs.Spike(
                 sig=signal.id(),
                 parents=parents,
                 consumable_resources=set(self._properties.keys()),
@@ -126,11 +140,11 @@ class UIContext(Context):
         super(UIContext, self).run_once(seconds_passed, debug)
         with self._lock:
             acts_to_update = (
-                {act for act in self.ui_objects if isinstance(act, Activation)} |
+                {act for act in self.ui_objects if isinstance(act, rs.Activation)} |
                 self._state_activations())
         for act in acts_to_update:
             self.ui_update_act(act)
 
-    def _state_activated(self, act: Activation):
+    def _state_activated(self, act: rs.Activation):
         super(UIContext, self)._state_activated(act)
         self.ui_update_act(act, is_running=True)

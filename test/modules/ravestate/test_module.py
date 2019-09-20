@@ -1,5 +1,5 @@
 from ravestate.testfixtures import *
-from ravestate.module import Module, import_module
+from ravestate.module import Module
 
 
 def test_illegal_nested_modules():
@@ -23,10 +23,3 @@ def test_add_invalid_argument():
         with Module(name="Invalid Argument") as mod:
             mod.add(42)
         log_capture.check("Module.add() called with invalid argument 42!")
-
-
-def test_import_module(mocker):
-    with mocker.patch('importlib.import_module'):
-        from importlib import import_module as lib_import
-        import_module(module_name=DEFAULT_MODULE_NAME, callback=None)
-        lib_import.assert_called_once_with(DEFAULT_MODULE_NAME)

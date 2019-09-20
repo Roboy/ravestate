@@ -26,6 +26,16 @@
 
 ⚠️ Do not confuse `state` and `status`!
 
+#### Output message
+
+This message is sent to the frontend, when output is received (`raw:out` property value changes):
+
+
+#### Input message
+
+This message us sent from the frontend to the backend, when the user types dialog input. The backend writes the
+
+
 ### Sample message sequence
 
 #### Message 0: A spike (id 0) is instantiated

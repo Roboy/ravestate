@@ -1,7 +1,9 @@
 # Ravestate module class
 
-from typing import Dict, Any, Union, Iterable, Callable
-import importlib
+from typing import Dict, Any, Union, Iterable, Callable, Set
+import inspect
+from collections import defaultdict
+
 from ravestate.constraint import Signal
 from ravestate.property import Property
 from ravestate.state import State
@@ -24,8 +26,8 @@ class Module:
     ```
     """
 
+    modules_per_python_module: Dict[str, Set['Module']] = defaultdict(set)
     registered_modules: Dict[str, 'Module'] = dict()
-    registration_callback: Callable[['Module'], Any] = None  # set by import_module
 
     def __init__(self, *, name: str, config: Dict[str, Any]=None):
         """
@@ -46,21 +48,22 @@ class Module:
         self.name = name
         self.conf = config
         if name in self.registered_modules:
-            logger.error(f"Adding module {name} twice!")
+            raise RuntimeError(f"Cannot add module {name} twice!")
+        self.module_name = inspect.getmodule(inspect.stack()[1][0])
         self.registered_modules[name] = self
+        self.modules_per_python_module[self.module_name].add(self)
+        logger.info(f"Registered module `{self.name}` under python module `{self.module_name}`.")
 
     def __enter__(self):
         mod = getattr(ravestate_thread_local, 'module_under_construction', None)
         if mod:
-            logger.error("Nested `with Module(...)` calls are not supported!`")
+            raise RuntimeError("Nested `with Module(...)` calls are not supported!`")
         else:
             ravestate_thread_local.module_under_construction = self
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         ravestate_thread_local.module_under_construction = None
-        if self.registration_callback:
-            self.registration_callback(self)
 
     def add(self, ownable: Union[Property, State, Signal, Iterable[Property], Iterable[State], Iterable[Signal]]):
         try:
@@ -82,21 +85,7 @@ class Module:
             logger.error(f"Module.add() called with invalid argument {ownable}!")
 
 
-def import_module(*, module_name: str, callback):
-    """
-    Called by context to import a particular ravestate python module.
-
-    * `module_name`: The name of the python module to be imported (must be in pythonpath).
-
-    * `callback`: A callback which should be called when a module calls register() while it is being imported.
-    """
-    assert not Module.registration_callback
-    Module.registration_callback = callback
-    importlib.import_module(module_name)
-    Module.registration_callback = None
-
-
-def has_module(module_name: str):
+def has_module(module_name: str) -> bool:
     """
     Check whether a module with a particular name has been registered.
 
@@ -104,15 +93,23 @@ def has_module(module_name: str):
 
     **Returns:** True if a module with the given name has been registered, false otherwise.
     """
-    return module_name in Module.registered_modules
+    return module_name in Module.registered_modules or len(Module.modules_per_python_module[module_name])
 
 
-def get_module(module_name: str):
+def get_module(module_name: str) -> Set[Module]:
     """
-    Get a registered module with a particular name
+    Get modules registered with a particular name.
 
-    * `module_name`: The name of the moduke which should be retrieved.
+    **Note:** If the module_name refers to a Python module,
+     multiple Ravestate modules might be returned.
 
-    **Returns:** The module with the given name if it was registered, false if otherwise.
+    * `module_name`: Python or Ravestate module name.
+
+    **Returns:** The modules registered under the given name, empty set otherwise.
     """
-    return Module.registered_modules[module_name] if module_name in Module.registered_modules else None
+    if module_name in Module.registered_modules:
+        return {Module.registered_modules[module_name]}
+    elif module_name in Module.modules_per_python_module:
+        return Module.modules_per_python_module[module_name]
+    else:
+        return set()
