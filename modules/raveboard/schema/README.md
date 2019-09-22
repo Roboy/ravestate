@@ -36,7 +36,7 @@ This message is emitted, when the `rawio:out` property value changes.
 | `text`       | `string`               | The content that was written to the `rawio:out` property.  |
 
 
-#### Output Message
+#### Input Message
 
 This message should be emitted by the raveboard frontend to push a new `rawio:in` value.
 
