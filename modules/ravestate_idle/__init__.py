@@ -11,7 +11,7 @@ CONFIG = {
     BORED_THRESHOLD_CONFIG_KEY: 1.5
 }
 
-with rs.Module(name="idle", config=CONFIG):
+with rs.Module(name="idle", config=CONFIG) as mod:
 
     sig_impatient = rs.Signal(name="impatient")
     sig_bored = rs.Signal(name="bored")

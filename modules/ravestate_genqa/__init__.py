@@ -18,7 +18,7 @@ CONFIG = {
 SERVER_AVAILABLE_CODE = 200
 
 
-with rs.Module(name="genqa", config=CONFIG):
+with rs.Module(name="genqa", config=CONFIG, depends=(rawio.mod, idle.mod, nlp.mod, verbaliser.mod)) as mod:
 
     @rs.state(cond=rs.sig_startup)
     def hello_world_genqa(ctx):

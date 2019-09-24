@@ -642,7 +642,10 @@ class Context(IContext):
         self._needy_acts_per_state_per_signal.pop(sig)
 
     def _add_ravestate_module(self, mod: Module):
-        assert mod not in self._modules
+        if mod in self._modules:
+            return
+        for dependency in mod.depends:
+            self._add_ravestate_module(dependency)
         self._config.add_conf(mod)
         self._modules.add(mod)
         for prop in mod.props:

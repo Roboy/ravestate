@@ -55,12 +55,12 @@ def test_get_conf(under_test: Configuration):
 def test_apply_config(under_test: Configuration, config_file_paths):
     under_test.read(config_file_paths[0])
     under_test.read(config_file_paths[1])
+    foo_module = Module(name="foo", config={
+        "a": "hehe",
+        "b": "hoho",
+        "c": "lol"
+    })
     with LogCapture(attributes=strip_prefix) as log_capture:
-        foo_module = Module(name="foo", config={
-            "a": "hehe",
-            "b": "hoho",
-            "c": "lol"
-        })
         under_test.add_conf(foo_module)
         log_capture.check(f"Config entry for foo.a has conflicting type bool (should be str).")
         assert under_test.get("foo", "a") == False

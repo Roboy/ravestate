@@ -1,6 +1,6 @@
 # Ravestate module class
 
-from typing import Dict, Any, Union, Iterable, Callable, Set
+from typing import Dict, Any, Union, Iterable, Set
 import inspect
 from collections import defaultdict
 
@@ -29,7 +29,7 @@ class Module:
     modules_per_python_module: Dict[str, Set['Module']] = defaultdict(set)
     registered_modules: Dict[str, 'Module'] = dict()
 
-    def __init__(self, *, name: str, config: Dict[str, Any]=None):
+    def __init__(self, *, name: str, config: Dict[str, Any]=None, depends: Iterable['Module']=None):
         """
         Create a new module with a name and certain config entries.
 
@@ -39,20 +39,32 @@ class Module:
 
         * `config`: A dictionary of config entries and their default values, which should be read
          from the default/user config files.
+
+        * `depends`: Collection of modules which must also be added to a context which
+         includes this module. __Note:__ A core module dependency (referring to core module objects
+        such as `sig_startup`, `prop_intent` etc.) may safely be omitted.
         """
         if not config:
             config = {}
+        if not depends:
+            depends = []
         self.props = []
         self.states = []
         self.signals = []
         self.name = name
         self.conf = config
+        self.depends = depends
         if name in self.registered_modules:
-            raise RuntimeError(f"Cannot add module {name} twice!")
-        self.module_name = inspect.getmodule(inspect.stack()[1][0])
+            logger.warn(f"Redefinition of module `{name}`!")
+        module = inspect.getmodule(inspect.stack()[1].frame)
+        if module:
+            self.module_name = module.__spec__.name.split(".")[0]
+            self.modules_per_python_module[self.module_name].add(self)
+            logger.info(f"Registered module `{self.name}` under python module `{self.module_name}`.")
+        else:
+            self.module_name = "unknown"
+            logger.warn(f"Could not determine python module for `{self.name}`!")
         self.registered_modules[name] = self
-        self.modules_per_python_module[self.module_name].add(self)
-        logger.info(f"Registered module `{self.name}` under python module `{self.module_name}`.")
 
     def __enter__(self):
         mod = getattr(ravestate_thread_local, 'module_under_construction', None)

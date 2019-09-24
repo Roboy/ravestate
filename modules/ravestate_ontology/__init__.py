@@ -26,7 +26,7 @@ CONFIG = {
     NEO4J_PASSWORD_KEY: "neo4j"
 }
 
-with Module(name="ontology", config=CONFIG):
+with Module(name="ontology", config=CONFIG) as mod:
 
     @state(cond=sig_startup)
     def hello_world_ontology(ctx):

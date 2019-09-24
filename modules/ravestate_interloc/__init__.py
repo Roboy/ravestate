@@ -12,7 +12,7 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-with rs.Module(name="interloc"):
+with rs.Module(name="interloc", depends=(rawio.mod, verbaliser.mod, mem.mod)) as mod:
 
     # TODO: Make interloc:all a special property type, that only accepts ScientioNodeProperty as children
     prop_all = rs.Property(name="all", allow_read=True, allow_write=False, allow_push=True, allow_pop=True)

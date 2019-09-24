@@ -68,7 +68,10 @@ if PYROBOY_AVAILABLE:
     LUCKY_EMOTION = "lucky"
     KISS_EMOTION = "kiss"
 
-    with rs.Module(name="roboyio", config=CONFIG):
+    with rs.Module(
+            name="roboyio",
+            config=CONFIG,
+            depends=(interloc.mod, rawio.mod, idle.mod, emotion.mod)) as mod:
 
         prop_head_axis0 = Ros1PubProperty(name="head_axis0", topic="/sphere_head_axis0/sphere_head_axis0/target", msg_type=Float32)
         prop_head_axis1 = Ros1PubProperty(name="head_axis1", topic="/sphere_head_axis1/sphere_head_axis1/target", msg_type=Float32)
