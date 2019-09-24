@@ -6,47 +6,67 @@ from .ui_model import UIActivationModel, UISpikeModel
 from typing import Any, Tuple, List, Union, Dict
 import socketio
 import flask
+import urllib.parse
 from threading import Thread, Lock
 from collections import namedtuple, defaultdict
 
 from reggol import get_logger
 logger = get_logger(__name__)
 
+RAVEBOARD = "raveboard"
 PORT_CONFIG_KEY = "raveboard_port"
 URL_PREFIX_KEY = "raveboard_host_prefix"
 DEFAULT_PORT = 4242
+
+RAVEBOARD_CONFIG = {
+    PORT_CONFIG_KEY: 4242,
+    URL_PREFIX_KEY: "http://localhost"
+}
 
 
 class UIContext(rs.Context):
 
     def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None):
-
-        # Monkey-patch core module before it is loaded. Clean enough?
-        rs.core_module.conf[PORT_CONFIG_KEY] = 4242
-        rs.core_module.conf[URL_PREFIX_KEY] = "http://localhost"
-
         super().__init__(*arguments, runtime_overrides=runtime_overrides)
-        self._add_url_announce_state()
 
         self.msgs_lock = Lock()
         self.sio = socketio.Server(cors_allowed_origins="*", async_mode="threading")
         self.next_id_for_object = defaultdict(int)
         self.ui_objects: Dict[Union[rs.Spike, rs.Activation], Union[UISpikeModel, UIActivationModel]] = dict()
+
+        self._add_ui_module()
         Thread(target=self.ui_serve_events_async).start()
 
     def ui_serve_events_async(self):
         app = flask.Flask(__name__, static_folder="dist/ravestate")
-        # app.static_url_path = "/"
         app.wsgi_app = socketio.Middleware(self.sio, app.wsgi_app)
-        app.run(port=self.conf(mod=rs.core_module.name, key=PORT_CONFIG_KEY), threaded=True)
+        app.run(port=self.conf(mod=RAVEBOARD, key=PORT_CONFIG_KEY), threaded=True)
 
-    def _add_url_announce_state(self):
+    def _add_ui_module(self):
         import ravestate_rawio as rawio
-        if
 
-        @rs.state(cond=rs.sig_startup.detached().min_age(1.), write=)
-        def announce_ui_url(ctx):
+        with rs.Module(name=RAVEBOARD, config=RAVEBOARD_CONFIG, depends=(rawio.mod,)) as mod:
 
+            @rs.state(cond=rs.sig_startup.detached().min_age(1.), write=rawio.prop_out)
+            def announce_ui_url(ctx):
+                sio_uri = urllib.parse.quote(f"{ctx.conf(key=URL_PREFIX_KEY)}:{ctx.conf(key=PORT_CONFIG_KEY)}")
+                url = f"{ctx.conf(key=URL_PREFIX_KEY)}:{ctx.conf(key=PORT_CONFIG_KEY)}/ravestate?rs-sio-url={sio_uri}"
+                ctx[rawio.prop_out] = f"Watch your conversation on raveboard here! {url}"
+
+            @rs.state(read=rawio.prop_out)
+            def emit_output(ctx):
+                self.sio.emit("output", {"type": "output", "text": ctx[rawio.prop_out.changed()]})
+
+        self._add_ravestate_module(mod)
+
+        @rs.receptor(ctx_wrap=self, write=(rawio.prop_in,))
+        def receive_input(ctx, new_input_event):
+            if 'text' not in new_input_event:
+                logger.error("Bad socket.io message for input event!")
+                return
+            ctx[rawio.prop_in] = new_input_event['text']
+
+        self.sio.on("input", receive_input)
 
     def ui_model(self, spike_or_act: Union[rs.Spike, rs.Activation], parent_spikes=()) -> Union[UIActivationModel, UISpikeModel]:
         if spike_or_act in self.ui_objects:
