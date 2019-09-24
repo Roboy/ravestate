@@ -1,6 +1,6 @@
 import ravestate as rs
 
-with rs.Module(name="rawio"):
+with rs.Module(name="rawio") as mod:
 
     prop_in = rs.Property(
         name="in",

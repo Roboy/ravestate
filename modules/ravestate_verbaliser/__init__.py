@@ -5,7 +5,7 @@ from .verbaliser import *
 from reggol import get_logger
 logger = get_logger(__name__)
 
-with rs.Module(name="verbaliser"):
+with rs.Module(name="verbaliser") as mod:
 
     prop_intent = rs.Property(
         name="intent",

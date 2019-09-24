@@ -31,7 +31,7 @@ CONFIG = {
 }
 
 
-with rs.Module(name="sendpics", config=CONFIG):
+with rs.Module(name="sendpics", config=CONFIG, depends=(rawio.mod, nlp.mod, idle.mod, verbaliser.mod)) as mod:
 
     prop_face_vec = rs.Property(name="face_vec", always_signal_changed=True)
 

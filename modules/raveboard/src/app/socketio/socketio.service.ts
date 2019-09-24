@@ -20,7 +20,14 @@ export class SocketIOService {
         this.activations = this.dataStream.pipe(filter(data => data.type === 'activation'), map(data => data as ActivationUpdate));
         this.spikes = this.dataStream.pipe(filter(data => data.type === 'spike'), map( data => data as SpikeUpdate));
 
-        let socket = io.connect("http://localhost:4242");
+        const urlParams = new URLSearchParams(window.location.search);
+        let sio_url = urlParams.get("rs-sio-url");
+        if (sio_url === null)
+            sio_url = "http://localhost:4242";
+
+        console.log(`Connecting to websocket url '${sio_url}'.`)
+
+        let socket = io.connect(sio_url);
         let scope = this;
 
         socket.on('spike', msg => {

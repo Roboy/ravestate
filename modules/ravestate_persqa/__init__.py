@@ -36,7 +36,7 @@ ONTOLOGY_TYPE_FOR_PRED = defaultdict(str, {
 # TODO "EQUALS"
 
 
-with rs.Module(name="persqa") as mod:
+with rs.Module(name="persqa", depends=(verbaliser.mod, mem.mod, nlp.mod, idle.mod, rawio.mod, interloc.mod)) as mod:
 
     # This is a nice demo of using properties as synchronization
     #  primitives. The problem: inference must only run for inputs

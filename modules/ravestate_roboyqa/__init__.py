@@ -21,7 +21,10 @@ verbaliser.add_folder(join(dirname(realpath(__file__)), "answering_phrases"))
 ROBOY_NODE_PROP_CONF_KEY = "roboy_node_properties"
 
 
-with rs.Module(name="roboyqa", config={ROBOY_NODE_PROP_CONF_KEY: {"name": "roboy two"}}):
+with rs.Module(
+        name="roboyqa",
+        config={ROBOY_NODE_PROP_CONF_KEY: {"name": "roboy two"}},
+        depends=(nlp.mod, verbaliser.mod, idle.mod, rawio.mod)) as mod:
 
     @rs.state(cond=idle.sig_bored, write=rawio.prop_out, weight=1.2, cooldown=30.)
     def hello_world_roboyqa(ctx):
