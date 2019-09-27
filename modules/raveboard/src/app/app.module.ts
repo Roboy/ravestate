@@ -1,5 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 
 import { AppComponent } from './app.component';
 import { NodeComponent } from './svg/elements/node.component';
@@ -18,7 +19,8 @@ import { ChatWindowComponent } from './chat-window/chat-window.component';
         ChatWindowComponent
     ],
     imports: [
-        BrowserModule
+        BrowserModule,
+        ReactiveFormsModule
     ],
     providers: [],
     bootstrap: [AppComponent]

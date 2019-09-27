@@ -47,4 +47,11 @@ export class SocketIOService {
         });
     }
 
+    sendMessage(message: string) {
+        this.messagesFromUI.next({
+            type: 'input',
+            text: message
+        });
+    }
+
 }

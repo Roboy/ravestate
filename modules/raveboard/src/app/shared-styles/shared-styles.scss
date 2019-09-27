@@ -49,3 +49,11 @@ input[type=text] {
   min-height: $min-button-size;
   min-width: $min-button-size;
 }
+
+input[type=text]:hover {
+  background: #333;
+}
+
+input[type=text]:focus {
+  background: #444;
+}
