@@ -16,7 +16,6 @@ import { Component } from '@angular/core';
                 <div>
                     TODOs:
                     <ul>
-                        <li>allow scrolling around (sideways/vertical)</li>
                         <li>simple chat window</li>
                         <li>allow to move columns up and down (to a certain degree)</li>
                     </ul>

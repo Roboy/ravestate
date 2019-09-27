@@ -6,17 +6,15 @@ import { MOCK_MESSAGES } from "./mock-messages";
 @Component({
     selector: 'app-mock-data-controller',
     template: `
-        Mock Data Controller
-        <br>
+        <h3>Mock data</h3>
         <button (click)="sendNextMockMessage()">Send mock message</button>
-        <button (click)="resetMockData()">Reset mock messages</button>
+        <button (click)="resetMockData()">Reset</button>
+        <span class="mock-msg-counter">Sent: {{mockMessageCounter}} / {{mockMessageTotal}}</span>
         <br>
-        <button (click)="sendActivation()">Send activation</button>
-        <button (click)="sendSpike()">Send spike</button>
+        <button (click)="sendActivation()">Send random activation</button>
+        <button (click)="sendSpike()">Send random spike</button>
         <br>
-        <br>
-        Recent data
-        <br>
+        <h3>Last mock message</h3>
         <div class="data-json">
             <pre>{{lastMockMessage ? (lastMockMessage | json) : '- none -'}}</pre>
         </div>
@@ -26,13 +24,14 @@ import { MOCK_MESSAGES } from "./mock-messages";
 export class MockDataControllerComponent {
 
     private randomIDCounter: number = 100;
-    private mockMessageCounter: number = 0;
-
     private lastRandomSpikeID: number = -1;
 
+    mockMessageCounter: number = 0;
+    mockMessageTotal: number;
     lastMockMessage: any;
 
     constructor(private ioService: SocketIOService) {
+        this.mockMessageTotal = MOCK_MESSAGES.length;
     }
 
     sendNextMockMessage() {
