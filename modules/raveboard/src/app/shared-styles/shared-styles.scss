@@ -31,3 +31,21 @@ button.round {
   max-width: $min-button-size;
   text-align: center;
 }
+
+h3:first-child {
+  margin: 7px 0;
+}
+h3 {
+  margin: 15px 0 7px 0;
+}
+
+input[type=text] {
+  color: white;
+  background: #222;
+  border: 1px solid gray;
+  border-radius: 30px;
+  padding: 5px 10px;
+  margin: 1px;
+  min-height: $min-button-size;
+  min-width: $min-button-size;
+}

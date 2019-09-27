@@ -19,8 +19,10 @@ import { Component } from '@angular/core';
                         <li>simple chat window</li>
                         <li>allow to move columns up and down (to a certain degree)</li>
                     </ul>
-                </div>
-                
+                </div>                
+            </div>
+            <div class="side2">
+                <app-chat-window></app-chat-window>
             </div>
         </div>
     `,
