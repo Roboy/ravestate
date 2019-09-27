@@ -74,7 +74,7 @@ export class NodeData {
             </g>
         </svg>
         <div class="controls">
-            <span class="percentage-label">{{(scale * 100).toFixed(0)}} %</span>
+            <span class="percentage-label">{{(scale * 100).toFixed(0)}}%</span>
             <button (click)="scaleDown()" class="round">-</button>
             <button (click)="scaleUp()" class="round">+</button>
             <button (click)="scale = 1" [disabled]="scale == 1">100%</button>

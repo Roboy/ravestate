@@ -1,4 +1,4 @@
-@import "../shared-styles/shared-styles";
+@import "../../shared-styles/shared-styles";
 
 :host {
   width: 100%;
@@ -17,6 +17,10 @@
   padding-top: 5px;
   display: grid;
   grid-template-columns: 1fr 70px;
+}
+
+.new-message-send {
+  margin-left: 5px;
 }
 
 .message-area {

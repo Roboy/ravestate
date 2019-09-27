@@ -7,7 +7,8 @@ import { NodeComponent } from './svg/elements/node.component';
 import { ConnectorComponent } from './svg/elements/connector.component';
 import { MockDataControllerComponent } from './model/mocks/mock-data-controller.component';
 import { ActivationSpikeGraphComponent } from './svg/activation-spike-graph/activation-spike-graph.component';
-import { ChatWindowComponent } from './chat-window/chat-window.component';
+import { ChatWindowComponent } from './chat/chat-window/chat-window.component';
+import { ChatMessageComponent } from './chat/chat-message/chat-message.component';
 
 @NgModule({
     declarations: [
@@ -16,7 +17,8 @@ import { ChatWindowComponent } from './chat-window/chat-window.component';
         ConnectorComponent,
         MockDataControllerComponent,
         ActivationSpikeGraphComponent,
-        ChatWindowComponent
+        ChatWindowComponent,
+        ChatMessageComponent
     ],
     imports: [
         BrowserModule,
