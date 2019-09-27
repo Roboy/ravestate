@@ -1,11 +1,11 @@
 import { Component, OnDestroy } from '@angular/core';
-import { merge, Subscription } from "rxjs";
+import { Subscription } from "rxjs";
 
-import { MockDataService } from "../../mock-data/mock-data.service";
-import { ActivationUpdate, SpikeUpdate } from "../../model/model";
 import { NodeType } from "../elements/node.component";
 import { DomSanitizer } from "@angular/platform-browser";
 import { SocketIOService } from "../../socketio/socketio.service";
+import { SpikeUpdate } from "../../model/spike-update";
+import { ActivationUpdate } from "../../model/activation-update";
 
 export class NodeData {
     id: number;
@@ -40,6 +40,7 @@ export class NodeData {
     static activationID(id: number): number {
         return id * 2;
     }
+
     static spikeID(id: number): number {
         return id * 2 + 1;
     }
@@ -55,24 +56,25 @@ export class NodeData {
                 <!-- connectors for every node -->
                 <ng-container *ngFor="let node of allNodes.values()">
                     <ng-container *ngIf="node.visible">
-                        <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y" [toY]="node.y" 
-                           [style.opacity]="hoveredNode && hoveredNode != node ? .1 : 1"></g>                        
+                        <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y"
+                           [toY]="node.y"
+                           [style.opacity]="hoveredNode && hoveredNode != node ? .1 : 1"></g>
                     </ng-container>
                 </ng-container>
 
                 <!-- all nodes on top of connectors -->
                 <ng-container *ngFor="let node of allNodes.values()">
                     <g node *ngIf="node.visible"
-                       (mouseenter)="hoverStart(node)" (mouseleave)="hoverEnd()"  
-                       [x]="node.x" [y]="node.y" [label]="node.label" 
-                       [nodeType]="node.nodeType" [nodeStatus]="node.element.status" 
+                       (mouseenter)="hoverStart(node)" (mouseleave)="hoverEnd()"
+                       [x]="node.x" [y]="node.y" [label]="node.label"
+                       [nodeType]="node.nodeType" [nodeStatus]="node.element.status"
                        [style.opacity]="node.transparent ? .2 : 1"></g>
                 </ng-container>
-                                
+
             </g>
         </svg>
         <div class="controls">
-            <span class="percentage-label">{{(scale * 100).toFixed(0)}} %</span> 
+            <span class="percentage-label">{{(scale * 100).toFixed(0)}} %</span>
             <button (click)="scaleDown()" class="round">-</button>
             <button (click)="scaleUp()" class="round">+</button>
             <button (click)="scale = 1" [disabled]="scale == 1">100%</button>
@@ -103,16 +105,11 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     hoveredNode: NodeData;
 
-    constructor(private mockDataService: MockDataService, private socketIoService: SocketIOService, private sanitizer: DomSanitizer)
-    {
-
-        // allow to mix real and mock data for development
-        const mergedSpikes = merge(mockDataService.spikes, socketIoService.spikes);
-        const mergedActs = merge(mockDataService.activations, socketIoService.activations);
+    constructor(private socketIoService: SocketIOService, private sanitizer: DomSanitizer) {
 
         this.subscriptions = new Subscription();
 
-        this.subscriptions.add(mergedSpikes.subscribe(spike => {
+        this.subscriptions.add(socketIoService.spikes.subscribe(spike => {
 
             const node = new NodeData(spike);
             this.allNodes.set(node.id, node);
@@ -145,7 +142,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
         }));
 
-        this.subscriptions.add(mergedActs.subscribe(activation => {
+        this.subscriptions.add(socketIoService.activations.subscribe(activation => {
 
             // create a new node for incoming activation
             const newNode = new NodeData(activation);
@@ -214,7 +211,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         }
 
         // reposition column
-        let y = - (visibleNodes - 1) / 2 * this.ySpacing;
+        let y = -(visibleNodes - 1) / 2 * this.ySpacing;
         for (const node of this.columns[targetColumnID].values()) {
             if (!node.visible) {
                 continue;
@@ -250,9 +247,11 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
     moveLeft() {
         this.xOffset -= 300 / this.scale;
     }
+
     moveRight() {
         this.xOffset += 300 / this.scale;
     }
+
     resetOffset() {
         this.xOffset = 0;
     }

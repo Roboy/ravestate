@@ -1,16 +1,3 @@
-export interface SpikeUpdate {
-    type: 'spike';
-
-    /** (int) Identifies a unique spike - use to update view model. Can conflict with ActivationUpdate. */
-    id: number;
-
-    /** Signal represented by spike - use as caption. */
-    signal: string;
-
-    /** List of immediate parent spikes that caused this spike - draw connections pointing from parents to child spikes. */
-    parents: Array<number>;
-}
-
 export interface ActivationUpdate {
     type: 'activation';
 
@@ -38,14 +25,4 @@ export interface ActivationUpdate {
      * Visualise referenced spikes as lines from the activation to the spike.
      */
     spikes: Array<{[signalName: string]: number}>;
-}
-
-export interface MessageToUI {
-    type: 'output', // output message (from the ravestate server to the UI)
-    text: string	// message text
-}
-
-export interface MessageFromUI {
-    type: 'input',  // input message (from the UI to the ravestate server)
-    text: string	// message text
 }

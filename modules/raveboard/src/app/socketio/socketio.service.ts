@@ -2,7 +2,10 @@ import { Injectable } from "@angular/core";
 import { Subject } from "rxjs";
 import * as io from "socket.io-client";
 
-import { ActivationUpdate, MessageFromUI, SpikeUpdate } from "../model/model";
+import { ActivationUpdate } from "../model/activation-update";
+import { SpikeUpdate } from "../model/spike-update";
+import { MessageToUI } from "../model/message-to-ui";
+import { MessageFromUI } from "../model/message-from-ui";
 
 
 @Injectable({
@@ -13,7 +16,7 @@ export class SocketIOService {
     // inputs: subscribe to receive messages
     activations: Subject<ActivationUpdate> = new Subject();
     spikes: Subject<SpikeUpdate> = new Subject();
-    messagesToUI: Subject<MessageFromUI> = new Subject();
+    messagesToUI: Subject<MessageToUI> = new Subject();
 
     // output: call emit() to send a message
     messagesFromUI: Subject<MessageFromUI> = new Subject();
@@ -38,6 +41,7 @@ export class SocketIOService {
             this.messagesToUI.next(msg);
         });
 
+        // listen for messages emitted by UI and send to the server
         this.messagesFromUI.subscribe(msg => { // no unsubscribe since this service lives forever
             socket.emit('message', msg);
         });
