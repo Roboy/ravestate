@@ -1,4 +1,3 @@
-
 export interface SpikeUpdate {
     type: 'spike';
 
@@ -39,4 +38,14 @@ export interface ActivationUpdate {
      * Visualise referenced spikes as lines from the activation to the spike.
      */
     spikes: Array<{[signalName: string]: number}>;
+}
+
+export interface MessageToUI {
+    type: 'output', // output message (from the ravestate server to the UI)
+    text: string	// message text
+}
+
+export interface MessageFromUI {
+    type: 'input',  // input message (from the UI to the ravestate server)
+    text: string	// message text
 }
