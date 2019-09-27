@@ -16,8 +16,8 @@ import { Component } from '@angular/core';
                 <div>
                     TODOs:
                     <ul>
-                        <li>simple chat window</li>
-                        <li>allow to move columns up and down (to a certain degree)</li>
+                        <li>allow to move graph with drag</li>
+                        <li>idea: allow to move columns up and down (to a certain degree)</li>
                     </ul>
                 </div>                
             </div>

@@ -7,13 +7,16 @@ import { MOCK_MESSAGES } from "./mock-messages";
     selector: 'app-mock-data-controller',
     template: `
         <h3>Mock data</h3>
-        <button (click)="sendNextMockMessage()">Send mock message</button>
+        <button (click)="sendNextMockMessage()">Send mock data</button>
         <button (click)="resetMockData()">Reset</button>
         <span class="mock-msg-counter">Sent: {{mockMessageCounter}} / {{mockMessageTotal}}</span>
         <br>
         <button (click)="sendActivation()">Send random activation</button>
         <button (click)="sendSpike()">Send random spike</button>
         <br>
+        <h3>Mock messages</h3>
+        <button (click)="chatSend()">Chat Send</button>
+        <button (click)="chatReceive()">Chat Receive</button>
         <h3>Last mock message</h3>
         <div class="data-json">
             <pre>{{lastMockMessage ? (lastMockMessage | json) : '- none -'}}</pre>
@@ -80,5 +83,26 @@ export class MockDataControllerComponent {
         this.lastRandomSpikeID = this.randomIDCounter;
         this.randomIDCounter++;
         this.ioService.spikes.next(this.lastMockMessage);
+    }
+
+    chatSend() {
+        this.ioService.sendMessage(this.randomMessage())
+    }
+
+    chatReceive() {
+        this.ioService.messagesToUI.next({
+            type: 'output',
+            text: this.randomMessage()
+        })
+    }
+
+    private randomMessage(): string {
+        const words = 'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor'.split(' ');
+        const n = Math.floor(Math.random() * 7) + 2;
+        let msg = '';
+        for (let i = 0; i < n; i++) {
+            msg += words[Math.floor(Math.random() * words.length)] + ' ';
+        }
+        return msg;
     }
 }

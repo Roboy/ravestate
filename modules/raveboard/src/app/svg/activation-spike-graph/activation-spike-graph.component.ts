@@ -27,11 +27,11 @@ export class NodeData {
         this.transparent = false;
         this.parents = [];
         if (element.type === 'activation') {
-            this.label = `${element.state} [${element.id}]`;
+            this.label = element.state; // `${element.state} [${element.id}]`;
             this.id = NodeData.activationID(element.id);
             this.nodeType = NodeType.ACTIVATION;
         } else {
-            this.label = `${element.signal} [${element.id}]`;
+            this.label = element.signal; // `${element.signal} [${element.id}]`;
             this.id = NodeData.spikeID(element.id);
             this.nodeType = NodeType.SPIKE;
         }

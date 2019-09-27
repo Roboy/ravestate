@@ -1,4 +1,4 @@
-@import "../../shared-styles/shared-styles";
+@import "../../shared-styles";
 
 :host {
   position: relative;
@@ -24,7 +24,7 @@ svg {
 
 .percentage-label {
   font-size: 12px;
-  width: 70px;
+  width: 50px;
   display: inline-block;
   text-align: right;
   padding: 0 10px;
