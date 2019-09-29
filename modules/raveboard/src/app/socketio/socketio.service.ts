@@ -37,13 +37,13 @@ export class SocketIOService {
             this.activations.next(msg)
         });
 
-        socket.on('message', msg => {
+        socket.on('output', msg => {
             this.messagesToUI.next(msg);
         });
 
         // listen for messages emitted by UI and send to the server
         this.messagesFromUI.subscribe(msg => { // no unsubscribe since this service lives forever
-            socket.emit('message', msg);
+            socket.emit('input', msg);
         });
     }
 

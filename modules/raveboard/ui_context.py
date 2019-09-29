@@ -50,8 +50,9 @@ class UIContext(rs.Context):
             @rs.state(cond=rs.sig_startup.detached().min_age(1.), write=rawio.prop_out)
             def announce_ui_url(ctx):
                 sio_uri = urllib.parse.quote(f"{ctx.conf(key=URL_PREFIX_KEY)}:{ctx.conf(key=PORT_CONFIG_KEY)}")
-                url = f"{ctx.conf(key=URL_PREFIX_KEY)}:{ctx.conf(key=PORT_CONFIG_KEY)}/ravestate?rs-sio-url={sio_uri}"
-                ctx[rawio.prop_out] = f"Watch your conversation on raveboard here! {url}"
+                url = f"{ctx.conf(key=URL_PREFIX_KEY)}:{ctx.conf(key=PORT_CONFIG_KEY)}/ravestate/index.html?rs-sio-url={sio_uri}"
+                logger.info(f"Raveboard URL: {url}")
+                ctx[rawio.prop_out] = f"Watch your conversation on Raveboard here! {url}"
 
             @rs.state(read=rawio.prop_out)
             def emit_output(ctx):
@@ -60,7 +61,7 @@ class UIContext(rs.Context):
         self._add_ravestate_module(mod)
 
         @rs.receptor(ctx_wrap=self, write=(rawio.prop_in,))
-        def receive_input(ctx, new_input_event):
+        def receive_input(ctx, _, new_input_event):
             if 'text' not in new_input_event:
                 logger.error("Bad socket.io message for input event!")
                 return
@@ -124,7 +125,11 @@ class UIContext(rs.Context):
             for sig in conj.signals():
                 spike_id = -1
                 if sig.spike:
-                    spike_id = self.ui_model(sig.spike).id
+                    spike_model = self.ui_model(sig.spike)
+                    spike_id = spike_model.id
+                    if not spike_model.published:
+                        self.sio.emit("spike", vars(spike_model))
+                        spike_model.published = True
                     fully_unreferenced = False
                 new_conj_dict[sig.name] = spike_id
                 if sig.name not in cur_conj_dict or cur_conj_dict[sig.name] != spike_id:
@@ -141,20 +146,15 @@ class UIContext(rs.Context):
 
     # --------------------- Context Overrides ---------------------
 
-    def emit(self, signal, parents=None, wipe: bool=False, payload=None) -> None:
-        # Copy instead of calling super to obtain reference to created spike.
-        if wipe:
-            self.wipe(signal)
-        with self._lock:
-            new_spike = rs.Spike(
-                sig=signal.id(),
-                parents=parents,
-                consumable_resources=set(self._properties.keys()),
-                payload=payload)
-            logger.debug(f"Emitting {new_spike}")
-            self._spikes_per_signal[signal].add(new_spike)
-            new_spike_model = self.ui_model(new_spike, parent_spikes=parents if parents else ())
-            self.sio.emit("spike", vars(new_spike_model))
+    def emit(self, signal, parents=None, wipe: bool=False, payload=None) -> rs.Spike:
+        new_spike = super().emit(signal, parents, wipe, payload)
+        # create spike ui model, but only send it on demand when it is ref'd by an activation
+        #  exception: the spike is an offspring spike
+        new_spike_ui_model = self.ui_model(new_spike, parent_spikes=parents if parents else ())
+        if parents:
+            self.sio.emit("spike", vars(new_spike))
+            new_spike_ui_model.published = True
+        return new_spike
 
     def run_once(self, seconds_passed=1., debug=False):
         super(UIContext, self).run_once(seconds_passed, debug)

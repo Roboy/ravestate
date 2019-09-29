@@ -182,10 +182,10 @@ class Context(IContext):
             logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
             self.tick_rate = 1
 
-    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> None:
+    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> Spike:
         """
         Emit a signal to the signal processing loop. _Note:_
-         The signal will only be processed if #run() has been called!
+         The spike will only be picked up by activations once `run_once`/`run` is called!
 
         * `signal`: The signal to be emitted.
 
@@ -195,6 +195,8 @@ class Context(IContext):
          before the new spike is created.
 
         * `payload`: Value that should be embedded in the new spike.
+
+        **Returns:** The newly created spike object.
         """
         if wipe:
             self.wipe(signal)
@@ -206,6 +208,7 @@ class Context(IContext):
                 payload=payload)
             logger.debug(f"Emitting {new_spike}")
             self._spikes_per_signal[signal].add(new_spike)
+        return new_spike
 
     def wipe(self, signal: Signal):
         """
