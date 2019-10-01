@@ -150,10 +150,10 @@ class UIContext(rs.Context):
         new_spike = super().emit(signal, parents, wipe, payload)
         # create spike ui model, but only send it on demand when it is ref'd by an activation
         #  exception: the spike is an offspring spike
-        new_spike_ui_model = self.ui_model(new_spike, parent_spikes=parents if parents else ())
+        spike_model = self.ui_model(new_spike, parent_spikes=parents if parents else ())
         if parents:
-            self.sio.emit("spike", vars(new_spike))
-            new_spike_ui_model.published = True
+            self.sio.emit("spike", vars(spike_model))
+            spike_model.published = True
         return new_spike
 
     def run_once(self, seconds_passed=1., debug=False):
