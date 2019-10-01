@@ -22,3 +22,4 @@ class UISpikeModel:
         self.id = id
         self.signal = signal
         self.parents = parents
+        self.published = False

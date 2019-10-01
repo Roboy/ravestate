@@ -5,11 +5,12 @@ from collections import defaultdict
 from math import ceil
 from copy import deepcopy
 import gc
+import importlib
 
 from ravestate.wrappers import PropertyWrapper
 
 from ravestate.icontext import IContext
-from ravestate.module import Module, has_module, get_module, import_module
+from ravestate.module import Module, has_module, get_module
 from ravestate.state import State
 from ravestate.property import Property
 from ravestate.iactivation import IActivation
@@ -106,6 +107,7 @@ class Context(IContext):
 
     _lock: RLock
 
+    _modules: Set[str]
     _properties: Dict[str, Property]
     _spikes_per_signal: Dict[
         Signal,
@@ -159,6 +161,7 @@ class Context(IContext):
         self._signal_causes = dict()
         self._activations_per_state = dict()
         self._run_task = None
+        self._modules = set()
 
         # Load required modules
         self.add_module(CORE_MODULE_NAME)
@@ -168,6 +171,7 @@ class Context(IContext):
         # Set required config overrides
         for module_name, key, value in overrides:
             self._config.set(module_name, key, value)
+
         # Set additional config runtime overrides
         if runtime_overrides:
             for module_name, key, value in runtime_overrides:
@@ -178,10 +182,10 @@ class Context(IContext):
             logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
             self.tick_rate = 1
 
-    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> None:
+    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> Spike:
         """
         Emit a signal to the signal processing loop. _Note:_
-         The signal will only be processed if #run() has been called!
+         The spike will only be picked up by activations once `run_once`/`run` is called!
 
         * `signal`: The signal to be emitted.
 
@@ -191,6 +195,8 @@ class Context(IContext):
          before the new spike is created.
 
         * `payload`: Value that should be embedded in the new spike.
+
+        **Returns:** The newly created spike object.
         """
         if wipe:
             self.wipe(signal)
@@ -202,6 +208,7 @@ class Context(IContext):
                 payload=payload)
             logger.debug(f"Emitting {new_spike}")
             self._spikes_per_signal[signal].add(new_spike)
+        return new_spike
 
     def wipe(self, signal: Signal):
         """
@@ -256,10 +263,15 @@ class Context(IContext):
          will be imported, and any ravestate modules registered during the python
          import will also be added to this context.
         """
-        if has_module(module_name):
-            self._module_registration_callback(get_module(module_name))
+        if module_name in self._modules:
+            logger.info(f"Module {module_name} already added.")
             return
-        import_module(module_name=module_name, callback=self._module_registration_callback)
+        if not has_module(module_name):
+            importlib.import_module(module_name)
+        modules_under_name = get_module(module_name)
+        assert len(modules_under_name) > 0
+        for mod in modules_under_name:
+            self._add_ravestate_module(mod)
 
     def add_state(self, *, st: State) -> None:
         """
@@ -634,8 +646,13 @@ class Context(IContext):
         del self._signal_causes[sig]
         self._needy_acts_per_state_per_signal.pop(sig)
 
-    def _module_registration_callback(self, mod: Module):
+    def _add_ravestate_module(self, mod: Module):
+        if mod in self._modules:
+            return
+        for dependency in mod.depends:
+            self._add_ravestate_module(dependency)
         self._config.add_conf(mod)
+        self._modules.add(mod)
         for prop in mod.props:
             self.add_prop(prop=prop)
         for sig in mod.signals:

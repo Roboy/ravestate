@@ -1,0 +1,28 @@
+@import "../../shared-styles";
+
+:host {
+  width: 100%;
+  height: 100%;
+
+  display: grid;
+  grid-template-rows: min-content 1fr min-content;
+}
+
+.chat-header {
+  text-align: center;
+}
+
+.new-message-area {
+  padding-bottom: 5px;
+  padding-top: 5px;
+  display: grid;
+  grid-template-columns: 1fr 70px;
+}
+
+.new-message-send {
+  margin-left: 5px;
+}
+
+.message-area {
+  overflow-y: auto;
+}

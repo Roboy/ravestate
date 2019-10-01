@@ -26,7 +26,27 @@
 
 ⚠️ Do not confuse `state` and `status`!
 
-### Sample message sequence
+#### Output Message
+
+This message is emitted, when the `rawio:out` property value changes.
+
+| Field name   | Value domain           | Purpose                                                |
+|--------------|------------------------|--------------------------------------------------------|
+| `type`       | `"output"`             | Message type - identifies message schema.              |
+| `text`       | `string`               | The content that was written to the `rawio:out` property.  |
+
+
+#### Input Message
+
+This message should be emitted by the raveboard frontend to push a new `rawio:in` value.
+
+| Field name   | Value domain           | Purpose                                                |
+|--------------|------------------------|--------------------------------------------------------|
+| `type`       | `"input"`              | Message type - identifies message schema.              |
+| `text`       | `string`               | The content that should be written to the `rawio:in` property. |
+
+
+### Sample message sequence for Spikes/Activations
 
 #### Message 0: A spike (id 0) is instantiated
 
@@ -296,4 +316,33 @@
 
 ![Pic7](7.png)
 
+
+### Sample message sequence for Input/Output
+
+```json
+{
+    "type": "input",
+    "text": "Hello!"
+}
+
+{
+    "type": "output",
+    "text": "greetings"
+}
+
+{
+    "type": "input",
+    "text": "How are you"
+}
+
+{
+    "type": "output",
+    "text": "hmmm"
+}
+
+{
+    "type": "output",
+    "text": "free as a butterfly"
+}
+```
 

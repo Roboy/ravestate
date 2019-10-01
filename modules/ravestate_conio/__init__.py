@@ -8,7 +8,7 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-with rs.Module(name="consoleio"):
+with rs.Module(name="consoleio", depends=(rawio.mod, interloc.mod)) as mod:
 
     @rs.state(cond=rs.sig_startup, read=interloc.prop_all)
     def console_input(ctx: rs.ContextWrapper):

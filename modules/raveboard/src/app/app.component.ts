@@ -5,7 +5,7 @@ import { Component } from '@angular/core';
     template: `
         <div class="root-container">
             <div class="header">
-                Raveboard &#127940;
+                Raveboard 🏄
             </div>
             <div class="main">
                 <app-activation-spike-graph class="graph-area"></app-activation-spike-graph>
@@ -16,12 +16,13 @@ import { Component } from '@angular/core';
                 <div>
                     TODOs:
                     <ul>
-                        <li>allow scrolling around (sideways/vertical)</li>
-                        <li>simple chat window</li>
-                        <li>allow to move columns up and down (to a certain degree)</li>
+                        <li>allow to move graph with drag</li>
+                        <li>idea: allow to move columns up and down (to a certain degree)</li>
                     </ul>
-                </div>
-                
+                </div>                
+            </div>
+            <div class="side2">
+                <app-chat-window></app-chat-window>
             </div>
         </div>
     `,

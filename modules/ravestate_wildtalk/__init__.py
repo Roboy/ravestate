@@ -27,12 +27,12 @@ CONFIG = {
     TOP_K_KEY: 0,  # convai_gpt, gpt2: <=0: no filtering, >0: keep only top k tokens with highest probability.
     TOP_P_KEY: 0.9,  # convai_gpt: <=0.0 no filtering, >0.0: keep smallest subset whose total probability mass >= top_p
     MAX_HISTORY_KEY: 4,  # convai_gpt: maximal number of previous dialog turns to be used for output generation
-
 }
 
 server_started = False
 
-with rs.Module(name="wildtalk", config=CONFIG):
+with rs.Module(name="wildtalk", config=CONFIG, depends=(rawio.mod,)):
+
     @rs.state(cond=rs.sig_startup)
     def init_wildtalk(ctx):
         server_address = f"{ctx.conf(key=SERVER_ADDRESS_KEY)}:{ctx.conf(key=SERVER_PORT_KEY)}"

@@ -1,0 +1,15 @@
+@import "../../shared-styles";
+
+.data-json {
+  overflow: auto;
+  border-radius: 5px;
+  padding: 3px;
+  background: #47253c;
+  color: #ffbe06;
+}
+
+.mock-msg-counter {
+  display: inline-block;
+  padding: 0 10px;
+  font-size: 12px;
+}

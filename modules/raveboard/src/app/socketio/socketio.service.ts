@@ -1,8 +1,11 @@
-import {Injectable} from "@angular/core";
-import {Observable, Subject} from "rxjs";
-import {filter, map} from "rxjs/operators";
-import {ActivationUpdate, SpikeUpdate} from "../model/model";
+import { Injectable } from "@angular/core";
+import { Subject } from "rxjs";
 import * as io from "socket.io-client";
+
+import { ActivationUpdate } from "../model/activation-update";
+import { SpikeUpdate } from "../model/spike-update";
+import { MessageToUI } from "../model/message-to-ui";
+import { MessageFromUI } from "../model/message-from-ui";
 
 
 @Injectable({
@@ -10,25 +13,45 @@ import * as io from "socket.io-client";
 })
 export class SocketIOService {
 
-    dataStream: Subject<SpikeUpdate | ActivationUpdate>;
+    // inputs: subscribe to receive messages
+    activations: Subject<ActivationUpdate> = new Subject();
+    spikes: Subject<SpikeUpdate> = new Subject();
+    messagesToUI: Subject<MessageToUI> = new Subject();
 
-    activations: Observable<ActivationUpdate>;
-    spikes: Observable<SpikeUpdate>;
+    // output: call emit() to send a message
+    messagesFromUI: Subject<MessageFromUI> = new Subject();
 
     constructor() {
-        this.dataStream = new Subject();
-        this.activations = this.dataStream.pipe(filter(data => data.type === 'activation'), map(data => data as ActivationUpdate));
-        this.spikes = this.dataStream.pipe(filter(data => data.type === 'spike'), map( data => data as SpikeUpdate));
+        const urlParams = new URLSearchParams(window.location.search);
+        const sio_url = urlParams.get('rs-sio-url') || 'http://localhost:4242';
 
-        let socket = io.connect("http://localhost:4242");
-        let scope = this;
+        console.log(`Connecting to socket.io URL: '${sio_url}'`);
+
+        let socket = io.connect(sio_url);
 
         socket.on('spike', msg => {
-            scope.dataStream.next(msg)
+            this.spikes.next(msg)
         });
 
         socket.on('activation', msg => {
-            scope.dataStream.next(msg)
+            this.activations.next(msg)
+        });
+
+        socket.on('output', msg => {
+            this.messagesToUI.next(msg);
+        });
+
+        // listen for messages emitted by UI and send to the server
+        this.messagesFromUI.subscribe(msg => { // no unsubscribe since this service lives forever
+            socket.emit('input', msg);
         });
     }
+
+    sendMessage(message: string) {
+        this.messagesFromUI.next({
+            type: 'input',
+            text: message
+        });
+    }
+
 }

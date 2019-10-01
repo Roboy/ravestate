@@ -1,18 +1,18 @@
 import { Component, OnDestroy } from '@angular/core';
 import { Subscription } from "rxjs";
 
-import { MockDataService } from "../../mock-data/mock-data.service";
-import { ActivationUpdate, SpikeUpdate } from "../../model/model";
 import { NodeType } from "../elements/node.component";
 import { DomSanitizer } from "@angular/platform-browser";
 import { SocketIOService } from "../../socketio/socketio.service";
+import { SpikeUpdate } from "../../model/spike-update";
+import { ActivationUpdate } from "../../model/activation-update";
 
-export class Node {
+export class NodeData {
     id: number;
     column: number;
 
     element: SpikeUpdate | ActivationUpdate;
-    parents: Array<Node>;
+    parents: Array<NodeData>;
 
     x: number;
     y: number;
@@ -27,12 +27,12 @@ export class Node {
         this.transparent = false;
         this.parents = [];
         if (element.type === 'activation') {
-            this.label = `${element.state} [${element.id}]`;
-            this.id = Node.activationID(element.id);
+            this.label = element.state; // `${element.state} [${element.id}]`;
+            this.id = NodeData.activationID(element.id);
             this.nodeType = NodeType.ACTIVATION;
         } else {
-            this.label = `${element.signal} [${element.id}]`;
-            this.id = Node.spikeID(element.id);
+            this.label = element.signal; // `${element.signal} [${element.id}]`;
+            this.id = NodeData.spikeID(element.id);
             this.nodeType = NodeType.SPIKE;
         }
     }
@@ -40,6 +40,7 @@ export class Node {
     static activationID(id: number): number {
         return id * 2;
     }
+
     static spikeID(id: number): number {
         return id * 2 + 1;
     }
@@ -55,29 +56,34 @@ export class Node {
                 <!-- connectors for every node -->
                 <ng-container *ngFor="let node of allNodes.values()">
                     <ng-container *ngIf="node.visible">
-                        <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y" [toY]="node.y" 
-                           [style.opacity]="hoveredNode && hoveredNode != node ? .1 : 1"></g>                        
+                        <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y"
+                           [toY]="node.y"
+                           [style.opacity]="hoveredNode && hoveredNode != node ? .1 : 1"></g>
                     </ng-container>
                 </ng-container>
 
                 <!-- all nodes on top of connectors -->
                 <ng-container *ngFor="let node of allNodes.values()">
                     <g node *ngIf="node.visible"
-                       (mouseenter)="hoverStart(node)" (mouseleave)="hoverEnd(node)"  
-                       [x]="node.x" [y]="node.y" [label]="node.label" 
-                       [nodeType]="node.nodeType" [nodeStatus]="node.element.status" 
+                       (mouseenter)="hoverStart(node)" (mouseleave)="hoverEnd()"
+                       [x]="node.x" [y]="node.y" [label]="node.label"
+                       [nodeType]="node.nodeType" [nodeStatus]="node.element.status"
                        [style.opacity]="node.transparent ? .2 : 1"></g>
                 </ng-container>
-                                
+
             </g>
         </svg>
         <div class="controls">
-            {{(scale * 100).toFixed(0)}} % 
+            <span class="percentage-label">{{(scale * 100).toFixed(0)}}%</span>
             <button (click)="scaleDown()" class="round">-</button>
             <button (click)="scaleUp()" class="round">+</button>
-            <button (click)="scale = 1">100%</button> 
-            |
-            <button (click)="clear()">Clear</button>
+            <button (click)="scale = 1" [disabled]="scale == 1">100%</button>
+            <span class="separator">|</span>
+            <button (click)="moveLeft()" class="round">&lt;</button>
+            <button (click)="resetOffset()" [disabled]="xOffset == 0">Reset Offset</button>
+            <button (click)="moveRight()" class="round">&gt;</button>
+            <span class="separator">|</span>
+            <button (click)="clear()">Clear Graph</button>
         </div>
     `,
     styleUrls: ['./activation-spike-graph.component.scss']
@@ -92,25 +98,26 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
     maxNodesPerColumn = 4;
 
     scale = 1;
+    xOffset = 0;
 
-    allNodes: Map<number, Node> = new Map();
-    columns: Array<Set<Node>> = [new Set()];
+    allNodes: Map<number, NodeData> = new Map();
+    columns: Array<Set<NodeData>> = [new Set()];
 
-    hoveredNode: Node;
+    hoveredNode: NodeData;
 
-    constructor(private mockDataService: MockDataService, private socketIoService: SocketIOService, private sanitizer: DomSanitizer)
-    {
+    constructor(private socketIoService: SocketIOService, private sanitizer: DomSanitizer) {
+
         this.subscriptions = new Subscription();
 
-        this.subscriptions.add(this.socketIoService.spikes.subscribe(spike => {
+        this.subscriptions.add(socketIoService.spikes.subscribe(spike => {
 
-            const node = new Node(spike);
+            const node = new NodeData(spike);
             this.allNodes.set(node.id, node);
 
             // find all spike parents
             let parentInLastCol = false;
             for (const parentID of spike.parents) {
-                const nodeID = Node.spikeID(parentID);
+                const nodeID = NodeData.spikeID(parentID);
                 const parent = this.allNodes.get(nodeID);
                 if (parent) {
                     if (parent.column === this.columns.length - 1) {
@@ -135,16 +142,16 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
         }));
 
-        this.subscriptions.add(this.socketIoService.activations.subscribe(activation => {
+        this.subscriptions.add(socketIoService.activations.subscribe(activation => {
 
             // create a new node for incoming activation
-            const newNode = new Node(activation);
+            const newNode = new NodeData(activation);
 
             // find all activation parents, determine lowest allowed column id
             let highestParentColumn = -1;
             for (const spikeMap of activation.spikes) {
                 for (const spikeID of Object.values(spikeMap)) {
-                    const nodeID = Node.spikeID(spikeID);
+                    const nodeID = NodeData.spikeID(spikeID);
                     const parent = this.allNodes.get(nodeID);
                     if (parent) {
                         highestParentColumn = Math.max(highestParentColumn, parent.column);
@@ -164,7 +171,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
                 targetColumnID = prevNode.column;
 
                 // create new set to keep order, replace prev node
-                const newColSet: Set<Node> = new Set();
+                const newColSet: Set<NodeData> = new Set();
                 for (const colNode of this.columns[targetColumnID]) {
                     newColSet.add(colNode != prevNode ? colNode : newNode);
                 }
@@ -204,7 +211,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         }
 
         // reposition column
-        let y = - (visibleNodes - 1) / 2 * this.ySpacing;
+        let y = -(visibleNodes - 1) / 2 * this.ySpacing;
         for (const node of this.columns[targetColumnID].values()) {
             if (!node.visible) {
                 continue;
@@ -237,13 +244,25 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         }
     }
 
+    moveLeft() {
+        this.xOffset -= 300 / this.scale;
+    }
+
+    moveRight() {
+        this.xOffset += 300 / this.scale;
+    }
+
+    resetOffset() {
+        this.xOffset = 0;
+    }
+
     getTransform() {
-        const containerPosX = 800 - this.columns.length * this.nodeSpacingX;
+        const containerPosX = 800 - this.columns.length * this.nodeSpacingX - this.xOffset;
         const transform = `translateX(900px) scale(${this.scale.toFixed(2)}) translateX(-900px) translateX(${containerPosX}px)`;
         return this.sanitizer.bypassSecurityTrustStyle(transform);
     }
 
-    hoverStart(hoveredNode: Node) {
+    hoverStart(hoveredNode: NodeData) {
         for (const node of this.allNodes.values()) {
             node.transparent = true;
         }
@@ -256,7 +275,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         this.hoveredNode = hoveredNode;
     }
 
-    hoverEnd(node: Node) {
+    hoverEnd() {
         for (const node of this.allNodes.values()) {
             node.transparent = false;
         }

@@ -1,4 +1,4 @@
-@import "../../shared-styles/shared-styles";
+@import "../../shared-styles";
 
 :host {
   position: relative;
@@ -16,6 +16,25 @@ svg {
 .controls {
   position: absolute;
   bottom: 0;
-  right: 0;
-  padding: 5px;
+  right: 5px;
+  padding: 10px;
+  background: #222;
+  border-radius: 30px 0 0 0;
+}
+
+.percentage-label {
+  font-size: 12px;
+  width: 50px;
+  display: inline-block;
+  text-align: right;
+  padding: 0 10px;
+}
+
+.separator {
+  display: inline-block;
+  padding: 0 10px;
+}
+
+g {
+  transition: opacity 0.5s;
 }
