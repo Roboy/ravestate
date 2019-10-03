@@ -94,6 +94,11 @@ class UIContext(rs.Context):
             return new_obj
 
     def ui_update_act(self, act: rs.Activation, is_running=False):
+
+        # -- do not report on boring activations
+        if act.boring():
+            return
+
         act_model = self.ui_model(act)
         update_needed = False
 
