@@ -10,7 +10,7 @@ from scientio.ontology.node import Node
 from os.path import realpath, dirname, join
 verbaliser.add_folder(join(dirname(realpath(__file__)), "en"))
 
-with rs.Module(name="hibye", depends=(interloc.mod, rawio.mod)) as mod:
+with rs.Module(name="hibye", depends=(interloc.mod, rawio.mod, verbaliser.mod)) as mod:
 
     @rs.state(cond=interloc.prop_all.pushed(), write=rawio.prop_out,
               read=interloc.prop_all)
