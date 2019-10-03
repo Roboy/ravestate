@@ -30,11 +30,7 @@ Please make sure to have the following items installed & sourced:
 3. pyroboy
 --------
     """)
-import time
-global listen_start_timestamp
-global say_end_timestamp
-listen_start_timestamp = 0
-say_end_timestamp = 0
+
 
 if PYROBOY_AVAILABLE:
 
@@ -75,7 +71,6 @@ if PYROBOY_AVAILABLE:
     LUCKY_EMOTION = "lucky"
     KISS_EMOTION = "kiss"
 
-
     with rs.Module(
             name="roboyio",
             config=CONFIG,
@@ -94,34 +89,12 @@ if PYROBOY_AVAILABLE:
             msg_type=RecognizedSpeech,
             always_signal_changed=True)
 
-        @rs.state(cond=recognized_speech.changed(), read=(interloc.prop_all,recognized_speech.id()) )
+        @rs.state(cond=recognized_speech.changed(), read=(interloc.prop_all, recognized_speech), write=rawio.prop_in)
         def roboy_input(ctx: rs.ContextWrapper):
-
-            # global say_end_timestamp
-            logger.info("in roboy_input again")
-            result = ctx[recognized_speech.id()]
-            # listen_start_timestamp = result.start_timestamp
-            # if say_end_timestamp >= listen_start_timestamp:
-                # logger.info("Discarded: " + str(result.text))
-                # result = None
-                # interloc.handle_single_interlocutor_input(ctx, "")
-            # else:
+            result = ctx[recognized_speech.changed()]
             if result.text:
-                    logger.info(result.text)
-                    interloc.handle_single_interlocutor_input(ctx, result.text)
-
-            # while not ctx.shutting_down():
-            #     listen_start_timestamp = time.time()
-            #     result = result = ctx[recognized_speech.id()]
-            #     print(result)
-            #     logger.info(f"pyroboy.listen() -> {result}")
-            #     if say_end_timestamp >= listen_start_timestamp:
-            #         logger.info("Discarded: " + str(result))
-            #         result = None
-            #         interloc.handle_single_interlocutor_input(ctx, "")
-            #     else:
-            #         if result:
-            #             interloc.handle_single_interlocutor_input(ctx, result)
+                logger.info("Input:", result.text)
+                rawio.say(ctx, result.text)
 
         @rs.state(read=rawio.prop_out)
         def roboy_output(ctx):
@@ -132,15 +105,11 @@ if PYROBOY_AVAILABLE:
             except:
                 logger.info("does /raveskills/off.sh exist?")
             with say_lock:
-                # logger.warn(unidecode(ctx[rawio.prop_out.changed()]))
-                ret = say(unidecode(ctx[rawio.prop_out.changed()]))
-            say_end_timestamp = time.time()
+                say(unidecode(ctx[rawio.prop_out.changed()]))
             try:
                 os.system('/raveskills/rainbow.sh')
             except:
                 logger.info("does /raveskills/rainbow.sh exist?")
-            # logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")\
-
 
         @rs.state(cond=rawio.prop_in.changed() | idle.sig_bored, write=(prop_head_axis0, prop_head_axis1, prop_head_axis2))
         def move_head(ctx: rs.ContextWrapper):

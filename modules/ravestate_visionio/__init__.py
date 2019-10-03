@@ -1,9 +1,8 @@
 import ravestate as rs
-import ravestate_rawio as rawio
 import ravestate_interloc as interloc
 import ravestate_ontology as mem
-import ravestate_persqa as persqa
 import ravestate_ros1 as ros
+
 from ravestate_visionio.faceoraclefilter import FaceOracleFilter, Person
 from scientio.session import Session
 from scientio.ontology.ontology import Ontology
@@ -33,7 +32,7 @@ if ROBOY_COGNITION_AVAILABLE:
     REDIS_PASS_CONF = "redis_pass"
     ROS1_FACE_TOPIC_CONFIG = "ros1-node"
     FACE_CONFIDENCE_THRESHOLD = "min-confidence"
-    PERSON_DISAPPEARED_THRESHOLD = "person-disappeared-treshold"
+    PERSON_DISAPPEARED_THRESHOLD = "person-disappeared-threshold"
 
     CONFIG = {
         REDIS_HOST_CONF: "localhost",
@@ -41,10 +40,10 @@ if ROBOY_COGNITION_AVAILABLE:
         REDIS_PASS_CONF: "pass",
         ROS1_FACE_TOPIC_CONFIG: "/roboy/cognition/vision/visible_face_names",
         FACE_CONFIDENCE_THRESHOLD: 0.85,
-        PERSON_DISAPPEARED_THRESHOLD: 4
+        PERSON_DISAPPEARED_THRESHOLD: 5
     }
 
-    with rs.Module(name="visionio", config=CONFIG) as mod:
+    with rs.Module(name="visionio", config=CONFIG, depends=(interloc.mod, mem.mod, ros.mod)) as mod:
 
         prop_subscribe_faces = ros.Ros1SubProperty(
             "face_names",

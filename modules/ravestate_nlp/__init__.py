@@ -1,6 +1,9 @@
 import ravestate as rs
 
 import ravestate_rawio as rawio
+import ravestate_verbaliser as verbaliser
+import ravestate_phrases_basic_en as lang
+
 from .question_word import QuestionWord
 from .triple import Triple
 from .extract_triples import extract_triples
@@ -53,7 +56,8 @@ with rs.Module(name="nlp", depends=(rawio.mod,)) as mod:
     sig_contains_roboy = rs.Signal(name="contains-roboy")
     sig_is_question = rs.Signal(name="is-question")
     sig_intent_play = rs.Signal(name="intent-play")
-
+    sig_intent_hi = rs.Signal(name="intent-hi")
+    sig_intent_bye = rs.Signal(name="intent-bye")
 
     @rs.state(read=rawio.prop_in, write=(prop_tokens, prop_postags, prop_lemmas, prop_tags, prop_ner, prop_triples, prop_roboy, prop_yesno))
     def nlp_preprocess(ctx):
@@ -97,23 +101,32 @@ with rs.Module(name="nlp", depends=(rawio.mod,)) as mod:
         logger.info(f"[NLP:yesno]: {nlp_yesno}")
 
     @rs.state(signal=sig_contains_roboy, read=prop_roboy)
-    def nlp_contains_roboy_signal(ctx):
+    def recognize_roboy(ctx):
         if ctx[prop_roboy]:
             return rs.Emit()
-        return False
 
     @rs.state(signal=sig_is_question, read=(prop_triples, prop_tags))
-    def nlp_is_question_signal(ctx):
+    def recognize_question(ctx):
         if ctx[prop_triples][0].is_question():
             return rs.Emit()
-        return False
 
     @rs.state(signal=sig_intent_play, read=prop_triples)
-    def nlp_intent_play_signal(ctx):
+    def recognize_intent_play(ctx):
         nlp_triples = ctx[prop_triples]
         if nlp_triples[0].match_either_lemma(pred={"play"}, obj={"game"}):
             return rs.Emit()
-        return False
+
+    @rs.state(signal=sig_intent_hi, read=rawio.prop_in)
+    def recognize_intent_hi(ctx):
+        input_value = (ctx[rawio.prop_in] or "").strip().lower()
+        if input_value in verbaliser.get_phrase_list(lang.intent_greeting):
+            return rs.Emit()
+
+    @rs.state(signal=sig_intent_bye, read=rawio.prop_in)
+    def recognize_intent_bye(ctx):
+        input_value = (ctx[rawio.prop_in] or "").strip().lower()
+        if input_value in verbaliser.get_phrase_list(lang.intent_farewells):
+            return rs.Emit()
 
     def detect_yesno_question(tags):
         """
