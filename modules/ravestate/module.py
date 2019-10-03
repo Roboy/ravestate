@@ -57,7 +57,7 @@ class Module:
         if name in self.registered_modules:
             logger.warn(f"Redefinition of module `{name}`!")
         module = inspect.getmodule(inspect.stack()[1].frame)
-        if module:
+        if module and module.__spec__:
             self.module_name = module.__spec__.name.split(".")[0]
             self.modules_per_python_module[self.module_name].add(self)
             logger.info(f"Registered module `{self.name}` under python module `{self.module_name}`.")
