@@ -6,6 +6,8 @@ set -x
 
 . ~/melodic_ws/devel/setup.bash
 
+echo dbms.connectors.default_listen_address=0.0.0.0 >> /etc/neo4j/neo4j.conf
+
 neo4j start
 roscore &
 cd /redis_db && redis-server &
