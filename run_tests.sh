@@ -13,3 +13,6 @@ echo "Sleeping 10 s to wait for neo4j and roscore ..."
 echo "-----------------------------------------------"
 sleep 10
 pytest --cov=modules -p no:warnings test
+
+neo4j stop
+killall roscore
