@@ -11,7 +11,7 @@ from ravestate.constraint import Constraint
 from ravestate.iactivation import IActivation, ISpike, ICausalGroup
 from ravestate.spike import Spike
 from ravestate.causal import CausalGroup
-from ravestate.state import State, Emit, Delete, Resign, Wipe
+from ravestate.state import State, Emit, Delete, Resign, Wipe, StateResult
 from ravestate.wrappers import ContextWrapper
 
 from reggol import get_logger
@@ -332,23 +332,14 @@ class Activation(IActivation):
                                          state=self.state_to_activate,
                                          spike_parents=self.parent_spikes,
                                          spike_payloads=self.spike_payloads)
-        # Run state function
+        # -- Run state function
         try:
             result = self.state_to_activate(context_wrapper, *self.args, **self.kwargs)
-        except Exception as e:
+        except:
             logger.error(f"An exception occurred while activating {self}: {traceback.format_exc()}")
             result = Resign()
 
-        # Remove references between causal groups <-> self. Note:
-        #  Activations for receptors do not have constraints.
-        if self.constraint:
-            for signal in self.constraint.signals():
-                if signal.spike:
-                    with signal.spike.causal_group() as cg:
-                        cg.rejected(signal.spike, self, reason=2)
-                    signal.spike = None
-
-        # Process state function result
+        # -- Process state function result
         if isinstance(result, Emit):
             if self.state_to_activate.signal:
                 self.ctx.emit(
@@ -357,33 +348,32 @@ class Activation(IActivation):
                     wipe=result.wipe)
             else:
                 logger.error(f"Attempt to emit spike from state {self.name}, which does not specify a signal name!")
-
         elif isinstance(result, Wipe):
             if self.state_to_activate.signal:
                 self.ctx.wipe(self.state_to_activate.signal)
             else:
                 logger.error(f"Attempt to wipe spikes from state {self.name}, which does not specify a signal name!")
-
         elif isinstance(result, Delete):
             self.ctx.rm_state(st=self.state_to_activate)
-            if result.resign:
-                for cg in self._unique_consenting_causal_groups():
-                    with cg:
-                        cg.resigned(self)
-                self.state_to_activate.activated.release()
-                return
-
         elif isinstance(result, Resign):
-            for cg in self._unique_consenting_causal_groups():
-                with cg:
-                    cg.resigned(self)
-            self.state_to_activate.activated.release()
-            return
+            pass
 
-        # Let participating causal groups know about consumed properties and forgone signals.
+        # -- Remove references between causal groups <-> self. Note:
+        #  Activations for receptors do not have constraints.
+        if self.constraint:
+            for signal in self.constraint.signals():
+                if signal.spike:
+                    with signal.spike.causal_group() as cg:
+                        cg.rejected(signal.spike, self, reason=2)
+                    signal.spike = None
+
+        # -- Execute result-dependent causal-group action
         for cg in self._unique_consenting_causal_groups():
             with cg:
-                cg.consumed(self.resources())
+                if not result or result.causal_group_action == StateResult.CAUSAL_GROUP_CONSUME:
+                    cg.consumed(self.resources())
+                elif result.causal_group_action == StateResult.CAUSAL_GROUP_RESIGN:
+                    cg.resigned(self)
 
         self.state_to_activate.activation_finished()
 
