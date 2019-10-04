@@ -19,7 +19,7 @@ with rs.Module(name="interloc", depends=(nlp.mod, mem.mod)) as mod:
     prop_persisted = rs.Property(name="persisted", allow_read=True, allow_write=True, allow_push=True, allow_pop=True,
                                  always_signal_changed=True)
 
-    @rs.state(cond=nlp.sig_intent_hi, write=prop_all)
+    @rs.state(cond=nlp.sig_intent_hi, read=prop_all, write=prop_all)
     def push_interlocutor(ctx):
         interloc_exists = ANON_INTERLOC_PATH in ctx.enum(prop_all)
         if not interloc_exists:
@@ -32,7 +32,7 @@ with rs.Module(name="interloc", depends=(nlp.mod, mem.mod)) as mod:
                     child=rs.Property(name=ANON_INTERLOC_ID, default_value=new_interloc)):
                 logger.debug(f"Pushed {new_interloc} to interloc:all")
 
-    @rs.state(cond=nlp.sig_intent_bye, write=prop_all)
+    @rs.state(cond=nlp.sig_intent_bye, read=prop_all, write=prop_all)
     def pop_interlocutor(ctx):
         interloc_exists = ANON_INTERLOC_PATH in ctx.enum(prop_all)
         if interloc_exists and ctx.pop(ANON_INTERLOC_PATH):

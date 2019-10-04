@@ -16,10 +16,9 @@ logger = get_logger(__name__)
 RAVEBOARD = "raveboard"
 PORT_CONFIG_KEY = "raveboard_port"
 URL_PREFIX_KEY = "raveboard_host_prefix"
-DEFAULT_PORT = 4242
 
 RAVEBOARD_CONFIG = {
-    PORT_CONFIG_KEY: 4242,
+    PORT_CONFIG_KEY: 42424,
     URL_PREFIX_KEY: "http://localhost"
 }
 
@@ -169,6 +168,7 @@ class UIContext(rs.Context):
                 self._state_activations())
         for act in acts_to_update:
             self.ui_update_act(act)
+        self.test()
 
     def _state_activated(self, act: rs.Activation):
         super(UIContext, self)._state_activated(act)

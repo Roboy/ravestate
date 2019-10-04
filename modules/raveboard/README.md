@@ -11,8 +11,8 @@ python3 -m raveboard ravestate_wildtalk ravestate_hibye
 ```
 
 If you did not override the `raveboard_port` config for the `core` module, you may
-access the UI in any browser under [localhost:4242/ravestate/index.html](http://localhost:4242/ravestate/index.html)
-Otherwise, just substite 4242 with your configured port.
+access the UI in any browser under [localhost:42424/ravestate/index.html](http://localhost:4242/ravestate/index.html)
+Otherwise, just substitute 42424 with your configured port.
 
 ## Setup, Development and Building
 
