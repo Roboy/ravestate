@@ -13,7 +13,6 @@ from ravestate.icontext import IContext
 from ravestate.module import Module, has_module, get_module
 from ravestate.state import State
 from ravestate.property import Property
-from ravestate.iactivation import IActivation
 from ravestate.activation import Activation
 from ravestate import argparser
 from ravestate.config import Configuration
@@ -165,8 +164,7 @@ class Context(IContext):
 
         # Load required modules
         self.add_module(CORE_MODULE_NAME)
-        for module_name in self.conf(mod=CORE_MODULE_NAME, key=IMPORT_MODULES_CONFIG_KEY) + modules:
-            self.add_module(module_name)
+        self._load_modules(self.conf(mod=CORE_MODULE_NAME, key=IMPORT_MODULES_CONFIG_KEY) + modules)
 
         # Set required config overrides
         for module_name, key, value in overrides:
@@ -623,6 +621,10 @@ class Context(IContext):
             gc.collect()
 
         self._update_core_properties(debug=debug)
+
+    def _load_modules(self, modules: List[str]):
+        for module_name in modules:
+            self.add_module(module_name)
 
     def _state_activated(self, act: Activation):
         self._activations_per_state[act.state_to_activate].discard(act)

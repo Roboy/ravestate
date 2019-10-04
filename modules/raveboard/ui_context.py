@@ -14,8 +14,8 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 RAVEBOARD = "raveboard"
-PORT_CONFIG_KEY = "raveboard_port"
-URL_PREFIX_KEY = "raveboard_host_prefix"
+PORT_CONFIG_KEY = "port"
+URL_PREFIX_KEY = "host"
 
 RAVEBOARD_CONFIG = {
     PORT_CONFIG_KEY: 42424,
@@ -26,23 +26,21 @@ RAVEBOARD_CONFIG = {
 class UIContext(rs.Context):
 
     def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None):
-        super().__init__(*arguments, runtime_overrides=runtime_overrides)
-
         self.msgs_lock = Lock()
         self.sio = socketio.Server(cors_allowed_origins="*", async_mode="threading")
         self.next_id_for_object = defaultdict(int)
         self.ui_objects: Dict[Union[rs.Spike, rs.Activation], Union[UISpikeModel, UIActivationModel]] = dict()
 
-        self._add_ui_module()
+        super().__init__(*arguments, runtime_overrides=runtime_overrides)
         Thread(target=self.ui_serve_events_async).start()
 
     def ui_serve_events_async(self):
         app = flask.Flask(__name__, static_folder="dist/ravestate")
         app.wsgi_app = socketio.Middleware(self.sio, app.wsgi_app)
-        app.run(port=self.conf(mod=RAVEBOARD, key=PORT_CONFIG_KEY), threaded=True)
+        app.run(host='0.0.0.0', port=self.conf(mod=RAVEBOARD, key=PORT_CONFIG_KEY), threaded=True)
 
-    def _add_ui_module(self):
-        import ravestate_rawio as rawio
+    def _load_modules(self, modules: List[str]):
+        super()._load_modules(modules)
 
         with rs.Module(name=RAVEBOARD, config=RAVEBOARD_CONFIG, depends=(rawio.mod,)) as mod:
 
@@ -168,7 +166,6 @@ class UIContext(rs.Context):
                 self._state_activations())
         for act in acts_to_update:
             self.ui_update_act(act)
-        self.test()
 
     def _state_activated(self, act: rs.Activation):
         super(UIContext, self)._state_activated(act)
