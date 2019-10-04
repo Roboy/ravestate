@@ -54,35 +54,35 @@ if ROBOY_COGNITION_AVAILABLE:
 
         prop_face_filter = rs.Property(
             name="face_frequencies",
-            default_value=None,
+            default_value=FaceOracleFilter(),
             always_signal_changed=True,
             allow_write=True
         )
 
-        @rs.state(
-            cond=rs.sig_startup | prop_subscribe_faces
-                .changed()
-                .detached()  # detached, because recognize_faces is also listening.
-                .min_age(rs.ConfigurableAge(key=PERSON_DISAPPEARED_THRESHOLD))
-                .max_age(-1),
-            read=(rs.prop_activity, interloc.prop_all, interloc.prop_persisted),
-            write=(prop_face_filter, interloc.prop_all),
-            boring=True
-        )
-        def reset(ctx: rs.ContextWrapper):
-            """
-            If there is no call for given seconds, removes the interlocutor node and initializes face oracle filter
-            from scratch.
-            """
-
-            # Remove interloc if present
-            if any(ctx.enum(interloc.prop_all)):
-                popped_node = ctx.pop(f'interloc:all:{interloc.ANON_INTERLOC_ID}')
-                if popped_node:
-                    logger.info("Visual contact is broken, removed the interlocutor node")
-
-            # Install a new FaceOracleFilter
-            ctx[prop_face_filter] = FaceOracleFilter()
+        # TODO: Reset is disabled for now. Reason: Camera image stream is too unreliable for timeout-mechanic to be
+        #  reasonable, and there is a conflict between `bye` and vision-based conversation stop.
+        # @rs.state(
+        #     cond=rs.sig_startup | prop_subscribe_faces
+        #         .changed()
+        #         .detached()  # detached, because recognize_faces is also listening.
+        #         .min_age(rs.ConfigurableAge(key=PERSON_DISAPPEARED_THRESHOLD))
+        #         .max_age(-1),
+        #     read=(rs.prop_activity, interloc.prop_all, interloc.prop_persisted),
+        #     write=(prop_face_filter, interloc.prop_all),
+        #     boring=True
+        # )
+        # def reset(ctx: rs.ContextWrapper):
+        #     """
+        #     If there is no call for given seconds, removes the interlocutor node and initializes face oracle filter
+        #     from scratch.
+        #     """
+        #     # Remove interloc if present
+        #     if any(ctx.enum(interloc.prop_all)):
+        #         popped_node = ctx.pop(f'interloc:all:{interloc.ANON_INTERLOC_ID}')
+        #         if popped_node:
+        #             logger.info("Visual contact is broken, removed the interlocutor node")
+        #     # Install a new FaceOracleFilter
+        #     ctx[prop_face_filter] = FaceOracleFilter()
 
         @rs.state(
             cond=prop_subscribe_faces.changed(),

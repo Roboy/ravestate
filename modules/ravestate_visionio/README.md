@@ -86,7 +86,7 @@ On macOS, devices (such as webcams) cannot be easily mapped into Docker. Therefo
 # 1/5) On Host: Launch `Local RTMP Server`
 # 2/5) On Host: run `ffmpeg` to stream video from your Facetime camera to Docker 
 
-ffmpeg -f avfoundation -framerate 30 -i 0 -filter:v fps=fps=2 -f flv rtmp://127.0.0.1/live/facetime   
+ffmpeg -f avfoundation -framerate 25 -pixel_format 0rgb -video_size 640x480 -i 0 -filter:v fps=fps=2 -f flv rtmp://127.0.0.1/live/faceoracle
 #Note: `"0"` refers to device with index 0. Change to stream from a different camera.`
 
 # 3/5) In Docker: Make sure that roscore is running
