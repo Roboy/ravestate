@@ -252,7 +252,8 @@ class Context(IContext):
         """
         self._shutdown_flag.set()
         self.emit(sig_shutdown)
-        self._run_task.join()
+        if self._run_task:
+            self._run_task.join()
 
     def add_module(self, module_name: str) -> None:
         """

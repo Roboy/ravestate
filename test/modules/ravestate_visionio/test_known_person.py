@@ -94,6 +94,7 @@ def test_known_person():
 
     assert visionio.recognize_faces.wait(0)
 
+    ctx.shutdown()
     delete_dummy_people()
     # Unfortunately needed until Context adopts Properties as clones.
     interloc.prop_all.children.clear()
