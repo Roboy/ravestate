@@ -180,8 +180,8 @@ with rs.Module(name="persqa", depends=(verbaliser.mod, mem.mod, nlp.mod, idle.mo
         create_small_talk_states(ctx=ctx, interloc_path=interloc_path)
 
     @rs.state(
-        cond=rawio.prop_in.changed() & interloc.prop_all.popped(),
-        write=(prop_inference_mutex, prop_predicate, prop_subject))
+        cond=interloc.prop_all.popped(),
+        write=(prop_predicate, prop_subject))
     def removed_interloc(ctx: rs.ContextWrapper):
         """
         reacts to interloc:popped and makes sure that
