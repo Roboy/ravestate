@@ -33,14 +33,14 @@ relationships: [EQUALS, FROM, SUBSIDIARY_OF, WORK_FOR, STUDY_AT]
 entity: Company
 properties: [name, birthdate, timestamp]
 relationships: [EQUALS, FROM, WORK_FOR]
-meta: [Organisation]
+meta: [Organization]
 
 ---
 !OType
 entity: University
 properties: [name, birthdate, timestamp]
 relationships: [EQUALS, FROM, STUDY_AT]
-meta: [Organisation]
+meta: [Organization]
 
 ---
 !OType
