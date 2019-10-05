@@ -37,7 +37,7 @@ if ROBOY_COGNITION_AVAILABLE:
     CONFIG = {
         REDIS_HOST_CONF: "localhost",
         REDIS_PORT_CONF: 6379,
-        REDIS_PASS_CONF: "pass",
+        REDIS_PASS_CONF: "",
         ROS1_FACE_TOPIC_CONFIG: "/roboy/cognition/vision/visible_face_names",
         FACE_CONFIDENCE_THRESHOLD: 0.85,
         PERSON_DISAPPEARED_THRESHOLD: 5
