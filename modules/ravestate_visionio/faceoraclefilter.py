@@ -179,6 +179,9 @@ class FaceOracleFilter:
         person_to_save = self.people[unregistered_primary_key]._replace(is_known=True, id=registered_primary_key)
         del self.people[unregistered_primary_key]
 
+        self.messages_per_person[registered_primary_key] = self.messages_per_person[unregistered_primary_key]
+        del self.messages_per_person[unregistered_primary_key]
+
         self.people[registered_primary_key] = person_to_save
         self.current_best_guess = person_to_save
 
