@@ -175,7 +175,7 @@ class Context(IContext):
             for module_name, key, value in runtime_overrides:
                 self._config.set(module_name, key, value)
 
-        self.tick_rate = self.conf(mod=CORE_MODULE_NAME, key=TICK_RATE_CONFIG_KEY)
+        self.tick_rate = int(self.conf(mod=CORE_MODULE_NAME, key=TICK_RATE_CONFIG_KEY))
         if self.tick_rate < 1:
             logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
             self.tick_rate = 1
@@ -325,16 +325,13 @@ class Context(IContext):
             # add state to state activation map
             self._activations_per_state[st] = set()
 
-            # make sure that all of the state's depended-upon signals exist,
-            #  add a default state activation for every constraint.
+            # complete constraint, create a new default state activation for every affected state.
             for state in states_to_recomplete:
-                self._del_state_activations(state)
                 self._complete_constraint(state)
-                # first create an activation which reacquires for existing spikes,
-                #  then create another activation which hooks into signals
-                #  that are not looked for anymore by the spiky one.
-                if self._new_state_activation(state, reacquire=True):
-                    self._new_state_activation(state)
+                # remove (filter out) the current default (catch-all) activation
+                self._activations_per_state[state] = {act for act in self._activations_per_state[state] if act.spiky()}
+                # create a new default (catch-all) activation
+                self._new_state_activation(state)
 
         # register the state's consumable dummy, so that it is passed
         #  to Spike and from there to CausalGroup as a consumable resource.
@@ -554,25 +551,23 @@ class Context(IContext):
             # ----------- For every state, compress it's activations -----------
 
             for st, acts in self._activations_per_state.items():
-                # print(st)
-                if len(acts) > 0:
-                # assert len(acts) > 0
-                    if len(acts) > 1:
-                        # We could do some fancy merge of partially fulfilled activations,
-                        #  but for now let's just remove all completely unfulfilled
-                        #  ones apart from one.
-                        allowed_unfulfilled: Optional[Activation] = None
-                        for act in acts.copy():
-                            if not act.spiky():
-                                if allowed_unfulfilled:
-                                    for signal in act.constraint.signals():
-                                        if signal in self._needy_acts_per_state_per_signal and \
-                                                act in self._needy_acts_per_state_per_signal[signal][act.state_to_activate]:
-                                            self._needy_acts_per_state_per_signal[
-                                                signal][act.state_to_activate].remove(act)
-                                    acts.remove(act)
-                                else:
-                                    allowed_unfulfilled = act
+                assert len(acts) > 0
+                if len(acts) > 1:
+                    # We could do some fancy merge of partially fulfilled activations,
+                    #  but for now let's just remove all completely unfulfilled
+                    #  ones apart from one.
+                    allowed_unfulfilled: Optional[Activation] = None
+                    for act in acts.copy():
+                        if not act.spiky():
+                            if allowed_unfulfilled:
+                                for signal in act.constraint.signals():
+                                    if signal in self._needy_acts_per_state_per_signal and \
+                                            act in self._needy_acts_per_state_per_signal[signal][act.state_to_activate]:
+                                        self._needy_acts_per_state_per_signal[
+                                            signal][act.state_to_activate].remove(act)
+                                acts.remove(act)
+                            else:
+                                allowed_unfulfilled = act
 
             # --------- Acquire new state activations for every spike ----------
 
@@ -664,31 +659,14 @@ class Context(IContext):
             self.add_state(st=st)
         logger.info(f"Module {mod.name} added to session.")
 
-    def _new_state_activation(self, st: State, reacquire: bool = False) -> bool:
+    def _new_state_activation(self, st: State):
         activation = Activation(st, self)
-        reacquired = False
         self._activations_per_state[st].add(activation)
         for signal in st.completed_constraint.signals():
             if signal in self._needy_acts_per_state_per_signal:
-                signal_reacquired = False
-                if reacquire:
-                    for spike in self._spikes_per_signal[signal]:
-                        if spike.is_wiped():
-                            continue
-                        if activation.acquire(spike=spike):
-                            signal_reacquired = True
-                            break
-                if signal_reacquired:
-                    reacquired = True
-                else:
-                    self._needy_acts_per_state_per_signal[signal][st].add(activation)
-            else:
-                logger.warning(
-                    f"Adding state activation for {st.name} which depends on unknown signal `{signal}`!")
-        return reacquired
+                self._needy_acts_per_state_per_signal[signal][st].add(activation)
 
     def _del_state_activations(self, st: State) -> None:
-        # delete activation from gaybar
         if st not in self._activations_per_state:
             return
         for signal in st.completed_constraint.signals():
