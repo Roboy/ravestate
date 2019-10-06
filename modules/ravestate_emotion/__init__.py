@@ -20,7 +20,7 @@ CONFIG = {
 
 AFFECTIONATE_LIST = ["cute", "nice", "cool", "awesome", "funny"]
 
-with rs.Module(name="emotion", config=CONFIG):
+with rs.Module(name="emotion", config=CONFIG, depends=(rawio.mod, nlp.mod)) as mod:
 
     sig_shy = rs.Signal(name="shy")
     sig_surprise = rs.Signal(name="surprise")

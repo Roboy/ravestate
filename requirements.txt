@@ -4,7 +4,7 @@ pyyaml>=5.1
 python-telegram-bot
 pyyaml-include
 roboy_parlai>=0.1.post3
-spacy>=2.1.0
+spacy==2.1.0
 flask
 flask_socketio
 requests
@@ -13,3 +13,4 @@ redis
 face_recognition
 pytorch-pretrained-bert
 pytorch_transformers
+python-socketio

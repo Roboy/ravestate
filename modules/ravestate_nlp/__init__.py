@@ -1,10 +1,10 @@
 import ravestate as rs
 
 import ravestate_rawio as rawio
-from ravestate_nlp.question_word import QuestionWord
-from ravestate_nlp.triple import Triple
-from ravestate_nlp.extract_triples import extract_triples
-from ravestate_nlp.yes_no import yes_no, YesNoWrapper
+from .question_word import QuestionWord
+from .triple import Triple
+from .extract_triples import extract_triples
+from .yes_no import yes_no, YesNoWrapper
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -39,7 +39,7 @@ def init_spacy():
 spacy_nlp_en = init_spacy()
 
 
-with rs.Module(name="nlp"):
+with rs.Module(name="nlp", depends=(rawio.mod,)) as mod:
 
     prop_tokens = rs.Property(name="tokens", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)
     prop_postags = rs.Property(name="postags", default_value="", always_signal_changed=True, allow_pop=False, allow_push=False)

@@ -1,0 +1,28 @@
+:host {
+}
+
+.input-message-wrapper, .output-message-wrapper {
+  padding: 5px;
+}
+.input-message-wrapper {
+  text-align: right;
+}
+
+
+.input-message, .output-message {
+  display: inline-block;
+  padding: 7px 12px;
+  border-radius: 20px;
+  max-width: 70%;
+}
+
+.input-message {
+  // input message is sent from UI to server
+  background: #3d4f3c;
+}
+
+.output-message {
+  //output message is received by UI from server
+  background: #353851;
+}
+
