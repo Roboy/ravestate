@@ -51,7 +51,7 @@ export class NodeData {
     selector: 'app-activation-spike-graph',
     template: `
         <div #wrapper style="overflow-x: scroll; width: 100%; height: 100%;">
-            <svg [style.width]="columns.length * nodeSpacingX * scale + 'px'">
+            <svg #svg>
                 <g [style.transform]="getTransform()">
                     
                     <!-- connectors for every node -->
@@ -98,6 +98,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
     scale = 1;
 
     @ViewChild('wrapper', {static: true} ) wrapper: ElementRef<HTMLDivElement>;
+    @ViewChild('svg', {static: true} ) svg: ElementRef<SVGElement>;
 
     allNodes: Map<number, NodeData> = new Map();
     columns: Array<Set<NodeData>> = [new Set()];
@@ -251,18 +252,20 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     scaleBy(factor: number) {
         this.scale *= factor;
-        this.svg.nativeElement.style.width = this.columns.length * this.nodeSpacingX * this.scale + 'px';
         const e = this.wrapper.nativeElement;
         const dx = (e.scrollLeft + e.clientWidth / 2) * (factor - 1);
-        const targetScroll = e.scrollLeft + dx;
-        setTimeout(() => {
-            e.scrollLeft = targetScroll;
-        }, 0)
+        const target = e.scrollLeft + dx;
+        if (dx > 0) {
+            this.svg.nativeElement.style.width = this.columns.length * this.nodeSpacingX * this.scale + 'px';
+            e.scrollLeft = target;
+        } else {
+            e.scrollLeft = target;
+            this.svg.nativeElement.style.width = this.columns.length * this.nodeSpacingX * this.scale + 'px';
+        }
     }
 
     getTransform() {
-        //const transform = `translateX(${hx}px) scale(${this.scale.toFixed(2)}) translateX(-${hx}px) translateX(${containerPosX}px)`;
-        const transform = `scale(${this.scale.toFixed(2)})`;
+        const transform = `scale(${this.scale.toFixed(6)})`;
         return this.sanitizer.bypassSecurityTrustStyle(transform);
     }
 
@@ -288,10 +291,10 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     scheduleScrollSnapCheck() {
         const e = this.wrapper.nativeElement;
-        if (e.scrollLeft >= (e.scrollWidth - e.clientWidth)) {
-            setTimeout(() => {
-                e.scrollLeft = e.scrollWidth;
-            });
+        const snap = e.scrollLeft >= (e.scrollWidth - e.clientWidth);
+        this.svg.nativeElement.style.width = this.columns.length * this.nodeSpacingX * this.scale + 'px';
+        if (snap) {
+            e.scrollLeft = e.scrollWidth;
         }
     }
 
