@@ -92,8 +92,8 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     // distance between two nodes (x-axis)
     nodeSpacingX = 180;
-    ySpacing = 100;
-    maxNodesPerColumn = 4;
+    nodeSpacingY = 100;
+    maxNodesPerColumn = 5;
 
     scale = 1;
 
@@ -125,7 +125,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
                     node.parents.push(parent);
                 }
             }
-            const lastColumnFull = this.columns[this.columns.length - 1].size > this.maxNodesPerColumn;
+            const lastColumnFull = this.columns[this.columns.length - 1].size >= this.maxNodesPerColumn;
 
             // create new column if necessary
             if (parentInLastCol || lastColumnFull) {
@@ -186,7 +186,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
                 // need to insert new into last column
                 if (highestParentColumn >= this.columns.length - 1
-                    || this.columns[this.columns.length - 1].size > this.maxNodesPerColumn) {
+                    || this.columns[this.columns.length - 1].size >= this.maxNodesPerColumn) {
                     // last column not ok (full or has parents)
                     this.columns.push(new Set());
                     this.scheduleScrollSnapCheck();
@@ -212,14 +212,14 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         }
 
         // reposition column
-        let y = -(visibleNodes - 1) / 2 * this.ySpacing;
+        let y = -(visibleNodes - 1) / 2 * this.nodeSpacingY;
         for (const node of this.columns[targetColumnID].values()) {
             if (!node.visible) {
                 continue;
             }
             node.x = targetColumnID * this.nodeSpacingX + 85;
             node.y = y;
-            y += this.ySpacing;
+            y += this.nodeSpacingY;
         }
 
     }
