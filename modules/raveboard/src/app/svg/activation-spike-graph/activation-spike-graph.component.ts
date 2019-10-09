@@ -79,7 +79,7 @@ export class NodeData {
             <button (click)="scaleDown()" class="round">-</button>
             <span class="percentage-label">{{(scale * 100).toFixed(0)}}%</span>
             <button (click)="scaleUp()" class="round">+</button>
-            <button (click)="scale = 1" [disabled]="scale == 1">100%</button>
+            <button (click)="resetScale()" [disabled]="scale == 1">100%</button>
             <span class="separator">|</span>
             <button (click)="clear()">Clear Graph</button>
         </div>
@@ -235,25 +235,30 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     scaleUp() {
         if (this.scale < 4) {
-            this.scale *= 1.1;
-            const e = this.wrapper.nativeElement;
-            const dx = (e.scrollLeft + e.clientWidth / 2) * 0.1;
-            setTimeout(() => {
-                e.scrollLeft += dx;
-            }, 0)
-
+            this.scaleBy(1.1);
         }
     }
 
     scaleDown() {
         if (this.scale >= 0.3) {
-            this.scale /= 1.1;
-            const e = this.wrapper.nativeElement;
-            const dx = (e.scrollLeft + e.clientWidth / 2) * (1 - 1 / 1.1);
-            setTimeout(() => {
-                e.scrollLeft -= dx;
-            }, 0)
+            this.scaleBy(1 / 1.1);
         }
+    }
+
+    resetScale() {
+
+        this.scaleBy(1 / this.scale);
+        this.scale = 1;
+
+    }
+
+    scaleBy(factor: number) {
+        this.scale *= factor;
+        const e = this.wrapper.nativeElement;
+        const dx = (e.scrollLeft + e.clientWidth / 2) * (factor - 1);
+        setTimeout(() => {
+            e.scrollLeft += dx;
+        }, 0)
     }
 
     getTransform() {
