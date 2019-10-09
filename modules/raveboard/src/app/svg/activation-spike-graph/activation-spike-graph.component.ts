@@ -246,18 +246,17 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
     }
 
     resetScale() {
-
         this.scaleBy(1 / this.scale);
-        this.scale = 1;
-
     }
 
     scaleBy(factor: number) {
         this.scale *= factor;
+        this.svg.nativeElement.style.width = this.columns.length * this.nodeSpacingX * this.scale + 'px';
         const e = this.wrapper.nativeElement;
         const dx = (e.scrollLeft + e.clientWidth / 2) * (factor - 1);
+        const targetScroll = e.scrollLeft + dx;
         setTimeout(() => {
-            e.scrollLeft += dx;
+            e.scrollLeft = targetScroll;
         }, 0)
     }
 
