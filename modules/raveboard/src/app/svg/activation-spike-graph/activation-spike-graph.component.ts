@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { Subscription } from "rxjs";
 
 import { NodeType } from "../elements/node.component";
@@ -50,40 +50,38 @@ export class NodeData {
 @Component({
     selector: 'app-activation-spike-graph',
     template: `
-        <div style="overflow-x: scroll; width: 100%; height: 100%; scrollbar-width: thin">
-            <div style="height:100%" [style.width]="">
-                <svg [attr.viewBox]="'0 0 1 ' + ySize" preserveAspectRatio="xMidYMid meet">
-                    <g class="moving-container" [style.transform]="getTransform()">
-        
-                        <!-- connectors for every node -->
-                        <ng-container *ngFor="let node of allNodes.values()">
-                            <ng-container *ngIf="node.visible">
-                                <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y"
-                                   [toY]="node.y"
-                                   [style.opacity]="hoveredNode && hoveredNode != node ? .1 : 1"></g>
-                            </ng-container>
+        <div #wrapper style="overflow-x: scroll; width: 100%; height: 100%;">
+            <svg [style.width]="columns.length * nodeSpacingX * scale + 'px'">
+                <g [style.transform]="getTransform()">
+                    
+                    <!-- connectors for every node -->
+                    <ng-container *ngFor="let node of allNodes.values()">
+                        <ng-container *ngIf="node.visible">
+                            <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y"
+                               [toY]="node.y"
+                               [style.opacity]="hoveredNode && hoveredNode != node ? .1 : 1"></g>
                         </ng-container>
-        
-                        <!-- all nodes on top of connectors -->
-                        <ng-container *ngFor="let node of allNodes.values()">
-                            <g node *ngIf="node.visible"
-                               (mouseenter)="hoverStart(node)" (mouseleave)="hoverEnd()"
-                               [x]="node.x" [y]="node.y" [label]="node.label"
-                               [nodeType]="node.nodeType" [nodeStatus]="node.element.status"
-                               [style.opacity]="node.transparent ? .2 : 1"></g>
-                        </ng-container>
-        
-                    </g>
-                </svg>
-            </div>
+                    </ng-container>
+    
+                    <!-- all nodes on top of connectors -->
+                    <ng-container *ngFor="let node of allNodes.values()">
+                        <g node *ngIf="node.visible"
+                           (mouseenter)="hoverStart(node)" (mouseleave)="hoverEnd()"
+                           [x]="node.x" [y]="node.y" [label]="node.label"
+                           [nodeType]="node.nodeType" [nodeStatus]="node.element.status"
+                           [style.opacity]="node.transparent ? .2 : 1"></g>
+                    </ng-container>
+    
+                </g>
+            </svg>
         </div>
         <div class="controls">
-            <button (click)="clear()">Clear Graph</button>
-            <span class="separator">|</span>
-            <span class="percentage-label">{{(scale * 100).toFixed(0)}}%</span>
             <button (click)="scaleDown()" class="round">-</button>
+            <span class="percentage-label">{{(scale * 100).toFixed(0)}}%</span>
             <button (click)="scaleUp()" class="round">+</button>
             <button (click)="scale = 1" [disabled]="scale == 1">100%</button>
+            <span class="separator">|</span>
+            <button (click)="clear()">Clear Graph</button>
         </div>
     `,
     styleUrls: ['./activation-spike-graph.component.scss']
@@ -97,8 +95,9 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
     ySpacing = 100;
     maxNodesPerColumn = 4;
 
-    ySize = 500;
     scale = 1;
+
+    @ViewChild('wrapper', {static: true} ) wrapper: ElementRef<HTMLDivElement>;
 
     allNodes: Map<number, NodeData> = new Map();
     columns: Array<Set<NodeData>> = [new Set()];
@@ -131,6 +130,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
             // create new column if necessary
             if (parentInLastCol || lastColumnFull) {
                 this.columns.push(new Set());
+                this.scheduleScrollSnapCheck();
             }
 
             // add new node to the last column and reposition nodes
@@ -189,6 +189,7 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
                     || this.columns[this.columns.length - 1].size > this.maxNodesPerColumn) {
                     // last column not ok (full or has parents)
                     this.columns.push(new Set());
+                    this.scheduleScrollSnapCheck();
                 }
                 targetColumnID = this.columns.length - 1;
 
@@ -211,12 +212,12 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         }
 
         // reposition column
-        let y = -(visibleNodes - 1) / 2 * this.ySpacing + this.ySize / 2;
+        let y = -(visibleNodes - 1) / 2 * this.ySpacing;
         for (const node of this.columns[targetColumnID].values()) {
             if (!node.visible) {
                 continue;
             }
-            node.x = targetColumnID * this.nodeSpacingX;
+            node.x = targetColumnID * this.nodeSpacingX + 85;
             node.y = y;
             y += this.ySpacing;
         }
@@ -235,19 +236,29 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
     scaleUp() {
         if (this.scale < 4) {
             this.scale *= 1.1;
+            const e = this.wrapper.nativeElement;
+            const dx = (e.scrollLeft + e.clientWidth / 2) * 0.1;
+            setTimeout(() => {
+                e.scrollLeft += dx;
+            }, 0)
+
         }
     }
 
     scaleDown() {
         if (this.scale >= 0.3) {
             this.scale /= 1.1;
+            const e = this.wrapper.nativeElement;
+            const dx = (e.scrollLeft + e.clientWidth / 2) * (1 - 1 / 1.1);
+            setTimeout(() => {
+                e.scrollLeft -= dx;
+            }, 0)
         }
     }
 
     getTransform() {
-        const containerPosX = - this.columns.length * this.nodeSpacingX;
-        const hy = this.ySize / 2;
-        const transform = `translateY(${hy}px) scale(${this.scale.toFixed(2)}) translateY(-${hy}px) translateX(${containerPosX}px)`;
+        //const transform = `translateX(${hx}px) scale(${this.scale.toFixed(2)}) translateX(-${hx}px) translateX(${containerPosX}px)`;
+        const transform = `scale(${this.scale.toFixed(2)})`;
         return this.sanitizer.bypassSecurityTrustStyle(transform);
     }
 
@@ -271,9 +282,13 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         this.hoveredNode = null;
     }
 
-    graphWidth() {
-
-        return this.sanitizer.bypassSecurityTrustStyle(`calc(100% + ${Math.round(this.columns.length * this.nodeSpacingX)}px)`);
+    scheduleScrollSnapCheck() {
+        const e = this.wrapper.nativeElement;
+        if (e.scrollLeft >= (e.scrollWidth - e.clientWidth)) {
+            setTimeout(() => {
+                e.scrollLeft = e.scrollWidth;
+            });
+        }
     }
 
 }
