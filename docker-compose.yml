@@ -16,9 +16,6 @@ services:
     devices:
       - /dev/snd:/dev/snd
       - /dev/video0:/dev/video0
-      - /dev/video1:/dev/video1
-      - /dev/video2:/dev/video2
-      - /dev/video3:/dev/video3
     ports:
       - "10002:10002"
       - "9000:9000"
