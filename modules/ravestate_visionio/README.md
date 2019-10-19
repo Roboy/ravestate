@@ -42,64 +42,65 @@ OpenCV Video Stream
    [ Name for PrimKey from Scientio ]
 ```
 
+## Dependencies
+
+VisionIO requires the following components to be running:
+
+* `ravestate` or `raveboard` with `ravestate_visionio` module
+* `Neo4j` backend for Scientio
+* `redis` for persisting facial feature vectors
+* `face_oracle` client and server 
+
+## Configuration
+
+VisionIO provides the following config keys:
+
+Key | Default | Description
+----|---------|--------------------------------------------
+redis_host | Host for Redis database. | localhost
+redis_port | Port for Redis database. | 6379
+redis_pass | Password for Redis database | Empty
+ros1-node | Topic for Faces messages. | /roboy/cognition/vision/visible_face_names
+min-confidence | Minimum confidence below which someone will be a stranger. | 0.85
+
 ## How to run
 
-Add the `ravestate_visionio` module to your ravestate session. For recognition, `ravestate_visionio` requires a running FaceOracle websocket client.
+We recommend running VisionIO through one of the ravestate
+docker-compose profiles, which will start `Neo4j`, `redis`,
+and the `face_oracle` client and server automatically.
 
-The FaceOracle websocket client is installed inside the ravestate docker container.
-The client processes camera frames with OpenCV and `face_recogniton`, and
-streams the results to the `/roboy/cognition/vision/visible_face_names` ROS1 topic.
-
-When running the `ravestate` image via Docker compose (see main README), you can
-navigate to `~/melodic_ws/src/face_oracle` and start the FaceOracle client with a parameter
-indicating the camera you want to process. The parameter value depends on your platform:
-
-### Linux
-
-On Linux, on both Audio and Video devices are easily mapped into the container
-via the provided docker-compose configuration. Inside the container, just execute...
+Start the profile and visionio in docker as follows:
 
 ```bash
-# 1/3) In Docker: Make sure that `roscore` is running
-
-roscore &
-
-# 2/3) In Docker: Launch `webcam_video_processor.py` on video device `0` (Change number for different cam)
-
-python webcam_video_processor.py -i 0 &
-
-# 3/3) On Host: Connect to `localhost:5000` in your browser to start video streaming.
+> docker-compose up -d {profile}
+> docker exec -it rs bash
+> python3 -m ravestate ...
 ```
 
-### MacOS
+The profiles differ per operating system: 
 
-On macOS, devices (such as webcams) cannot be easily mapped into Docker. Therefore, we use `ffmpeg` and `RTMP` to stream video into the ravestate docker container, which can then be picked up by the face oracle client component.
+### Profile rs-linux
 
-**Requirements:**
+On Linux, a Webcam for VisionIO can simply be mapped into
+docker as a device. Per default, this will be `video0`.
 
-- `ffmpeg` (`brew install ffmpeg`)
-- `Local RTMP Server` ([See Releases on GitHub](https://github.com/sallar/mac-local-rtmp-server/releases))
+If you want to change the device, map a new device in
+`docker-compose.yml`, and don't forget to change the
+`FACEORACLE_VIDEO_DEVICE` variable.
 
-**Running:**
+### Profile rs-macos
 
-```bash
-# 1/5) On Host: Launch `Local RTMP Server`
-# 2/5) On Host: run `ffmpeg` to stream video from your Facetime camera to Docker 
+On Mac, Docker can not natively access USB devices. Instead,
+live video can be streamed into the container via RTMP:
 
-ffmpeg -f avfoundation -framerate 25 -pixel_format 0rgb -video_size 640x480 -i 0 -filter:v fps=fps=2 -f flv rtmp://127.0.0.1/live/faceoracle
-#Note: `"0"` refers to device with index 0. Change to stream from a different camera.`
+1. Install/start [`Local RTMP Server`](https://github.com/sallar/mac-local-rtmp-server/releases)
+2. Install `ffmpeg` via `brew install ffmpeg`
+3. Stream webcam via RTMP by starting `ravestate/run_ffmpeg_stream.sh`
 
-# 3/5) In Docker: Make sure that roscore is running
+You can now start `docker-compose up -d rs-macos`.
 
-roscore &
+### Using a video instead of a webcam feed
 
-# 4/5) In Docker: Launch `webcam_video_processor.py` listening to `rtmp://127.0.0.1/live/facetime`
-
-python webcam_video_processor.py -i "rtmp://host.docker.internal/live/facetime" &
-
-# 5/5) On Host: Connect to `localhost:5000` in your browser to start video streaming.
-```
-
-### Windows
-
-Currently unexplored.
+If you don't have a webcam, you can use a video instead for
+debugging. Just set `FACEORACLE_VIDEO_DEVICE` for your
+particular platform profile to `/ravestate/resources/obama.mp4`.
