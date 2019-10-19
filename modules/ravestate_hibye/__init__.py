@@ -12,7 +12,7 @@ verbaliser.add_folder(join(dirname(realpath(__file__)), "en"))
 
 with rs.Module(name="hibye", depends=(interloc.mod, rawio.mod, verbaliser.mod)) as mod:
 
-    @rs.state(cond=interloc.prop_all.pushed(), write=rawio.prop_out,
+    @rs.state(cond=interloc.prop_all.pushed().min_age(1.), write=rawio.prop_out,
               read=interloc.prop_all)
     def greeting(ctx: rs.ContextWrapper):
         pushed_node_path: str = ctx[interloc.prop_all.pushed()]

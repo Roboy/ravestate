@@ -29,9 +29,9 @@ roscore &
 cd /redis_db && redis-server &
 
 echo "----------------------------------------------"
-echo "Sleeping 5 s to wait for neo4j and roscore ..."
+echo "Sleeping 10 s to wait for neo4j and roscore ..."
 echo "----------------------------------------------"
-sleep 5
+sleep 10
 
 # Start face_oracle server and client
 cd /root/melodic_ws/src/face_oracle

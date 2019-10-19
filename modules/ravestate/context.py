@@ -621,7 +621,7 @@ class Context(IContext):
 
             gc.collect()
 
-        self._update_core_properties(debug=True)
+        self._update_core_properties(debug=debug)
 
     def _load_modules(self, modules: List[str]):
         for module_name in modules:

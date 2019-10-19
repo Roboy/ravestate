@@ -92,7 +92,7 @@ class UIContext(rs.Context):
 
     def ui_update_act(self, act: rs.Activation, is_running=False):
         # -- do not report on boring activations
-        if act.spiky(filter_boring=True):
+        if act not in self.ui_objects and not act.spiky(filter_boring=True):
             return
 
         act_model = self.ui_model(act)
