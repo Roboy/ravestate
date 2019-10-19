@@ -25,13 +25,16 @@ class PropertyWrapper:
                  prop: Property,
                  ctx: IContext,
                  allow_read: bool,
-                 allow_write: bool):
+                 allow_write: bool,
+                 boring: bool = False):
+
         self.prop = prop
         self.ctx = ctx
         self.allow_read = allow_read and prop.allow_read
         self.allow_write = allow_write and (prop.allow_write | prop.allow_push | prop.allow_pop)
         self.frozen_value = None
         self.spike_parents = spike_parents
+        self.boring = boring or prop.boring
 
         self.prop.lock()
         if self.allow_read:
@@ -75,20 +78,23 @@ class PropertyWrapper:
                 self.ctx.emit(
                     self.prop.true(),
                     parents=self.spike_parents,
-                    wipe=self.prop.wipe_on_changed)
+                    wipe=self.prop.wipe_on_changed,
+                    boring=self.boring)
             if self.prop.is_flag_property and value is False:
                 # wipe true signal, emit false signal
                 self.ctx.wipe(self.prop.true())
                 self.ctx.emit(
                     self.prop.false(),
                     parents=self.spike_parents,
-                    wipe=self.prop.wipe_on_changed)
+                    wipe=self.prop.wipe_on_changed,
+                    boring=self.boring)
 
             self.ctx.emit(
                 self.prop.changed(),
                 parents=self.spike_parents,
                 wipe=self.prop.wipe_on_changed,
-                payload=value)
+                payload=value,
+                boring=self.boring)
             return True
         return False
 
@@ -109,7 +115,8 @@ class PropertyWrapper:
                 self.prop.pushed(),
                 parents=self.spike_parents,
                 wipe=False,
-                payload=child.id())
+                payload=child.id(),
+                boring=self.boring)
             return True
         return False
 
@@ -129,7 +136,8 @@ class PropertyWrapper:
                 self.prop.popped(),
                 parents=self.spike_parents,
                 wipe=False,
-                payload=f"{self.prop.id()}:{childname}")
+                payload=f"{self.prop.id()}:{childname}",
+                boring=self.boring)
             return True
         return False
 
@@ -168,7 +176,8 @@ class ContextWrapper:
                             prop=prop, ctx=self.ctx,
                             spike_parents=self.spike_parents,
                             allow_read=prop_parent_id in state.get_read_props_ids(),
-                            allow_write=prop_parent_id in state.get_write_props_ids())
+                            allow_write=prop_parent_id in state.get_write_props_ids(),
+                            boring=self.state.boring)
 
     def __setitem__(self, key: Union[str, Property], value: Any):
         if isinstance(key, Property):
@@ -239,7 +248,8 @@ class ContextWrapper:
                     prop=child, ctx=self.ctx,
                     spike_parents=self.spike_parents,
                     allow_read=self.properties[parent_property_or_path].allow_read,
-                    allow_write=self.properties[parent_property_or_path].allow_write)
+                    allow_write=self.properties[parent_property_or_path].allow_write,
+                    boring=self.state.boring)
                 self.ctx.add_prop(prop=child)
                 return True
         else:

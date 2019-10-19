@@ -71,7 +71,8 @@ services:
       - NEO4J_PASSWORD=test
       - REDIS_HOST=localhost
       - REDIS_PASSWORD=
-      - FACEORACLE_VIDEO_DEVICE=rtmp://host.docker.internal/live/faceoracle
+      - FACEORACLE_VIDEO_DEVICE=/ravestate/resources/obama.mp4
+      #- FACEORACLE_VIDEO_DEVICE=rtmp://host.docker.internal/live/faceoracle
     # After starting container, attach console and enter python3 -m ravestate [...]
     # This enables "hot reload" in the running container because the source directory is mounted
     tty: true

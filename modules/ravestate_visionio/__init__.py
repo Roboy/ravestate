@@ -49,7 +49,8 @@ if ROBOY_COGNITION_AVAILABLE:
             "face_names",
             topic="/roboy/cognition/vision/visible_face_names",
             msg_type=Faces,
-            always_signal_changed=True
+            always_signal_changed=True,
+            boring=True
         )
 
         prop_face_filter = rs.Property(
@@ -89,8 +90,7 @@ if ROBOY_COGNITION_AVAILABLE:
         @rs.state(
             cond=prop_subscribe_faces.changed(),
             write=interloc.prop_all,
-            read=(prop_subscribe_faces, interloc.prop_all, prop_face_filter),
-            boring=True
+            read=(prop_subscribe_faces, interloc.prop_all, prop_face_filter)
         )
         def recognize_faces(ctx: rs.ContextWrapper):
             """

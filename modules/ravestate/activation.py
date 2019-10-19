@@ -177,14 +177,17 @@ class Activation(IActivation):
         """
         return len(self.pressuring_causal_groups) > 0
 
-    def spiky(self) -> bool:
+    def spiky(self, filter_boring=False) -> bool:
         """
         Returns true, if the activation has acquired any spikes at all.
+
+        * `filter_boring`: Flag to indicate, whether boring spikes should
+         should NOT be counted against a `true` return value.
 
         **Returns:** True, if any of this activation's constraint's
          signal is referencing a spike.
         """
-        return any(self.spikes())
+        return any(spike for spike in self.spikes() if not (filter_boring and spike.boring()))
 
     def boring(self) -> bool:
         """
@@ -345,7 +348,8 @@ class Activation(IActivation):
                 self.ctx.emit(
                     self.state_to_activate.signal,
                     parents=self.parent_spikes,
-                    wipe=result.wipe)
+                    wipe=result.wipe,
+                    boring=self.state_to_activate.boring)
             else:
                 logger.error(f"Attempt to emit spike from state {self.name}, which does not specify a signal name!")
         elif isinstance(result, Wipe):

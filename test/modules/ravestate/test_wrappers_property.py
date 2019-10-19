@@ -103,7 +103,8 @@ def test_property_write(under_test_read_write: PropertyWrapper, default_property
         SignalRef(f"{under_test_read_write.prop.id()}:changed"),
         parents=None,
         wipe=True,
-        payload=NEW_PROPERTY_VALUE)
+        payload=NEW_PROPERTY_VALUE,
+        boring=False)
 
 
 def test_flag_property(context_mock):
@@ -118,11 +119,13 @@ def test_flag_property(context_mock):
         SignalRef(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True,
-        payload=True)
+        payload=True,
+        boring=False)
     context_mock.emit.assert_any_call(
         SignalRef(f"{prop_wrapper.prop.id()}:true"),
         parents=None,
-        wipe=True)
+        wipe=True,
+        boring=False)
 
     context_mock.emit.reset_mock()
     prop_wrapper.set(False)
@@ -131,11 +134,13 @@ def test_flag_property(context_mock):
         SignalRef(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True,
-        payload=False)
+        payload=False,
+        boring=False)
     context_mock.emit.assert_any_call(
         SignalRef(f"{prop_wrapper.prop.id()}:false"),
         parents=None,
-        wipe=True)
+        wipe=True,
+        boring=False)
 
     context_mock.emit.reset_mock()
     prop_wrapper.set(None)
@@ -144,7 +149,8 @@ def test_flag_property(context_mock):
         SignalRef(f"{prop_wrapper.prop.id()}:changed"),
         parents=None,
         wipe=True,
-        payload=None)
+        payload=None,
+        boring=False)
 
 
 def test_property_child(under_test_read_write: PropertyWrapper, default_property_base, context_mock):

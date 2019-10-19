@@ -91,9 +91,8 @@ class UIContext(rs.Context):
             return new_obj
 
     def ui_update_act(self, act: rs.Activation, is_running=False):
-
         # -- do not report on boring activations
-        if act.boring():
+        if act.spiky(filter_boring=True):
             return
 
         act_model = self.ui_model(act)
@@ -148,8 +147,8 @@ class UIContext(rs.Context):
 
     # --------------------- Context Overrides ---------------------
 
-    def emit(self, signal, parents=None, wipe: bool=False, payload=None) -> rs.Spike:
-        new_spike = super().emit(signal, parents, wipe, payload)
+    def emit(self, signal, parents=None, wipe: bool = False, payload=None, boring=False) -> rs.Spike:
+        new_spike = super().emit(signal, parents, wipe, payload, boring)
         # create spike ui model, but only send it on demand when it is ref'd by an activation
         #  exception: the spike is an offspring spike
         spike_model = self.ui_model(new_spike, parent_spikes=parents if parents else ())
@@ -166,6 +165,7 @@ class UIContext(rs.Context):
                 self._state_activations())
         for act in acts_to_update:
             self.ui_update_act(act)
+
 
     def _state_activated(self, act: rs.Activation):
         super(UIContext, self)._state_activated(act)

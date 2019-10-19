@@ -64,7 +64,8 @@ with Module(name="core", config=CORE_MODULE_CONFIG) as core_module:
         allow_push=False,
         allow_pop=False,
         default_value=0,
-        always_signal_changed=False)
+        always_signal_changed=False,
+        boring=True)
 
 
 def create_and_run_context(*args, runtime_overrides=None):
@@ -180,7 +181,8 @@ class Context(IContext):
             logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
             self.tick_rate = 1
 
-    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> Spike:
+    def emit(self, signal: Signal, parents: Set[Spike] = None, wipe: bool = False, payload: Any = None,
+             boring: bool = False) -> Spike:
         """
         Emit a signal to the signal processing loop. _Note:_
          The spike will only be picked up by activations once `run_once`/`run` is called!
@@ -194,6 +196,9 @@ class Context(IContext):
 
         * `payload`: Value that should be embedded in the new spike.
 
+        * `boring`: Flag which indicates, whether the new spike is boring. Activations which
+         acquire boring spikes will not count against the `core:activity` flag.
+
         **Returns:** The newly created spike object.
         """
         if wipe:
@@ -203,7 +208,8 @@ class Context(IContext):
                 sig=signal.id(),
                 parents=parents,
                 consumable_resources=set(self._properties.keys()),
-                payload=payload)
+                payload=payload,
+                boring=boring)
             logger.debug(f"Emitting {new_spike}")
             self._spikes_per_signal[signal].add(new_spike)
         return new_spike
@@ -615,7 +621,7 @@ class Context(IContext):
 
             gc.collect()
 
-        self._update_core_properties(debug=debug)
+        self._update_core_properties(debug=True)
 
     def _load_modules(self, modules: List[str]):
         for module_name in modules:
@@ -754,7 +760,7 @@ class Context(IContext):
                 if prop_activity.changed() not in set(act.constraint.signals()):
                     if act.is_pressured():
                         pressured_acts.append(act.id)
-                    if not act.boring() and act.spiky():
+                    if act.spiky(filter_boring=True):
                         partially_fulfilled_acts.append(act)
         PropertyWrapper(
             prop=prop_pressure,
