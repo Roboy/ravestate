@@ -17,7 +17,7 @@ import { MOCK_MESSAGES } from "./mock-messages";
         <h3>Mock messages</h3>
         <button (click)="chatSend()">Chat Send</button>
         <button (click)="chatReceive()">Chat Receive</button>
-        <h3>Last mock message</h3>
+        <h3>Last mock data / message</h3>
         <div class="data-json">
             <pre>{{lastMockMessage ? (lastMockMessage | json) : '- none -'}}</pre>
         </div>
@@ -86,13 +86,15 @@ export class MockDataControllerComponent {
     }
 
     chatSend() {
-        this.ioService.sendMessage(this.randomMessage())
+        this.lastMockMessage = this.randomMessage();
+        this.ioService.sendMessage(this.lastMockMessage)
     }
 
     chatReceive() {
+        this.lastMockMessage = this.randomMessage();
         this.ioService.messagesToUI.next({
             type: 'output',
-            text: this.randomMessage()
+            text: this.lastMockMessage
         })
     }
 
@@ -103,6 +105,6 @@ export class MockDataControllerComponent {
         for (let i = 0; i < n; i++) {
             msg += words[Math.floor(Math.random() * words.length)] + ' ';
         }
-        return msg;
+        return msg.trim();
     }
 }

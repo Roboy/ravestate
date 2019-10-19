@@ -10,24 +10,18 @@ import { Component } from '@angular/core';
             <div class="main">
                 <app-activation-spike-graph class="graph-area"></app-activation-spike-graph>
             </div>
-            <!-- Uncomment when mock data panel is required.
-            <div class="side">
-                <app-mock-data-controller></app-mock-data-controller>
-                <br>
-                <div>
-                    TODOs:
-                    <ul>
-                        <li>allow to move graph with drag</li>
-                        <li>idea: allow to move columns up and down (to a certain degree)</li>
-                    </ul>
-                </div>
-            </div> -->
-            <div class="side">
-                <app-chat-window></app-chat-window>
+            <div class="side">                
+                <app-chat-window [style.display]="debugMode ? 'none' : null"></app-chat-window>                
+                <app-mock-data-controller [style.display]="debugMode ? null : 'none'"></app-mock-data-controller>                
+            </div> 
+            <!-- debug button, can be enabled with dev tools -->
+            <div style="position: fixed; top: 5px; right: 5px; display: none">
+                <button (click)="debugMode = !debugMode">Debug</button>
             </div>
         </div>
     `,
     styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
+    debugMode = false;
 }
