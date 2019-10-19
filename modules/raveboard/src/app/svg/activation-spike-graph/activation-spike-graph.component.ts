@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { Subscription } from "rxjs";
 
 import { NodeType } from "../elements/node.component";
@@ -50,38 +50,36 @@ export class NodeData {
 @Component({
     selector: 'app-activation-spike-graph',
     template: `
-        <svg [attr.viewBox]="'0 0 1000 1'" preserveAspectRatio="xMidYMid meet">
-            <g class="moving-container" [style.transform]="getTransform()">
-
-                <!-- connectors for every node -->
-                <ng-container *ngFor="let node of allNodes.values()">
-                    <ng-container *ngIf="node.visible">
-                        <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y"
-                           [toY]="node.y"
-                           [style.opacity]="hoveredNode && hoveredNode != node ? .1 : 1"></g>
+        <div #wrapper style="overflow-x: scroll; width: 100%; height: 100%;">
+            <svg #svg>
+                <g [style.transform]="getTransform()">
+                    
+                    <!-- connectors for every node -->
+                    <ng-container *ngFor="let node of allNodes.values()">
+                        <ng-container *ngIf="node.visible">
+                            <g connector *ngFor="let p of node.parents" [fromX]="p.x" [toX]="node.x" [fromY]="p.y"
+                               [toY]="node.y"
+                               [style.opacity]="hoveredNode && hoveredNode != node ? .1 : 1"></g>
+                        </ng-container>
                     </ng-container>
-                </ng-container>
-
-                <!-- all nodes on top of connectors -->
-                <ng-container *ngFor="let node of allNodes.values()">
-                    <g node *ngIf="node.visible"
-                       (mouseenter)="hoverStart(node)" (mouseleave)="hoverEnd()"
-                       [x]="node.x" [y]="node.y" [label]="node.label"
-                       [nodeType]="node.nodeType" [nodeStatus]="node.element.status"
-                       [style.opacity]="node.transparent ? .2 : 1"></g>
-                </ng-container>
-
-            </g>
-        </svg>
+    
+                    <!-- all nodes on top of connectors -->
+                    <ng-container *ngFor="let node of allNodes.values()">
+                        <g node *ngIf="node.visible"
+                           (mouseenter)="hoverStart(node)" (mouseleave)="hoverEnd()"
+                           [x]="node.x" [y]="node.y" [label]="node.label"
+                           [nodeType]="node.nodeType" [nodeStatus]="node.element.status"
+                           [style.opacity]="node.transparent ? .2 : 1"></g>
+                    </ng-container>
+    
+                </g>
+            </svg>
+        </div>
         <div class="controls">
-            <span class="percentage-label">{{(scale * 100).toFixed(0)}}%</span>
             <button (click)="scaleDown()" class="round">-</button>
+            <span class="percentage-label">{{(scale * 100).toFixed(0)}}%</span>
             <button (click)="scaleUp()" class="round">+</button>
-            <button (click)="scale = 1" [disabled]="scale == 1">100%</button>
-            <span class="separator">|</span>
-            <button (click)="moveLeft()" class="round">&lt;</button>
-            <button (click)="resetOffset()" [disabled]="xOffset == 0">Reset Offset</button>
-            <button (click)="moveRight()" class="round">&gt;</button>
+            <button (click)="resetScale()" [disabled]="scale == 1">100%</button>
             <span class="separator">|</span>
             <button (click)="clear()">Clear Graph</button>
         </div>
@@ -94,11 +92,13 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     // distance between two nodes (x-axis)
     nodeSpacingX = 180;
-    ySpacing = 100;
-    maxNodesPerColumn = 4;
+    nodeSpacingY = 100;
+    maxNodesPerColumn = 5;
 
     scale = 1;
-    xOffset = 0;
+
+    @ViewChild('wrapper', {static: true} ) wrapper: ElementRef<HTMLDivElement>;
+    @ViewChild('svg', {static: true} ) svg: ElementRef<SVGElement>;
 
     allNodes: Map<number, NodeData> = new Map();
     columns: Array<Set<NodeData>> = [new Set()];
@@ -126,11 +126,12 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
                     node.parents.push(parent);
                 }
             }
-            const lastColumnFull = this.columns[this.columns.length - 1].size > this.maxNodesPerColumn;
+            const lastColumnFull = this.columns[this.columns.length - 1].size >= this.maxNodesPerColumn;
 
             // create new column if necessary
             if (parentInLastCol || lastColumnFull) {
                 this.columns.push(new Set());
+                this.scheduleScrollSnapCheck();
             }
 
             // add new node to the last column and reposition nodes
@@ -186,9 +187,10 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
                 // need to insert new into last column
                 if (highestParentColumn >= this.columns.length - 1
-                    || this.columns[this.columns.length - 1].size > this.maxNodesPerColumn) {
+                    || this.columns[this.columns.length - 1].size >= this.maxNodesPerColumn) {
                     // last column not ok (full or has parents)
                     this.columns.push(new Set());
+                    this.scheduleScrollSnapCheck();
                 }
                 targetColumnID = this.columns.length - 1;
 
@@ -211,14 +213,14 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
         }
 
         // reposition column
-        let y = -(visibleNodes - 1) / 2 * this.ySpacing;
+        let y = -(visibleNodes - 1) / 2 * this.nodeSpacingY;
         for (const node of this.columns[targetColumnID].values()) {
             if (!node.visible) {
                 continue;
             }
-            node.x = targetColumnID * this.nodeSpacingX;
+            node.x = targetColumnID * this.nodeSpacingX + 85;
             node.y = y;
-            y += this.ySpacing;
+            y += this.nodeSpacingY;
         }
 
     }
@@ -234,31 +236,36 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
 
     scaleUp() {
         if (this.scale < 4) {
-            this.scale *= 1.1;
+            this.scaleBy(1.1);
         }
     }
 
     scaleDown() {
         if (this.scale >= 0.3) {
-            this.scale /= 1.1;
+            this.scaleBy(1 / 1.1);
         }
     }
 
-    moveLeft() {
-        this.xOffset -= 300 / this.scale;
+    resetScale() {
+        this.scaleBy(1 / this.scale);
     }
 
-    moveRight() {
-        this.xOffset += 300 / this.scale;
-    }
-
-    resetOffset() {
-        this.xOffset = 0;
+    scaleBy(factor: number) {
+        this.scale *= factor;
+        const e = this.wrapper.nativeElement;
+        const dx = (e.scrollLeft + e.clientWidth / 2) * (factor - 1);
+        const target = e.scrollLeft + dx;
+        if (dx > 0) {
+            this.svg.nativeElement.style.width = this.columns.length * this.nodeSpacingX * this.scale + 'px';
+            e.scrollLeft = target;
+        } else {
+            e.scrollLeft = target;
+            this.svg.nativeElement.style.width = this.columns.length * this.nodeSpacingX * this.scale + 'px';
+        }
     }
 
     getTransform() {
-        const containerPosX = 800 - this.columns.length * this.nodeSpacingX - this.xOffset;
-        const transform = `translateX(900px) scale(${this.scale.toFixed(2)}) translateX(-900px) translateX(${containerPosX}px)`;
+        const transform = `scale(${this.scale.toFixed(6)})`;
         return this.sanitizer.bypassSecurityTrustStyle(transform);
     }
 
@@ -280,6 +287,15 @@ export class ActivationSpikeGraphComponent implements OnDestroy {
             node.transparent = false;
         }
         this.hoveredNode = null;
+    }
+
+    scheduleScrollSnapCheck() {
+        const e = this.wrapper.nativeElement;
+        const snap = e.scrollLeft >= (e.scrollWidth - e.clientWidth);
+        this.svg.nativeElement.style.width = this.columns.length * this.nodeSpacingX * this.scale + 'px';
+        if (snap) {
+            e.scrollLeft = e.scrollWidth;
+        }
     }
 
 }
