@@ -121,7 +121,7 @@ def sync_ros_properties(ctx: rs.ContextWrapper):
 
 
 class Ros2SubProperty(rs.Property):
-    def __init__(self, name: str, topic: str, msg_type, default_value=None, always_signal_changed: bool = True):
+    def __init__(self, name: str, topic: str, msg_type, default_value=None, always_signal_changed: bool = True, boring: bool = False):
         """
         Initialize Property
 
@@ -142,7 +142,8 @@ class Ros2SubProperty(rs.Property):
             allow_push=False,
             allow_pop=False,
             default_value=default_value,
-            always_signal_changed=always_signal_changed)
+            always_signal_changed=always_signal_changed,
+            boring=boring)
         self.topic = topic
         self.msg_type = msg_type
         self.subscription = None
@@ -176,7 +177,7 @@ class Ros2SubProperty(rs.Property):
 
 
 class Ros2PubProperty(rs.Property):
-    def __init__(self, name: str, topic: str, msg_type):
+    def __init__(self, name: str, topic: str, msg_type, boring: bool = False):
         """
         Initialize Property
 
@@ -193,7 +194,8 @@ class Ros2PubProperty(rs.Property):
             allow_push=False,
             allow_pop=False,
             default_value=None,
-            always_signal_changed=True)
+            always_signal_changed=True,
+            boring=boring)
         self.topic = topic
         self.msg_type = msg_type
         self.publisher = None
@@ -228,7 +230,7 @@ class Ros2PubProperty(rs.Property):
 
 
 class Ros2CallProperty(rs.Property):
-    def __init__(self, name: str, service_name: str, service_type, call_timeout: float = 10.0):
+    def __init__(self, name: str, service_name: str, service_type, call_timeout: float = 10.0, boring: bool = False):
         """
         Initialize Property
 
@@ -247,7 +249,8 @@ class Ros2CallProperty(rs.Property):
             allow_push=False,
             allow_pop=False,
             default_value=None,
-            always_signal_changed=False)
+            always_signal_changed=False,
+            boring=boring)
         self.service_name = service_name
         self.service_type = service_type
         self.call_timeout = call_timeout

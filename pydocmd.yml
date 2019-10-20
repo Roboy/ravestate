@@ -31,9 +31,14 @@ pages:
 - Home: index.md << README.md
 - Modules:
   - NLP: modules/ravestate_nlp/README.md << modules/ravestate_nlp/README.md
+  - Wildtalk: modules/ravestate_wildtalk/README.md << modules/ravestate_wildtalk/README.md
+  - ROS: modules/ravestate_ros1/README.md << modules/ravestate_ros1/README.md
   - Verbaliser: modules/ravestate_verbaliser/README.md << modules/ravestate_verbaliser/README.md
   - TelegramIO: modules/ravestate_telegramio/README.md << modules/ravestate_telegramio/README.md
+  - VisionIO: modules/ravestate_visionio/README.md << modules/ravestate_visionio/README.md
   - Akinator: modules/ravestate_akinator/README.md << modules/ravestate_akinator/README.md
+- Tutorials:
+  - "NLP: The Ice Cream Salesman": modules/ravestate_nlp/luigi.md << modules/ravestate_nlp/luigi.md
 - API:
   - Modules: modules.md
   - States: states.md

@@ -23,11 +23,11 @@ export class SocketIOService {
 
     constructor() {
         const urlParams = new URLSearchParams(window.location.search);
-        const sio_url = urlParams.get('rs-sio-url') || 'http://localhost:4242';
+        const sioUrl = urlParams.get('rs-sio-url') || 'http://localhost:42424';
 
-        console.log(`Connecting to socket.io URL: '${sio_url}'`);
+        console.log(`Connecting to socket.io URL: '${sioUrl}'`);
 
-        let socket = io.connect(sio_url);
+        let socket = io.connect(sioUrl);
 
         socket.on('spike', msg => {
             this.spikes.next(msg)

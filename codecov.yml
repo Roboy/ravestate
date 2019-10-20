@@ -16,3 +16,15 @@ comment:
   layout: "reach, diff, flags, files, footer"
   behavior: default
   require_changes: no
+
+#ignore:
+#  - raveboard       # exclude ui
+#  - ravestate_ui    #
+#  - akinator        # exclude akinator
+#  - ravestate/i*    # exlude interfaces
+#  - ravestate_ros1  # exlude interfaces
+#  - ravestate_ros2  # exlude interfaces
+#  - "path/to/folder"  # ignore folders and all its contents
+#  - "test_*.rb"       # wildcards accepted
+#  - "**/*.py"         # glob accepted
+#  - "[a-z]+/test_.*"  # regexp accepted

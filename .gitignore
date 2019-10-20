@@ -1,6 +1,5 @@
 *.key
 *.default
-.coverage
 .pytest_cache
 .idea
 __pycache__
@@ -17,3 +16,4 @@ ros2/install
 ros2/log
 venv/*
 mkdocs.yml
+db/*

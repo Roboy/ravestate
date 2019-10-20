@@ -32,7 +32,7 @@ def assert_list_and_random(actual: List, expected: List, random_element: str):
 def test_add_file_phrases():
     verbaliser.add_file(join(dirname(realpath(__file__)), "verbaliser_testfiles", "phrases_test.yml"))
     assert_phrases_file()
-    cleanup_verbaliser()
+    # cleanup_verbaliser()
 
 
 def assert_phrases_file():
@@ -47,7 +47,7 @@ def assert_phrases_file():
 def test_add_file_qa():
     verbaliser.add_file(join(dirname(realpath(__file__)), "verbaliser_testfiles", "QAList_test.yml"))
     assert_qa_file()
-    cleanup_verbaliser()
+    # cleanup_verbaliser()
 
 
 def assert_qa_file():
@@ -79,7 +79,7 @@ def assert_qa_file():
 def test_add_file_mixed():
     verbaliser.add_file(join(dirname(realpath(__file__)), "verbaliser_testfiles", "mixed_test.yml"))
     assert_mixed_file()
-    cleanup_verbaliser()
+    # cleanup_verbaliser()
 
 
 def assert_mixed_file():
@@ -103,7 +103,7 @@ def assert_mixed_file():
 def test_add_file_nosection():
     verbaliser.add_file(join(dirname(realpath(__file__)), "verbaliser_testfiles", "nosection_test.yml"))
     assert_nosection_file()
-    cleanup_verbaliser()
+    # cleanup_verbaliser()
 
 
 def assert_nosection_file():
@@ -121,7 +121,7 @@ def test_add_folder():
     assert_qa_file()
     assert_mixed_file()
     assert_nosection_file()
-    cleanup_verbaliser()
+    # cleanup_verbaliser()
 
 
 def test_add_file_nonexistent():

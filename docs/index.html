@@ -333,29 +333,16 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#running-tests" title="Running tests" class="md-nav__link">
-    Running tests
+  <a href="#docker-for-ros-and-ros2" title="Docker for ROS and ROS2" class="md-nav__link">
+    Docker for ROS and ROS2
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#docker-for-ros-and-ros2" title="Docker for ROS and ROS2" class="md-nav__link">
-    Docker for ROS and ROS2
+  <a href="#running-tests" title="Running tests" class="md-nav__link">
+    Running tests
   </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#start-ros-bridge" title="Start ROS Bridge" class="md-nav__link">
-    Start ROS Bridge
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -414,6 +401,30 @@
 
 
   <li class="md-nav__item">
+    <a href="modules/ravestate_wildtalk/" title="Wildtalk" class="md-nav__link">
+      Wildtalk
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="modules/ravestate_ros1/" title="ROS" class="md-nav__link">
+      ROS
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="modules/ravestate_verbaliser/" title="Verbaliser" class="md-nav__link">
       Verbaliser
     </a>
@@ -428,6 +439,18 @@
   <li class="md-nav__item">
     <a href="modules/ravestate_telegramio/" title="TelegramIO" class="md-nav__link">
       TelegramIO
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="modules/ravestate_visionio/" title="VisionIO" class="md-nav__link">
+      VisionIO
     </a>
   </li>
 
@@ -459,10 +482,46 @@
       <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
     
     <label class="md-nav__link" for="nav-3">
-      API
+      Tutorials
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
       <label class="md-nav__title" for="nav-3">
+        Tutorials
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="modules/ravestate_nlp/luigi/" title="NLP: The Ice Cream Salesman" class="md-nav__link">
+      NLP: The Ice Cream Salesman
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
         API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -694,29 +753,16 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#running-tests" title="Running tests" class="md-nav__link">
-    Running tests
+  <a href="#docker-for-ros-and-ros2" title="Docker for ROS and ROS2" class="md-nav__link">
+    Docker for ROS and ROS2
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#docker-for-ros-and-ros2" title="Docker for ROS and ROS2" class="md-nav__link">
-    Docker for ROS and ROS2
+  <a href="#running-tests" title="Running tests" class="md-nav__link">
+    Running tests
   </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#start-ros-bridge" title="Start ROS Bridge" class="md-nav__link">
-    Start ROS Bridge
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -954,8 +1000,16 @@ External (Red) and Skills (Green):</p>
 <td>Spacy-based NLP properties and signals, documented <a href="modules/ravestate_nlp/">here</a>.</td>
 </tr>
 <tr>
+<td>ravestate_emotion</td>
+<td>Generates signals for, and recognizes specific emotions (<code>sig_shy</code>, <code>sig_surprise</code>, <code>sig_happy</code>, <code>sig_affectionate</code>).</td>
+</tr>
+<tr>
+<td>ravestate_ros1</td>
+<td>Provides specific <code>Ros1PubProperty</code>, <code>Ros1SubProperty</code> and <code>Ros1CallProperty</code> context properties, which greatly simplify working with ROS1 in ravestate. Documentation <a href="modules/ravestate_ros1/">here</a>.</td>
+</tr>
+<tr>
 <td>ravestate_ros2</td>
-<td>Provides specific <code>Ros2PubProperty</code>, <code>Ros2SubProperty</code> and <code>Ros2CallProperty</code> context props., which greatly simplify working with ROS2 in ravestate.</td>
+<td>Provides specific <code>Ros2PubProperty</code>, <code>Ros2SubProperty</code> and <code>Ros2CallProperty</code> context properties, which greatly simplify working with ROS2 in ravestate.</td>
 </tr>
 </tbody>
 </table>
@@ -980,6 +1034,10 @@ External (Red) and Skills (Green):</p>
 <td>ravestate_roboyio</td>
 <td><a href="https://github.com/roboy/pyroboy">PyroBoy</a> -based STT/TTS with ROS2.</td>
 </tr>
+<tr>
+<td>ravestate_visionio</td>
+<td>See dedicated docs <a href="modules/ravestate_visionio/">here</a>. Enables face-recognition based dialog interactions.</td>
+</tr>
 </tbody>
 </table>
 <h4 id="skill-modules">Skill Modules</h4>
@@ -993,7 +1051,7 @@ External (Red) and Skills (Green):</p>
 <tbody>
 <tr>
 <td>ravestate_wildtalk</td>
-<td><a href="https://github.com/roboy/parlai">ParlAI</a> -based generative conversational module.</td>
+<td>See docs <a href="modules/ravestate_wildtalk/">here</a> - runs generative language models (GPT-2, ConvAi, ParlAi)!</td>
 </tr>
 <tr>
 <td>ravestate_hibye</td>
@@ -1012,16 +1070,12 @@ External (Red) and Skills (Green):</p>
 <td>QA module which provides answers to questions about Roboy, such as <strong>Who is your dad?</strong></td>
 </tr>
 <tr>
-<td>ravestate_akinator</td>
+<td>ravestate_akinator <strong>(*)</strong></td>
 <td>Enables dialog-based play of <a href="modules/ravestate_akinator/">Akinator!</a></td>
 </tr>
 <tr>
-<td>ravestate_sendpics</td>
+<td>ravestate_sendpics <strong>(*)</strong></td>
 <td>Uses face recognition to extract facial features and an assiciated Person with <code>pic_in</code> and ontology, which are then persisted in Redis and Scientio.</td>
-</tr>
-<tr>
-<td>ravestate_stalker</td>
-<td>Uses <code>facial feature &lt;-&gt; person</code> tuples generated by sendpics, to surprise people in front of a camera with knowledge of their names.</td>
 </tr>
 <tr>
 <td>ravestate_fillers</td>
@@ -1029,44 +1083,46 @@ External (Red) and Skills (Green):</p>
 </tr>
 </tbody>
 </table>
-<h2 id="running-tests">Running tests</h2>
-<p>If you have installed the dependencies from <code>requirements-dev.txt</code> you
-may run the ravestate test suite as follows:</p>
-<p><code>./run_tests.sh</code></p>
+<p><strong>Note:</strong> <strong>(*)</strong> = deprecated.</p>
 <h2 id="docker-for-ros-and-ros2">Docker for ROS and ROS2</h2>
-<p>There is a Dockerfile for ROS and ROS2 support which can be built with</p>
-<div class="codehilite"><pre><span></span>docker build -t ravestate-ros2-image .
+<p>There is a Dockerfile for ROS, ROS2 and Face Recognition support, which can be built with</p>
+<div class="codehilite"><pre><span></span>docker build -t ravestate .
 </pre></div>
 
 
 <p>The image contains ROS, ROS2 and a ROS Bridge to connect ROS with ROS2.
 Furthermore the roboy_communication message and service types are installed.</p>
-<p>A container can then be created with the docker-compose.yml:</p>
-<div class="codehilite"><pre><span></span>docker-compose up --detach ravestate
+<p>A container can then be created with docker-compose.yml. Choose <code>linux</code> or <code>macos</code> as fit for your platform:</p>
+<div class="codehilite"><pre><span></span>docker-compose up -d rs-<span class="o">{</span>linux<span class="p">|</span>macos<span class="o">}</span>
 </pre></div>
 
 
 <p>The container is now running and a connection into the container can be
 established with:</p>
-<div class="codehilite"><pre><span></span>docker <span class="nb">exec</span> -it ravestate-ros2-container bash
+<div class="codehilite"><pre><span></span>docker <span class="nb">exec</span> -it rs bash
 </pre></div>
 
 
-<p>Inside the container, first source the ROS2 setups and then 
-ravestate can be run with ROS2 and rclpy available.</p>
-<div class="codehilite"><pre><span></span><span class="nb">source</span> ~/ros2_ws/install/setup.sh
+<p>Inside the container, first source the ROS/ROS2 setups. Then 
+ravestate can be run with <code>rclpy</code> (ROS2) and <code>rospy</code> (ROS) available.</p>
+<div class="codehilite"><pre><span></span><span class="c1"># Source ROS2 setup if needed</span>
+. ~/ros2_ws/install/setup.bash
+
+<span class="c1"># Source ROS1 setup if needed</span>
+. ~/melodic_ws/idevel/setup.bash
+
+<span class="c1"># Start ravestate or raveboard to run your modules.</span>
 python3 -m ravestate <span class="o">[</span>...<span class="o">]</span>
 </pre></div>
 
 
-<h3 id="start-ros-bridge">Start ROS Bridge</h3>
-<p>In order to start ROS Bridge, the image and container have to be set up
-as above. After connecting into the container run from inside the container:</p>
-<div class="codehilite"><pre><span></span><span class="nb">export</span> <span class="nv">ROS_IP</span><span class="o">=</span><span class="m">192</span>.168.0.105
-<span class="nb">source</span> ~/melodic_ws/devel/setup.sh
-<span class="nb">source</span> ~/ros2_ws/install/setup.sh
-<span class="nb">source</span> ~/ros1_bridge_ws/install/setup.sh
-ros2 run ros1_bridge dynamic_bridge
+<p><strong>Note:</strong> The ravestate docker container contains both <code>redis</code> and <code>neo4j</code>
+databases, which are automatically started and mapped into folders at
+<code>ravestate/db/{redis|neo4j}</code>.</p>
+<h2 id="running-tests">Running tests</h2>
+<p>If you have built the ravestate docker image as described above,
+you may run the test suite as follows:</p>
+<div class="codehilite"><pre><span></span>docker run -t -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/ravestate -w /ravestate ravestate ./run_tests.sh
 </pre></div>
 
 

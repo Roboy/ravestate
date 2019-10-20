@@ -1,9 +1,8 @@
+import pytest
 import ravestate as rs
 import ravestate_interloc as interloc
 import ravestate_rawio as rawio
 import ravestate_persqa as persqa
-import ravestate_idle as idle
-import ravestate_ontology
 import ravestate_verbaliser as verbaliser
 
 
@@ -16,10 +15,9 @@ def test_run_qa():
 
     with rs.Module(name="persqa_test"):
 
-        @rs.state(cond=rs.sig_startup, read=interloc.prop_all)
+        @rs.state(cond=rs.sig_startup, write=rawio.prop_in)
         def persqa_hi(ctx: rs.ContextWrapper):
-            ravestate_ontology.initialized.wait()
-            interloc.handle_single_interlocutor_input(ctx, "hi")
+            ctx[rawio.prop_in] = "hi"
 
         @rs.state(read=rawio.prop_out)
         def raw_out(ctx: rs.ContextWrapper):
@@ -42,9 +40,9 @@ def test_run_qa():
         ctx[rawio.prop_in] = what
 
     ctx.emit(rs.sig_startup)
-    ctx.run_once()
-
-    assert persqa_hi.wait()
+    while not persqa_hi.wait(.1):
+        ctx.run_once(debug=True)
+        ctx.test()
 
     # Wait for name being asked
     while not raw_out.wait(.1):
@@ -76,6 +74,9 @@ def test_run_qa():
 
     assert persqa.inference.wait(0)
     assert persqa.react.wait(0)
+
+    # Unfortunately needed until Context adopts Properties as clones.
+    interloc.prop_all.children.clear()
 
 
 if __name__ == "__main__":

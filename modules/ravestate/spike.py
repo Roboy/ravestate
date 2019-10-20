@@ -47,7 +47,15 @@ class Spike(ISpike):
     # Spike payload passed through emit
     _payload: Any
 
-    def __init__(self, *, sig: str, parents: Set['Spike']=None, consumable_resources: Set[str]=None, payload: Any=None):
+    # Tells whether the activation that produced this spike was boring
+    _boring: bool
+
+    def __init__(self, *,
+                 sig: str,
+                 parents: Set['Spike']=None,
+                 consumable_resources: Set[str]=None,
+                 payload: Any=None,
+                 boring: bool=False):
         """
         Construct a spike from a signal name and a list of causing parent signals.
 
@@ -77,6 +85,7 @@ class Spike(ISpike):
         self._parents = parents.copy() if parents else set()
         self._causal_group = next(iter(parents)).causal_group() if parents else CausalGroup(consumable_resources)
         self._payload = payload
+        self._boring = boring
         for parent in parents:
             parent.adopt(self)
         with self._causal_group as cg:
@@ -90,6 +99,15 @@ class Spike(ISpike):
 
     def id(self):
         return self._signal
+
+    def boring(self):
+        """
+        Get the `boring`-flag of this spike, which indicates whether state
+         of the activation that produced this spike was boring.
+
+        :return: True if the activation boring, false otherwise.
+        """
+        return self._boring
 
     def causal_group(self) -> CausalGroup:
         """

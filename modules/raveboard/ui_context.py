@@ -14,12 +14,11 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 RAVEBOARD = "raveboard"
-PORT_CONFIG_KEY = "raveboard_port"
-URL_PREFIX_KEY = "raveboard_host_prefix"
-DEFAULT_PORT = 4242
+PORT_CONFIG_KEY = "port"
+URL_PREFIX_KEY = "host"
 
 RAVEBOARD_CONFIG = {
-    PORT_CONFIG_KEY: 4242,
+    PORT_CONFIG_KEY: 42424,
     URL_PREFIX_KEY: "http://localhost"
 }
 
@@ -27,23 +26,21 @@ RAVEBOARD_CONFIG = {
 class UIContext(rs.Context):
 
     def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None):
-        super().__init__(*arguments, runtime_overrides=runtime_overrides)
-
         self.msgs_lock = Lock()
         self.sio = socketio.Server(cors_allowed_origins="*", async_mode="threading")
         self.next_id_for_object = defaultdict(int)
         self.ui_objects: Dict[Union[rs.Spike, rs.Activation], Union[UISpikeModel, UIActivationModel]] = dict()
 
-        self._add_ui_module()
+        super().__init__(*arguments, runtime_overrides=runtime_overrides)
         Thread(target=self.ui_serve_events_async).start()
 
     def ui_serve_events_async(self):
         app = flask.Flask(__name__, static_folder="dist/ravestate")
         app.wsgi_app = socketio.Middleware(self.sio, app.wsgi_app)
-        app.run(port=self.conf(mod=RAVEBOARD, key=PORT_CONFIG_KEY), threaded=True)
+        app.run(host='0.0.0.0', port=self.conf(mod=RAVEBOARD, key=PORT_CONFIG_KEY), threaded=True)
 
-    def _add_ui_module(self):
-        import ravestate_rawio as rawio
+    def _load_modules(self, modules: List[str]):
+        super()._load_modules(modules)
 
         with rs.Module(name=RAVEBOARD, config=RAVEBOARD_CONFIG, depends=(rawio.mod,)) as mod:
 
@@ -94,6 +91,10 @@ class UIContext(rs.Context):
             return new_obj
 
     def ui_update_act(self, act: rs.Activation, is_running=False):
+        # -- do not report on boring activations
+        if act not in self.ui_objects and not act.spiky(filter_boring=True):
+            return
+
         act_model = self.ui_model(act)
         update_needed = False
 
@@ -146,8 +147,8 @@ class UIContext(rs.Context):
 
     # --------------------- Context Overrides ---------------------
 
-    def emit(self, signal, parents=None, wipe: bool=False, payload=None) -> rs.Spike:
-        new_spike = super().emit(signal, parents, wipe, payload)
+    def emit(self, signal, parents=None, wipe: bool = False, payload=None, boring=False) -> rs.Spike:
+        new_spike = super().emit(signal, parents, wipe, payload, boring)
         # create spike ui model, but only send it on demand when it is ref'd by an activation
         #  exception: the spike is an offspring spike
         spike_model = self.ui_model(new_spike, parent_spikes=parents if parents else ())
@@ -164,6 +165,7 @@ class UIContext(rs.Context):
                 self._state_activations())
         for act in acts_to_update:
             self.ui_update_act(act)
+
 
     def _state_activated(self, act: rs.Activation):
         super(UIContext, self)._state_activated(act)

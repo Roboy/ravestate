@@ -1,5 +1,7 @@
 import random
 
+import os
+
 import ravestate as rs
 import ravestate_interloc as interloc
 import ravestate_rawio as rawio
@@ -13,9 +15,10 @@ logger = get_logger(__name__)
 
 PYROBOY_AVAILABLE = False
 try:
-    from ravestate_ros1 import Ros1PubProperty
+    from ravestate_ros1 import Ros1PubProperty, Ros1SubProperty
     from std_msgs.msg import Float32, String
-    from pyroboy import say, listen
+    from roboy_cognition_msgs.msg import RecognizedSpeech
+    from pyroboy import say, listen, leds
     PYROBOY_AVAILABLE = True
 except ImportError as e:
     logger.error(f"""
@@ -80,20 +83,33 @@ if PYROBOY_AVAILABLE:
         prop_show_emotion = Ros1PubProperty(name="show_emotion", topic="/roboy/cognition/face/show_emotion", msg_type=String)
         prop_move_eyes = Ros1PubProperty(name="move_eyes", topic="/roboy/cognition/face/show_emotion", msg_type=String)
 
+        recognized_speech = Ros1SubProperty(
+            name="recognized_speech",
+            topic="/roboy/cognition/speech/recognition",
+            msg_type=RecognizedSpeech,
+            always_signal_changed=True)
 
-        @rs.state(cond=rs.sig_startup, read=interloc.prop_all)
+        @rs.state(cond=recognized_speech.changed(), read=(interloc.prop_all, recognized_speech), write=rawio.prop_in)
         def roboy_input(ctx: rs.ContextWrapper):
-            while not ctx.shutting_down():
-                result = listen()
-                logger.info(f"pyroboy.listen() -> {result}")
-                interloc.handle_single_interlocutor_input(ctx, result)
+            result = ctx[recognized_speech.changed()]
+            if result.text:
+                logger.info("Input:", result.text)
+                rawio.say(ctx, result.text)
 
         @rs.state(read=rawio.prop_out)
         def roboy_output(ctx):
             # don't call say simultaneously in different threads
+            global say_end_timestamp
+            try:
+                os.system('/raveskills/off.sh')
+            except:
+                logger.info("does /raveskills/off.sh exist?")
             with say_lock:
-                ret = say(unidecode(ctx[rawio.prop_out.changed()]))
-            logger.info(f"pyroboy.say({ctx[rawio.prop_out.changed()]}) -> {ret}")
+                say(unidecode(ctx[rawio.prop_out.changed()]))
+            try:
+                os.system('/raveskills/rainbow.sh')
+            except:
+                logger.info("does /raveskills/rainbow.sh exist?")
 
         @rs.state(cond=rawio.prop_in.changed() | idle.sig_bored, write=(prop_head_axis0, prop_head_axis1, prop_head_axis2))
         def move_head(ctx: rs.ContextWrapper):

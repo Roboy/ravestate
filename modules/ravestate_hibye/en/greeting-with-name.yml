@@ -1,0 +1,14 @@
+type: phrases
+name: "greeting-with-name"
+opts:
+- "hello {name}"
+- "hi {name}"
+- "greetings {name}"
+- "howdy {name}"
+- "hey {name}"
+- "what's up {name}"
+- "hi there {name}"
+- "gruse gott {name}"
+- "wazup wazup wazup {name}"
+- "howdy {name}"
+- "hey hey hey {name}"

@@ -207,6 +207,30 @@
 
 
   <li class="md-nav__item">
+    <a href="../modules/ravestate_wildtalk/" title="Wildtalk" class="md-nav__link">
+      Wildtalk
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_ros1/" title="ROS" class="md-nav__link">
+      ROS
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../modules/ravestate_verbaliser/" title="Verbaliser" class="md-nav__link">
       Verbaliser
     </a>
@@ -221,6 +245,18 @@
   <li class="md-nav__item">
     <a href="../modules/ravestate_telegramio/" title="TelegramIO" class="md-nav__link">
       TelegramIO
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_visionio/" title="VisionIO" class="md-nav__link">
+      VisionIO
     </a>
   </li>
 
@@ -246,18 +282,54 @@
       
       
 
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Tutorials
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Tutorials
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_nlp/luigi/" title="NLP: The Ice Cream Salesman" class="md-nav__link">
+      NLP: The Ice Cream Salesman
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
   
 
 
   <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
-    <label class="md-nav__link" for="nav-3">
+    <label class="md-nav__link" for="nav-4">
       API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-3">
+      <label class="md-nav__title" for="nav-4">
         API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -350,7 +422,7 @@
                 
                 <h1 id="ravestate.state">state</h1>
 
-<div class="codehilite"><pre><span></span><span class="n">state</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">write</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">property</span><span class="o">.</span><span class="n">Property</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span> <span class="n">read</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">property</span><span class="o">.</span><span class="n">Property</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span> <span class="n">cond</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Constraint</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">emit_detached</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">cooldown</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="n">state</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">write</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">property</span><span class="o">.</span><span class="n">Property</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span> <span class="n">read</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">property</span><span class="o">.</span><span class="n">Property</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span> <span class="n">cond</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Constraint</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">emit_detached</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">cooldown</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">boring</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">)</span>
 </pre></div>
 
 

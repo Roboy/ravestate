@@ -23,6 +23,7 @@ import ravestate_rawio as rawio
 import ravestate_interloc as interloc
 import ravestate_ontology as ontology
 import ravestate_emotion as emotion
+import ravestate_verbaliser as verbaliser
 
 
 MODULE_NAME: str = 'telegramio'
@@ -209,12 +210,18 @@ def telegram_run(ctx: rs.ContextWrapper):
             time.sleep(tick_interval)
             for chat_id, (last_msg_timestamp, parent_pipe) in active_chats.items():
                 if parent_pipe.poll():
-                    msg = parent_pipe.recv()
-                    if isinstance(msg, str):
-                        logger.info(f"OUTPUT: {msg}")
-                        updater.bot.send_message(chat_id=chat_id, text=msg)
-                    else:
-                        logger.error(f'Tried sending non-str object as telegram message: {str(msg)}')
+                    try:
+                        msg = parent_pipe.recv()
+                        if isinstance(msg, str):
+                            logger.info(f"OUTPUT: {msg}")
+                            updater.bot.send_message(chat_id=chat_id, text=msg)
+                        else:
+                            logger.error(f'Tried sending non-str object as telegram message: {str(msg)}')
+                    except EOFError:
+                        # Child pipe was closed
+                        parent_pipe.close()
+                        removable_chats.add(chat_id)
+                        continue
                 # remove chat from active_chats if inactive for too long
                 if last_msg_timestamp.age() > chat_lifetime:
                     parent_pipe.close()
@@ -276,6 +283,10 @@ def telegram_run(ctx: rs.ContextWrapper):
                 if update.effective_message.photo:
                     handle_photo(bot, update)
                 elif update.effective_message.text:
+                    if update.effective_message.text.strip().lower() in verbaliser.get_phrase_list("farewells"):
+                        send_on_telegram(ctx, verbaliser.get_random_phrase("farewells"))
+                        logger.info("Shutting down child process")
+                        ctx.shutdown()
                     handle_text(bot, update)
                 else:
                     logger.error(f"{MODULE_NAME} received an update it cannot handle.")

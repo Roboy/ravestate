@@ -110,6 +110,7 @@ with rs.Module(name="persqa", depends=(verbaliser.mod, mem.mod, nlp.mod, idle.mo
         def small_talk(ctx: rs.ContextWrapper):
             sess: Session = mem.get_session()
             interloc: Node = ctx[interloc_path]
+
             if interloc.get_id() < 0:  # ask for name, if the interlocutor is not (yet) a persistent instance
                 pred = "NAME"
             else:
@@ -168,7 +169,7 @@ with rs.Module(name="persqa", depends=(verbaliser.mod, mem.mod, nlp.mod, idle.mo
         ctx.add_state(fup_react)
 
     @rs.state(
-        cond=rawio.prop_in.changed() & interloc.prop_all.pushed(),
+        cond=interloc.prop_all.pushed(),
         write=prop_inference_mutex,
         read=interloc.prop_all)
     def new_interloc(ctx: rs.ContextWrapper):
@@ -179,8 +180,8 @@ with rs.Module(name="persqa", depends=(verbaliser.mod, mem.mod, nlp.mod, idle.mo
         create_small_talk_states(ctx=ctx, interloc_path=interloc_path)
 
     @rs.state(
-        cond=rawio.prop_in.changed() & interloc.prop_all.popped(),
-        write=(prop_inference_mutex, prop_predicate, prop_subject))
+        cond=interloc.prop_all.popped(),
+        write=(prop_predicate, prop_subject))
     def removed_interloc(ctx: rs.ContextWrapper):
         """
         reacts to interloc:popped and makes sure that
@@ -226,7 +227,7 @@ with rs.Module(name="persqa", depends=(verbaliser.mod, mem.mod, nlp.mod, idle.mo
 
     @rs.state(
         cond=prop_answer.changed(),
-        write=(rawio.prop_out, prop_predicate),
+        write=(rawio.prop_out, prop_predicate, interloc.prop_persisted),
         read=(prop_predicate, prop_subject, prop_answer, interloc.prop_all))
     def react(ctx: rs.ContextWrapper):
         """
@@ -253,6 +254,7 @@ with rs.Module(name="persqa", depends=(verbaliser.mod, mem.mod, nlp.mod, idle.mo
             #  picked up by persqa:new_interloc.
             subject_node.set_node(persistent_subject_node)
             sess.update(subject_node)
+            ctx[interloc.prop_persisted] = subject_node
         elif pred in PREDICATE_SET:
             relationship_type = onto.get_type(ONTOLOGY_TYPE_FOR_PRED[pred])
             relationship_node = Node(metatype=relationship_type)
@@ -266,5 +268,3 @@ with rs.Module(name="persqa", depends=(verbaliser.mod, mem.mod, nlp.mod, idle.mo
             name=subject_node.get_name(),
             obj=inferred_answer)
         ctx[prop_predicate] = None
-
-

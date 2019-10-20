@@ -1,0 +1,773 @@
+
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.2.0">
+    
+    
+      
+        <title>NLP: The Ice Cream Salesman - Ravestate</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/application.750b69bd.css">
+      
+      
+    
+    
+      <script src="../../../assets/javascripts/modernizr.74668098.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../../../assets/fonts/material-icons.css">
+    
+    
+    
+      
+    
+    
+  </head>
+  
+    <body dir="ltr">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#sentence-processing-and-feature-extraction-techniques-for-ice-cream-selling" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../../.." title="Ravestate" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon"></i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              Ravestate
+            </span>
+            <span class="md-header-nav__topic">
+              NLP: The Ice Cream Salesman
+            </span>
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="../../.." title="Ravestate" class="md-nav__button md-logo">
+      
+        <i class="md-icon"></i>
+      
+    </a>
+    Ravestate
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../.." title="Home" class="md-nav__link">
+      Home
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2">
+    
+    <label class="md-nav__link" for="nav-2">
+      Modules
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        Modules
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../" title="NLP" class="md-nav__link">
+      NLP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../ravestate_wildtalk/" title="Wildtalk" class="md-nav__link">
+      Wildtalk
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../ravestate_ros1/" title="ROS" class="md-nav__link">
+      ROS
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../ravestate_verbaliser/" title="Verbaliser" class="md-nav__link">
+      Verbaliser
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../ravestate_telegramio/" title="TelegramIO" class="md-nav__link">
+      TelegramIO
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../ravestate_visionio/" title="VisionIO" class="md-nav__link">
+      VisionIO
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../ravestate_akinator/" title="Akinator" class="md-nav__link">
+      Akinator
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+    
+    <label class="md-nav__link" for="nav-3">
+      Tutorials
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Tutorials
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        NLP: The Ice Cream Salesman
+      </label>
+    
+    <a href="./" title="NLP: The Ice Cream Salesman" class="md-nav__link md-nav__link--active">
+      NLP: The Ice Cream Salesman
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sentence-processing-and-feature-extraction-techniques-for-ice-cream-selling" title="Sentence Processing and Feature Extraction Techniques for Ice Cream Selling" class="md-nav__link">
+    Sentence Processing and Feature Extraction Techniques for Ice Cream Selling
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#yes-no-property" title="Yes-No Property" class="md-nav__link">
+    Yes-No Property
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lemmatization" title="Lemmatization" class="md-nav__link">
+    Lemmatization
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#named-entity-recognition-ner" title="Named Entity Recognition (NER)" class="md-nav__link">
+    Named Entity Recognition (NER)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#triple-extraction" title="Triple Extraction" class="md-nav__link">
+    Triple Extraction
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../" title="Modules" class="md-nav__link">
+      Modules
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../states/" title="States" class="md-nav__link">
+      States
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../properties/" title="Properties" class="md-nav__link">
+      Properties
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../context/" title="Context" class="md-nav__link">
+      Context
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../../config/" title="Configuration" class="md-nav__link">
+      Configuration
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#sentence-processing-and-feature-extraction-techniques-for-ice-cream-selling" title="Sentence Processing and Feature Extraction Techniques for Ice Cream Selling" class="md-nav__link">
+    Sentence Processing and Feature Extraction Techniques for Ice Cream Selling
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#yes-no-property" title="Yes-No Property" class="md-nav__link">
+    Yes-No Property
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lemmatization" title="Lemmatization" class="md-nav__link">
+    Lemmatization
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#named-entity-recognition-ner" title="Named Entity Recognition (NER)" class="md-nav__link">
+    Named Entity Recognition (NER)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#triple-extraction" title="Triple Extraction" class="md-nav__link">
+    Triple Extraction
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                  <h1>NLP: The Ice Cream Salesman</h1>
+                
+                <h2 id="sentence-processing-and-feature-extraction-techniques-for-ice-cream-selling">Sentence Processing and Feature Extraction Techniques for Ice Cream Selling</h2>
+<p>This document discusses the possible sentence processing and feature extraction techniques 
+applied with NLP module of ravestate library for ice cream selling.</p>
+<h4 id="yes-no-property">Yes-No Property</h4>
+<p>This feature can be used to understand a given question's positive/negative answer to proceed such as:</p>
+<ul>
+<li>Do you want the usual?</li>
+<li>Do you want ice cream?</li>
+</ul>
+<p>Example: State that reads the "yesno" property</p>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">ravestate</span> <span class="kn">as</span> <span class="nn">rs</span>
+<span class="kn">import</span> <span class="nn">ravestate_nlp</span> <span class="kn">as</span> <span class="nn">nlp</span>
+<span class="kn">import</span> <span class="nn">ravestate_rawio</span> <span class="kn">as</span> <span class="nn">rawio</span>
+
+<span class="nd">@rs.state</span><span class="p">(</span>
+    <span class="n">cond</span><span class="o">=</span><span class="n">nlp</span><span class="o">.</span><span class="n">prop_yesno</span><span class="o">.</span><span class="n">changed</span><span class="p">(),</span>  <span class="c1"># state reacts to a change in the &#39;yesno&#39; property</span>
+    <span class="n">read</span><span class="o">=</span><span class="n">nlp</span><span class="o">.</span><span class="n">prop_yesno</span><span class="p">,</span>  <span class="c1"># state is allowed to read the &#39;yesno&#39; property</span>
+    <span class="n">write</span><span class="o">=</span><span class="n">rawio</span><span class="o">.</span><span class="n">prop_out</span><span class="p">)</span>  <span class="c1"># state is allowed to write to the output property</span>
+<span class="k">def</span> <span class="nf">customer_wants_ice_cream</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ContextWrapper</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">ctx</span><span class="p">[</span><span class="n">nlp</span><span class="o">.</span><span class="n">prop_yesno</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;yes&quot;</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="p">[</span><span class="n">rawio</span><span class="o">.</span><span class="n">prop_out</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Your ice cream is coming right up!&quot;</span>
+</pre></div>
+
+
+<h4 id="lemmatization">Lemmatization</h4>
+<p>After tokenizing the sentences, roboy needs to match the strings in order to understand the context.
+Lemmatization allows to get the base form of words which is the required form for matching.</p>
+<h4 id="named-entity-recognition-ner">Named Entity Recognition (NER)</h4>
+<p>NER can be used in order to understand the quantity of ice cream, payment or any matter that requires specifics.
+The following figure includes the most possible types of use, please check 
+https://spacy.io/api/annotation#named-entities for further types and for Spacy's interactive NER detector https://explosion.ai/demos/displacy-ent</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>DESCRIPTION</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DATE</td>
+<td>Absolute or relative dates or periods.</td>
+</tr>
+<tr>
+<td>TIME</td>
+<td>Times smaller than a day.</td>
+</tr>
+<tr>
+<td>PERCENT</td>
+<td>Percentage, including ”%“.</td>
+</tr>
+<tr>
+<td>MONEY</td>
+<td>Monetary values, including unit.</td>
+</tr>
+<tr>
+<td>QUANTITY</td>
+<td>Measurements, as of weight or distance.</td>
+</tr>
+<tr>
+<td>ORDINAL</td>
+<td>“first”, “second”, etc.</td>
+</tr>
+<tr>
+<td>CARDINAL</td>
+<td>Numerals that do not fall under another type.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="triple-extraction">Triple Extraction</h3>
+<p>Triple Extraction provides object and subject applied with the verb. 
+This allows us to have a wider perspective over the request because
+we can specifically understand which flavor is additionally or less requested.
+Consider the following scenarios:</p>
+<ul>
+<li>I need more vanilla ice cream</li>
+<li>Drop the chocolate please.</li>
+</ul>
+<p>This feature can be used to understand the requested flavors or payment options. 
+Roboy's flavor and payment options are predefined so any match between our database and incoming token
+can help us to identify the requested options. Such as:</p>
+<ul>
+<li><em>"vanilla"</em></li>
+<li><em>"chocolate"</em></li>
+<li><em>"lemon"</em></li>
+<li><em>"strawberry"</em></li>
+</ul>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">ravestate</span> <span class="kn">as</span> <span class="nn">rs</span>
+<span class="kn">import</span> <span class="nn">ravestate_nlp</span> <span class="kn">as</span> <span class="nn">nlp</span>
+<span class="kn">import</span> <span class="nn">ravestate_rawio</span> <span class="kn">as</span> <span class="nn">rawio</span>
+
+<span class="n">prop_flavor</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Property</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;flavor&quot;</span><span class="p">,</span> <span class="n">allow_read</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">allow_write</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">always_signal_changed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="nd">@rs.state</span><span class="p">(</span>
+    <span class="n">cond</span><span class="o">=</span><span class="n">nlp</span><span class="o">.</span><span class="n">prop_triples</span><span class="o">.</span><span class="n">changed</span><span class="p">(),</span>  <span class="c1"># state reacts to a change in the &#39;prop_triples&#39; property</span>
+    <span class="n">read</span><span class="o">=</span><span class="n">nlp</span><span class="o">.</span><span class="n">prop_triples</span><span class="p">,</span>  <span class="c1"># state is allowed to read the &#39;prop_triples&#39; property</span>
+    <span class="n">write</span><span class="o">=</span><span class="n">prop_flavor</span><span class="p">,</span> <span class="c1"># state is allowed to write to the &#39;prop_flavor&#39; property</span>
+    <span class="n">signal</span><span class="o">=</span><span class="n">prop_flavor</span><span class="o">.</span><span class="n">changed_signal</span><span class="p">)</span>  <span class="c1"># state signals &#39;prop_flavor&#39; change signal </span>
+<span class="k">def</span> <span class="nf">flavor_recognition_state</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ContextWrapper</span><span class="p">):</span>
+    <span class="n">triple_match_result</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="n">nlp</span><span class="o">.</span><span class="n">prop_triples</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">match_either_lemma</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;vanilla&quot;</span><span class="p">,</span> <span class="s2">&quot;strawberry&quot;</span><span class="p">,</span> <span class="s2">&quot;lemon&quot;</span><span class="p">,</span> <span class="s2">&quot;chocolate&quot;</span><span class="p">}):</span>
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">triple_match_result</span><span class="o">.</span><span class="n">objs</span>
+    <span class="k">if</span> <span class="n">objects</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="p">[</span><span class="n">prop_flavor</span><span class="p">]</span> <span class="o">=</span> <span class="n">objects</span>
+        <span class="k">return</span> <span class="n">rs</span><span class="o">.</span><span class="n">Emit</span><span class="p">()</span>
+</pre></div>
+
+
+<p>or ...</p>
+<ul>
+<li><em>"credit card"</em></li>
+<li><em>"cash"</em></li>
+<li><em>"bitcoin"</em></li>
+</ul>
+<div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">ravestate</span> <span class="kn">as</span> <span class="nn">rs</span>
+<span class="kn">import</span> <span class="nn">ravestate_nlp</span> <span class="kn">as</span> <span class="nn">nlp</span>
+<span class="kn">import</span> <span class="nn">ravestate_rawio</span> <span class="kn">as</span> <span class="nn">rawio</span>
+
+<span class="n">prop_payment</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">Property</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;payment&quot;</span><span class="p">,</span> <span class="n">allow_read</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">allow_write</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">always_signal_changed</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="nd">@rs.state</span><span class="p">(</span>
+    <span class="n">cond</span><span class="o">=</span><span class="n">nlp</span><span class="o">.</span><span class="n">prop_triples</span><span class="o">.</span><span class="n">changed</span><span class="p">(),</span>  <span class="c1"># state reacts to a change in the &#39;prop_triples&#39; property</span>
+    <span class="n">read</span><span class="o">=</span><span class="n">nlp</span><span class="o">.</span><span class="n">prop_triples</span><span class="p">,</span>  <span class="c1"># state is allowed to read the &#39;prop_triples&#39; property</span>
+    <span class="n">write</span><span class="o">=</span><span class="n">prop_payment</span><span class="p">,</span> <span class="c1"># state is allowed to write to the &#39;prop_payment&#39; property</span>
+    <span class="n">signal</span><span class="o">=</span><span class="n">prop_payment</span><span class="o">.</span><span class="n">changed_signal</span><span class="p">)</span>  <span class="c1"># state signals &#39;prop_payment&#39; change signal </span>
+<span class="k">def</span> <span class="nf">payment_recognition_state</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="n">ContextWrapper</span><span class="p">):</span>
+    <span class="n">triple_match_result</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="n">nlp</span><span class="o">.</span><span class="n">prop_triples</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">match_either_lemma</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;bitcoin&quot;</span><span class="p">,</span> <span class="s2">&quot;cash&quot;</span><span class="p">,</span> <span class="s2">&quot;card&quot;</span><span class="p">}):</span>
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">triple_match_result</span><span class="o">.</span><span class="n">objs</span>
+    <span class="k">if</span> <span class="n">objects</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">objects</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="p">[</span><span class="n">prop_payment</span><span class="p">]</span> <span class="o">=</span> <span class="n">objects</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> 
+        <span class="k">return</span> <span class="n">rs</span><span class="o">.</span><span class="n">Emit</span><span class="p">()</span>
+</pre></div>
+
+
+<p>Alternatively by using triples, Roboy can understand whether the sentence is a request or not by only parsing the verb.
+For example if the customer uses one of the following phrases, it is easy to detect that customer has a request:</p>
+<ul>
+<li><em>"would like"</em></li>
+<li><em>"can have"</em></li>
+<li><em>"can get"</em></li>
+<li><em>"will have"</em></li>
+<li><em>"choose"</em></li>
+<li><em>"wish"</em></li>
+<li><em>"desire"</em></li>
+<li><em>"prefer"</em></li>
+</ul>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../../ravestate_akinator/" title="Akinator" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Akinator
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../../" title="Modules" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Modules
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../../assets/javascripts/application.39abc4af.js"></script>
+      
+      <script>app.initialize({version:"1.0.4",url:{base:"../../.."}})</script>
+      
+    
+  </body>
+</html>

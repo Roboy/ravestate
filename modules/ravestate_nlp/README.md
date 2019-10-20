@@ -14,6 +14,8 @@ The natural language processing (NLP) module enables Roboy to process and unders
 That way he can interpret the meaning of the detected sentences.  
 We use a free, open-source NLP library for advanced NLP in Python: [spaCy](https://spacy.io/) 
 
+You can find some hands-on examples [here](luigi.md).
+
 
 ### Extracted Features
 
@@ -140,6 +142,3 @@ def answer_chicken_question(ctx: rs.ContextWrapper):
 
 #### Happy language processing to all chickens out there!
 
-### Hands-on
-
-[How to use nlp features for selling ice cream.](ICE_CREAM_SELLING_NLP_USA_CASES.md)

@@ -207,6 +207,30 @@
 
 
   <li class="md-nav__item">
+    <a href="../modules/ravestate_wildtalk/" title="Wildtalk" class="md-nav__link">
+      Wildtalk
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_ros1/" title="ROS" class="md-nav__link">
+      ROS
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../modules/ravestate_verbaliser/" title="Verbaliser" class="md-nav__link">
       Verbaliser
     </a>
@@ -221,6 +245,18 @@
   <li class="md-nav__item">
     <a href="../modules/ravestate_telegramio/" title="TelegramIO" class="md-nav__link">
       TelegramIO
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_visionio/" title="VisionIO" class="md-nav__link">
+      VisionIO
     </a>
   </li>
 
@@ -246,18 +282,54 @@
       
       
 
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Tutorials
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Tutorials
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_nlp/luigi/" title="NLP: The Ice Cream Salesman" class="md-nav__link">
+      NLP: The Ice Cream Salesman
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
   
 
 
   <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
-    <label class="md-nav__link" for="nav-3">
+    <label class="md-nav__link" for="nav-4">
       API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-3">
+      <label class="md-nav__title" for="nav-4">
         API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -816,6 +888,17 @@ This is called by ... <br>
 <p>Returns true, if the activation has acquired any spikes at all.</p>
 <p><strong>Returns:</strong> True, if any of this activation's constraint's
  signal is referencing a spike.</p>
+<h3 id="ravestate.activation.Activation.boring">boring</h3>
+
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">boring</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
+
+
+<p>Returns True, if the activation's state is boring. Called by
+ context, to figure out whether this activation counts towards
+ the system not setting the <code>idle:bored</code> property  to True.</p>
+<p><strong>Returns:</strong> True, if the state assigned to this activation has
+ the <code>boring</code> field set to true, False otherwise.</p>
 <h3 id="ravestate.activation.Activation.spikes">spikes</h3>
 
 <div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">spikes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">spike</span><span class="o">.</span><span class="n">Spike</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>

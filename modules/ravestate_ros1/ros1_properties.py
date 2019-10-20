@@ -51,7 +51,7 @@ def sync_ros_properties(ctx: rs.ContextWrapper):
     if rospy.get_name():
         node_name = rospy.get_name()[1:]  # cut off leading /
     # init ROS1
-    rospy.init_node(node_name, disable_signals = True)
+    # rospy.init_node(node_name, disable_signals=True)
     global global_prop_set
     # current_props: hash -> Subscriber/Publisher/ServiceProxy
     current_props: Dict = dict()
@@ -97,7 +97,7 @@ def sync_ros_properties(ctx: rs.ContextWrapper):
 
 
 class Ros1SubProperty(rs.Property):
-    def __init__(self, name: str, topic: str, msg_type, default_value=None, always_signal_changed: bool = True):
+    def __init__(self, name: str, topic: str, msg_type, default_value=None, always_signal_changed: bool = True, boring: bool = False):
         """
         Initialize Property
 
@@ -118,7 +118,8 @@ class Ros1SubProperty(rs.Property):
             allow_push=False,
             allow_pop=False,
             default_value=default_value,
-            always_signal_changed=always_signal_changed)
+            always_signal_changed=always_signal_changed,
+            boring=boring)
         self.topic = topic
         self.msg_type = msg_type
         self.subscriber = None
@@ -152,7 +153,7 @@ class Ros1SubProperty(rs.Property):
 
 
 class Ros1PubProperty(rs.Property):
-    def __init__(self, name: str, topic: str, msg_type, queue_size: int = 10):
+    def __init__(self, name: str, topic: str, msg_type, queue_size: int = 10, boring: bool = False):
         """
         Initialize Property
 
@@ -171,7 +172,8 @@ class Ros1PubProperty(rs.Property):
             allow_push=False,
             allow_pop=False,
             default_value=None,
-            always_signal_changed=True)
+            always_signal_changed=True,
+            boring=boring)
         self.topic = topic
         self.msg_type = msg_type
         self.queue_size = queue_size
@@ -207,7 +209,7 @@ class Ros1PubProperty(rs.Property):
 
 
 class Ros1CallProperty(rs.Property):
-    def __init__(self, name: str, service_name: str, service_type, call_timeout: float = 10.0):
+    def __init__(self, name: str, service_name: str, service_type, call_timeout: float = 10.0, boring: bool = False):
         """
         Initialize Property
 
@@ -226,7 +228,8 @@ class Ros1CallProperty(rs.Property):
             allow_push=False,
             allow_pop=False,
             default_value=None,
-            always_signal_changed=False)
+            always_signal_changed=False,
+            boring=boring)
         self.service_name = service_name
         self.service_type = service_type
         self.call_timeout = call_timeout
@@ -280,4 +283,3 @@ class Ros1CallProperty(rs.Property):
             elif ROS1_AVAILABLE:
                 logger.error(f"Request {str(value)} to service {self.service_name} "
                              f"cannot be sent because client was not registered in ROS1")
-

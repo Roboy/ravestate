@@ -31,7 +31,8 @@ class Property:
             default_value=None,
             always_signal_changed=False,
             is_flag_property=False,
-            wipe_on_changed=True):
+            wipe_on_changed=True,
+            boring=False):
 
         self.name = name
         self.allow_read = allow_read
@@ -50,6 +51,7 @@ class Property:
         self.popped_signal = Signal(f"{name}:popped")
         self.true_signal = Signal(f"{name}:true")
         self.false_signal = Signal(f"{name}:false")
+        self.boring = boring
 
         # add property to module in current `with Module(...)` clause
         module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
