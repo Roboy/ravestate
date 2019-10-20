@@ -56,7 +56,7 @@ will be hosted on a configurable port.
 
 The following GIF shows raveboard together with `ravestate_visionio`:
 
-[Raveboard](resources/docs/raveboard.gif)
+![Raveboard](resources/docs/raveboard.gif)
 
 ## Installation
 
