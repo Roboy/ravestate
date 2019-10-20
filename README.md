@@ -31,7 +31,7 @@ import ravestate_conio
 # Ravestate applications should always be wrapped in a Module.
 # This allows easier scoping, and enables separation of concerns
 # beyond states.
-with rs.Module(name="hi!"):
+with rs.Module(name="hi!", depends=(rawio.mod,)):
 
     # Create an application state which reacts to the `:startup` signal,
     # and writes a string to raw:out. Note: State functions are
@@ -41,14 +41,22 @@ with rs.Module(name="hi!"):
         context[rawio.prop_out] = "Waddup waddup waddup!"
 
 # Run context with console input/output and our 'hi!' module.
-rs.Context("conio", "hi!").run()
+rs.Context("hi!").run()
 ```
 
-### Visualization
+### Raveboard
 
-Ravestate has a [d3.js](https://d3js.org)-based visualization. When using `ravestate_ui.UIContext` instead of `Context`, or `python3 -m ravestate_ui` instead of `python3 -m ravestate`, a real-time visualization of all states/properties/signals in the state machine will be hosted on port 5001. Here is the view of `http://localhost:5001` after launching `python3 ravestate_ui -f generic.yml`:
+Ravestate has an [angular](https://angular.io)/[socket.io](https://socket.io)-based
+interactive (beta) UI called __Raveboard__. It shows the events (spikes) that are
+currently relevant, as well as potential state activations that are referencing these spikes.
 
-<img src="resources/docs/ravestate_ui.gif">
+When using `raveboard.UIContext` instead of `Context`, or `python3 -m raveboard` instead of
+`python3 -m ravestate`, a real-time visualization of all spikes/activations, as well as a chat window,
+will be hosted on a configurable port.
+
+The following GIF shows raveboard together with `ravestate_visionio`:
+
+[Raveboard](resources/docs/raveboard.gif)
 
 ## Installation
 
@@ -68,15 +76,61 @@ For reliability, we recommend using an environment virtualization tool,
 like [virtualenv](https://virtualenv.pypa.io/en/latest/)
 or [conda](https://conda.io/en/latest/).
 
-### For developers
+### Via Docker/Docker-compose
+
+Ravestate offers a docker image that bundles all dependencies that are required
+for advanced cognitive chatbot design:
+
+* `Neo4j`: The Neo4j graph DBMS is used by `ravestate_ontology` to provide long-term memory.
+* `Redis`: The Redis in-memory DBMS is used to provide fast short-term memory, for example to store facial feature vectors.
+* ``
+
+There is a Dockerfile for ROS, ROS2 and Face Recognition support, which can be built with
+```bash
+docker build -t ravestate .
+```
+The image contains ROS, ROS2 and a ROS Bridge to connect ROS with ROS2.
+Furthermore the roboy_communication message and service types are installed.
+
+A container can then be created with docker-compose.yml. Choose `linux` or `macos` as fit for your platform:
+```bash
+docker-compose up -d rs-{linux|macos}
+```
+
+The container is now running and a connection into the container can be
+established with:
+```bash
+docker exec -it rs bash
+```
+
+Inside the container, first source the ROS/ROS2 setups. Then 
+ravestate can be run with `rclpy` (ROS2) and `rospy` (ROS) available.
+```bash
+# Source ROS2 setup if needed
+. ~/ros2_ws/install/setup.bash
+
+# Source ROS1 setup if needed
+. ~/melodic_ws/idevel/setup.bash
+
+# Start ravestate or raveboard to run your modules.
+python3 -m ravestate [...]
+```
+
+**Note:** The ravestate docker container contains both `redis` and `neo4j`
+databases, which are automatically started and mapped into folders at
+`ravestate/db/{redis|neo4j}`.
+
+### For developers and ROS users
 
 #### Initial configuration and setup
 
 Clone the repository and install dependencies:
 
 ```bash
+cd ~
+
 # Create a virtual python environment to not pollute the global setup
-python3 -m virtualenv python-ravestate
+python3 -m virtualenv -p python3 python-ravestate
 
 # Source the virtual environment
 . python-ravestate/bin/activate
@@ -241,44 +295,6 @@ External (Red) and Skills (Green):
   | ravestate_fillers    | Recognize when the dialog context is taking a long time to produce an answer, and voice a filler like __"Uhm"__ or __"Let's see..."__.
 
 **Note:** __(*)__ = deprecated.
-
-
-## Docker for ROS and ROS2
-
-There is a Dockerfile for ROS, ROS2 and Face Recognition support, which can be built with
-```bash
-docker build -t ravestate .
-```
-The image contains ROS, ROS2 and a ROS Bridge to connect ROS with ROS2.
-Furthermore the roboy_communication message and service types are installed.
-
-A container can then be created with docker-compose.yml. Choose `linux` or `macos` as fit for your platform:
-```bash
-docker-compose up -d rs-{linux|macos}
-```
-
-The container is now running and a connection into the container can be
-established with:
-```bash
-docker exec -it rs bash
-```
-
-Inside the container, first source the ROS/ROS2 setups. Then 
-ravestate can be run with `rclpy` (ROS2) and `rospy` (ROS) available.
-```bash
-# Source ROS2 setup if needed
-. ~/ros2_ws/install/setup.bash
-
-# Source ROS1 setup if needed
-. ~/melodic_ws/idevel/setup.bash
-
-# Start ravestate or raveboard to run your modules.
-python3 -m ravestate [...]
-```
-
-**Note:** The ravestate docker container contains both `redis` and `neo4j`
-databases, which are automatically started and mapped into folders at
-`ravestate/db/{redis|neo4j}`.
 
 ## Running tests
 
