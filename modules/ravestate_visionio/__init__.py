@@ -50,6 +50,7 @@ if ROBOY_COGNITION_AVAILABLE:
             topic="/roboy/cognition/vision/visible_face_names",
             msg_type=Faces,
             always_signal_changed=True,
+            wipe_on_changed=False,
             boring=True
         )
 

@@ -172,7 +172,7 @@ class FaceOracleFilter:
         If the current best guess is an anonymous interlocutor, convert it to
          a known interlocutor with the given primary key.
         """
-        assert registered_primary_key > 0
+        assert registered_primary_key >= 0
         unregistered_primary_key = self.current_best_guess.id
 
         assert not (registered_primary_key in self.people.keys())

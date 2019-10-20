@@ -97,7 +97,14 @@ def sync_ros_properties(ctx: rs.ContextWrapper):
 
 
 class Ros1SubProperty(rs.Property):
-    def __init__(self, name: str, topic: str, msg_type, default_value=None, always_signal_changed: bool = True, boring: bool = False):
+    def __init__(self,
+                 name: str,
+                 topic: str,
+                 msg_type,
+                 default_value=None,
+                 always_signal_changed: bool = True,
+                 wipe_on_changed=True,
+                 boring: bool = False):
         """
         Initialize Property
 
@@ -119,6 +126,7 @@ class Ros1SubProperty(rs.Property):
             allow_pop=False,
             default_value=default_value,
             always_signal_changed=always_signal_changed,
+            wipe_on_changed=wipe_on_changed,
             boring=boring)
         self.topic = topic
         self.msg_type = msg_type
@@ -153,7 +161,13 @@ class Ros1SubProperty(rs.Property):
 
 
 class Ros1PubProperty(rs.Property):
-    def __init__(self, name: str, topic: str, msg_type, queue_size: int = 10, boring: bool = False):
+    def __init__(self,
+                 name: str,
+                 topic: str,
+                 msg_type,
+                 queue_size: int = 10,
+                 wipe_on_changed=True,
+                 boring: bool = False):
         """
         Initialize Property
 
@@ -173,6 +187,7 @@ class Ros1PubProperty(rs.Property):
             allow_pop=False,
             default_value=None,
             always_signal_changed=True,
+            wipe_on_changed=wipe_on_changed,
             boring=boring)
         self.topic = topic
         self.msg_type = msg_type
@@ -209,7 +224,13 @@ class Ros1PubProperty(rs.Property):
 
 
 class Ros1CallProperty(rs.Property):
-    def __init__(self, name: str, service_name: str, service_type, call_timeout: float = 10.0, boring: bool = False):
+    def __init__(self,
+                 name: str,
+                 service_name: str,
+                 service_type,
+                 call_timeout: float = 10.0,
+                 wipe_on_changed=True,
+                 boring: bool = False):
         """
         Initialize Property
 
@@ -229,6 +250,7 @@ class Ros1CallProperty(rs.Property):
             allow_pop=False,
             default_value=None,
             always_signal_changed=False,
+            wipe_on_changed=wipe_on_changed,
             boring=boring)
         self.service_name = service_name
         self.service_type = service_type
@@ -250,7 +272,8 @@ class Ros1CallProperty(rs.Property):
         result.set_parent_path(self.parent_path)
         return result
 
-    def write(self, value):
+    def write(self,
+              value):
         """
         Call Service and receive result directly in the property.
         Blocks during service-call.
