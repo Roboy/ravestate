@@ -30,6 +30,7 @@ generate:
 pages:
 - Home: index.md << README.md
 - Modules:
+  - Raveboard: modules/raveboard/README.md << modules/raveboard/README.md
   - NLP: modules/ravestate_nlp/README.md << modules/ravestate_nlp/README.md
   - Wildtalk: modules/ravestate_wildtalk/README.md << modules/ravestate_wildtalk/README.md
   - ROS: modules/ravestate_ros1/README.md << modules/ravestate_ros1/README.md
@@ -56,4 +57,4 @@ additional_search_paths:
 
 # Extension for code highlighting
 markdown_extensions:
-  - codehilite
+- codehilite

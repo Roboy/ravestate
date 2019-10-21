@@ -201,6 +201,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../raveboard/" title="Raveboard" class="md-nav__link">
+      Raveboard
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../ravestate_nlp/" title="NLP" class="md-nav__link">
       NLP
     </a>
@@ -298,6 +310,20 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dependencies" title="Dependencies" class="md-nav__link">
+    Dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" title="Configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-to-run" title="How to run" class="md-nav__link">
     How to run
   </a>
@@ -306,22 +332,22 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#linux" title="Linux" class="md-nav__link">
-    Linux
+  <a href="#profile-rs-linux" title="Profile rs-linux" class="md-nav__link">
+    Profile rs-linux
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#macos" title="MacOS" class="md-nav__link">
-    MacOS
+  <a href="#profile-rs-macos" title="Profile rs-macos" class="md-nav__link">
+    Profile rs-macos
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#windows" title="Windows" class="md-nav__link">
-    Windows
+  <a href="#using-a-video-instead-of-a-webcam-feed" title="Using a video instead of a webcam feed" class="md-nav__link">
+    Using a video instead of a webcam feed
   </a>
   
 </li>
@@ -512,6 +538,20 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dependencies" title="Dependencies" class="md-nav__link">
+    Dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" title="Configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-to-run" title="How to run" class="md-nav__link">
     How to run
   </a>
@@ -520,22 +560,22 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#linux" title="Linux" class="md-nav__link">
-    Linux
+  <a href="#profile-rs-linux" title="Profile rs-linux" class="md-nav__link">
+    Profile rs-linux
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#macos" title="MacOS" class="md-nav__link">
-    MacOS
+  <a href="#profile-rs-macos" title="Profile rs-macos" class="md-nav__link">
+    Profile rs-macos
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#windows" title="Windows" class="md-nav__link">
-    Windows
+  <a href="#using-a-video-instead-of-a-webcam-feed" title="Using a video instead of a webcam feed" class="md-nav__link">
+    Using a video instead of a webcam feed
   </a>
   
 </li>
@@ -605,57 +645,83 @@ ROS topic provided by <code>face_oracle</code>, based on which conversations can
 </pre></div>
 
 
-<h2 id="how-to-run">How to run</h2>
-<p>Add the <code>ravestate_visionio</code> module to your ravestate session. For recognition, <code>ravestate_visionio</code> requires a running FaceOracle websocket client.</p>
-<p>The FaceOracle websocket client is installed inside the ravestate docker container.
-The client processes camera frames with OpenCV and <code>face_recogniton</code>, and
-streams the results to the <code>/roboy/cognition/vision/visible_face_names</code> ROS1 topic.</p>
-<p>When running the <code>ravestate</code> image via Docker compose (see main README), you can
-navigate to <code>~/melodic_ws/src/face_oracle</code> and start the FaceOracle client with a parameter
-indicating the camera you want to process. The parameter value depends on your platform:</p>
-<h3 id="linux">Linux</h3>
-<p>On Linux, on both Audio and Video devices are easily mapped into the container
-via the provided docker-compose configuration. Inside the container, just execute...</p>
-<div class="codehilite"><pre><span></span><span class="c1"># 1/3) In Docker: Make sure that `roscore` is running</span>
-
-roscore <span class="p">&amp;</span>
-
-<span class="c1"># 2/3) In Docker: Launch `webcam_video_processor.py` on video device `0` (Change number for different cam)</span>
-
-python webcam_video_processor.py -i <span class="m">0</span> <span class="p">&amp;</span>
-
-<span class="c1"># 3/3) On Host: Connect to `localhost:5000` in your browser to start video streaming.</span>
-</pre></div>
-
-
-<h3 id="macos">MacOS</h3>
-<p>On macOS, devices (such as webcams) cannot be easily mapped into Docker. Therefore, we use <code>ffmpeg</code> and <code>RTMP</code> to stream video into the ravestate docker container, which can then be picked up by the face oracle client component.</p>
-<p><strong>Requirements:</strong></p>
+<h2 id="dependencies">Dependencies</h2>
+<p>VisionIO requires the following components to be running:</p>
 <ul>
-<li><code>ffmpeg</code> (<code>brew install ffmpeg</code>)</li>
-<li><code>Local RTMP Server</code> (<a href="https://github.com/sallar/mac-local-rtmp-server/releases">See Releases on GitHub</a>)</li>
+<li><code>ravestate</code> or <code>raveboard</code> with <code>ravestate_visionio</code> module</li>
+<li><code>Neo4j</code> backend for Scientio</li>
+<li><code>redis</code> for persisting facial feature vectors</li>
+<li><code>face_oracle</code> client and server </li>
 </ul>
-<p><strong>Running:</strong></p>
-<div class="codehilite"><pre><span></span><span class="c1"># 1/5) On Host: Launch `Local RTMP Server`</span>
-<span class="c1"># 2/5) On Host: run `ffmpeg` to stream video from your Facetime camera to Docker </span>
-
-ffmpeg -f avfoundation -framerate <span class="m">30</span> -i <span class="m">0</span> -filter:v <span class="nv">fps</span><span class="o">=</span><span class="nv">fps</span><span class="o">=</span><span class="m">2</span> -f flv rtmp://127.0.0.1/live/facetime   
-<span class="c1">#Note: `&quot;0&quot;` refers to device with index 0. Change to stream from a different camera.`</span>
-
-<span class="c1"># 3/5) In Docker: Make sure that roscore is running</span>
-
-roscore <span class="p">&amp;</span>
-
-<span class="c1"># 4/5) In Docker: Launch `webcam_video_processor.py` listening to `rtmp://127.0.0.1/live/facetime`</span>
-
-python webcam_video_processor.py -i <span class="s2">&quot;rtmp://host.docker.internal/live/facetime&quot;</span> <span class="p">&amp;</span>
-
-<span class="c1"># 5/5) On Host: Connect to `localhost:5000` in your browser to start video streaming.</span>
+<h2 id="configuration">Configuration</h2>
+<p>VisionIO provides the following config keys:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>redis_host</td>
+<td>Host for Redis database.</td>
+<td>localhost</td>
+</tr>
+<tr>
+<td>redis_port</td>
+<td>Port for Redis database.</td>
+<td>6379</td>
+</tr>
+<tr>
+<td>redis_pass</td>
+<td>Password for Redis database</td>
+<td>Empty</td>
+</tr>
+<tr>
+<td>ros1-node</td>
+<td>Topic for Faces messages.</td>
+<td>/roboy/cognition/vision/visible_face_names</td>
+</tr>
+<tr>
+<td>min-confidence</td>
+<td>Minimum confidence below which someone will be a stranger.</td>
+<td>0.85</td>
+</tr>
+</tbody>
+</table>
+<h2 id="how-to-run">How to run</h2>
+<p>We recommend running VisionIO through one of the ravestate
+docker-compose profiles, which will start <code>Neo4j</code>, <code>redis</code>,
+and the <code>face_oracle</code> client and server automatically.</p>
+<p>Start the profile and visionio in docker as follows:</p>
+<div class="codehilite"><pre><span></span>&gt; docker-compose up -d <span class="o">{</span>profile<span class="o">}</span>
+&gt; docker <span class="nb">exec</span> -it rs bash
+&gt; python3 -m ravestate ...
 </pre></div>
 
 
-<h3 id="windows">Windows</h3>
-<p>Currently unexplored.</p>
+<p>The profiles differ per operating system: </p>
+<h3 id="profile-rs-linux">Profile rs-linux</h3>
+<p>On Linux, a Webcam for VisionIO can simply be mapped into
+docker as a device. Per default, this will be <code>video0</code>.</p>
+<p>If you want to change the device, map a new device in
+<code>docker-compose.yml</code>, and don't forget to change the
+<code>FACEORACLE_VIDEO_DEVICE</code> variable.</p>
+<h3 id="profile-rs-macos">Profile rs-macos</h3>
+<p>On Mac, Docker can not natively access USB devices. Instead,
+live video can be streamed into the container via RTMP:</p>
+<ol>
+<li>Install/start <a href="https://github.com/sallar/mac-local-rtmp-server/releases"><code>Local RTMP Server</code></a></li>
+<li>Install <code>ffmpeg</code> via <code>brew install ffmpeg</code></li>
+<li>Stream webcam via RTMP by starting <code>ravestate/run_ffmpeg_stream.sh</code></li>
+</ol>
+<p>You can now start <code>docker-compose up -d rs-macos</code>.</p>
+<h3 id="using-a-video-instead-of-a-webcam-feed">Using a video instead of a webcam feed</h3>
+<p>If you don't have a webcam, you can use a video instead for
+debugging. Just set <code>FACEORACLE_VIDEO_DEVICE</code> for your
+particular platform profile to <code>/ravestate/resources/obama.mp4</code>.</p>
                 
                   
                 

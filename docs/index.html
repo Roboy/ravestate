@@ -206,8 +206,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#visualization" title="Visualization" class="md-nav__link">
-    Visualization
+  <a href="#raveboard" title="Raveboard" class="md-nav__link">
+    Raveboard
   </a>
   
 </li>
@@ -233,8 +233,49 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#for-developers" title="For developers" class="md-nav__link">
-    For developers
+  <a href="#via-dockerdocker-compose" title="Via Docker/Docker-compose" class="md-nav__link">
+    Via Docker/Docker-compose
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-docker" title="Why Docker?" class="md-nav__link">
+    Why Docker?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-build" title="How to build?" class="md-nav__link">
+    How to build?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-run" title="How to run?" class="md-nav__link">
+    How to run?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#which-services-are-exposed-from-the-container" title="Which services are exposed from the container?" class="md-nav__link">
+    Which services are exposed from the container?
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-development" title="For development" class="md-nav__link">
+    For development
   </a>
   
     <nav class="md-nav">
@@ -299,8 +340,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#module-overview" title="Module overview" class="md-nav__link">
-    Module overview
+  <a href="#modules" title="Modules" class="md-nav__link">
+    Modules
   </a>
   
     <nav class="md-nav">
@@ -329,13 +370,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#docker-for-ros-and-ros2" title="Docker for ROS and ROS2" class="md-nav__link">
-    Docker for ROS and ROS2
-  </a>
   
 </li>
       
@@ -382,6 +416,18 @@
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="modules/raveboard/" title="Raveboard" class="md-nav__link">
+      Raveboard
+    </a>
+  </li>
+
         
           
           
@@ -626,8 +672,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#visualization" title="Visualization" class="md-nav__link">
-    Visualization
+  <a href="#raveboard" title="Raveboard" class="md-nav__link">
+    Raveboard
   </a>
   
 </li>
@@ -653,8 +699,49 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#for-developers" title="For developers" class="md-nav__link">
-    For developers
+  <a href="#via-dockerdocker-compose" title="Via Docker/Docker-compose" class="md-nav__link">
+    Via Docker/Docker-compose
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-docker" title="Why Docker?" class="md-nav__link">
+    Why Docker?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-build" title="How to build?" class="md-nav__link">
+    How to build?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-run" title="How to run?" class="md-nav__link">
+    How to run?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#which-services-are-exposed-from-the-container" title="Which services are exposed from the container?" class="md-nav__link">
+    Which services are exposed from the container?
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-development" title="For development" class="md-nav__link">
+    For development
   </a>
   
     <nav class="md-nav">
@@ -719,8 +806,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#module-overview" title="Module overview" class="md-nav__link">
-    Module overview
+  <a href="#modules" title="Modules" class="md-nav__link">
+    Modules
   </a>
   
     <nav class="md-nav">
@@ -749,13 +836,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#docker-for-ros-and-ros2" title="Docker for ROS and ROS2" class="md-nav__link">
-    Docker for ROS and ROS2
-  </a>
   
 </li>
       
@@ -820,7 +900,7 @@
 <span class="c1"># Ravestate applications should always be wrapped in a Module.</span>
 <span class="c1"># This allows easier scoping, and enables separation of concerns</span>
 <span class="c1"># beyond states.</span>
-<span class="k">with</span> <span class="n">rs</span><span class="o">.</span><span class="n">Module</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;hi!&quot;</span><span class="p">):</span>
+<span class="k">with</span> <span class="n">rs</span><span class="o">.</span><span class="n">Module</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;hi!&quot;</span><span class="p">,</span> <span class="n">depends</span><span class="o">=</span><span class="p">(</span><span class="n">rawio</span><span class="o">.</span><span class="n">mod</span><span class="p">,)):</span>
 
     <span class="c1"># Create an application state which reacts to the `:startup` signal,</span>
     <span class="c1"># and writes a string to raw:out. Note: State functions are</span>
@@ -830,13 +910,19 @@
         <span class="n">context</span><span class="p">[</span><span class="n">rawio</span><span class="o">.</span><span class="n">prop_out</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Waddup waddup waddup!&quot;</span>
 
 <span class="c1"># Run context with console input/output and our &#39;hi!&#39; module.</span>
-<span class="n">rs</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s2">&quot;conio&quot;</span><span class="p">,</span> <span class="s2">&quot;hi!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">rs</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s2">&quot;hi!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 
 
-<h3 id="visualization">Visualization</h3>
-<p>Ravestate has a <a href="https://d3js.org">d3.js</a>-based visualization. When using <code>ravestate_ui.UIContext</code> instead of <code>Context</code>, or <code>python3 -m ravestate_ui</code> instead of <code>python3 -m ravestate</code>, a real-time visualization of all states/properties/signals in the state machine will be hosted on port 5001. Here is the view of <code>http://localhost:5001</code> after launching <code>python3 ravestate_ui -f generic.yml</code>:</p>
-<p><img src="resources/docs/ravestate_ui.gif"></p>
+<h3 id="raveboard">Raveboard</h3>
+<p>Ravestate has an <a href="https://angular.io">angular</a>/<a href="https://socket.io">socket.io</a>-based
+interactive (beta) UI called <strong>Raveboard</strong>. It shows the events (spikes) that are
+currently relevant, as well as potential state activations that are referencing these spikes.</p>
+<p>When using <code>raveboard.UIContext</code> instead of <code>Context</code>, or <code>python3 -m raveboard</code> instead of
+<code>python3 -m ravestate</code>, a real-time visualization of all spikes/activations, as well as a chat window,
+will be hosted on a configurable port. You can find dedicated docs <a href="modules/raveboard/">here</a>.</p>
+<p>The following GIF shows raveboard together with <code>ravestate_visionio</code>:</p>
+<p><a href="resources/docs/raveboard.gif">Raveboard</a></p>
 <h2 id="installation">Installation</h2>
 <h3 id="via-pip">Via PIP</h3>
 <p>The easiest way to install ravestate is through pip:</p>
@@ -847,11 +933,114 @@ It is currently not tested on Windows.</p>
 <p>For reliability, we recommend using an environment virtualization tool,
 like <a href="https://virtualenv.pypa.io/en/latest/">virtualenv</a>
 or <a href="https://conda.io/en/latest/">conda</a>.</p>
-<h3 id="for-developers">For developers</h3>
+<h3 id="via-dockerdocker-compose">Via Docker/Docker-compose</h3>
+<h4 id="why-docker">Why Docker?</h4>
+<p>Ravestate offers a docker image that bundles runtime dependencies that are required
+for advanced cognitive dialog systems/chatbots:</p>
+<ul>
+<li><a href="neo4j.com">📦 Neo4j</a>: The Neo4j Graph DBMS is used by <code>ravestate_ontology</code> to provide long-term memory.</li>
+<li><a href="redis.io">💡 Redis</a>: A Redis in-memory DB is used for fast short-term memory, e.g. to store facial feature vectors.</li>
+<li><a href="github.com/roboy/face_oracle">🤦 FaceOracle</a>: A Roboy-developed server-client architecture used by <code>ravestate_visionio</code> for real-time face recognition.</li>
+<li><a href="ros.org">🤖 ROS Melodic</a>: Version 1 of the <em>Robot Operating System</em> for distributed real-time communication.
+  This version of ROS requires a broker process (<code>roscore</code>) which is started automatically inside the container.</li>
+<li><a href="index.ros.org/doc/ros2">🤖 ROS2 Dashing</a>: Version 2 of the <em>Robot Operating System</em> for distributed real-time communication.</li>
+<li><a href="github.com/huggingface/transformers">🤗 HuggingFace Transformer Models</a>: Language models (ConvAI GPT/OpenAI GPT2)
+  for neural-network-generated conversation.</li>
+<li><a href="github.com/roboy/roboy_communication">💌 Roboy ROS Messages</a>: Message defs. that are required to interact with Roboy hardware.</li>
+</ul>
+<p>Installing these dependencies by hand is time-consuming and error-prone, so using Docker
+to ship them makes everyone's lives easier!</p>
+<h4 id="how-to-build">How to build?</h4>
+<p>Clone ravestate:</p>
+<div class="codehilite"><pre><span></span>git clone git@github.com:roboy/ravestate <span class="o">&amp;&amp;</span> <span class="nb">cd</span> ravestate
+</pre></div>
+
+
+<p>You can build the ravestate container using the provided <code>Dockerfile</code>:</p>
+<div class="codehilite"><pre><span></span>docker build -t ravestate .
+</pre></div>
+
+
+<p><strong>Note: Building the container takes time and requires a good internet connection, since
+all of the dependencies are several Gigabytes in size.</strong></p>
+<h4 id="how-to-run">How to run?</h4>
+<p>Use one of the following docker-compose commands to run ravestate in Docker:</p>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linux</td>
+<td><code>docker-compose up -d rs-linux</code></td>
+</tr>
+<tr>
+<td>macOS</td>
+<td><code>docker-compose up -d rs-macos</code></td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>Not supported yet.</td>
+</tr>
+</tbody>
+</table>
+<p>The container is now running and a shell inside the container can be opened with:</p>
+<div class="codehilite"><pre><span></span>docker <span class="nb">exec</span> -it rs bash
+</pre></div>
+
+
+<p>You can now start ravestate or raveboard as described in the section <a href="#running-hello-world">Running Hello World</a>.</p>
+<div class="codehilite"><pre><span></span>python3 -m ravestate <span class="o">[</span>...<span class="o">]</span>
+</pre></div>
+
+
+<h4 id="which-services-are-exposed-from-the-container">Which services are exposed from the container?</h4>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Port</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Neo4j UI</td>
+<td>7474</td>
+<td>Neo4j UI for DB stored under <code>&lt;ravestate&gt;/db/neo4j</code></td>
+</tr>
+<tr>
+<td>Neo4j Bolt Interface</td>
+<td>7687</td>
+<td>Communication with Neo4j DBMS</td>
+</tr>
+<tr>
+<td>Redis Database Dump</td>
+<td>-</td>
+<td>A dump of the Redis DB in the container can be found under <code>&lt;ravestate&gt;/db/redis</code></td>
+</tr>
+<tr>
+<td>FaceOracle Client Interface</td>
+<td>8088</td>
+<td>Visualisation for the FaceOracle client.</td>
+</tr>
+<tr>
+<td>Raveboard</td>
+<td>42424</td>
+<td>Default port for raveboard, the ravestate debug UI.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="for-development">For development</h3>
 <h4 id="initial-configuration-and-setup">Initial configuration and setup</h4>
 <p>Clone the repository and install dependencies:</p>
-<div class="codehilite"><pre><span></span><span class="c1"># Create a virtual python environment to not pollute the global setup</span>
-python3 -m virtualenv python-ravestate
+<div class="codehilite"><pre><span></span><span class="nb">cd</span> ~
+
+<span class="c1"># Create a virtual python environment to not pollute the global setup</span>
+python3 -m virtualenv -p python3 python-ravestate
 
 <span class="c1"># Source the virtual environment</span>
 . python-ravestate/bin/activate
@@ -870,38 +1059,24 @@ pip install -e .
 </pre></div>
 
 
-<p>Now, launch a Neo4j docker instance to serve <a href="https://github.com/roboy/scientio">Scientio</a>, so the dialog system has a memory:</p>
-<div class="codehilite"><pre><span></span>docker run <span class="se">\</span>
-    --publish<span class="o">=</span><span class="m">7474</span>:7474 --publish<span class="o">=</span><span class="m">7687</span>:7687 <span class="se">\</span>
-    --volume<span class="o">=</span><span class="nv">$HOME</span>/neo4j/data:/data <span class="se">\</span>
-    --volume<span class="o">=</span><span class="nv">$HOME</span>/neo4j/logs:/logs <span class="se">\</span>
-    neo4j:latest
-
-<span class="c1"># Open the address localhost:7474 in a browser, and enter the</span>
-<span class="c1"># credentials `neo4j`/`neo4j`. You will then be prompted to enter</span>
-<span class="c1"># your own password. Remember this password.</span>
-</pre></div>
-
-
+<p>Launch the ravestate docker container as described above. It will serve you Neo4j,
+which is a backend for <a href="https://github.com/roboy/scientio">Scientio</a>, Roboy's
+long-term memory system.</p>
 <p>In the <code>config</code> folder, create a file called <code>keys.yml</code>. It should have the following content:</p>
 <div class="codehilite"><pre><span></span><span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">telegramio</span>
 <span class="nt">config</span><span class="p">:</span>
   <span class="nt">telegram-token</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;sexycactus&gt;</span>  <span class="c1"># This is where your own telegram bot token</span>
                                 <span class="c1"># will go later</span>
-<span class="nn">---</span>
-<span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ontology</span>
-<span class="nt">config</span><span class="p">:</span>
-  <span class="nt">neo4j_address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">bolt://localhost:7687</span>  <span class="c1"># Your neo4j server uri here</span>
-  <span class="nt">neo4j_username</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">neo4j</span>                 <span class="c1"># Your neo4j user here</span>
-  <span class="nt">neo4j_pw</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">test</span>                        <span class="c1"># Your neo4j pw here</span>
 </pre></div>
 
 
 <p>You may now conduct your first conversation with ravestate:</p>
-<div class="codehilite"><pre><span></span>python3 -m ravestate -f config/generic.yml -f config/keys.yml
+<div class="codehilite"><pre><span></span>python3 -m raveboard -f config/generic.yml -f config/keys.yml
 </pre></div>
 
 
+<p>Open raveboard on <code>localhost:42424/ravestate/index.html?rs-sio-url=http%3A//localhost%3A42424</code>
+to conduct your first conversation with ravestate.</p>
 <p>After the conversation, check the Neo4j interface under <code>localhost:7474</code>. It should now contain some nodes!</p>
 <p><strong>Reminder: Whenever you use ravestate from the command line, source the virtual environment first!</strong></p>
 <h4 id="running-your-telegram-bot">Running your Telegram bot</h4>
@@ -914,10 +1089,10 @@ just run <code>telegram_test.yml</code> instead of <code>generic.yml</code>. Thi
 <li>Mark the <code>modules</code> folder as sources root via the right-click context menu.</li>
 <li>Create a run config via the "Edit configurations menu":<br>
    • Create a new Python configuration.<br>
-   • Set <code>modules/ravestate/__main__.py</code> as the script to execute<br>
+   • Set <code>raveboard</code> as the <strong>module</strong> to execute<br>
    • Set the working directory to the git clone directory.<br>
    • Set parameters to <code>-f config/generic.yml -f config/keys.yml</code>.<br> </li>
-<li>You should now be able to run the generic ravestate config from pycharm.</li>
+<li>You should now be able to run the generic ravestate config from PyCharm.</li>
 </ol>
 <h2 id="running-hello-world">Running Hello World</h2>
 <p>Ravestate applications are defined by a configuration,
@@ -955,7 +1130,7 @@ when specifying everything through the command line becomes too laborious:</p>
 </pre></div>
 
 
-<h2 id="module-overview">Module overview</h2>
+<h2 id="modules">Modules</h2>
 <p>Ravestate offers a landscape of fine-grained modules
 for different aspects of dialog application tasks, which
 may be seen in the following dependency diagram. Broadly,
@@ -1084,41 +1259,6 @@ External (Red) and Skills (Green):</p>
 </tbody>
 </table>
 <p><strong>Note:</strong> <strong>(*)</strong> = deprecated.</p>
-<h2 id="docker-for-ros-and-ros2">Docker for ROS and ROS2</h2>
-<p>There is a Dockerfile for ROS, ROS2 and Face Recognition support, which can be built with</p>
-<div class="codehilite"><pre><span></span>docker build -t ravestate .
-</pre></div>
-
-
-<p>The image contains ROS, ROS2 and a ROS Bridge to connect ROS with ROS2.
-Furthermore the roboy_communication message and service types are installed.</p>
-<p>A container can then be created with docker-compose.yml. Choose <code>linux</code> or <code>macos</code> as fit for your platform:</p>
-<div class="codehilite"><pre><span></span>docker-compose up -d rs-<span class="o">{</span>linux<span class="p">|</span>macos<span class="o">}</span>
-</pre></div>
-
-
-<p>The container is now running and a connection into the container can be
-established with:</p>
-<div class="codehilite"><pre><span></span>docker <span class="nb">exec</span> -it rs bash
-</pre></div>
-
-
-<p>Inside the container, first source the ROS/ROS2 setups. Then 
-ravestate can be run with <code>rclpy</code> (ROS2) and <code>rospy</code> (ROS) available.</p>
-<div class="codehilite"><pre><span></span><span class="c1"># Source ROS2 setup if needed</span>
-. ~/ros2_ws/install/setup.bash
-
-<span class="c1"># Source ROS1 setup if needed</span>
-. ~/melodic_ws/idevel/setup.bash
-
-<span class="c1"># Start ravestate or raveboard to run your modules.</span>
-python3 -m ravestate <span class="o">[</span>...<span class="o">]</span>
-</pre></div>
-
-
-<p><strong>Note:</strong> The ravestate docker container contains both <code>redis</code> and <code>neo4j</code>
-databases, which are automatically started and mapped into folders at
-<code>ravestate/db/{redis|neo4j}</code>.</p>
 <h2 id="running-tests">Running tests</h2>
 <p>If you have built the ravestate docker image as described above,
 you may run the test suite as follows:</p>
@@ -1161,13 +1301,13 @@ git add docs/*
       <nav class="md-footer-nav__inner md-grid">
         
         
-          <a href="modules/ravestate_nlp/" title="NLP" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="modules/raveboard/" title="Raveboard" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                NLP
+                Raveboard
               </span>
             </div>
             <div class="md-flex__cell md-flex__cell--shrink">

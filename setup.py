@@ -13,7 +13,7 @@ packages.remove("reggol")
 
 setuptools.setup(
     name="ravestate",
-    version="0.6.0",
+    version="0.7.0",
     url="https://github.com/roboy/ravestate",
     author="Roboy",
     author_email="info@roboy.org",
@@ -26,6 +26,7 @@ setuptools.setup(
     packages=packages,
     include_package_data=True,
     package_data={
+        'raveboard': ['*.js', '*.ico', '*.html', '*.txt', '*.css'],
         'ravestate_phrases_basic_en': ['en/*.yml'],
         'ravestate_ontology': ['ravestate_ontology.yml'],
         'ravestate_roboyqa': ['answering_phrases/RoboyInfoList.yml'],

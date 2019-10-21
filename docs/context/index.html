@@ -195,6 +195,18 @@
 
 
   <li class="md-nav__item">
+    <a href="../modules/raveboard/" title="Raveboard" class="md-nav__link">
+      Raveboard
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../modules/ravestate_nlp/" title="NLP" class="md-nav__link">
       NLP
     </a>
@@ -437,12 +449,12 @@
 
 <h3 id="ravestate.context.Context.emit">emit</h3>
 
-<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">,</span> <span class="n">parents</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">spike</span><span class="o">.</span><span class="n">Spike</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">wipe</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="bp">None</span>
+<div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">,</span> <span class="n">parents</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">spike</span><span class="o">.</span><span class="n">Spike</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">wipe</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">boring</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">spike</span><span class="o">.</span><span class="n">Spike</span>
 </pre></div>
 
 
 <p>Emit a signal to the signal processing loop. <em>Note:</em>
- The signal will only be processed if <code>run()</code> has been called!</p>
+ The spike will only be picked up by activations once <code>run_once</code>/<code>run</code> is called!</p>
 <ul>
 <li>
 <p><code>signal</code>: The signal to be emitted.</p>
@@ -457,7 +469,12 @@
 <li>
 <p><code>payload</code>: Value that should be embedded in the new spike.</p>
 </li>
+<li>
+<p><code>boring</code>: Flag which indicates, whether the new spike is boring. Activations which
+ acquire boring spikes will not count against the <code>core:activity</code> flag.</p>
+</li>
 </ul>
+<p><strong>Returns:</strong> The newly created spike object.</p>
 <h3 id="ravestate.context.Context.wipe">wipe</h3>
 
 <div class="codehilite"><pre><span></span><span class="n">Context</span><span class="o">.</span><span class="n">wipe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">)</span>
@@ -673,13 +690,22 @@ Note: Not thread-safe, sync must be guaranteed by caller.</p>
 
 <h2 id="ravestate.spike.Spike">Spike</h2>
 
-<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parents</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">ForwardRef</span><span class="p">(</span><span class="s1">&#39;Spike&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">consumable_resources</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sig</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">parents</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">ForwardRef</span><span class="p">(</span><span class="s1">&#39;Spike&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">consumable_resources</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">boring</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">)</span>
 </pre></div>
 
 
 <p>This class encapsulates a single spike, to track ... <br>
 ... it's consumption for different output properties (through <code>CausalGroup</code>). <br>
 ... it's offspring instances (causal group -&gt; spikes caused by this spike)</p>
+<h3 id="ravestate.spike.Spike.boring">boring</h3>
+
+<div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">boring</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Get the <code>boring</code>-flag of this spike, which indicates whether state
+ of the activation that produced this spike was boring.</p>
+<p>:return: True if the activation boring, false otherwise.</p>
 <h3 id="ravestate.spike.Spike.causal_group">causal_group</h3>
 
 <div class="codehilite"><pre><span></span><span class="n">Spike</span><span class="o">.</span><span class="n">causal_group</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">causal</span><span class="o">.</span><span class="n">CausalGroup</span>
@@ -881,11 +907,15 @@ This is called by ... <br>
  and therefore the idle:bored signal should be emitted.</p>
 <h3 id="ravestate.activation.Activation.spiky">spiky</h3>
 
-<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">spiky</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+<div class="codehilite"><pre><span></span><span class="n">Activation</span><span class="o">.</span><span class="n">spiky</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filter_boring</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
 </pre></div>
 
 
 <p>Returns true, if the activation has acquired any spikes at all.</p>
+<ul>
+<li><code>filter_boring</code>: Flag to indicate, whether boring spikes should
+ should NOT be counted against a <code>true</code> return value.</li>
+</ul>
 <p><strong>Returns:</strong> True, if any of this activation's constraint's
  signal is referencing a spike.</p>
 <h3 id="ravestate.activation.Activation.boring">boring</h3>
