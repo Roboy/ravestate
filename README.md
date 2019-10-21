@@ -13,7 +13,12 @@
                  \____/                \____/             Olà! -       
 ```
 
-Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events. You may find a short introductory video [here](http://www.youtube.com/watch?v=6GMmY-xvA_Y "Introduction to Ravestate").
+Ravestate is a reactive library for real-time natural language dialog systems.
+It combines elements from event-based and reactive programming into an API,
+where application states are defined as functions that are run when a certain
+boolean set of criteria (signals) in the current application context is satisfied.
+It is the first reactive API to allow for boolean combinations of events.
+You may find a short introductory video [here](http://www.youtube.com/watch?v=6GMmY-xvA_Y "Introduction to Ravestate").
 
 ### Reactive Hello World
 
@@ -54,7 +59,7 @@ When using `raveboard.UIContext` instead of `Context`, or `python3 -m raveboard`
 `python3 -m ravestate`, a real-time visualization of all spikes/activations, as well as a chat window,
 will be hosted on a configurable port. You can find dedicated docs [here](modules/raveboard/README.md).
 
-The following GIF shows raveboard together with `ravestate_visionio`:
+The following GIF shows raveboard together with [ravestate_visionio](modules/ravestate_visionio/README.md):
 
 ![Raveboard](resources/docs/raveboard.gif)
 
@@ -83,15 +88,15 @@ or [conda](https://conda.io/en/latest/).
 Ravestate offers a docker image that bundles runtime dependencies that are required
 for advanced cognitive dialog systems/chatbots:
 
-* [📦 Neo4j](neo4j.com): The Neo4j Graph DBMS is used by `ravestate_ontology` to provide long-term memory.
-* [💡 Redis](redis.io): A Redis in-memory DB is used for fast short-term memory, e.g. to store facial feature vectors.
-* [🤦 FaceOracle](github.com/roboy/face_oracle): A Roboy-developed server-client architecture used by `ravestate_visionio` for real-time face recognition.
-* [🤖 ROS Melodic](ros.org): Version 1 of the *Robot Operating System* for distributed real-time communication.
-  This version of ROS requires a broker process (`roscore`) which is started automatically inside the container.
-* [🤖 ROS2 Dashing](index.ros.org/doc/ros2): Version 2 of the *Robot Operating System* for distributed real-time communication.
-* [🤗 HuggingFace Transformer Models](github.com/huggingface/transformers): Language models (ConvAI GPT/OpenAI GPT2)
+* [📦 Neo4j](https://neo4j.com): The Neo4j Graph DBMS is used by [Scientio](https://github.com/roboy/scientio) for long-term memory.
+* [💡 Redis](https://redis.io): A Redis in-memory DB is used for fast short-term memory, e.g. to store/recall facial feature vectors.
+* [🤦 FaceOracle](https://github.com/roboy/face_oracle): A Roboy-developed server-client architecture used by `ravestate_visionio` for real-time face recognition.
+* [🤖 ROS Melodic](https://ros.org): Version 1 of the *Robot Operating System* for distributed real-time communication.
+  This version of ROS requires a broker process (`roscore`), which is started automatically inside the container.
+* [🤖 ROS2 Dashing](https://index.ros.org/doc/ros2): Version 2 of the *Robot Operating System* for distributed real-time communication.
+* [🤗 HuggingFace Transformer Models](https://github.com/huggingface/transformers): Language models (ConvAI GPT/OpenAI GPT2)
   for neural-network-generated conversation.
-* [💌 Roboy ROS Messages](github.com/roboy/roboy_communication): Message defs. that are required to interact with Roboy hardware.
+* [💌 Roboy ROS Messages](https://github.com/roboy/roboy_communication): Message defs. that are required to interact with Roboy hardware.
 
 Installing these dependencies by hand is time-consuming and error-prone, so using Docker
 to ship them makes everyone's lives easier!
