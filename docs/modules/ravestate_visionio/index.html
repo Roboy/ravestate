@@ -702,7 +702,10 @@ and the <code>face_oracle</code> client and server automatically.</p>
 </pre></div>
 
 
-<p>The profiles differ per operating system: </p>
+<p><strong>To start face recognition, open <a href="localhost:8088/index.html">localhost:8088/index.html</a> in a browser (Chrome works best).</strong>
+This will give a visualisation of recognised faces, and simultaneously keep recognition running.
+<strong>Face recognition will only work as long as you can see it doing so!</strong></p>
+<p>The docker-compose profiles differ per operating system: </p>
 <h3 id="profile-rs-linux">Profile rs-linux</h3>
 <p>On Linux, a Webcam for VisionIO can simply be mapped into
 docker as a device. Per default, this will be <code>video0</code>.</p>
@@ -721,7 +724,9 @@ live video can be streamed into the container via RTMP:</p>
 <h3 id="using-a-video-instead-of-a-webcam-feed">Using a video instead of a webcam feed</h3>
 <p>If you don't have a webcam, you can use a video instead for
 debugging. Just set <code>FACEORACLE_VIDEO_DEVICE</code> for your
-particular platform profile to <code>/ravestate/resources/obama.mp4</code>.</p>
+particular platform profile to <code>/ravestate/resources/obama.mp4</code>.
+Note, that after changing <code>docker-compose.yml</code>, you have to run
+<code>docker-compose up -d</code> with the <code>--force-recreate</code> flag.</p>
                 
                   
                 

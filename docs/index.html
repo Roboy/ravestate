@@ -885,7 +885,12 @@
 </pre></div>
 
 
-<p>Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events. You may find a short introductory video <a href="http://www.youtube.com/watch?v=6GMmY-xvA_Y" title="Introduction to Ravestate">here</a>.</p>
+<p>Ravestate is a reactive library for real-time natural language dialog systems.
+It combines elements from event-based and reactive programming into an API,
+where application states are defined as functions that are run when a certain
+boolean set of criteria (signals) in the current application context is satisfied.
+It is the first reactive API to allow for boolean combinations of events.
+You may find a short introductory video <a href="http://www.youtube.com/watch?v=6GMmY-xvA_Y" title="Introduction to Ravestate">here</a>.</p>
 <h3 id="reactive-hello-world">Reactive Hello World</h3>
 <div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">ravestate</span> <span class="kn">as</span> <span class="nn">rs</span>
 
@@ -921,7 +926,7 @@ currently relevant, as well as potential state activations that are referencing 
 <p>When using <code>raveboard.UIContext</code> instead of <code>Context</code>, or <code>python3 -m raveboard</code> instead of
 <code>python3 -m ravestate</code>, a real-time visualization of all spikes/activations, as well as a chat window,
 will be hosted on a configurable port. You can find dedicated docs <a href="modules/raveboard/">here</a>.</p>
-<p>The following GIF shows raveboard together with <code>ravestate_visionio</code>:</p>
+<p>The following GIF shows raveboard together with <a href="modules/ravestate_visionio/">ravestate_visionio</a>:</p>
 <p><img alt="Raveboard" src="resources/docs/raveboard.gif" /></p>
 <h2 id="installation">Installation</h2>
 <h3 id="via-pip">Via PIP</h3>
@@ -938,15 +943,15 @@ or <a href="https://conda.io/en/latest/">conda</a>.</p>
 <p>Ravestate offers a docker image that bundles runtime dependencies that are required
 for advanced cognitive dialog systems/chatbots:</p>
 <ul>
-<li><a href="neo4j.com">📦 Neo4j</a>: The Neo4j Graph DBMS is used by <code>ravestate_ontology</code> to provide long-term memory.</li>
-<li><a href="redis.io">💡 Redis</a>: A Redis in-memory DB is used for fast short-term memory, e.g. to store facial feature vectors.</li>
-<li><a href="github.com/roboy/face_oracle">🤦 FaceOracle</a>: A Roboy-developed server-client architecture used by <code>ravestate_visionio</code> for real-time face recognition.</li>
-<li><a href="ros.org">🤖 ROS Melodic</a>: Version 1 of the <em>Robot Operating System</em> for distributed real-time communication.
-  This version of ROS requires a broker process (<code>roscore</code>) which is started automatically inside the container.</li>
-<li><a href="index.ros.org/doc/ros2">🤖 ROS2 Dashing</a>: Version 2 of the <em>Robot Operating System</em> for distributed real-time communication.</li>
-<li><a href="github.com/huggingface/transformers">🤗 HuggingFace Transformer Models</a>: Language models (ConvAI GPT/OpenAI GPT2)
+<li><a href="https://neo4j.com">📦 Neo4j</a>: The Neo4j Graph DBMS is used by <a href="https://github.com/roboy/scientio">Scientio</a> for long-term memory.</li>
+<li><a href="https://redis.io">💡 Redis</a>: A Redis in-memory DB is used for fast short-term memory, e.g. to store/recall facial feature vectors.</li>
+<li><a href="https://github.com/roboy/face_oracle">🤦 FaceOracle</a>: A Roboy-developed server-client architecture used by <code>ravestate_visionio</code> for real-time face recognition.</li>
+<li><a href="https://ros.org">🤖 ROS Melodic</a>: Version 1 of the <em>Robot Operating System</em> for distributed real-time communication.
+  This version of ROS requires a broker process (<code>roscore</code>), which is started automatically inside the container.</li>
+<li><a href="https://index.ros.org/doc/ros2">🤖 ROS2 Dashing</a>: Version 2 of the <em>Robot Operating System</em> for distributed real-time communication.</li>
+<li><a href="https://github.com/huggingface/transformers">🤗 HuggingFace Transformer Models</a>: Language models (ConvAI GPT/OpenAI GPT2)
   for neural-network-generated conversation.</li>
-<li><a href="github.com/roboy/roboy_communication">💌 Roboy ROS Messages</a>: Message defs. that are required to interact with Roboy hardware.</li>
+<li><a href="https://github.com/roboy/roboy_communication">💌 Roboy ROS Messages</a>: Message defs. that are required to interact with Roboy hardware.</li>
 </ul>
 <p>Installing these dependencies by hand is time-consuming and error-prone, so using Docker
 to ship them makes everyone's lives easier!</p>

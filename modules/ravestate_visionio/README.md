@@ -77,7 +77,11 @@ Start the profile and visionio in docker as follows:
 > python3 -m ravestate ...
 ```
 
-The profiles differ per operating system: 
+__To start face recognition, open [localhost:8088/index.html](localhost:8088/index.html) in a browser (Chrome works best).__
+This will give a visualisation of recognised faces, and simultaneously keep recognition running.
+__Face recognition will only work as long as you can see it doing so!__
+
+The docker-compose profiles differ per operating system: 
 
 ### Profile rs-linux
 
@@ -104,3 +108,5 @@ You can now start `docker-compose up -d rs-macos`.
 If you don't have a webcam, you can use a video instead for
 debugging. Just set `FACEORACLE_VIDEO_DEVICE` for your
 particular platform profile to `/ravestate/resources/obama.mp4`.
+Note, that after changing `docker-compose.yml`, you have to run
+`docker-compose up -d` with the `--force-recreate` flag.
