@@ -1,0 +1,40 @@
+@import "../../shared-styles";
+
+:host {
+  position: relative;
+}
+
+svg {
+  width: 1px;
+  height: 1px;
+  top: 50%;
+  overflow: visible;
+  position: relative;
+}
+
+.controls {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  padding: 10px;
+  background: #222;
+  border-radius: 0 0 30px 0;
+  user-select: none;
+}
+
+.percentage-label {
+  font-size: 12px;
+  width: 50px;
+  display: inline-block;
+  text-align: center;
+  padding: 0 10px;
+}
+
+.separator {
+  display: inline-block;
+  padding: 0 10px;
+}
+
+g {
+  transition: opacity 0.5s;
+}

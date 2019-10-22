@@ -1,7 +1,7 @@
 ---
 !OType
 entity: Person
-properties: [name, sex, full_name, birthdate, timestamp, familiar]
+properties: [name, sex, full_name, birthdate, timestamp, familiar, face_vector]
 relationships: [EQUALS, FROM, HAS_HOBBY, LIVE_IN, STUDY_AT, OCCUPIED_AS, WORK_FOR, FRIEND_OF, MEMBER_OF, CHILD_OF, SIBLING_OF]
 
 ---
@@ -33,14 +33,14 @@ relationships: [EQUALS, FROM, SUBSIDIARY_OF, WORK_FOR, STUDY_AT]
 entity: Company
 properties: [name, birthdate, timestamp]
 relationships: [EQUALS, FROM, WORK_FOR]
-meta: [Organisation]
+meta: [Organization]
 
 ---
 !OType
 entity: University
 properties: [name, birthdate, timestamp]
 relationships: [EQUALS, FROM, STUDY_AT]
-meta: [Organisation]
+meta: [Organization]
 
 ---
 !OType

@@ -1,0 +1,46 @@
+$header-height: 50px;
+
+.root-container {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+
+  display: grid;
+  grid-template-columns: 3fr minmax(250px, 1fr);
+  grid-template-rows: $header-height 1fr;
+  grid-template-areas: "header header" "main side";
+}
+
+.header {
+  grid-area: header;
+  line-height: $header-height;
+  font-size: 20px;
+  text-align: center;
+}
+
+.main {
+  grid-area: main;
+  background: #373237;
+  overflow: hidden;
+}
+
+.graph-area {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.side {
+  grid-area: side;
+  padding: 5px;
+  border-top: 5px solid #373237;
+  overflow-y: auto;
+}
+
+.side2 {
+  grid-area: side2;
+  padding: 5px;
+  border-top: 5px solid #373237;
+  border-right: 5px solid #373237;
+  overflow-y: auto;
+}

@@ -12,14 +12,22 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-class _StateActivationResult:
+class StateResult:
     """
     Base class for return values of state activation functions.
     """
-    pass
+
+    # Activation should call `consume()` on all unique consenting causal groups
+    CAUSAL_GROUP_CONSUME = 1
+
+    # Activation should call `resign()` on all unique consenting causal groups
+    CAUSAL_GROUP_RESIGN = 2
+
+    # One of `CAUSAL_GROUP_CONSUME` or `CAUSAL_GROUP_RESIGN`
+    causal_group_action = CAUSAL_GROUP_CONSUME
 
 
-class Delete(_StateActivationResult):
+class Delete(StateResult):
     """
     Return an instance of this class, if the invoked state should be deleted.
 
@@ -28,11 +36,11 @@ class Delete(_StateActivationResult):
      This means, that the spikes that were allocated for it's activation
       may be re-used by another state.
     """
-    def __init__(self, resign: bool=False):
-        self.resign = resign
+    def __init__(self, resign: bool = False):
+        self.causal_group_action = StateResult.CAUSAL_GROUP_RESIGN if resign else StateResult.CAUSAL_GROUP_CONSUME
 
 
-class Wipe(_StateActivationResult):
+class Wipe(StateResult):
     """
     Return an instance of this class, if context.wipe(signal) should be called,
      to ensure that there are no more active spikes for the state's signal.
@@ -40,7 +48,7 @@ class Wipe(_StateActivationResult):
     pass
 
 
-class Emit(_StateActivationResult):
+class Emit(StateResult):
     """
     Return an instance of this class, if the invoked state's signal should be emitted.
 
@@ -51,13 +59,13 @@ class Emit(_StateActivationResult):
         self.wipe = wipe
 
 
-class Resign(_StateActivationResult):
+class Resign(StateResult):
     """
     Return an instance of this class, if the state invocation should be regarded unsuccessful.
      This means, that the state's signal will not be emitted, and the spikes
      that were allocated for it's activation may be re-used by another state.
     """
-    pass
+    causal_group_action = StateResult.CAUSAL_GROUP_RESIGN
 
 
 class State:
@@ -74,6 +82,7 @@ class State:
     cooldown: float
     weight: float
     is_receptor: bool
+    is_boring: bool
 
     module_name: str                  # The module which this state belongs to
     completed_constraint: Constraint  # Updated by context, to add constraint causes to constraint
@@ -94,7 +103,8 @@ class State:
                  is_receptor: bool = False,
                  emit_detached: bool = False,
                  weight: float = 1.,
-                 cooldown: float = 0.):
+                 cooldown: float = 0.,
+                 boring: bool = False):
 
         assert(callable(action))
         self.name = action.__name__
@@ -142,13 +152,14 @@ class State:
         self.cooldown = cooldown
         self.is_receptor = is_receptor
         self.lock = Lock()
+        self.boring = boring
 
         # add state to module in current `with Module(...)` clause
         module_under_construction = getattr(ravestate_thread_local, 'module_under_construction', None)
         if module_under_construction:
             module_under_construction.add(self)
 
-    def __call__(self, context, *args, **kwargs) -> Optional[_StateActivationResult]:
+    def __call__(self, context, *args, **kwargs) -> Optional[StateResult]:
         args = (context,) + args
         return self.action(*args, **kwargs)
 
@@ -216,7 +227,8 @@ def state(*,
           cond: Constraint = None,
           emit_detached: bool = False,
           weight: float = 1.,
-          cooldown: float = 0.):
+          cooldown: float = 0.,
+          boring: bool = False):
 
     """
     Decorator to declare a new state, which may emit a certain signal,
@@ -241,5 +253,6 @@ def state(*,
             action=action,
             emit_detached=emit_detached,
             weight=weight,
-            cooldown=cooldown)
+            cooldown=cooldown,
+            boring=boring)
     return state_decorator

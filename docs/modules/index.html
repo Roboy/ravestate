@@ -195,8 +195,44 @@
 
 
   <li class="md-nav__item">
+    <a href="raveboard/" title="Raveboard" class="md-nav__link">
+      Raveboard
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="ravestate_nlp/" title="NLP" class="md-nav__link">
       NLP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ravestate_wildtalk/" title="Wildtalk" class="md-nav__link">
+      Wildtalk
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ravestate_ros1/" title="ROS" class="md-nav__link">
+      ROS
     </a>
   </li>
 
@@ -231,8 +267,56 @@
 
 
   <li class="md-nav__item">
+    <a href="ravestate_visionio/" title="VisionIO" class="md-nav__link">
+      VisionIO
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="ravestate_akinator/" title="Akinator" class="md-nav__link">
       Akinator
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Tutorials
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Tutorials
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="ravestate_nlp/luigi/" title="NLP: The Ice Cream Salesman" class="md-nav__link">
+      NLP: The Ice Cream Salesman
     </a>
   </li>
 
@@ -251,13 +335,13 @@
 
   <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
-    <label class="md-nav__link" for="nav-3">
+    <label class="md-nav__link" for="nav-4">
       API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-3">
+      <label class="md-nav__title" for="nav-4">
         API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -352,17 +436,27 @@
 
 <h2 id="ravestate.module.Module">Module</h2>
 
-<pre><code class="python">Module(self, *, name: str, config: Dict[str, Any] = None)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">depends</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">ForwardRef</span><span class="p">(</span><span class="s1">&#39;Module&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Atomic class, which encapsulates a named set of states, properties and config entries,
 which form a coherent bundle.</p>
 <p><em>Example:</em></p>
-<pre><code class="python">with Module(name=&quot;my_module&quot;, config={&quot;paramA&quot;: 42}):
-    # define properties
-    # define states
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="k">with</span> <span class="n">Module</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_module&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;paramA&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">}):</span>
+    <span class="c1"># define properties</span>
+    <span class="c1"># define states</span>
+</pre></div>
 
+
+<h3 id="ravestate.module.Module.modules_per_python_module">modules_per_python_module</h3>
+
+<p>defaultdict(default_factory[, ...]) --&gt; dict with default factory</p>
+<p>The default factory is called without arguments to produce
+a new value when a key is not present, in <strong>getitem</strong> only.
+A defaultdict compares equal to a dict with the same items.
+All remaining arguments are treated the same as if they were
+passed to the dict constructor, including keyword arguments.</p>
 <h3 id="ravestate.module.Module.registered_modules">registered_modules</h3>
 
 <p>dict() -&gt; new empty dictionary
@@ -374,23 +468,10 @@ dict(iterable) -&gt; new dictionary initialized as if via:
         d[k] = v
 dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
     in the keyword argument list.  For example:  dict(one=1, two=2)
-<h2 id="ravestate.module.import_module">import_module</h2></p>
-<pre><code class="python">import_module(*, module_name: str, callback)
-</code></pre>
+<h2 id="ravestate.module.has_module">has_module</h2></p>
+<div class="codehilite"><pre><span></span><span class="n">has_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</pre></div>
 
-<p>Called by context to import a particular ravestate python module.</p>
-<ul>
-<li>
-<p><code>module_name</code>: The name of the python module to be imported (must be in pythonpath).</p>
-</li>
-<li>
-<p><code>callback</code>: A callback which should be called when a module calls register() while it is being imported.</p>
-</li>
-</ul>
-<h2 id="ravestate.module.has_module">has_module</h2>
-
-<pre><code class="python">has_module(module_name: str)
-</code></pre>
 
 <p>Check whether a module with a particular name has been registered.</p>
 <ul>
@@ -399,14 +480,17 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
 <p><strong>Returns:</strong> True if a module with the given name has been registered, false otherwise.</p>
 <h2 id="ravestate.module.get_module">get_module</h2>
 
-<pre><code class="python">get_module(module_name: str)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">get_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">Module</span><span class="p">]</span>
+</pre></div>
 
-<p>Get a registered module with a particular name</p>
+
+<p>Get modules registered with a particular name.</p>
+<p><strong>Note:</strong> If the module_name refers to a Python module,
+ multiple Ravestate modules might be returned.</p>
 <ul>
-<li><code>module_name</code>: The name of the moduke which should be retrieved.</li>
+<li><code>module_name</code>: Python or Ravestate module name.</li>
 </ul>
-<p><strong>Returns:</strong> The module with the given name if it was registered, false if otherwise.</p>
+<p><strong>Returns:</strong> The modules registered under the given name, empty set otherwise.</p>
                 
                   
                 
@@ -427,7 +511,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="ravestate_akinator/" title="Akinator" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="ravestate_nlp/luigi/" title="NLP: The Ice Cream Salesman" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -436,7 +520,7 @@ dict(**kwargs) -&gt; new dictionary initialized with the name=value pairs
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Akinator
+                NLP: The Ice Cream Salesman
               </span>
             </div>
           </a>

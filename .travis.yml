@@ -2,21 +2,19 @@ language: python
 os: linux
 python:
   - "3.6"
-  
+
 # Enable 3.7 without globally enabling sudo and dist: xenial for other build jobs
 matrix:
   include:
     - python: 3.7
       dist: xenial
       sudo: true
-      
-# command to install dependencies
-install:
-  - pip install -r requirements.txt -r requirements-dev.txt
   
-# command to run tests
-script:
-  - ./run_tests.sh
+services: docker
 
-after_success:
-  - codecov
+before_install:
+  - docker build -t ravestate .
+
+script: docker run -t -v $(pwd):/ravestate -w /ravestate ravestate ./run_tests.sh
+
+after_success: codecov

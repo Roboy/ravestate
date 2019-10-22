@@ -5,14 +5,14 @@ from collections import defaultdict
 from math import ceil
 from copy import deepcopy
 import gc
+import importlib
 
 from ravestate.wrappers import PropertyWrapper
 
 from ravestate.icontext import IContext
-from ravestate.module import Module, has_module, get_module, import_module
+from ravestate.module import Module, has_module, get_module
 from ravestate.state import State
 from ravestate.property import Property
-from ravestate.iactivation import IActivation
 from ravestate.activation import Activation
 from ravestate import argparser
 from ravestate.config import Configuration
@@ -31,7 +31,7 @@ CORE_MODULE_CONFIG = {
     TICK_RATE_CONFIG_KEY: 20
 }
 
-with Module(name="core", config=CORE_MODULE_CONFIG):
+with Module(name="core", config=CORE_MODULE_CONFIG) as core_module:
 
     """
     The startup signal, which is fired once when `Context.run()` is executed.<br>
@@ -64,7 +64,8 @@ with Module(name="core", config=CORE_MODULE_CONFIG):
         allow_push=False,
         allow_pop=False,
         default_value=0,
-        always_signal_changed=False)
+        always_signal_changed=False,
+        boring=True)
 
 
 def create_and_run_context(*args, runtime_overrides=None):
@@ -106,6 +107,7 @@ class Context(IContext):
 
     _lock: RLock
 
+    _modules: Set[str]
     _properties: Dict[str, Property]
     _spikes_per_signal: Dict[
         Signal,
@@ -159,29 +161,31 @@ class Context(IContext):
         self._signal_causes = dict()
         self._activations_per_state = dict()
         self._run_task = None
+        self._modules = set()
 
         # Load required modules
         self.add_module(CORE_MODULE_NAME)
-        for module_name in self.conf(mod=CORE_MODULE_NAME, key=IMPORT_MODULES_CONFIG_KEY) + modules:
-            self.add_module(module_name)
+        self._load_modules(self.conf(mod=CORE_MODULE_NAME, key=IMPORT_MODULES_CONFIG_KEY) + modules)
 
         # Set required config overrides
         for module_name, key, value in overrides:
             self._config.set(module_name, key, value)
+
         # Set additional config runtime overrides
         if runtime_overrides:
             for module_name, key, value in runtime_overrides:
                 self._config.set(module_name, key, value)
 
-        self.tick_rate = self.conf(mod=CORE_MODULE_NAME, key=TICK_RATE_CONFIG_KEY)
+        self.tick_rate = int(self.conf(mod=CORE_MODULE_NAME, key=TICK_RATE_CONFIG_KEY))
         if self.tick_rate < 1:
             logger.error("Attempt to set core config `tickrate` to a value less-than 1!")
             self.tick_rate = 1
 
-    def emit(self, signal: Signal, parents: Set[Spike]=None, wipe: bool=False, payload: Any=None) -> None:
+    def emit(self, signal: Signal, parents: Set[Spike] = None, wipe: bool = False, payload: Any = None,
+             boring: bool = False) -> Spike:
         """
         Emit a signal to the signal processing loop. _Note:_
-         The signal will only be processed if #run() has been called!
+         The spike will only be picked up by activations once `run_once`/`run` is called!
 
         * `signal`: The signal to be emitted.
 
@@ -191,6 +195,11 @@ class Context(IContext):
          before the new spike is created.
 
         * `payload`: Value that should be embedded in the new spike.
+
+        * `boring`: Flag which indicates, whether the new spike is boring. Activations which
+         acquire boring spikes will not count against the `core:activity` flag.
+
+        **Returns:** The newly created spike object.
         """
         if wipe:
             self.wipe(signal)
@@ -199,9 +208,11 @@ class Context(IContext):
                 sig=signal.id(),
                 parents=parents,
                 consumable_resources=set(self._properties.keys()),
-                payload=payload)
+                payload=payload,
+                boring=boring)
             logger.debug(f"Emitting {new_spike}")
             self._spikes_per_signal[signal].add(new_spike)
+        return new_spike
 
     def wipe(self, signal: Signal):
         """
@@ -245,7 +256,8 @@ class Context(IContext):
         """
         self._shutdown_flag.set()
         self.emit(sig_shutdown)
-        self._run_task.join()
+        if self._run_task:
+            self._run_task.join()
 
     def add_module(self, module_name: str) -> None:
         """
@@ -256,10 +268,15 @@ class Context(IContext):
          will be imported, and any ravestate modules registered during the python
          import will also be added to this context.
         """
-        if has_module(module_name):
-            self._module_registration_callback(get_module(module_name))
+        if module_name in self._modules:
+            logger.info(f"Module {module_name} already added.")
             return
-        import_module(module_name=module_name, callback=self._module_registration_callback)
+        if not has_module(module_name):
+            importlib.import_module(module_name)
+        modules_under_name = get_module(module_name)
+        assert len(modules_under_name) > 0
+        for mod in modules_under_name:
+            self._add_ravestate_module(mod)
 
     def add_state(self, *, st: State) -> None:
         """
@@ -314,16 +331,13 @@ class Context(IContext):
             # add state to state activation map
             self._activations_per_state[st] = set()
 
-            # make sure that all of the state's depended-upon signals exist,
-            #  add a default state activation for every constraint.
+            # complete constraint, create a new default state activation for every affected state.
             for state in states_to_recomplete:
-                self._del_state_activations(state)
                 self._complete_constraint(state)
-                # first create an activation which reacquires for existing spikes,
-                #  then create another activation which hooks into signals
-                #  that are not looked for anymore by the spiky one.
-                if self._new_state_activation(state, reacquire=True):
-                    self._new_state_activation(state)
+                # remove (filter out) the current default (catch-all) activation
+                self._activations_per_state[state] = {act for act in self._activations_per_state[state] if act.spiky()}
+                # create a new default (catch-all) activation
+                self._new_state_activation(state)
 
         # register the state's consumable dummy, so that it is passed
         #  to Spike and from there to CausalGroup as a consumable resource.
@@ -575,6 +589,7 @@ class Context(IContext):
                                 #  for the Spike with a certain minimum age. In place of the removed
                                 #  activation, if no activation with the same target state is left,
                                 #  a new Activation will be created.
+                                # TODO implications for visualization of partially fulfilled activations
                                 acts.remove(act)
                                 if len(acts) == 0:
                                     self._new_state_activation(state)
@@ -608,6 +623,10 @@ class Context(IContext):
 
         self._update_core_properties(debug=debug)
 
+    def _load_modules(self, modules: List[str]):
+        for module_name in modules:
+            self.add_module(module_name)
+
     def _state_activated(self, act: Activation):
         self._activations_per_state[act.state_to_activate].discard(act)
 
@@ -631,8 +650,13 @@ class Context(IContext):
         del self._signal_causes[sig]
         self._needy_acts_per_state_per_signal.pop(sig)
 
-    def _module_registration_callback(self, mod: Module):
+    def _add_ravestate_module(self, mod: Module):
+        if mod in self._modules:
+            return
+        for dependency in mod.depends:
+            self._add_ravestate_module(dependency)
         self._config.add_conf(mod)
+        self._modules.add(mod)
         for prop in mod.props:
             self.add_prop(prop=prop)
         for sig in mod.signals:
@@ -641,31 +665,14 @@ class Context(IContext):
             self.add_state(st=st)
         logger.info(f"Module {mod.name} added to session.")
 
-    def _new_state_activation(self, st: State, reacquire: bool = False) -> bool:
+    def _new_state_activation(self, st: State):
         activation = Activation(st, self)
-        reacquired = False
         self._activations_per_state[st].add(activation)
         for signal in st.completed_constraint.signals():
             if signal in self._needy_acts_per_state_per_signal:
-                signal_reacquired = False
-                if reacquire:
-                    for spike in self._spikes_per_signal[signal]:
-                        if spike.is_wiped():
-                            continue
-                        if activation.acquire(spike=spike):
-                            signal_reacquired = True
-                            break
-                if signal_reacquired:
-                    reacquired = True
-                else:
-                    self._needy_acts_per_state_per_signal[signal][st].add(activation)
-            else:
-                logger.warning(
-                    f"Adding state activation for {st.name} which depends on unknown signal `{signal}`!")
-        return reacquired
+                self._needy_acts_per_state_per_signal[signal][st].add(activation)
 
     def _del_state_activations(self, st: State) -> None:
-        # delete activation from gaybar
         if st not in self._activations_per_state:
             return
         for signal in st.completed_constraint.signals():
@@ -753,7 +760,7 @@ class Context(IContext):
                 if prop_activity.changed() not in set(act.constraint.signals()):
                     if act.is_pressured():
                         pressured_acts.append(act.id)
-                    if act.spiky():
+                    if act.spiky(filter_boring=True):
                         partially_fulfilled_acts.append(act)
         PropertyWrapper(
             prop=prop_pressure,

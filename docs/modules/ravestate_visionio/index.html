@@ -1,0 +1,805 @@
+
+
+
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+      
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.0.4, mkdocs-material-4.2.0">
+    
+    
+      
+        <title>VisionIO - Ravestate</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/application.750b69bd.css">
+      
+      
+    
+    
+      <script src="../../assets/javascripts/modernizr.74668098.js"></script>
+    
+    
+      
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+    
+    <link rel="stylesheet" href="../../assets/fonts/material-icons.css">
+    
+    
+    
+      
+    
+    
+  </head>
+  
+    <body dir="ltr">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
+    
+      <a href="#visionio" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../.." title="Ravestate" class="md-header-nav__button md-logo">
+          
+            <i class="md-icon"></i>
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="__drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            <span class="md-header-nav__topic">
+              Ravestate
+            </span>
+            <span class="md-header-nav__topic">
+              VisionIO
+            </span>
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          <label class="md-icon md-icon--search md-header-nav__button" for="__search"></label>
+          
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="__search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        
+      </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="__drawer">
+    <a href="../.." title="Ravestate" class="md-nav__button md-logo">
+      
+        <i class="md-icon"></i>
+      
+    </a>
+    Ravestate
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../.." title="Home" class="md-nav__link">
+      Home
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
+    
+    <label class="md-nav__link" for="nav-2">
+      Modules
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        Modules
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../raveboard/" title="Raveboard" class="md-nav__link">
+      Raveboard
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../ravestate_nlp/" title="NLP" class="md-nav__link">
+      NLP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../ravestate_wildtalk/" title="Wildtalk" class="md-nav__link">
+      Wildtalk
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../ravestate_ros1/" title="ROS" class="md-nav__link">
+      ROS
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../ravestate_verbaliser/" title="Verbaliser" class="md-nav__link">
+      Verbaliser
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../ravestate_telegramio/" title="TelegramIO" class="md-nav__link">
+      TelegramIO
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        VisionIO
+      </label>
+    
+    <a href="./" title="VisionIO" class="md-nav__link md-nav__link--active">
+      VisionIO
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#visionio" title="VisionIO" class="md-nav__link">
+    VisionIO
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" title="Architecture" class="md-nav__link">
+    Architecture
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependencies" title="Dependencies" class="md-nav__link">
+    Dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" title="Configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-run" title="How to run" class="md-nav__link">
+    How to run
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#profile-rs-linux" title="Profile rs-linux" class="md-nav__link">
+    Profile rs-linux
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#profile-rs-macos" title="Profile rs-macos" class="md-nav__link">
+    Profile rs-macos
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-a-video-instead-of-a-webcam-feed" title="Using a video instead of a webcam feed" class="md-nav__link">
+    Using a video instead of a webcam feed
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../ravestate_akinator/" title="Akinator" class="md-nav__link">
+      Akinator
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Tutorials
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Tutorials
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../ravestate_nlp/luigi/" title="NLP: The Ice Cream Salesman" class="md-nav__link">
+      NLP: The Ice Cream Salesman
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4">
+    
+    <label class="md-nav__link" for="nav-4">
+      API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../" title="Modules" class="md-nav__link">
+      Modules
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../states/" title="States" class="md-nav__link">
+      States
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../properties/" title="Properties" class="md-nav__link">
+      Properties
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../context/" title="Context" class="md-nav__link">
+      Context
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../config/" title="Configuration" class="md-nav__link">
+      Configuration
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#visionio" title="VisionIO" class="md-nav__link">
+    VisionIO
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" title="Architecture" class="md-nav__link">
+    Architecture
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dependencies" title="Dependencies" class="md-nav__link">
+    Dependencies
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" title="Configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-run" title="How to run" class="md-nav__link">
+    How to run
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#profile-rs-linux" title="Profile rs-linux" class="md-nav__link">
+    Profile rs-linux
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#profile-rs-macos" title="Profile rs-macos" class="md-nav__link">
+    Profile rs-macos
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-a-video-instead-of-a-webcam-feed" title="Using a video instead of a webcam feed" class="md-nav__link">
+    Using a video instead of a webcam feed
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                
+                  <h1>VisionIO</h1>
+                
+                <div class="codehilite"><pre><span></span>       <span class="n">_</span>      <span class="n">_</span>             <span class="n">_____</span> <span class="n">____</span>  
+      <span class="p">(</span><span class="n">_</span><span class="p">)</span>    <span class="p">(</span><span class="n">_</span><span class="p">)</span>           <span class="o">|</span><span class="n">_</span>   <span class="n">_</span><span class="o">/</span> <span class="n">__</span> <span class="err">\</span> 
+ <span class="n">_</span>   <span class="n">_</span> <span class="n">_</span>  <span class="n">___</span> <span class="n">_</span>  <span class="n">___</span>  <span class="n">_____</span>  <span class="o">|</span> <span class="o">||</span> <span class="o">|</span>  <span class="o">|</span> <span class="o">|</span>
+<span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|/</span><span class="n">___</span><span class="p">)</span> <span class="o">|/</span> <span class="n">_</span> <span class="err">\</span><span class="o">|</span>  <span class="n">_</span>  <span class="err">\</span> <span class="o">|</span> <span class="o">||</span> <span class="o">|</span>  <span class="o">|</span> <span class="o">|</span>
+ <span class="err">\</span> <span class="n">V</span> <span class="o">/|</span> <span class="o">|</span><span class="n">___</span> <span class="o">|</span> <span class="p">(</span> <span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="p">)</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">||</span> <span class="o">|</span><span class="n">__</span><span class="o">|</span> <span class="o">|</span>
+  <span class="err">\</span><span class="n">_</span><span class="o">/</span> <span class="o">|</span><span class="n">_</span><span class="p">(</span><span class="n">___</span><span class="o">/|</span><span class="n">_</span><span class="o">|</span><span class="err">\</span><span class="n">___</span><span class="o">/|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="p">)</span><span class="n">_____</span><span class="err">\</span><span class="n">____</span><span class="o">/</span> 
+</pre></div>
+
+
+<h2 id="visionio">VisionIO</h2>
+<p>The VisionIO module enables ravestate to connect to a Face Recognition
+ROS topic provided by <code>face_oracle</code>, based on which conversations can be initiated.</p>
+<h2 id="architecture">Architecture</h2>
+<div class="codehilite"><pre><span></span><span class="nv">OpenCV</span> <span class="nv">Video</span> <span class="nv">Stream</span>
+<span class="o">----&gt;</span> <span class="ss">(</span>     <span class="nv">FaceOracle</span> <span class="nv">Client</span>   <span class="ss">)</span>
+      <span class="ss">(</span><span class="nv">webcam_video_processor</span>.<span class="nv">py</span><span class="ss">)</span> <span class="o">---&gt;</span> <span class="nv">ravestate_visionio</span>
+        <span class="o">|</span>                     <span class="nv">A</span>        <span class="o">/</span><span class="nv">roboy</span><span class="o">/</span><span class="nv">cognition</span><span class="o">/</span><span class="nv">vision</span><span class="o">/</span><span class="nv">visible_face_names</span>
+        <span class="o">|</span>                     <span class="o">|</span>        <span class="ss">(</span><span class="nv">ROS1</span><span class="ss">)</span>
+        <span class="nv">V</span>                     <span class="o">|</span>
+  <span class="nv">face_recognition</span>            <span class="o">|</span>
+        <span class="o">|</span>              <span class="nv">name</span><span class="o">-</span><span class="nv">confidence</span> <span class="nv">pairs</span>
+        <span class="nv">V</span>                     <span class="o">|</span>
+  <span class="nv">facial</span> <span class="nv">feature</span> <span class="nv">vector</span>       <span class="o">|</span>
+        <span class="o">|</span>                     <span class="o">|</span>
+        <span class="nv">V</span>                     <span class="o">|</span>
+     <span class="ss">(</span><span class="nv">FaceOracle</span> <span class="nv">Websocket</span> <span class="nv">Server</span><span class="ss">)</span>
+        <span class="o">|</span>                     <span class="nv">A</span>
+        <span class="nv">V</span>                     <span class="o">|</span>
+  <span class="nv">Load</span> <span class="nv">FaceVector</span><span class="o">-</span><span class="nv">PrimKey</span>     <span class="o">|</span>
+  <span class="nv">pairs</span> <span class="nv">from</span> <span class="nv">Redis</span>            <span class="o">|</span>
+        <span class="o">|</span>                     <span class="o">|</span>
+        <span class="nv">V</span>                     <span class="o">|</span>
+  <span class="nv">Match</span> <span class="nv">with</span> <span class="nv">Request</span>          <span class="o">|</span>
+  <span class="nv">Vector</span> <span class="nv">via</span> <span class="nv">Pyroboy</span>          <span class="o">|</span>
+  <span class="nv">FaceRec</span>.<span class="nv">match_face</span>          <span class="o">|</span>
+        <span class="o">|</span>                     <span class="o">|</span>
+        <span class="nv">V</span>                     <span class="o">|</span>
+   [ <span class="nv">Name</span> <span class="k">for</span> <span class="nv">PrimKey</span> <span class="nv">from</span> <span class="nv">Scientio</span> ]
+</pre></div>
+
+
+<h2 id="dependencies">Dependencies</h2>
+<p>VisionIO requires the following components to be running:</p>
+<ul>
+<li><code>ravestate</code> or <code>raveboard</code> with <code>ravestate_visionio</code> module</li>
+<li><code>Neo4j</code> backend for Scientio</li>
+<li><code>redis</code> for persisting facial feature vectors</li>
+<li><code>face_oracle</code> client and server </li>
+</ul>
+<h2 id="configuration">Configuration</h2>
+<p>VisionIO provides the following config keys:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>redis_host</td>
+<td>Host for Redis database.</td>
+<td>localhost</td>
+</tr>
+<tr>
+<td>redis_port</td>
+<td>Port for Redis database.</td>
+<td>6379</td>
+</tr>
+<tr>
+<td>redis_pass</td>
+<td>Password for Redis database</td>
+<td>Empty</td>
+</tr>
+<tr>
+<td>ros1-node</td>
+<td>Topic for Faces messages.</td>
+<td>/roboy/cognition/vision/visible_face_names</td>
+</tr>
+<tr>
+<td>min-confidence</td>
+<td>Minimum confidence below which someone will be a stranger.</td>
+<td>0.85</td>
+</tr>
+</tbody>
+</table>
+<h2 id="how-to-run">How to run</h2>
+<p>We recommend running VisionIO through one of the ravestate
+docker-compose profiles, which will start <code>Neo4j</code>, <code>redis</code>,
+and the <code>face_oracle</code> client and server automatically.</p>
+<p>Start the profile and visionio in docker as follows:</p>
+<div class="codehilite"><pre><span></span>&gt; docker-compose up -d <span class="o">{</span>profile<span class="o">}</span>
+&gt; docker <span class="nb">exec</span> -it rs bash
+&gt; python3 -m ravestate ...
+</pre></div>
+
+
+<p><strong>To start face recognition, open <a href="localhost:8088/index.html">localhost:8088/index.html</a> in a browser (Chrome works best).</strong>
+This will give a visualisation of recognised faces, and simultaneously keep recognition running.
+<strong>Face recognition will only work as long as you can see it doing so!</strong></p>
+<p>The docker-compose profiles differ per operating system: </p>
+<h3 id="profile-rs-linux">Profile rs-linux</h3>
+<p>On Linux, a Webcam for VisionIO can simply be mapped into
+docker as a device. Per default, this will be <code>video0</code>.</p>
+<p>If you want to change the device, map a new device in
+<code>docker-compose.yml</code>, and don't forget to change the
+<code>FACEORACLE_VIDEO_DEVICE</code> variable.</p>
+<h3 id="profile-rs-macos">Profile rs-macos</h3>
+<p>On Mac, Docker can not natively access USB devices. Instead,
+live video can be streamed into the container via RTMP:</p>
+<ol>
+<li>Install/start <a href="https://github.com/sallar/mac-local-rtmp-server/releases"><code>Local RTMP Server</code></a></li>
+<li>Install <code>ffmpeg</code> via <code>brew install ffmpeg</code></li>
+<li>Stream webcam via RTMP by starting <code>ravestate/run_ffmpeg_stream.sh</code></li>
+</ol>
+<p>You can now start <code>docker-compose up -d rs-macos</code>.</p>
+<h3 id="using-a-video-instead-of-a-webcam-feed">Using a video instead of a webcam feed</h3>
+<p>If you don't have a webcam, you can use a video instead for
+debugging. Just set <code>FACEORACLE_VIDEO_DEVICE</code> for your
+particular platform profile to <code>/ravestate/resources/obama.mp4</code>.
+Note, that after changing <code>docker-compose.yml</code>, you have to run
+<code>docker-compose up -d</code> with the <code>--force-recreate</code> flag.</p>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../ravestate_telegramio/" title="TelegramIO" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                TelegramIO
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../ravestate_akinator/" title="Akinator" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Akinator
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        powered by
+        <a href="https://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/application.39abc4af.js"></script>
+      
+      <script>app.initialize({version:"1.0.4",url:{base:"../.."}})</script>
+      
+    
+  </body>
+</html>

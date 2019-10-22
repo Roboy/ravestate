@@ -36,7 +36,8 @@ def test_property_push_pop(mocker, context_wrapper_fixture, context_with_propert
             SignalRef(f"{DEFAULT_PROPERTY_ID}:pushed"),
             parents=None,
             wipe=False,
-            payload=CHILD_PROPERTY_ID)
+            payload=CHILD_PROPERTY_ID,
+            boring=False)
 
         # test child
         assert CHILD_PROPERTY_ID in list(context_wrapper_fixture.enum(DEFAULT_PROPERTY_ID))
@@ -46,7 +47,8 @@ def test_property_push_pop(mocker, context_wrapper_fixture, context_with_propert
             SignalRef(f"{CHILD_PROPERTY_ID}:changed"),
             parents=None,
             wipe=True,
-            payload=CHILD_PROPERTY_VALUE)
+            payload=CHILD_PROPERTY_VALUE,
+            boring=False)
         assert context_wrapper_fixture[CHILD_PROPERTY_ID] == CHILD_PROPERTY_VALUE
 
         # pop child
@@ -55,7 +57,8 @@ def test_property_push_pop(mocker, context_wrapper_fixture, context_with_propert
             SignalRef(f"{DEFAULT_PROPERTY_ID}:popped"),
             parents=None,
             wipe=False,
-            payload=CHILD_PROPERTY_ID)
+            payload=CHILD_PROPERTY_ID,
+            boring=False)
         assert [] == list(context_wrapper_fixture.enum(DEFAULT_PROPERTY_ID))
 
 
@@ -68,7 +71,8 @@ def test_property_nested(mocker, context_wrapper_fixture, context_with_property_
             SignalRef(f"{DEFAULT_PROPERTY_ID}:pushed"),
             parents=None,
             wipe=False,
-            payload=CHILD_PROPERTY_ID)
+            payload=CHILD_PROPERTY_ID,
+            boring=False)
 
         # push grandchild
         assert context_wrapper_fixture.push(parent_property_or_path=CHILD_PROPERTY_ID,
@@ -77,7 +81,8 @@ def test_property_nested(mocker, context_wrapper_fixture, context_with_property_
             SignalRef(f"{CHILD_PROPERTY_ID}:pushed"),
             parents=None,
             wipe=False,
-            payload=GRANDCHILD_PROPERTY_ID)
+            payload=GRANDCHILD_PROPERTY_ID,
+            boring=False)
 
         # test children
         assert CHILD_PROPERTY_ID in list(context_wrapper_fixture.enum(DEFAULT_PROPERTY_ID))
@@ -88,7 +93,8 @@ def test_property_nested(mocker, context_wrapper_fixture, context_with_property_
             SignalRef(f"{GRANDCHILD_PROPERTY_ID}:changed"),
             parents=None,
             wipe=True,
-            payload=GRANDCHILD_PROPERTY_VALUE)
+            payload=GRANDCHILD_PROPERTY_VALUE,
+            boring=False)
         assert context_wrapper_fixture[GRANDCHILD_PROPERTY_ID] == GRANDCHILD_PROPERTY_VALUE
 
         # pop child
@@ -97,7 +103,8 @@ def test_property_nested(mocker, context_wrapper_fixture, context_with_property_
             SignalRef(f"{DEFAULT_PROPERTY_ID}:popped"),
             parents=None,
             wipe=False,
-            payload=CHILD_PROPERTY_ID)
+            payload=CHILD_PROPERTY_ID,
+            boring=False)
         assert [] == list(context_wrapper_fixture.enum(DEFAULT_PROPERTY_ID))
 
 
@@ -110,7 +117,8 @@ def test_property_nested_2(mocker, context_wrapper_fixture, context_with_propert
             SignalRef(f"{DEFAULT_PROPERTY_ID}:pushed"),
             parents=None,
             wipe=False,
-            payload=CHILD_PROPERTY_ID)
+            payload=CHILD_PROPERTY_ID,
+            boring=False)
 
         # push grandchild
         assert context_wrapper_fixture.push(parent_property_or_path=CHILD_PROPERTY_ID,
@@ -119,7 +127,8 @@ def test_property_nested_2(mocker, context_wrapper_fixture, context_with_propert
             SignalRef(f"{CHILD_PROPERTY_ID}:pushed"),
             parents=None,
             wipe=False,
-            payload=GRANDCHILD_PROPERTY_ID)
+            payload=GRANDCHILD_PROPERTY_ID,
+            boring=False)
 
         # test children
         assert CHILD_PROPERTY_ID in list(context_wrapper_fixture.enum(DEFAULT_PROPERTY_ID))
@@ -131,6 +140,7 @@ def test_property_nested_2(mocker, context_wrapper_fixture, context_with_propert
             SignalRef(f"{CHILD_PROPERTY_ID}:popped"),
             parents=None,
             wipe=False,
-            payload=GRANDCHILD_PROPERTY_ID)
+            payload=GRANDCHILD_PROPERTY_ID,
+            boring=False)
         assert [] == list(context_wrapper_fixture.enum(CHILD_PROPERTY_ID))
         assert CHILD_PROPERTY_ID in list(context_wrapper_fixture.enum(DEFAULT_PROPERTY_ID))

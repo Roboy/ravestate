@@ -48,10 +48,10 @@ class IContext:
         """
         pass
 
-    def emit(self, signal: Signal, parents: Set[Spike] = None, wipe: bool = False, payload: Any = None) -> None:
+    def emit(self, signal: Signal, parents: Set[Spike] = None, wipe: bool = False, payload: Any = None, boring: bool=False) -> Spike:
         """
         Emit a signal to the signal processing loop. _Note:_
-         The signal will only be processed if #run() has been called!
+         The spike will only be picked up by activations once `run_once`/`run` is called!
 
         * `signal`: The signal to be emitted.
 
@@ -61,6 +61,11 @@ class IContext:
          before the new spike is created.
 
         * `payload`: Value that should be embedded in the new spike.
+
+        * `boring`: Flag which indicates, whether the new spike is boring. Activations which
+         acquire boring spikes will not count against the `core:activity` flag.
+
+        **Returns:** The newly created spike object.
         """
         pass
 

@@ -23,10 +23,10 @@ NEO4J_PASSWORD_KEY: str = "neo4j_pw"
 CONFIG = {
     NEO4J_ADDRESS_KEY: "bolt://localhost:7687",
     NEO4J_USERNAME_KEY: "neo4j",
-    NEO4J_PASSWORD_KEY: "neo4j"
+    NEO4J_PASSWORD_KEY: "test"
 }
 
-with Module(name="ontology", config=CONFIG):
+with Module(name="ontology", config=CONFIG) as mod:
 
     @state(cond=sig_startup)
     def hello_world_ontology(ctx):
@@ -60,6 +60,7 @@ with Module(name="ontology", config=CONFIG):
 
 
 def get_session():
+    initialized.wait()
     if not sess:
         logger.error("get_session() called before hello_world_ontology was invoked by context.")
         return None
@@ -67,6 +68,7 @@ def get_session():
 
 
 def get_ontology():
+    initialized.wait()
     if not onto:
         logger.error("get_ontology() called before hello_world_ontology was invoked by context.")
         return None

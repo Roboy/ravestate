@@ -195,8 +195,44 @@
 
 
   <li class="md-nav__item">
+    <a href="../modules/raveboard/" title="Raveboard" class="md-nav__link">
+      Raveboard
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../modules/ravestate_nlp/" title="NLP" class="md-nav__link">
       NLP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_wildtalk/" title="Wildtalk" class="md-nav__link">
+      Wildtalk
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_ros1/" title="ROS" class="md-nav__link">
+      ROS
     </a>
   </li>
 
@@ -231,8 +267,56 @@
 
 
   <li class="md-nav__item">
+    <a href="../modules/ravestate_visionio/" title="VisionIO" class="md-nav__link">
+      VisionIO
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../modules/ravestate_akinator/" title="Akinator" class="md-nav__link">
       Akinator
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Tutorials
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Tutorials
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_nlp/luigi/" title="NLP: The Ice Cream Salesman" class="md-nav__link">
+      NLP: The Ice Cream Salesman
     </a>
   </li>
 
@@ -251,13 +335,13 @@
 
   <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
-    <label class="md-nav__link" for="nav-3">
+    <label class="md-nav__link" for="nav-4">
       API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-3">
+      <label class="md-nav__title" for="nav-4">
         API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -352,20 +436,23 @@
 
 <h2 id="ravestate.property.Property">Property</h2>
 
-<pre><code class="python">Property(self, *, name='', allow_read=True, allow_write=True, allow_push=True, allow_pop=True, default_value=None, always_signal_changed=False, is_flag_property=False, wipe_on_changed=True)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">allow_read</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">allow_write</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">allow_push</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">allow_pop</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">default_value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">always_signal_changed</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">is_flag_property</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">wipe_on_changed</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">boring</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Base class for context properties. Controls read/write/push/pop/delete permissions,
 property name basic impls. for the property value, parent/child mechanism.</p>
 <p><em>Example (Creating a module containing a property named my_property):</em></p>
-<pre><code class="python">with Module(name=&quot;my_module&quot;):
-    my_property = Property(name=&quot;my_property&quot;)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="k">with</span> <span class="n">Module</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_module&quot;</span><span class="p">):</span>
+    <span class="n">my_property</span> <span class="o">=</span> <span class="n">Property</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_property&quot;</span><span class="p">)</span>
+</pre></div>
+
 
 <h3 id="ravestate.property.Property.set_parent_path">set_parent_path</h3>
 
-<pre><code class="python">Property.set_parent_path(self, path)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">set_parent_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Set the ancestors (including modulename) for a property</p>
 <ul>
@@ -373,20 +460,23 @@ property name basic impls. for the property value, parent/child mechanism.</p>
 </ul>
 <h3 id="ravestate.property.Property.gather_children">gather_children</h3>
 
-<pre><code class="python">Property.gather_children(self) -&gt; List[ForwardRef('Property')]
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">gather_children</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ForwardRef</span><span class="p">(</span><span class="s1">&#39;Property&#39;</span><span class="p">)]</span>
+</pre></div>
+
 
 <p>Collect this property, and all of it's children.</p>
 <h3 id="ravestate.property.Property.read">read</h3>
 
-<pre><code class="python">Property.read(self)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Read the current property value</p>
 <h3 id="ravestate.property.Property.write">write</h3>
 
-<pre><code class="python">Property.write(self, value)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Write a new value to the property</p>
 <ul>
@@ -395,8 +485,9 @@ property name basic impls. for the property value, parent/child mechanism.</p>
 <p><strong>Returns:</strong> True if the value has changed and :changed should be signaled, false otherwise.</p>
 <h3 id="ravestate.property.Property.push">push</h3>
 
-<pre><code class="python">Property.push(self, child: 'Property')
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child</span><span class="p">:</span> <span class="s1">&#39;Property&#39;</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Add a child to the property</p>
 <ul>
@@ -405,8 +496,9 @@ property name basic impls. for the property value, parent/child mechanism.</p>
 <p><strong>Returns:</strong> True if the child was added successfully, false otherwise.</p>
 <h3 id="ravestate.property.Property.pop">pop</h3>
 
-<pre><code class="python">Property.pop(self, child_name: str)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Remove a child from the property by it's name.</p>
 <ul>
@@ -415,38 +507,44 @@ property name basic impls. for the property value, parent/child mechanism.</p>
 <p><strong>Returns:</strong> True if the pop was successful, False otherwise</p>
 <h3 id="ravestate.property.Property.changed">changed</h3>
 
-<pre><code class="python">Property.changed(self) -&gt; ravestate.constraint.Signal
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">changed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span>
+</pre></div>
+
 
 <p>Signal that is emitted by PropertyWrapper when <code>write()</code> returns True.</p>
 <h3 id="ravestate.property.Property.pushed">pushed</h3>
 
-<pre><code class="python">Property.pushed(self) -&gt; ravestate.constraint.Signal
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">pushed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span>
+</pre></div>
+
 
 <p>Signal that is emitted by PropertyWrapper when <code>push()</code> returns True.</p>
 <h3 id="ravestate.property.Property.popped">popped</h3>
 
-<pre><code class="python">Property.popped(self) -&gt; ravestate.constraint.Signal
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">popped</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span>
+</pre></div>
+
 
 <p>Signal that is emitted by PropertyWrapper when <code>pop()</code> returns True.</p>
 <h3 id="ravestate.property.Property.true">true</h3>
 
-<pre><code class="python">Property.true(self) -&gt; ravestate.constraint.Signal
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">true</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span>
+</pre></div>
+
 
 <p>Signal that is emitted by PropertyWrapper when it is a flag-property and <code>self.value</code> is set to True.</p>
 <h3 id="ravestate.property.Property.false">false</h3>
 
-<pre><code class="python">Property.false(self) -&gt; ravestate.constraint.Signal
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">false</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span>
+</pre></div>
+
 
 <p>Signal that is emitted by PropertyWrapper when it is a flag-property and <code>self.value</code> is set to False.</p>
 <h3 id="ravestate.property.Property.signals">signals</h3>
 
-<pre><code class="python">Property.signals(self) -&gt; Generator[ravestate.constraint.Signal, NoneType, NoneType]
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Property</span><span class="o">.</span><span class="n">signals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>
+</pre></div>
+
 
 <p>Yields all signals that may be emitted because of
  this property, given it's write/push/pop permissions.</p>

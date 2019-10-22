@@ -1,24 +1,82 @@
 version: '2.1'
 
 services:
-  ravestate:
-    image: ravestate-ros2-image
-    container_name: ravestate-ros2-container
+
+  rs-linux:
+    image: ravestate
+    container_name: rs
     build:
       context: .
       dockerfile: Dockerfile
     network_mode: host
     volumes:
       - .:/ravestate
+      - ./db/neo4j:/var/lib/neo4j/data/databases
+      - ./db/redis:/redis_db
+    devices:
+      - /dev/snd:/dev/snd
+      - /dev/video0:/dev/video0
     ports:
       - "10002:10002"
       - "9000:9000"
       - "9001:9001"
+      - "8088:8088"
+      - "5000:5000"
+      - "4200:4200"
+      - "42424:42424"
+      - "7687:7687"
+      - "7474:7474"
     environment:
       - PYTHONPATH=$PYTHONPATH:/ravestate/modules
       - PYTHONUNBUFFERED=1
+      - NEO4J_ADDRESS=bolt://localhost:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=test
+      - REDIS_HOST=localhost
+      - REDIS_PASSWORD=
+      # - FACEORACLE_VIDEO_DEVICE=/ravestate/resources/obama.mp4
+      - FACEORACLE_VIDEO_DEVICE=0
     # After starting container, attach console and enter python3 -m ravestate [...]
     # This enables "hot reload" in the running container because the source directory is mounted
-    command: bash
     tty: true
     stdin_open: true
+    entrypoint:
+      - /ravestate/docker-entrypoint.sh
+
+  rs-macos:
+    image: ravestate
+    container_name: rs
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: bridge
+    volumes:
+      - .:/ravestate
+      - ./db/neo4j:/var/lib/neo4j/data/databases
+      - ./db/redis:/redis_db
+    ports:
+      - "10002:10002"
+      - "9000:9000"
+      - "9001:9001"
+      - "8088:8088"
+      - "5000:5000"
+      - "4200:4200"
+      - "42424:42424"
+      - "7687:7687"
+      - "7474:7474"
+    environment:
+      - PYTHONPATH=$PYTHONPATH:/ravestate/modules
+      - PYTHONUNBUFFERED=1
+      - NEO4J_ADDRESS=bolt://localhost:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=test
+      - REDIS_HOST=localhost
+      - REDIS_PASSWORD=
+      # - FACEORACLE_VIDEO_DEVICE=/ravestate/resources/obama.mp4
+      - FACEORACLE_VIDEO_DEVICE=rtmp://host.docker.internal/live/faceoracle
+    # After starting container, attach console and enter python3 -m ravestate [...]
+    # This enables "hot reload" in the running container because the source directory is mounted
+    tty: true
+    stdin_open: true
+    entrypoint:
+      - /ravestate/docker-entrypoint.sh

@@ -195,8 +195,44 @@
 
 
   <li class="md-nav__item">
+    <a href="../modules/raveboard/" title="Raveboard" class="md-nav__link">
+      Raveboard
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../modules/ravestate_nlp/" title="NLP" class="md-nav__link">
       NLP
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_wildtalk/" title="Wildtalk" class="md-nav__link">
+      Wildtalk
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_ros1/" title="ROS" class="md-nav__link">
+      ROS
     </a>
   </li>
 
@@ -231,8 +267,56 @@
 
 
   <li class="md-nav__item">
+    <a href="../modules/ravestate_visionio/" title="VisionIO" class="md-nav__link">
+      VisionIO
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
     <a href="../modules/ravestate_akinator/" title="Akinator" class="md-nav__link">
       Akinator
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Tutorials
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Tutorials
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../modules/ravestate_nlp/luigi/" title="NLP: The Ice Cream Salesman" class="md-nav__link">
+      NLP: The Ice Cream Salesman
     </a>
   </li>
 
@@ -251,13 +335,13 @@
 
   <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
     
-    <label class="md-nav__link" for="nav-3">
+    <label class="md-nav__link" for="nav-4">
       API
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-3">
+      <label class="md-nav__title" for="nav-4">
         API
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -350,25 +434,28 @@
                 
                 <h1 id="ravestate.state">state</h1>
 
-<pre><code class="python">state(*, signal: Union[ravestate.constraint.Signal, NoneType] = '', write: Tuple[ravestate.property.Property] = (), read: Tuple[ravestate.property.Property] = (), cond: ravestate.constraint.Constraint = None, emit_detached: bool = False, weight: float = 1.0, cooldown: float = 0.0)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">state</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">signal</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Signal</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">write</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">property</span><span class="o">.</span><span class="n">Property</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span> <span class="n">read</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">property</span><span class="o">.</span><span class="n">Property</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span> <span class="n">cond</span><span class="p">:</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">constraint</span><span class="o">.</span><span class="n">Constraint</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="n">emit_detached</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">cooldown</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">boring</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">False</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Decorator to declare a new state, which may emit a certain signal,
 write to a certain set of properties (calling write, push, pop),
 and read from certain properties (calling read).</p>
 <p><em>Example (Module that outputs "Don't Panic" after startup):</em></p>
-<pre><code class="python">with Module(name=&quot;my_module&quot;):
-    @state(cond=startup())
-    def after_startup(context, write=OUTPUT_PROPERTY):
-        context[OUTPUT_PROPERTY] = &quot;Don't Panic&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="k">with</span> <span class="n">Module</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_module&quot;</span><span class="p">):</span>
+    <span class="nd">@state</span><span class="p">(</span><span class="n">cond</span><span class="o">=</span><span class="n">startup</span><span class="p">())</span>
+    <span class="k">def</span> <span class="nf">after_startup</span><span class="p">(</span><span class="n">context</span><span class="p">,</span> <span class="n">write</span><span class="o">=</span><span class="n">OUTPUT_PROPERTY</span><span class="p">):</span>
+        <span class="n">context</span><span class="p">[</span><span class="n">OUTPUT_PROPERTY</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Don&#39;t Panic&quot;</span>
+</pre></div>
+
 
 <h1 id="ravestate.constraint">ravestate.constraint</h1>
 
 <h2 id="ravestate.constraint.ConfigurableAge">ConfigurableAge</h2>
 
-<pre><code class="python">ConfigurableAge(self, key: str)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">ConfigurableAge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Class for having min/max_age parameters for Constraints configurable with a config key</p>
 <h3 id="ravestate.constraint.ConfigurableAge.key">key</h3>
@@ -383,21 +470,24 @@ or repr(object).
 encoding defaults to sys.getdefaultencoding().
 errors defaults to 'strict'.
 <h2 id="ravestate.constraint.Constraint">Constraint</h2></p>
-<pre><code class="python">Constraint(self, /, *args, **kwargs)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Superclass for Signal, Conjunct and Disjunct</p>
 <h2 id="ravestate.constraint.Signal">Signal</h2>
 
-<pre><code class="python">Signal(self, name: str, *, min_age=0.0, max_age=5.0, detached=False, _skip_module_context=False)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Signal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">min_age</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">max_age</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">detached</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">_skip_module_context</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Class that represents a Signal. Should be constructed in a <code>with Module(..)</code>
  context, such that it's module scope is set automatically.</p>
 <h2 id="ravestate.constraint.SignalRef">SignalRef</h2>
 
-<pre><code class="python">SignalRef(self, name: str, *, min_age=0.0, max_age=5.0, detached=False)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">SignalRef</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">min_age</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">max_age</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">detached</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Signal reference. Almost the same as a signal, except that
  it will not try to auto-discover it's module out of thread-local context
@@ -406,32 +496,37 @@ errors defaults to 'strict'.
  without assigning that signal to the contextual module.</p>
 <h2 id="ravestate.constraint.Conjunct">Conjunct</h2>
 
-<pre><code class="python">Conjunct(self, *args)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Conjunct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Class that represents a Conjunction of Signals.
 Can be constructed using an overloaded &amp; operator.</p>
 <p><em>Example:</em></p>
-<pre><code class="python">signal_A &amp; signal_B
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">signal_A</span> <span class="o">&amp;</span> <span class="n">signal_B</span>
+</pre></div>
+
 
 <h2 id="ravestate.constraint.Disjunct">Disjunct</h2>
 
-<pre><code class="python">Disjunct(self, *args)
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">Disjunct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</pre></div>
+
 
 <p>Class that represents a Disjunction of Conjunctions
 Can be constructed using an overloaded | operator.</p>
 <p><em>Examples:</em></p>
-<pre><code class="python">conjunction_A | conjunction_B
+<div class="codehilite"><pre><span></span><span class="n">conjunction_A</span> <span class="o">|</span> <span class="n">conjunction_B</span>
 
-(signal_A &amp; signal_B) | (signal_C &amp; signal_D)
-</code></pre>
+<span class="p">(</span><span class="n">signal_A</span> <span class="o">&amp;</span> <span class="n">signal_B</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">signal_C</span> <span class="o">&amp;</span> <span class="n">signal_D</span><span class="p">)</span>
+</pre></div>
+
 
 <h1 id="ravestate.receptor">receptor</h1>
 
-<pre><code class="python">receptor(*, ctx_wrap: Union[ravestate.wrappers.ContextWrapper, ravestate.context.Context], write: Union[str, ravestate.property.Property, Tuple[Union[str, ravestate.property.Property]]])
-</code></pre>
+<div class="codehilite"><pre><span></span><span class="n">receptor</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">ctx_wrap</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ravestate</span><span class="o">.</span><span class="n">wrappers</span><span class="o">.</span><span class="n">ContextWrapper</span><span class="p">,</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">Context</span><span class="p">],</span> <span class="n">write</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">property</span><span class="o">.</span><span class="n">Property</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ravestate</span><span class="o">.</span><span class="n">property</span><span class="o">.</span><span class="n">Property</span><span class="p">]]])</span>
+</pre></div>
+
 
 <p>A receptor is a special state which can be invoked from outside,
  to push values into the context.</p>
@@ -445,18 +540,18 @@ Can be constructed using an overloaded | operator.</p>
 </li>
 </ul>
 <p><em>Example:</em></p>
-<pre><code class="python"># Module that outputs &quot;Don't Panic&quot; one minute after startup
-# Because a receptor is used, the OUTPUT_PROPERTY is not blocked the whole time
-with Module(name=&quot;my_module&quot;):
-    @state(cond=startup())
-    def after_startup(context):
-        @receptor(ctx_wrap=context, write=OUTPUT_PROPERTY)
-        def dont_panic(ctx_write):
-            ctx_write[OUTPUT_PROPERTY] = &quot;Don't Panic&quot;
+<div class="codehilite"><pre><span></span><span class="c1"># Module that outputs &quot;Don&#39;t Panic&quot; one minute after startup</span>
+<span class="c1"># Because a receptor is used, the OUTPUT_PROPERTY is not blocked the whole time</span>
+<span class="k">with</span> <span class="n">Module</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_module&quot;</span><span class="p">):</span>
+    <span class="nd">@state</span><span class="p">(</span><span class="n">cond</span><span class="o">=</span><span class="n">startup</span><span class="p">())</span>
+    <span class="k">def</span> <span class="nf">after_startup</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
+        <span class="nd">@receptor</span><span class="p">(</span><span class="n">ctx_wrap</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="n">write</span><span class="o">=</span><span class="n">OUTPUT_PROPERTY</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">dont_panic</span><span class="p">(</span><span class="n">ctx_write</span><span class="p">):</span>
+            <span class="n">ctx_write</span><span class="p">[</span><span class="n">OUTPUT_PROPERTY</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Don&#39;t Panic&quot;</span>
 
-        sleep(60)
-        dont_panic()
-</code></pre>
+        <span class="n">sleep</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
+        <span class="n">dont_panic</span><span class="p">()</span>
+</pre></div>
                 
                   
                 

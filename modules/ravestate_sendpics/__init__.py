@@ -6,6 +6,7 @@ import redis
 import ravestate_rawio as rawio
 import ravestate_nlp as nlp
 import ravestate_idle as idle
+import ravestate_verbaliser as verbaliser
 
 from scientio.ontology.node import Node
 from scientio.session import Session
@@ -15,6 +16,10 @@ from ravestate_sendpics.face_recognition import recognize_face_from_image_file
 
 from reggol import get_logger
 logger = get_logger(__name__)
+
+from os.path import realpath, dirname, join
+
+verbaliser.add_file(join(dirname(realpath(__file__)), "sendpics_phrases.yml"))
 
 REDIS_HOST_CONF = "redis_host"
 REDIS_PORT_CONF = "redis_port"
@@ -26,15 +31,15 @@ CONFIG = {
 }
 
 
-with rs.Module(name="sendpics", config=CONFIG):
+with rs.Module(name="sendpics", config=CONFIG, depends=(rawio.mod, nlp.mod, idle.mod, verbaliser.mod)) as mod:
 
     prop_face_vec = rs.Property(name="face_vec", always_signal_changed=True)
 
     sig_repeat_name = rs.Signal("repeat_name")
 
-    @rs.state(cond=idle.sig_bored, write=rawio.prop_out, weight=1.2, cooldown=30.)
+    @rs.state(cond=idle.sig_bored, write=rawio.prop_out, weight=0.8, cooldown=30.)
     def prompt_send(ctx):
-        ctx[rawio.prop_out] = "Why don't you send me a picture? I'm really good at recognizing faces!"
+        ctx[rawio.prop_out] = verbaliser.get_random_phrase("sendpics-prompt")
 
     @rs.state(
         read=rawio.prop_pic_in,

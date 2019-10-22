@@ -13,7 +13,12 @@
                  \____/                \____/             Olà! -       
 ```
 
-Ravestate is a reactive library for real-time natural language dialog systems. It combines elements from event-based and reactive programming into an API, where application states are defined as functions that are run when a certain boolean set of criteria (signals) in the current application context is satisfied. It is the first reactive API to allow for boolean combinations of events. You may find a short introductory video [here](http://www.youtube.com/watch?v=6GMmY-xvA_Y "Introduction to Ravestate").
+Ravestate is a reactive library for real-time natural language dialog systems.
+It combines elements from event-based and reactive programming into an API,
+where application states are defined as functions that are run when a certain
+boolean set of criteria (signals) in the current application context is satisfied.
+It is the first reactive API to allow for boolean combinations of events.
+You may find a short introductory video [here](http://www.youtube.com/watch?v=6GMmY-xvA_Y "Introduction to Ravestate").
 
 ### Reactive Hello World
 
@@ -31,7 +36,7 @@ import ravestate_conio
 # Ravestate applications should always be wrapped in a Module.
 # This allows easier scoping, and enables separation of concerns
 # beyond states.
-with rs.Module(name="hi!"):
+with rs.Module(name="hi!", depends=(rawio.mod,)):
 
     # Create an application state which reacts to the `:startup` signal,
     # and writes a string to raw:out. Note: State functions are
@@ -41,14 +46,22 @@ with rs.Module(name="hi!"):
         context[rawio.prop_out] = "Waddup waddup waddup!"
 
 # Run context with console input/output and our 'hi!' module.
-rs.Context("conio", "hi!").run()
+rs.Context("hi!").run()
 ```
 
-### Visualization
+### Raveboard
 
-Ravestate has a [d3.js](https://d3js.org)-based visualization. When using `ravestate_ui.UIContext` instead of `Context`, or `python3 -m ravestate_ui` instead of `python3 -m ravestate`, a real-time visualization of all states/properties/signals in the state machine will be hosted on port 5001. Here is the view of `http://localhost:5001` after launching `python3 ravestate_ui -f generic.yml`:
+Ravestate has an [angular](https://angular.io)/[socket.io](https://socket.io)-based
+interactive (beta) UI called __Raveboard__. It shows the events (spikes) that are
+currently relevant, as well as potential state activations that are referencing these spikes.
 
-<img src="resources/docs/ravestate_ui.gif">
+When using `raveboard.UIContext` instead of `Context`, or `python3 -m raveboard` instead of
+`python3 -m ravestate`, a real-time visualization of all spikes/activations, as well as a chat window,
+will be hosted on a configurable port. You can find dedicated docs [here](modules/raveboard/README.md).
+
+The following GIF shows raveboard together with [ravestate_visionio](modules/ravestate_visionio/README.md):
+
+![Raveboard](resources/docs/raveboard.gif)
 
 ## Installation
 
@@ -68,15 +81,87 @@ For reliability, we recommend using an environment virtualization tool,
 like [virtualenv](https://virtualenv.pypa.io/en/latest/)
 or [conda](https://conda.io/en/latest/).
 
-### For developers
+### Via Docker/Docker-compose
+
+#### Why Docker?
+
+Ravestate offers a docker image that bundles runtime dependencies that are required
+for advanced cognitive dialog systems/chatbots:
+
+* [📦 Neo4j](https://neo4j.com): The Neo4j Graph DBMS is used by [Scientio](https://github.com/roboy/scientio) for long-term memory.
+* [💡 Redis](https://redis.io): A Redis in-memory DB is used for fast short-term memory, e.g. to store/recall facial feature vectors.
+* [🤦 FaceOracle](https://github.com/roboy/face_oracle): A Roboy-developed server-client architecture used by `ravestate_visionio` for real-time face recognition.
+* [🤖 ROS Melodic](https://ros.org): Version 1 of the *Robot Operating System* for distributed real-time communication.
+  This version of ROS requires a broker process (`roscore`), which is started automatically inside the container.
+* [🤖 ROS2 Dashing](https://index.ros.org/doc/ros2): Version 2 of the *Robot Operating System* for distributed real-time communication.
+* [🤗 HuggingFace Transformer Models](https://github.com/huggingface/transformers): Language models (ConvAI GPT/OpenAI GPT2)
+  for neural-network-generated conversation.
+* [💌 Roboy ROS Messages](https://github.com/roboy/roboy_communication): Message defs. that are required to interact with Roboy hardware.
+
+Installing these dependencies by hand is time-consuming and error-prone, so using Docker
+to ship them makes everyone's lives easier!
+
+#### How to build?
+
+Clone ravestate:
+
+```bash
+git clone git@github.com:roboy/ravestate && cd ravestate
+```
+
+You can build the ravestate container using the provided `Dockerfile`:
+
+```bash
+docker build -t ravestate .
+```
+
+__Note: Building the container takes time and requires a good internet connection, since
+all of the dependencies are several Gigabytes in size.__
+
+#### How to run?
+
+Use one of the following docker-compose commands to run ravestate in Docker:
+
+Platform | Command
+---------|---------------------
+Linux    | `docker-compose up -d rs-linux`
+macOS    | `docker-compose up -d rs-macos`
+Windows  | Not supported yet.
+
+The container is now running and a shell inside the container can be opened with:
+
+```bash
+docker exec -it rs bash
+```
+
+You can now start ravestate or raveboard as described in the section [Running Hello World](#running-hello-world).
+
+```bash
+python3 -m ravestate [...]
+```
+
+#### Which services are exposed from the container?
+
+Service  | Port | Description
+---------|------|-------------------------------------
+Neo4j UI | 7474 | Neo4j UI for DB stored under `<ravestate>/db/neo4j`
+Neo4j Bolt Interface | 7687 | Communication with Neo4j DBMS
+Redis Database Dump | -  | A dump of the Redis DB in the container can be found under `<ravestate>/db/redis`
+FaceOracle Client Interface | 8088 | Visualisation for the FaceOracle client.
+Raveboard | 42424  | Default port for raveboard, the ravestate debug UI.
+
+
+### For development
 
 #### Initial configuration and setup
 
 Clone the repository and install dependencies:
 
 ```bash
+cd ~
+
 # Create a virtual python environment to not pollute the global setup
-python3 -m virtualenv python-ravestate
+python3 -m virtualenv -p python3 python-ravestate
 
 # Source the virtual environment
 . python-ravestate/bin/activate
@@ -94,18 +179,9 @@ pip install -r requirements-dev.txt
 pip install -e .
 ```
 
-Now, launch a Neo4j docker instance to serve [Scientio](https://github.com/roboy/scientio), so the dialog system has a memory:
-```bash
-docker run \
-    --publish=7474:7474 --publish=7687:7687 \
-    --volume=$HOME/neo4j/data:/data \
-    --volume=$HOME/neo4j/logs:/logs \
-    neo4j:latest
-    
-# Open the address localhost:7474 in a browser, and enter the
-# credentials `neo4j`/`neo4j`. You will then be prompted to enter
-# your own password. Remember this password.
-```
+Launch the ravestate docker container as described above. It will serve you Neo4j,
+which is a backend for [Scientio](https://github.com/roboy/scientio), Roboy's
+long-term memory system.
 
 In the `config` folder, create a file called `keys.yml`. It should have the following content:
 
@@ -114,18 +190,15 @@ module: telegramio
 config:
   telegram-token: <sexycactus>  # This is where your own telegram bot token
                                 # will go later
----
-module: ontology
-config:
-  neo4j_address: bolt://localhost:7687  # Your neo4j server uri here
-  neo4j_username: neo4j                 # Your neo4j user here
-  neo4j_pw: test                        # Your neo4j pw here
 ```
 
 You may now conduct your first conversation with ravestate:
 ```bash
-python3 -m ravestate -f config/generic.yml -f config/keys.yml
+python3 -m raveboard -f config/generic.yml -f config/keys.yml
 ```
+
+Open raveboard on `localhost:42424/ravestate/index.html?rs-sio-url=http%3A//localhost%3A42424`
+to conduct your first conversation with ravestate.
 
 After the conversation, check the Neo4j interface under `localhost:7474`. It should now contain some nodes!
 
@@ -143,10 +216,10 @@ just run `telegram_test.yml` instead of `generic.yml`. This will load the `raves
 3. Mark the `modules` folder as sources root via the right-click context menu.
 4. Create a run config via the "Edit configurations menu":<br>
    • Create a new Python configuration.<br>
-   • Set `modules/ravestate/__main__.py` as the script to execute<br>
+   • Set `raveboard` as the __module__ to execute<br>
    • Set the working directory to the git clone directory.<br>
    • Set parameters to `-f config/generic.yml -f config/keys.yml`.<br> 
-5. You should now be able to run the generic ravestate config from pycharm.
+5. You should now be able to run the generic ravestate config from PyCharm.
 
 ## Running Hello World
 
@@ -191,7 +264,7 @@ Then, run `ravestate` with this config file:
 python3 -m ravestate -f hello_world.yml
 ```
 
-## Module overview
+## Modules
 
 Ravestate offers a landscape of fine-grained modules
 for different aspects of dialog application tasks, which
@@ -202,7 +275,6 @@ External (Red) and Skills (Green):
 <img src="resources/docs/modules_sm.png">
 
 #### Core Modules
-
   
   | Module name          | Description |
   |----------------------|-------------|
@@ -213,7 +285,9 @@ External (Red) and Skills (Green):
   | ravestate_idle       | Provides `bored` and `impatient` signals, as specified [here](https://github.com/Roboy/ravestate/issues/12).
   | ravestate_verbaliser | Utilities for easy management of conversational text, documented [here](modules/ravestate_verbaliser/README.md).
   | ravestate_nlp        | Spacy-based NLP properties and signals, documented [here](modules/ravestate_nlp/README.md).
-  | ravestate_ros2       | Provides specific `Ros2PubProperty`, `Ros2SubProperty` and `Ros2CallProperty` context props., which greatly simplify working with ROS2 in ravestate.
+  | ravestate_emotion    | Generates signals for, and recognizes specific emotions (`sig_shy`, `sig_surprise`, `sig_happy`, `sig_affectionate`).
+  | ravestate_ros1       | Provides specific `Ros1PubProperty`, `Ros1SubProperty` and `Ros1CallProperty` context properties, which greatly simplify working with ROS1 in ravestate. Documentation [here](modules/ravestate_ros1/README.md).
+  | ravestate_ros2       | Provides specific `Ros2PubProperty`, `Ros2SubProperty` and `Ros2CallProperty` context properties, which greatly simplify working with ROS2 in ravestate.
 
 
 #### IO Modules
@@ -223,66 +297,31 @@ External (Red) and Skills (Green):
   | ravestate_conio      | Simple command-line based IO for development purposes.
   | ravestate_telegramio | Single- or Multi-process Telegram server module, documented [here](modules/ravestate_telegramio/README.md). 
   | ravestate_roboyio    | [PyroBoy](https://github.com/roboy/pyroboy) -based STT/TTS with ROS2.
+  | ravestate_visionio   | See dedicated docs [here](modules/ravestate_visionio/README.md). Enables face-recognition based dialog interactions.
 
 
 #### Skill Modules
 
   | Module name          | Description |
   |----------------------|-------------|
-  | ravestate_wildtalk   | [ParlAI](https://github.com/roboy/parlai) -based generative conversational module. 
+  | ravestate_wildtalk   | See docs [here](modules/ravestate_wildtalk/README.md) - runs generative language models (GPT-2, ConvAi, ParlAi)!
   | ravestate_hibye      | Simply voices __Hi!__ (or the likes thereof) when an interlocutor is added, and __Bye__ when one is removed.
   | ravestate_persqa     | Conducts personalized smalltalk with interlocutors, interacts with Scientio to persist trivia.
   | ravestate_genqa      | [DrQA](https://github.com/roboy/drqa) -based general question answering module.
   | ravestate_roboyqa    | QA module which provides answers to questions about Roboy, such as __Who is your dad?__
-  | ravestate_akinator   | Enables dialog-based play of [Akinator!](modules/ravestate_akinator/README.md)
-  | ravestate_sendpics   | Uses face recognition to extract facial features and an assiciated Person with `pic_in` and ontology, which are then persisted in Redis and Scientio.
-  | ravestate_stalker    | Uses `facial feature <-> person` tuples generated by sendpics, to surprise people in front of a camera with knowledge of their names.
+  | ravestate_akinator __(*)__ | Enables dialog-based play of [Akinator!](modules/ravestate_akinator/README.md)
+  | ravestate_sendpics __(*)__ | Uses face recognition to extract facial features and an assiciated Person with `pic_in` and ontology, which are then persisted in Redis and Scientio.
   | ravestate_fillers    | Recognize when the dialog context is taking a long time to produce an answer, and voice a filler like __"Uhm"__ or __"Let's see..."__.
 
+**Note:** __(*)__ = deprecated.
 
 ## Running tests
 
-If you have installed the dependencies from ``requirements-dev.txt`` you
-may run the ravestate test suite as follows:
+If you have built the ravestate docker image as described above,
+you may run the test suite as follows:
 
-``
-./run_tests.sh
-``
-
-## Docker for ROS and ROS2
-
-There is a Dockerfile for ROS and ROS2 support which can be built with
 ```bash
-docker build -t ravestate-ros2-image .
-```
-The image contains ROS, ROS2 and a ROS Bridge to connect ROS with ROS2.
-Furthermore the roboy_communication message and service types are installed.
-
-A container can then be created with the docker-compose.yml:
-```bash
-docker-compose up --detach ravestate
-```
-The container is now running and a connection into the container can be
-established with:
-```bash
-docker exec -it ravestate-ros2-container bash
-```
-Inside the container, first source the ROS2 setups and then 
-ravestate can be run with ROS2 and rclpy available.
-```bash
-source ~/ros2_ws/install/setup.sh
-python3 -m ravestate [...]
-```
-
-### Start ROS Bridge
-In order to start ROS Bridge, the image and container have to be set up
-as above. After connecting into the container run from inside the container:
-```bash
-export ROS_IP=192.168.0.105
-source ~/melodic_ws/devel/setup.sh
-source ~/ros2_ws/install/setup.sh
-source ~/ros1_bridge_ws/install/setup.sh
-ros2 run ros1_bridge dynamic_bridge
+docker run -t -v $(pwd):/ravestate -w /ravestate ravestate ./run_tests.sh
 ```
 
 ## Building/maintaining the docs
@@ -300,4 +339,4 @@ git add docs/*
 # For inspection: python3 -m http.server --directory docs
 ```
 
-The structure and content of the docs are defined in the file ``pydocmd.yml``.
+The structure and content of the docs are defined in the file `pydocmd.yml`.

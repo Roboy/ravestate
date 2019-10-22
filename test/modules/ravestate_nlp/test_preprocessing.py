@@ -1,5 +1,5 @@
 import pytest
-from ravestate_nlp import nlp_preprocess, prop_tokens, porp_postags, prop_lemmas, prop_tags, prop_ner, prop_roboy
+from ravestate_nlp import nlp_preprocess, prop_tokens, prop_postags, prop_lemmas, prop_tags, prop_ner, prop_roboy
 from ravestate_rawio import prop_in as raw_in
 from testfixtures import log_capture
 
@@ -23,7 +23,7 @@ def test_tokenization(capture, basic_input):
 def test_postags(capture, basic_input):
     nlp_preprocess(basic_input)
     expected = ('INTJ', 'NOUN', 'DET', 'NOUN', 'VERB', 'ADJ')
-    assert basic_input[porp_postags] == expected
+    assert basic_input[prop_postags] == expected
     capture.check_present((f"{FILE_NAME}", 'INFO', f"[NLP:postags]: {expected}"))
 
 
