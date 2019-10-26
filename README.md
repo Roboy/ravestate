@@ -20,6 +20,10 @@ boolean set of criteria (signals) in the current application context is satisfie
 It is the first reactive API to allow for boolean combinations of events.
 You may find a short introductory video [here](http://www.youtube.com/watch?v=6GMmY-xvA_Y "Introduction to Ravestate").
 
+### Docs 📖
+
+Pretty docs can be found at [roboy.github.io/ravestate](https://roboy.github.io/ravestate).
+
 ### Reactive Hello World
 
 ```python
@@ -31,12 +35,12 @@ import ravestate_rawio as rawio
 
 # Make sure that we use some i/o implementation,
 # so we can actually see stuff that is written to rawio:out.
-import ravestate_conio
+import ravestate_conio as conio
 
 # Ravestate applications should always be wrapped in a Module.
 # This allows easier scoping, and enables separation of concerns
 # beyond states.
-with rs.Module(name="hi!", depends=(rawio.mod,)):
+with rs.Module(name="hi!", depends=(rawio.mod, conio.mod)):
 
     # Create an application state which reacts to the `:startup` signal,
     # and writes a string to raw:out. Note: State functions are
@@ -46,10 +50,10 @@ with rs.Module(name="hi!", depends=(rawio.mod,)):
         context[rawio.prop_out] = "Waddup waddup waddup!"
 
 # Run context with console input/output and our 'hi!' module.
-rs.Context("hi!").run()
+rs.Context("hi!", "conio").run()
 ```
 
-### Raveboard
+### Raveboard 🏄
 
 Ravestate has an [angular](https://angular.io)/[socket.io](https://socket.io)-based
 interactive (beta) UI called __Raveboard__. It shows the events (spikes) that are
@@ -63,7 +67,7 @@ The following GIF shows raveboard together with [ravestate_visionio](modules/rav
 
 ![Raveboard](resources/docs/raveboard.gif)
 
-## Installation
+## Installation 🔥
 
 ### Via PIP
 
@@ -101,7 +105,15 @@ for advanced cognitive dialog systems/chatbots:
 Installing these dependencies by hand is time-consuming and error-prone, so using Docker
 to ship them makes everyone's lives easier!
 
-#### How to build?
+#### How to get?
+
+##### Option 1: Pulling from Dockerhub
+
+``docker pull realitivity/ravestate``
+
+Note: You will still need to clone ravestate for the docker-compose file.
+
+##### Option 2: Building the image yourself
 
 Clone ravestate:
 
@@ -112,7 +124,7 @@ git clone git@github.com:roboy/ravestate && cd ravestate
 You can build the ravestate container using the provided `Dockerfile`:
 
 ```bash
-docker build -t ravestate .
+docker build -t realitivity/ravestate .
 ```
 
 __Note: Building the container takes time and requires a good internet connection, since
@@ -151,11 +163,11 @@ FaceOracle Client Interface | 8088 | Visualisation for the FaceOracle client.
 Raveboard | 42424  | Default port for raveboard, the ravestate debug UI.
 
 
-### For development
+### Developing ravestate
 
 #### Initial configuration and setup
 
-Clone the repository and install dependencies:
+**Step 1:** Clone the repository and install dependencies:
 
 ```bash
 cd ~
@@ -179,11 +191,12 @@ pip install -r requirements-dev.txt
 pip install -e .
 ```
 
-Launch the ravestate docker container as described above. It will serve you Neo4j,
+**Step 2:** Launch the ravestate docker container as described above. It will serve you Neo4j,
 which is a backend for [Scientio](https://github.com/roboy/scientio), Roboy's
 long-term memory system.
 
-In the `config` folder, create a file called `keys.yml`. It should have the following content:
+**Step 3:** In the `config` folder, create a file called `keys.yml`. This is where your secrets,
+such as database credentials or your telegram token will go. For example,:
 
 ```yaml
 module: telegramio
@@ -192,7 +205,8 @@ config:
                                 # will go later
 ```
 
-You may now conduct your first conversation with ravestate:
+**Step 4:** You may now conduct your first conversation with ravestate:
+
 ```bash
 python3 -m raveboard -f config/generic.yml -f config/keys.yml
 ```
@@ -321,7 +335,7 @@ If you have built the ravestate docker image as described above,
 you may run the test suite as follows:
 
 ```bash
-docker run -t -v $(pwd):/ravestate -w /ravestate ravestate ./run_tests.sh
+docker run -t -v $(pwd):/ravestate -w /ravestate realitivity/ravestate ./run_tests.sh
 ```
 
 ## Building/maintaining the docs

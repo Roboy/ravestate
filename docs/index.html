@@ -199,6 +199,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#docs" title="Docs 📖" class="md-nav__link">
+    Docs 📖
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#reactive-hello-world" title="Reactive Hello World" class="md-nav__link">
     Reactive Hello World
   </a>
@@ -206,8 +213,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#raveboard" title="Raveboard" class="md-nav__link">
-    Raveboard
+  <a href="#raveboard" title="Raveboard 🏄" class="md-nav__link">
+    Raveboard 🏄
   </a>
   
 </li>
@@ -218,8 +225,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" title="Installation" class="md-nav__link">
-    Installation
+  <a href="#installation" title="Installation 🔥" class="md-nav__link">
+    Installation 🔥
   </a>
   
     <nav class="md-nav">
@@ -248,9 +255,29 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#how-to-build" title="How to build?" class="md-nav__link">
-    How to build?
+  <a href="#how-to-get" title="How to get?" class="md-nav__link">
+    How to get?
   </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-pulling-from-dockerhub" title="Option 1: Pulling from Dockerhub" class="md-nav__link">
+    Option 1: Pulling from Dockerhub
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-building-the-image-yourself" title="Option 2: Building the image yourself" class="md-nav__link">
+    Option 2: Building the image yourself
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -274,8 +301,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#for-development" title="For development" class="md-nav__link">
-    For development
+  <a href="#developing-ravestate" title="Developing ravestate" class="md-nav__link">
+    Developing ravestate
   </a>
   
     <nav class="md-nav">
@@ -665,6 +692,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#docs" title="Docs 📖" class="md-nav__link">
+    Docs 📖
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#reactive-hello-world" title="Reactive Hello World" class="md-nav__link">
     Reactive Hello World
   </a>
@@ -672,8 +706,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#raveboard" title="Raveboard" class="md-nav__link">
-    Raveboard
+  <a href="#raveboard" title="Raveboard 🏄" class="md-nav__link">
+    Raveboard 🏄
   </a>
   
 </li>
@@ -684,8 +718,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation" title="Installation" class="md-nav__link">
-    Installation
+  <a href="#installation" title="Installation 🔥" class="md-nav__link">
+    Installation 🔥
   </a>
   
     <nav class="md-nav">
@@ -714,9 +748,29 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#how-to-build" title="How to build?" class="md-nav__link">
-    How to build?
+  <a href="#how-to-get" title="How to get?" class="md-nav__link">
+    How to get?
   </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-pulling-from-dockerhub" title="Option 1: Pulling from Dockerhub" class="md-nav__link">
+    Option 1: Pulling from Dockerhub
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-building-the-image-yourself" title="Option 2: Building the image yourself" class="md-nav__link">
+    Option 2: Building the image yourself
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -740,8 +794,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#for-development" title="For development" class="md-nav__link">
-    For development
+  <a href="#developing-ravestate" title="Developing ravestate" class="md-nav__link">
+    Developing ravestate
   </a>
   
     <nav class="md-nav">
@@ -891,6 +945,8 @@ where application states are defined as functions that are run when a certain
 boolean set of criteria (signals) in the current application context is satisfied.
 It is the first reactive API to allow for boolean combinations of events.
 You may find a short introductory video <a href="http://www.youtube.com/watch?v=6GMmY-xvA_Y" title="Introduction to Ravestate">here</a>.</p>
+<h3 id="docs">Docs 📖</h3>
+<p>Pretty docs can be found at <a href="https://roboy.github.io/ravestate">roboy.github.io/ravestate</a>.</p>
 <h3 id="reactive-hello-world">Reactive Hello World</h3>
 <div class="codehilite"><pre><span></span><span class="kn">import</span> <span class="nn">ravestate</span> <span class="kn">as</span> <span class="nn">rs</span>
 
@@ -900,12 +956,12 @@ You may find a short introductory video <a href="http://www.youtube.com/watch?v=
 
 <span class="c1"># Make sure that we use some i/o implementation,</span>
 <span class="c1"># so we can actually see stuff that is written to rawio:out.</span>
-<span class="kn">import</span> <span class="nn">ravestate_conio</span>
+<span class="kn">import</span> <span class="nn">ravestate_conio</span> <span class="kn">as</span> <span class="nn">conio</span>
 
 <span class="c1"># Ravestate applications should always be wrapped in a Module.</span>
 <span class="c1"># This allows easier scoping, and enables separation of concerns</span>
 <span class="c1"># beyond states.</span>
-<span class="k">with</span> <span class="n">rs</span><span class="o">.</span><span class="n">Module</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;hi!&quot;</span><span class="p">,</span> <span class="n">depends</span><span class="o">=</span><span class="p">(</span><span class="n">rawio</span><span class="o">.</span><span class="n">mod</span><span class="p">,)):</span>
+<span class="k">with</span> <span class="n">rs</span><span class="o">.</span><span class="n">Module</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;hi!&quot;</span><span class="p">,</span> <span class="n">depends</span><span class="o">=</span><span class="p">(</span><span class="n">rawio</span><span class="o">.</span><span class="n">mod</span><span class="p">,</span> <span class="n">conio</span><span class="o">.</span><span class="n">mod</span><span class="p">)):</span>
 
     <span class="c1"># Create an application state which reacts to the `:startup` signal,</span>
     <span class="c1"># and writes a string to raw:out. Note: State functions are</span>
@@ -915,11 +971,11 @@ You may find a short introductory video <a href="http://www.youtube.com/watch?v=
         <span class="n">context</span><span class="p">[</span><span class="n">rawio</span><span class="o">.</span><span class="n">prop_out</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Waddup waddup waddup!&quot;</span>
 
 <span class="c1"># Run context with console input/output and our &#39;hi!&#39; module.</span>
-<span class="n">rs</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s2">&quot;hi!&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">rs</span><span class="o">.</span><span class="n">Context</span><span class="p">(</span><span class="s2">&quot;hi!&quot;</span><span class="p">,</span> <span class="s2">&quot;conio&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 
 
-<h3 id="raveboard">Raveboard</h3>
+<h3 id="raveboard">Raveboard 🏄</h3>
 <p>Ravestate has an <a href="https://angular.io">angular</a>/<a href="https://socket.io">socket.io</a>-based
 interactive (beta) UI called <strong>Raveboard</strong>. It shows the events (spikes) that are
 currently relevant, as well as potential state activations that are referencing these spikes.</p>
@@ -928,7 +984,7 @@ currently relevant, as well as potential state activations that are referencing 
 will be hosted on a configurable port. You can find dedicated docs <a href="modules/raveboard/">here</a>.</p>
 <p>The following GIF shows raveboard together with <a href="modules/ravestate_visionio/">ravestate_visionio</a>:</p>
 <p><img alt="Raveboard" src="resources/docs/raveboard.gif" /></p>
-<h2 id="installation">Installation</h2>
+<h2 id="installation">Installation 🔥</h2>
 <h3 id="via-pip">Via PIP</h3>
 <p>The easiest way to install ravestate is through pip:</p>
 <p><code>pip install ravestate</code></p>
@@ -955,14 +1011,18 @@ for advanced cognitive dialog systems/chatbots:</p>
 </ul>
 <p>Installing these dependencies by hand is time-consuming and error-prone, so using Docker
 to ship them makes everyone's lives easier!</p>
-<h4 id="how-to-build">How to build?</h4>
+<h4 id="how-to-get">How to get?</h4>
+<h5 id="option-1-pulling-from-dockerhub">Option 1: Pulling from Dockerhub</h5>
+<p><code>docker pull realitivity/ravestate</code></p>
+<p>Note: You will still need to clone ravestate for the docker-compose file.</p>
+<h5 id="option-2-building-the-image-yourself">Option 2: Building the image yourself</h5>
 <p>Clone ravestate:</p>
 <div class="codehilite"><pre><span></span>git clone git@github.com:roboy/ravestate <span class="o">&amp;&amp;</span> <span class="nb">cd</span> ravestate
 </pre></div>
 
 
 <p>You can build the ravestate container using the provided <code>Dockerfile</code>:</p>
-<div class="codehilite"><pre><span></span>docker build -t ravestate .
+<div class="codehilite"><pre><span></span>docker build -t realitivity/ravestate .
 </pre></div>
 
 
@@ -1039,9 +1099,9 @@ all of the dependencies are several Gigabytes in size.</strong></p>
 </tr>
 </tbody>
 </table>
-<h3 id="for-development">For development</h3>
+<h3 id="developing-ravestate">Developing ravestate</h3>
 <h4 id="initial-configuration-and-setup">Initial configuration and setup</h4>
-<p>Clone the repository and install dependencies:</p>
+<p><strong>Step 1:</strong> Clone the repository and install dependencies:</p>
 <div class="codehilite"><pre><span></span><span class="nb">cd</span> ~
 
 <span class="c1"># Create a virtual python environment to not pollute the global setup</span>
@@ -1064,10 +1124,11 @@ pip install -e .
 </pre></div>
 
 
-<p>Launch the ravestate docker container as described above. It will serve you Neo4j,
+<p><strong>Step 2:</strong> Launch the ravestate docker container as described above. It will serve you Neo4j,
 which is a backend for <a href="https://github.com/roboy/scientio">Scientio</a>, Roboy's
 long-term memory system.</p>
-<p>In the <code>config</code> folder, create a file called <code>keys.yml</code>. It should have the following content:</p>
+<p><strong>Step 3:</strong> In the <code>config</code> folder, create a file called <code>keys.yml</code>. This is where your secrets,
+such as database credentials or your telegram token will go. For example,:</p>
 <div class="codehilite"><pre><span></span><span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">telegramio</span>
 <span class="nt">config</span><span class="p">:</span>
   <span class="nt">telegram-token</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">&lt;sexycactus&gt;</span>  <span class="c1"># This is where your own telegram bot token</span>
@@ -1075,7 +1136,7 @@ long-term memory system.</p>
 </pre></div>
 
 
-<p>You may now conduct your first conversation with ravestate:</p>
+<p><strong>Step 4:</strong> You may now conduct your first conversation with ravestate:</p>
 <div class="codehilite"><pre><span></span>python3 -m raveboard -f config/generic.yml -f config/keys.yml
 </pre></div>
 
@@ -1267,7 +1328,7 @@ External (Red) and Skills (Green):</p>
 <h2 id="running-tests">Running tests</h2>
 <p>If you have built the ravestate docker image as described above,
 you may run the test suite as follows:</p>
-<div class="codehilite"><pre><span></span>docker run -t -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/ravestate -w /ravestate ravestate ./run_tests.sh
+<div class="codehilite"><pre><span></span>docker run -t -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/ravestate -w /ravestate realitivity/ravestate ./run_tests.sh
 </pre></div>
 
 
