@@ -3,7 +3,7 @@ version: '2.1'
 services:
 
   rs-linux:
-    image: ravestate
+    image: realitivity/ravestate
     container_name: rs
     build:
       context: .
@@ -44,7 +44,7 @@ services:
       - /ravestate/docker-entrypoint.sh
 
   rs-macos:
-    image: ravestate
+    image: realitivity/ravestate
     container_name: rs
     build:
       context: .

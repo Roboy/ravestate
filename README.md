@@ -124,7 +124,7 @@ git clone git@github.com:roboy/ravestate && cd ravestate
 You can build the ravestate container using the provided `Dockerfile`:
 
 ```bash
-docker build -t ravestate .
+docker build -t realitivity/ravestate .
 ```
 
 __Note: Building the container takes time and requires a good internet connection, since
@@ -335,7 +335,7 @@ If you have built the ravestate docker image as described above,
 you may run the test suite as follows:
 
 ```bash
-docker run -t -v $(pwd):/ravestate -w /ravestate ravestate ./run_tests.sh
+docker run -t -v $(pwd):/ravestate -w /ravestate realitivity/ravestate ./run_tests.sh
 ```
 
 ## Building/maintaining the docs

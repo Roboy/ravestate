@@ -16,6 +16,6 @@ before_install: docker pull realitivity/ravestate:0.7.0
 
 install: pip install codecov
 
-script: docker run -t -v $(pwd):/ravestate -w /ravestate ravestate ./run_tests.sh
+script: docker run -t -v $(pwd):/ravestate -w /ravestate realitivity/ravestate ./run_tests.sh
 
 after_success: codecov
