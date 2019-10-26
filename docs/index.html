@@ -1022,7 +1022,7 @@ to ship them makes everyone's lives easier!</p>
 
 
 <p>You can build the ravestate container using the provided <code>Dockerfile</code>:</p>
-<div class="codehilite"><pre><span></span>docker build -t ravestate .
+<div class="codehilite"><pre><span></span>docker build -t realitivity/ravestate .
 </pre></div>
 
 
@@ -1328,7 +1328,7 @@ External (Red) and Skills (Green):</p>
 <h2 id="running-tests">Running tests</h2>
 <p>If you have built the ravestate docker image as described above,
 you may run the test suite as follows:</p>
-<div class="codehilite"><pre><span></span>docker run -t -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/ravestate -w /ravestate ravestate ./run_tests.sh
+<div class="codehilite"><pre><span></span>docker run -t -v <span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/ravestate -w /ravestate realitivity/ravestate ./run_tests.sh
 </pre></div>
 
 
