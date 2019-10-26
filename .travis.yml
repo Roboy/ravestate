@@ -12,8 +12,9 @@ matrix:
   
 services: docker
 
-before_install:
-  - docker build -t ravestate .
+before_install: docker build -t ravestate .
+
+install: pip install codecov
 
 script: docker run -t -v $(pwd):/ravestate -w /ravestate ravestate ./run_tests.sh
 

@@ -6,7 +6,7 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-with rs.Module(name="consoleio", depends=(rawio.mod,)) as mod:
+with rs.Module(name="conio", depends=(rawio.mod,)) as mod:
 
     @rs.state(cond=rs.sig_startup)
     def console_input(ctx: rs.ContextWrapper):
