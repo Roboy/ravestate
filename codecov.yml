@@ -4,7 +4,7 @@ codecov:
 
 coverage:
   precision: 2
-  round: down
+  round: up
   range: "70...100"
 
   status:
@@ -16,6 +16,9 @@ comment:
   layout: "reach, diff, flags, files, footer"
   behavior: default
   require_changes: no
+
+fixes:
+  - /ravestate/::
 
 #ignore:
 #  - raveboard       # exclude ui
