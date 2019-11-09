@@ -34,16 +34,12 @@ CORE_MODULE_CONFIG = {
 with Module(name="core", config=CORE_MODULE_CONFIG) as core_module:
 
     """
-    The startup signal, which is fired once when `Context.run()` is executed.<br>
-    __Hint:__ All key-word arguments of #constraint.Signal(...)
-     (`min_age`, `max_age`, `detached`) are supported.
+    The startup signal, which is fired once when `Context.run()` is executed.
     """
     sig_startup = Signal("startup")
 
     """
-    Obtain the shutdown signal, which is fired once when `Context.shutdown()` is called.<br>
-    __Hint:__ All key-word arguments of #constraint.Signal(...)
-     (`min_age`, `max_age`, `detached`) are supported.
+    The shutdown signal, which is fired once when `Context.shutdown()` is called.
     """
     sig_shutdown = Signal("shutdown")
 
@@ -102,8 +98,6 @@ class _Grab:
 
 
 class Context(IContext):
-    _default_signals: Tuple[Signal] = (sig_startup, sig_shutdown)
-    _default_properties: Tuple[Property] = (prop_activity, prop_pressure)
 
     _lock: RLock
 
