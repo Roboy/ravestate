@@ -11,8 +11,7 @@ try:
     import rospy
     from ha_recognition.srv import RecordActivity
     from ha_recognition.msg import ActivityLabel
-    from ravestate_ros1 import Ros1SubProperty
-    from ravestate_ros1 import Ros1CallProperty
+    import ravestate_ros1 as ros1
     ROS_AVAILABLE = True
 except ImportError as e:
     logger.error(f"""
@@ -29,7 +28,7 @@ BROKEN_MESSAGE = "Sorry, something went wrong. Let's try again later"
 if ROS_AVAILABLE:
 
     with rs.Module(name="charades",
-                   depends=(nlp.mod, idle.mod, rawio.mod)) as mod:
+                   depends=(nlp.mod, idle.mod, rawio.mod, ros1.mod)) as mod:
 
         # signals
         sig_mentioned_charades = rs.Signal("mentioned charades")
@@ -61,12 +60,12 @@ if ROS_AVAILABLE:
 
         # ros properties
 
-        prop_record_action = Ros1CallProperty(name="_recognition",
+        prop_record_action = ros1.Ros1CallProperty(name="_recognition",
                                               service_name="ha_recognition",
                                               service_type=RecordActivity,
                                               call_timeout=5.0)
         # not used now
-        prop_label_subscriber = Ros1SubProperty(name="label_subsriber",
+        prop_label_subscriber = ros1.Ros1SubProperty(name="label_subsriber",
                                                 topic="/ha_classifier",
                                                 msg_type=ActivityLabel,
                                                 always_signal_changed=True)
