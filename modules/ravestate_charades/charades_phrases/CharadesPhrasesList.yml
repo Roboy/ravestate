@@ -53,7 +53,7 @@ type: phrases
 name: "charades_winning_exclamations"
 opts:
   - "Yay! I'm so smart!"
-  - "Nice! I win this time!"
+  - "Nice! I'm right this time!"
   - "Hooray! I am so happy!"
   - "Now isn't it marvelous how smart I am!"
 ---
@@ -64,6 +64,14 @@ opts:
   - "No way! I need to practice more."
   - "It's a pity. I thought I got it right."
   - "Too bad. I have to try harder."
+---
+type: phrases
+name: "charades_new_guess_attempt"
+opts:
+  - "Oh no! Let me make another guess."
+  - "No way! Wait! I have another idea."
+  - "It's a pity, please give me another try."
+  - "Oh, perhaps my next guess is better."
 ---
 type: phrases
 name: "charades_offer_another_round"

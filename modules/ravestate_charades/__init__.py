@@ -4,6 +4,7 @@ import ravestate_nlp as nlp
 import ravestate_idle as idle
 import ravestate_verbaliser as verbaliser
 
+import random
 from os.path import realpath, dirname, join
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -15,6 +16,7 @@ try:
     import rospy
     from ha_recognition.srv import RecordActivity
     from ha_recognition.msg import ActivityLabel
+    from std_msgs.msg import String
     import ravestate_ros1 as ros1
     ROS_AVAILABLE = True
 except ImportError as e:
@@ -28,6 +30,16 @@ Please make sure to have the following items installed & sourced:
     """)
 
 BROKEN_MESSAGE = "Sorry, something went wrong. Let's try again later"
+
+# emotions
+SHY_EMOTION = "shy"
+HAPPY_EMOTION = "happy"
+LUCKY_EMOTION = "lucky"
+KISS_EMOTION = "kiss"
+ROLL_EYES_EMOTION = "rolling_eyes"
+SUNGLASSES_ON_EMOTION = "sunglasses_on"
+LOOK_LEFT_EMOTION = "lookleft"
+LOOK_RIGHTEMOTION = "lookright"
 
 if ROS_AVAILABLE:
 
@@ -81,17 +93,30 @@ if ROS_AVAILABLE:
             name="prop_continuation_unclear",
             always_signal_changed=True,
             default_value=False)
+        prop_guess_attempt_count = rs.Property(name="prop_guess_attempt_count",
+                                               always_signal_changed=True,
+                                               default_value=0)
+        prop_another_attempt = rs.Property(name="prop_another_attempt",
+                                           always_signal_changed=True,
+                                           default_value=False)
 
         # ros properties
-        # not used for now. use direct client call with recognition_clien()
+
+        # not used for now. use direct client call with recognition_client()
         # prop_record_action = ros1.Ros1CallProperty(name="_recognition",
         #                                            service_name="ha_recognition",
         #                                            service_type=RecordActivity,
         #                                            call_timeout=5.0)
-        prop_label_subscriber = ros1.Ros1SubProperty(name="label_subsriber",
-                                                     topic="/ha_classifier",
-                                                     msg_type=ActivityLabel,
-                                                     always_signal_changed=True)
+        prop_label_subscriber = ros1.Ros1SubProperty(
+            name="label_subsriber",
+            topic="/ha_classifier",
+            msg_type=ActivityLabel,
+            always_signal_changed=True)
+
+        prop_emotion_publisher = ros1.Ros1PubProperty(
+            name="emotion_publisher",
+            topic="/roboy/cognition/face/show_emotion",
+            msg_type=String)
 
         def recognition_client():
             rospy.wait_for_service("ha_recognition")
@@ -171,7 +196,10 @@ if ROS_AVAILABLE:
         @rs.state(cond=(sig_offered_charades.max_age(10) &
                         nlp.prop_tokens.changed()),
                   read=(nlp.prop_yesno, prop_game_in_progress, prop_stop_game),
-                  write=(rawio.prop_out, prop_choice_unclear, prop_stop_game),
+                  write=(rawio.prop_out,
+                         prop_choice_unclear,
+                         prop_stop_game,
+                         prop_emotion_publisher),
                   signal=sig_play_decision_processed,
                   emit_detached=True)
         def process_play_decision(ctx: rs.ContextWrapper):
@@ -181,6 +209,9 @@ if ROS_AVAILABLE:
                         "charades_positive_expressions") + \
                         " Do you want to hear the rules?"
                 elif ctx[nlp.prop_yesno].no():
+                    if random.random() < 0.5:
+                        ctx[prop_emotion_publisher] = String(
+                            data=ROLL_EYES_EMOTION)
                     ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                         "charades_refuse_offer")
                     ctx[prop_stop_game] = True
@@ -204,9 +235,9 @@ if ROS_AVAILABLE:
                     "me and I try to guess what it is that you are showing. " \
                     "I know a lot of activities, but not all in the world. " \
                     "You can consult my tablet to pick one of the actions. " \
-                    "Just click on it and you will see all the available " \
-                    "actions. When I will actually start recording I will " \
-                    "say 'Beep' so you can start demonstrating the " \
+                    "I have three attempts at guessing the right activity." \
+                    "When I will actually start recording I will " \
+                    "say 'Beep' so you can start the demonstration of the " \
                     "activity. You will have about three seconds to show " \
                     "the activity to me until I say beep again."
                 if ctx[nlp.prop_yesno].no():
@@ -228,7 +259,7 @@ if ROS_AVAILABLE:
         def offer_activity_choice(ctx: rs.ContextWrapper):
             ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                 "charades_offer_activity_choice")
-            return rs.Emit()
+            return rs.Emit(wipe=True)
 
         @rs.state(cond=(nlp.prop_tokens.changed() &
                         sig_activity_choice_prompted.max_age(15)),
@@ -255,12 +286,20 @@ if ROS_AVAILABLE:
                   read=prop_ping_choice_count,
                   write=(rawio.prop_out,
                          prop_ping_choice_count,
-                         prop_stop_game),
+                         prop_stop_game,
+                         prop_emotion_publisher),
                   signal=sig_activity_choice_prompted,
                   emit_detached=True)
         def ping_activity_choice(ctx: rs.ContextWrapper):
+            rand = random.random()
             pinged_times = ctx[prop_ping_choice_count]
             if pinged_times < 5:
+                if rand < 0.15:
+                    ctx[prop_emotion_publisher] = String(
+                        data=LOOK_RIGHTEMOTION)
+                elif rand > 0.15 and rand < 0.3:
+                    ctx[prop_emotion_publisher] = String(
+                        data=LOOK_LEFT_EMOTION)
                 ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                     "charades_ping_activity_choice")
                 ctx[prop_ping_choice_count] = pinged_times + 1
@@ -280,35 +319,36 @@ if ROS_AVAILABLE:
             return rs.Emit()
 
         @rs.state(cond=(sig_readiness_check_started &
-                        prop_activity_chosen.changed().min_age(2)),
-                  # read=prop_record_action,
-                  write=(rawio.prop_out, prop_waiting_for_label),
+                        prop_activity_chosen.changed()),
+                  write=(rawio.prop_out, prop_waiting_for_label,
+                         prop_guess_attempt_count),
                   signal=sig_action_captured,
                   emit_detached=True)
         def start_recording(ctx: rs.ContextWrapper):
-            # request = ()
-            # ctx[prop_record_action] = request
-            # response = ctx[prop_record_action]
             resp = recognition_client()
             if resp:
                 ctx[rawio.prop_out] = "Beep! Now let me think a little bit"
                 ctx[prop_waiting_for_label] = True
+                ctx[prop_guess_attempt_count] = 0
                 return rs.Emit()
             else:
                 ctx[rawio.prop_out] = BROKEN_MESSAGE
 
-        @rs.state(cond=prop_label_subscriber.changed(),
-                  read=(prop_label_subscriber, prop_waiting_for_label),
+        @rs.state(cond=(prop_label_subscriber.changed() |
+                        prop_another_attempt.changed()),
+                  read=(prop_label_subscriber, prop_waiting_for_label,
+                        prop_guess_attempt_count),
                   write=(rawio.prop_out, prop_waiting_for_label,
-                         prop_feedback_received),
+                         prop_feedback_received, prop_guess_attempt_count),
                   signal=sig_label_named,
                   emit_detached=True)
         def name_the_label(ctx: rs.ContextWrapper):
-            if ctx[prop_waiting_for_label]:
+            if ctx[prop_waiting_for_label] or (ctx[prop_guess_attempt_count] > 0 and
+                                               ctx[prop_guess_attempt_count] < 3):
                 message = ctx[prop_label_subscriber]
                 if message:
-                    confidence = message.confidence
-                    label = message.label
+                    confidence = message.confidence[ctx[prop_guess_attempt_count]]
+                    label = message.label[ctx[prop_guess_attempt_count]]
                     if confidence < 0.5:
                         conf_expr = verbaliser.get_random_phrase(
                             "charades_lower_confidence_prediction")
@@ -323,6 +363,7 @@ if ROS_AVAILABLE:
                         "charades_ask_for_feedback")
                     ctx[prop_waiting_for_label] = False
                     ctx[prop_feedback_received] = False
+                    ctx[prop_guess_attempt_count] = ctx[prop_guess_attempt_count] + 1
                     return rs.Emit()
                 else:
                     ctx[rawio.prop_out] = BROKEN_MESSAGE
@@ -333,21 +374,37 @@ if ROS_AVAILABLE:
                          nlp.prop_yesno.changed()) |
                         (sig_feedback_repeat.max_age(10) &
                          nlp.prop_yesno.changed())),
-                  read=(nlp.prop_yesno, prop_game_in_progress),
+                  read=(nlp.prop_yesno, prop_game_in_progress,
+                        prop_guess_attempt_count),
                   write=(rawio.prop_out,
-                         prop_feedback_received),
+                         prop_feedback_received,
+                         prop_emotion_publisher,
+                         prop_another_attempt),
                   signal=sig_feedback_unclear,
                   emit_detached=True)
         def react_to_feedback(ctx: rs.ContextWrapper):
             if ctx[prop_game_in_progress]:
+                rand = random.random()
                 if ctx[nlp.prop_yesno].yes():
                     ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                         "charades_winning_exclamations")
+                    if rand < 0.5:
+                        emotion = HAPPY_EMOTION
+                    else:
+                        emotion = SUNGLASSES_ON_EMOTION
+                    ctx[prop_emotion_publisher] = String(data=emotion)
                     ctx[prop_feedback_received] = True
                 elif ctx[nlp.prop_yesno].no():
-                    ctx[rawio.prop_out] = verbaliser.get_random_phrase(
-                        "charades_losing_exclamations")
-                    ctx[prop_feedback_received] = True
+                    if ctx[prop_guess_attempt_count] < 3:
+                        ctx[rawio.prop_out] = verbaliser.get_random_phrase(
+                            "charades_new_guess_attempt")
+                        ctx[prop_another_attempt] = True
+                    else:
+                        ctx[rawio.prop_out] = verbaliser.get_random_phrase(
+                            "charades_losing_exclamations")
+                        if rand < 0.8:
+                            ctx[prop_emotion_publisher] = String(data=SHY_EMOTION)
+                        ctx[prop_feedback_received] = True
                 else:
                     ctx[prop_feedback_received] = False
                     return rs.Emit()
@@ -395,17 +452,23 @@ if ROS_AVAILABLE:
                   write=(rawio.prop_out,
                          prop_game_in_progress,
                          prop_continuation_unclear,
-                         prop_stop_game),
+                         prop_stop_game,
+                         prop_emotion_publisher),
                   signal=sig_continue_game,
                   emit_detached=True)
         def react_to_continue_decision(ctx: rs.ContextWrapper):
+            rand = random.random()
             if ctx[nlp.prop_yesno].yes():
                 ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                     "charades_positive_expressions") + " Let's continue then"
+                if rand < 0.7:
+                    ctx[prop_emotion_publisher] = String(data=LUCKY_EMOTION)
                 return rs.Emit()
             elif ctx[nlp.prop_yesno].no():
                 ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                     "charades_no_continuation")
+                if rand < 0.7:
+                    ctx[prop_emotion_publisher] = String(data=KISS_EMOTION)
                 ctx[prop_game_in_progress] = False
                 ctx[prop_stop_game] = True
             else:
