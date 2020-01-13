@@ -30,15 +30,15 @@ opts:
 - "Great. Then prepare yourself. Ready? Three, two, one, Go!"
 - "Ok. I am starting the countdown. Three, two, one, rock it!"
 - "Cool. Let's do it when I count to three. One and two and three!"
-- "Nice. Wait till I count to three. One, two, three, go!"
+- "Nice. Now wait till I count to three. One, two, three, go!"
 ---
 type: phrases
 name: "charades_offer_activity_choice"
 opts:
-- "Now please pick one activity that you like from my tablet. When you are ready say 'start'"
-- "Please choose one activity that you will show to me. Once you choose it say 'start'"
-- "Take a look at my tablet to choose one activity for this round. You can'start' after you made the choice"
-- "Now you need to choose one of the activities from the list and then say 'start' to proceed"
+- "Please pick an activity that you like. When you are ready say 'ready'"
+- "Now choose one activity that you will show to me. Once you choose it say 'ready'"
+- "Please choose one activity for this round. Say 'ready' after you made the choice"
+- "Now you need to choose one of the activities and then say 'ready' to proceed"
 ---
 type: phrases
 name: "charades_positive_expressions"
@@ -113,9 +113,9 @@ opts:
 type: phrases
 name: "charades_ping_activity_choice"
 opts:
-  - "Have you chosen anything? Say 'start' when you're ready."
-  - "Are you ready yet? Don't forget to say 'start' when you are."
-  - "How is it going? Remember to say 'start' when you make a choice"
+  - "Have you chosen anything? Say 'ready' when you're ready."
+  - "Are you ready yet? Don't forget to say 'ready' when you are."
+  - "How is it going? Remember to say 'ready' when you make a choice"
 ---
 type: phrases
 name: "charades_ask_for_feedback"
