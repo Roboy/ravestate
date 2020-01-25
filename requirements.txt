@@ -7,6 +7,7 @@ roboy_parlai>=0.1.post3
 spacy==2.1.0
 flask
 flask_socketio
+flask_cors
 requests
 scientio>=0.9.1rc2
 redis
