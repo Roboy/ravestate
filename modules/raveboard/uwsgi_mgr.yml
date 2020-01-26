@@ -1,0 +1,44 @@
+# This is a sample config file for the raveboard session server.
+
+# Arguments that should be used with Popen to start new ravestate sessions.
+# The following placeholders are supported inside arguments:
+# - {port}: Will be replaced with the port in which the session will run.
+# - {python}: Will be replaced with the path of the python executable running the session manager.
+# - {session-db}: Will be replaced with the path to the session tracking database.
+ravestate_session_command: [
+  "{python}",
+  "-m", "raveboard",
+  # "ravestate_wildtalk",
+  # "ravestate_persqa",
+  # "ravestate_roboyqa",
+  # "ravestate_fillers",
+  "ravestate_hibye",
+  "-d", "raveboard", "port",       "{port}",
+  "-d", "raveboard", "session_db", "{session_db}",
+  "-d", "raveboard", "announce",   "skip",
+  "-d", "raveboard", "greet",      "connect"
+]
+
+# Path to the session tracker SQLite database. If a relative path is used,
+# it will be relative to the working directory of the session server.
+session_db_path: sessions.sqlite
+
+# Time interval in seconds between session server cleanup refreshes.
+# During a cleanup, the session server terminates sessions that have stalled,
+# and readies new idle sessions (if necessary).
+session_refresh_interval: 2
+
+# At every point in time, the session server has a minimum number of idle worker
+# sessions 'in reserver' to assign to new sessions. This number must not be smaller than one.
+num_idle_sessions: 2
+
+# The session server launches session workers, which use individual ports to perform their
+# communication. The usable_port_range includes that maximum port.
+usable_port_range: [5010, 5020]
+
+# Session clients are referred to URLs which server their session backend. This is the prefix for the URL.
+hostname: localhost
+
+zombie_heartbeat_threshold: 30
+
+

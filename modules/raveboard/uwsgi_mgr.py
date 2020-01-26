@@ -4,6 +4,24 @@ from flask_cors import CORS
 import os
 import urllib.parse
 import time
+import yaml
+import sys
+import codecs
+
+from raveboard.ui_context import PORT_CONFIG_KEY, SESSION_DB_KEY, URL_ANNOUNCE_KEY, GREETING_KEY, GREET_ON_CONNECT, RAVEBOARD
+from raveboard.session import SessionManager
+
+from reggol import get_logger
+logger = get_logger(__name__)
+
+if len(sys.argv) < 1 or not os.path.isfile(sys.argv[1]):
+    logger.critical("The first argument does not point to a valid config file!")
+
+
+with codecs.open(sys.argv[1]) as config_file:
+    config = yaml.load(config_file)
+    if not isinstance(config, dict):
+        logger.error()
 
 # Record start timestamp to calculate uptime
 start_timestamp = time.time()
@@ -13,10 +31,6 @@ start_timestamp = time.time()
 app = Flask(__name__)
 CORS(app)
 
-# Import after flask such that custom logging is not destroyed
-from raveboard.ui_context import PORT_CONFIG_KEY, SESSION_DB_KEY, URL_ANNOUNCE_KEY, GREETING_KEY, GREET_ON_CONNECT, RAVEBOARD
-from raveboard.session import Session, SessionManager
-
 # Get path to python interpreter, such that we can use it to launch ravestate
 py_interpreter = os.path.join(os.__file__.split("lib/")[0], "bin", "python")
 
@@ -24,19 +38,7 @@ py_interpreter = os.path.join(os.__file__.split("lib/")[0], "bin", "python")
 session_db_path = os.path.abspath("sessions.sqlite")
 
 # Child ravestate process call.
-#  TODO: Convert to uwsgi
-ravestate_session_command = [
-    py_interpreter,
-    "-m", RAVEBOARD,
-    # "ravestate_wildtalk",
-    # "ravestate_persqa",
-    # "ravestate_roboyqa",
-    # "ravestate_fillers",
-    "ravestate_hibye",
-    "-d", RAVEBOARD, PORT_CONFIG_KEY, "{port}",
-    "-d", RAVEBOARD, SESSION_DB_KEY, session_db_path,
-    "-d", RAVEBOARD, URL_ANNOUNCE_KEY, "skip",
-    "-d", RAVEBOARD, GREETING_KEY, GREET_ON_CONNECT]
+ravestate_session_command = []
 
 # Session manager. Manages raveboard subprocesses.
 sessions = SessionManager(

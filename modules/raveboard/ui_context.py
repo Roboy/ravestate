@@ -12,7 +12,7 @@ import socketio
 import flask
 import urllib.parse
 from threading import Thread, Lock, Event
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -40,7 +40,7 @@ RAVEBOARD_CONFIG = {
 
 class UIContext(rs.Context):
 
-    def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None):
+    def __init__(self, *arguments, runtime_overrides: List[Tuple[str, str, Any]] = None, skip_http_serve=False):
         self.msgs_lock = Lock()
         self.sio = socketio.Server(cors_allowed_origins="*", async_mode="threading")
         self.next_id_for_object = defaultdict(int)
@@ -51,7 +51,8 @@ class UIContext(rs.Context):
         self.new_connection: Callable = lambda: None
 
         super().__init__(*arguments, runtime_overrides=runtime_overrides)
-        Thread(target=self.ui_serve_events_async).start()
+        if not skip_http_serve:
+            Thread(target=self.ui_serve_events_async).start()
 
     def ui_serve_events_async(self):
         app = flask.Flask(__name__, static_folder="dist/ravestate")
