@@ -29,14 +29,14 @@ class SessionManager:
 
     def __init__(self, *,
                  db_path,
-                 refresh_iv_ms,
+                 refresh_iv_secs,
                  session_launch_args,
                  num_idle_instances,
                  usable_ports,
                  hostname,
                  zombie_heartbeat_threshold=20.):
         self.db_path = db_path
-        self.refresh_iv_ms = refresh_iv_ms
+        self.refresh_iv_msecs= refresh_iv_secs
         self.session_launch_args = session_launch_args
         self.num_idle_instances = num_idle_instances
         self.usable_ports = usable_ports
@@ -181,3 +181,42 @@ class SessionManager:
                     num_sessions_to_start -= 1
                 self.conn.commit()
             time.sleep(self.zombie_heartbeat_threshold/4.)
+
+
+# For session instance processes, encapsulates calls to ...
+# * Update session state to `killme`.
+# * Update session heartbeat.
+# * Authorize session token
+class SessionClient:
+
+    def __init__(self, *, db_path, port):
+        self.port = int(port)
+        self.db_path = db_path
+        self.conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.lock = RLock()
+        if not self.conn:
+            logger.error("Failed to open SQLite DB at {}!".format(self.db_path))
+        self.heartbeat()
+
+    def heartbeat(self):
+        with self.lock:
+            self.conn.execute(f"""
+            update sessions set heartbeat = {time.time()} where port = {self.port}
+            """)
+            self.conn.commit()
+
+    def killme(self):
+        with self.lock:
+            self.conn.execute(f"""
+            update sessions set state = "{KILLME_STATE}" where port = {self.port}
+            """)
+            self.conn.commit()
+
+    def authorized(self, token) -> bool:
+        with self.lock:
+            secret = self.conn.execute(f"""
+            select secret from sessions where port = {self.port} limit 1
+            """).fetchall()
+            if len(secret) < 1:
+                return False
+            return secret[0][0] == token

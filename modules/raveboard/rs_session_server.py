@@ -10,6 +10,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Import after flask such that custom logging is not destroyed
+from raveboard.ui_context import PORT_CONFIG_KEY, SESSION_DB_KEY, URL_ANNOUNCE_KEY, GREETING_KEY, GREET_ON_CONNECT, RAVEBOARD
 from raveboard.session import Session, SessionManager
 
 # Get path to python interpreter, such that we can use it to launch ravestate
@@ -20,28 +21,28 @@ session_db_path = os.path.abspath("sessions.sqlite")
 
 # Child ravestate process call.
 #  TODO: Convert to uwsgi
-#  TODO: Pass on auth token, session tracking DB path
 ravestate_session_command = [
     py_interpreter,
-    "-m", "raveboard",
+    "-m", RAVEBOARD,
     # "ravestate_wildtalk",
     # "ravestate_persqa",
     # "ravestate_roboyqa",
     # "ravestate_fillers",
     "ravestate_hibye",
-    "-d",
-    "raveboard",
-    "port",
-    "{port}"]
+    "-d", RAVEBOARD, PORT_CONFIG_KEY, "{port}",
+    "-d", RAVEBOARD, SESSION_DB_KEY, session_db_path,
+    "-d", RAVEBOARD, URL_ANNOUNCE_KEY, "skip",
+    "-d", RAVEBOARD, GREETING_KEY, GREET_ON_CONNECT]
 
 # Session manager. Manages raveboard subprocesses.
 sessions = SessionManager(
     db_path=session_db_path,
-    refresh_iv_ms=1000,
+    refresh_iv_secs=1.,
     session_launch_args=ravestate_session_command,
     num_idle_instances=2,
     usable_ports=set(range(5010, 5020)),
-    hostname="localhost")
+    hostname="localhost",
+    zombie_heartbeat_threshold=30)
 
 
 @app.route('/', methods=['GET'])
@@ -53,7 +54,9 @@ def hello():
         rs_sio_url = request.args["rs-sio-url"]
         token = request.args["token"]
         if sessions.is_authorized(rs_sio_url, token):
-            return send_from_directory("dist/ravestate", "index.html")
+            response = send_from_directory("dist/ravestate", "index.html")
+            response.headers['Cache-Control'] = 'no-store'
+            return response
         else:
             pass  # auth token mismatch -> serve a new session
 
