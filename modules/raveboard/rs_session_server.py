@@ -3,6 +3,13 @@ from flask import request, redirect, send_from_directory, abort
 from flask_cors import CORS
 import os
 import urllib.parse
+
+# Instantiate flask app
+#  TODO: More fine-grained CORS management, allowing only valid host:port combinations
+app = Flask(__name__)
+CORS(app)
+
+# Import after flask such that custom logging is not destroyed
 from raveboard.session import Session, SessionManager
 
 # Get path to python interpreter, such that we can use it to launch ravestate
@@ -36,14 +43,9 @@ sessions = SessionManager(
     usable_ports=set(range(5010, 5020)),
     hostname="localhost")
 
-# Instantiate flask app
-#  TODO: More fine-grained CORS management, allowing only valid host:port combinations
-app = Flask(__name__)
-CORS(app)
 
-
-@app.route('/')
-@app.route('/index.html')
+@app.route('/', methods=['GET'])
+@app.route('/index.html', methods=['GET'])
 def hello():
 
     # check if authorized
