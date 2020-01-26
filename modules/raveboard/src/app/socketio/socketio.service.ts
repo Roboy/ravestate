@@ -24,10 +24,11 @@ export class SocketIOService {
     constructor() {
         const urlParams = new URLSearchParams(window.location.search);
         const sioUrl = urlParams.get('rs-sio-url') || 'http://localhost:42424';
+        const token = urlParams.get('token') || '';
 
         console.log(`Connecting to socket.io URL: '${sioUrl}'`);
 
-        let socket = io.connect(sioUrl);
+        let socket = io.connect(sioUrl, {query: {token: token}});
 
         socket.on('spike', msg => {
             this.spikes.next(msg)
