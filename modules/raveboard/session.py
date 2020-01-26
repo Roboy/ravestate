@@ -3,9 +3,11 @@ import secrets
 import sqlite3
 import time
 from typing import Dict, List, Set, Optional
+from threading import RLock, Thread
 
 from reggol import get_logger
 logger = get_logger(__name__)
+
 
 # Encapsulates a single raveboard session
 class Session:
@@ -42,6 +44,8 @@ class SessionManager:
         self.current_sessions: Dict[int, Session] = {}
         self.hostname = hostname
         self.zombie_heartbeat_threshold = zombie_heartbeat_threshold
+        self.lock = RLock()
+        self.update_thread = Thread(target=self.update)
 
         if not self.conn:
             logger.error("Failed to open SQLite DB at {}!".format(self.db_path))
@@ -64,19 +68,22 @@ class SessionManager:
 
         while len(self.idle_ports()) < self.num_idle_instances:
             self.create_idle_session()
+        self.update_thread.start()
 
     def used_ports(self) -> Set[int]:
-        used_port_rows = self.conn.execute(f"""
-        select port from sessions
-        """)
-        return {port_row[0] for port_row in used_port_rows}
+        with self.lock:
+            used_port_rows = self.conn.execute(f"""
+            select port from sessions
+            """)
+            return {port_row[0] for port_row in used_port_rows}
 
     def idle_ports(self) -> Set[int]:
-        idle_port_rows = self.conn.execute(f"""
-        select port from sessions
-        where state = "{IDLE_STATE}"
-        """)
-        return {port_row[0] for port_row in idle_port_rows}
+        with self.lock:
+            idle_port_rows = self.conn.execute(f"""
+            select port from sessions
+            where state = "{IDLE_STATE}"
+            """)
+            return {port_row[0] for port_row in idle_port_rows}
 
     def free_ports(self) -> Set[int]:
         return self.usable_ports - self.used_ports()
@@ -85,83 +92,92 @@ class SessionManager:
         return len(self.idle_ports()) > 0
 
     def pop_idle_session(self) -> Optional[Session]:
-        idle_rows = self.conn.execute(f"""
-        select port from sessions
-        where state = "{IDLE_STATE}"
-        limit 1
-        """).fetchall()
-        if len(idle_rows) < 1:
-            logger.error("An idle session was requested but not found in the database!")
-            return None
-        port = int(idle_rows[0][0])
-        result = self.current_sessions[port]
-        self.conn.execute(f"""
-        update sessions
-        set state = "{IN_USE_STATE}"
-        where port = {port}
-        """)
-        self.create_idle_session()
-        return result
+        with self.lock:
+            idle_rows = self.conn.execute(f"""
+            select port from sessions
+            where state = "{IDLE_STATE}"
+            limit 1
+            """).fetchall()
+            if len(idle_rows) < 1:
+                logger.error("An idle session was requested but not found in the database!")
+                return None
+            port = int(idle_rows[0][0])
+            result = self.current_sessions[port]
+            self.conn.execute(f"""
+            update sessions
+            set state = "{IN_USE_STATE}"
+            where port = {port}
+            """)
+            self.conn.commit()
+            self.create_idle_session()
+            return result
 
     def create_idle_session(self):
-        free_ports = self.free_ports()
-        if not free_ports:
-            logger.warn("Not starting required idle session, because free ports are exhausted.")
-            return
-        new_session = Session(
-            secret=secrets.token_urlsafe(16),
-            port=free_ports.pop(),
-            process=None,
-            sio_url="")
-        # enter into current sessions
-        new_session.sio_url = f"{self.hostname}:{new_session.port}"
-        self.current_sessions[new_session.port] = new_session
-        self.conn.execute(f"""
-        insert or replace into sessions (port, state, url, heartbeat, secret)
-        values (
-            {new_session.port},
-            "{IDLE_STATE}",
-            "{new_session.sio_url}",
-            "{time.time()}",
-            "{new_session.secret}")
-        """)
-        # commit before starting the new process, such that the entry is definitely seen
-        self.conn.commit()
-        # start raveboard on the selected port
-        new_session.process = subprocess.Popen([
-            str(new_session.port) if arg == "{port}" else arg
-            for arg in self.session_launch_args
-        ])
+        with self.lock:
+            free_ports = self.free_ports()
+            if not free_ports:
+                logger.warn("Not starting required idle session, because free ports are exhausted.")
+                return
+            new_session = Session(
+                secret=secrets.token_urlsafe(16),
+                port=free_ports.pop(),
+                process=None,
+                sio_url="")
+            # enter into current sessions
+            new_session.sio_url = f"{self.hostname}:{new_session.port}"
+            self.current_sessions[new_session.port] = new_session
+            self.conn.execute(f"""
+            insert or replace into sessions (port, state, url, heartbeat, secret)
+            values (
+                {new_session.port},
+                "{IDLE_STATE}",
+                "{new_session.sio_url}",
+                "{time.time()}",
+                "{new_session.secret}")
+            """)
+            # commit before starting the new process, such that the entry is definitely seen
+            self.conn.commit()
+            # start raveboard on the selected port
+            new_session.process = subprocess.Popen([
+                str(new_session.port) if arg == "{port}" else arg
+                for arg in self.session_launch_args
+            ])
 
     def is_authorized(self, url, secret_token):
-        token_rows = self.conn.execute(f"""
-        select secret from sessions where url = "{url}"
-        """).fetchall()
-        if not token_rows:
-            logger.warn(f"Session not authorized: {url}, {secret_token}")
-            return False
-        return token_rows[0][0] == secret_token
+        with self.lock:
+            token_rows = self.conn.execute(f"""
+            select secret from sessions where url = "{url}"
+            """).fetchall()
+            if not token_rows:
+                logger.warn(f"Session not authorized: {url}, {secret_token}")
+                return False
+            return token_rows[0][0] == secret_token
 
     def update(self):
-        # the grim reaper has arrived
-        dead_sessions = self.conn.execute(f"""
-        select port from sessions where
-        state = "{KILLME_STATE}" or heartbeat < {time.time() - self.zombie_heartbeat_threshold}
-        """).fetchall()
-        dead_ports = set()
-        for port_row in dead_sessions:
-            port = port_row[0]
-            dead_ports.add(port)
-            if port not in self.current_sessions:
-                logger.error("A port was marked as `KILLME`, but is not recorded in `current_sessions`.")
-                continue
-            sess = self.current_sessions[port]
-            del self.current_sessions[port]
-            sess.process.kill()
-        self.conn.execute(f"""
-        delete from sessions where {" or ".join(f"port = {port}" for port in dead_ports)}
-        """)
-        num_sessions_to_start = self.num_idle_instances - len(self.idle_ports())
-        while num_sessions_to_start > 0:
-            self.create_idle_session()
-        self.conn.commit()
+        while True:
+            with self.lock:
+                # the grim reaper has arrived
+                dead_sessions = self.conn.execute(f"""
+                select port from sessions where
+                state = "{KILLME_STATE}" or heartbeat < {time.time() - self.zombie_heartbeat_threshold}
+                """).fetchall()
+                dead_ports = set()
+                for port_row in dead_sessions:
+                    port = port_row[0]
+                    dead_ports.add(port)
+                    if port not in self.current_sessions:
+                        logger.error("A port was marked as `KILLME`, but is not recorded in `current_sessions`.")
+                        continue
+                    sess = self.current_sessions[port]
+                    del self.current_sessions[port]
+                    sess.process.kill()
+                if dead_ports:
+                    self.conn.execute(f"""
+                    delete from sessions where {" or ".join(f"port = {port}" for port in dead_ports)}
+                    """)
+                num_sessions_to_start = self.num_idle_instances - len(self.idle_ports())
+                while num_sessions_to_start > 0:
+                    self.create_idle_session()
+                    num_sessions_to_start -= 1
+                self.conn.commit()
+            time.sleep(self.zombie_heartbeat_threshold/4.)
