@@ -2,7 +2,7 @@ import subprocess
 import secrets
 import sqlite3
 import time
-from typing import Dict, List, Set, Optional
+from typing import Dict, List, Set, Optional, Tuple
 from threading import RLock, Thread
 
 from reggol import get_logger
@@ -36,7 +36,7 @@ class SessionManager:
                  hostname,
                  zombie_heartbeat_threshold=20.):
         self.db_path = db_path
-        self.refresh_iv_msecs= refresh_iv_secs
+        self.refresh_iv_secs = refresh_iv_secs
         self.session_launch_args = session_launch_args
         self.num_idle_instances = num_idle_instances
         self.usable_ports = usable_ports
@@ -46,6 +46,7 @@ class SessionManager:
         self.zombie_heartbeat_threshold = zombie_heartbeat_threshold
         self.lock = RLock()
         self.update_thread = Thread(target=self.update)
+        self.created_sessions = 0
 
         if not self.conn:
             logger.error("Failed to open SQLite DB at {}!".format(self.db_path))
@@ -57,7 +58,7 @@ class SessionManager:
         # -- prepare db: create table
         self.conn.execute("""
         create table if not exists sessions (
-            port real primary key, state text, url text, heartbeat real, secret text
+            port real primary key, state text, url text, heartbeat real, secret text, since real
         )
         """)
 
@@ -127,13 +128,14 @@ class SessionManager:
             new_session.sio_url = f"{self.hostname}:{new_session.port}"
             self.current_sessions[new_session.port] = new_session
             self.conn.execute(f"""
-            insert or replace into sessions (port, state, url, heartbeat, secret)
+            insert or replace into sessions (port, state, url, heartbeat, secret, since)
             values (
                 {new_session.port},
                 "{IDLE_STATE}",
                 "{new_session.sio_url}",
                 "{time.time()}",
-                "{new_session.secret}")
+                "{new_session.secret}",
+                "{time.time()}")
             """)
             # commit before starting the new process, such that the entry is definitely seen
             self.conn.commit()
@@ -142,6 +144,7 @@ class SessionManager:
                 str(new_session.port) if arg == "{port}" else arg
                 for arg in self.session_launch_args
             ])
+            self.created_sessions += 1
 
     def is_authorized(self, url, secret_token):
         with self.lock:
@@ -180,7 +183,13 @@ class SessionManager:
                     self.create_idle_session()
                     num_sessions_to_start -= 1
                 self.conn.commit()
-            time.sleep(self.zombie_heartbeat_threshold/4.)
+            time.sleep(self.refresh_iv_secs)
+
+    def sessions(self) -> List[Tuple[int, int, str]]:
+        with self.lock:
+            return self.conn.execute(f"""
+            select port, {time.time()} - since as uptime, state from sessions
+            """).fetchall()
 
 
 # For session instance processes, encapsulates calls to ...
