@@ -2,11 +2,15 @@ import subprocess
 import secrets
 import sqlite3
 import time
+import os
 from typing import Dict, List, Set, Optional, Tuple
 from threading import RLock, Thread
 
 from reggol import get_logger
 logger = get_logger(__name__)
+
+# Get path to python interpreter, such that we can use it to launch ravestate
+py_interpreter = os.path.join(os.__file__.split("lib/")[0], "bin", "python")
 
 
 # Encapsulates a single raveboard session
@@ -37,7 +41,7 @@ class SessionManager:
                  zombie_heartbeat_threshold=20.):
         self.db_path = db_path
         self.refresh_iv_secs = refresh_iv_secs
-        self.session_launch_args = session_launch_args
+        self.session_launch_args: List[str] = session_launch_args
         self.num_idle_instances = num_idle_instances
         self.usable_ports = usable_ports
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
@@ -141,7 +145,12 @@ class SessionManager:
             self.conn.commit()
             # start raveboard on the selected port
             new_session.process = subprocess.Popen([
-                str(new_session.port) if arg == "{port}" else arg
+                arg.replace(
+                    "{port}", str(new_session.port)
+                ).replace(
+                    "{python}", py_interpreter
+                ).replace(
+                    "{session_db}", self.db_path)
                 for arg in self.session_launch_args
             ])
             self.created_sessions += 1

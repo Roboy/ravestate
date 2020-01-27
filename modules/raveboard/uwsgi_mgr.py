@@ -7,21 +7,29 @@ import time
 import yaml
 import sys
 import codecs
-
-from raveboard.ui_context import PORT_CONFIG_KEY, SESSION_DB_KEY, URL_ANNOUNCE_KEY, GREETING_KEY, GREET_ON_CONNECT, RAVEBOARD
 from raveboard.session import SessionManager
 
 from reggol import get_logger
 logger = get_logger(__name__)
 
-if len(sys.argv) < 1 or not os.path.isfile(sys.argv[1]):
+
+# Valid config keys
+RAVESTATE_SESSION_COMMAND = "ravestate_session_command"
+SESSION_DB_PATH = "session_db_path"
+SESSION_REFRESH_INTERVAL = "session_refresh_interval"
+NUM_IDLE_SESSIONS = "num_idle_sessions"
+USABLE_PORT_RANGE = "usable_port_range"
+HOSTNAME = "hostname"
+ZOMBIE_HEARTBEAT_THRESHOLD = "zombie_heartbeat_threshold"
+
+if len(sys.argv) < 2 or not os.path.isfile(sys.argv[1]):
     logger.critical("The first argument does not point to a valid config file!")
-
-
-with codecs.open(sys.argv[1]) as config_file:
-    config = yaml.load(config_file)
-    if not isinstance(config, dict):
-        logger.error()
+    config = {}
+else:
+    with codecs.open(sys.argv[1]) as config_file:
+        config: dict = yaml.load(config_file)
+        if not isinstance(config, dict):
+            logger.error("Config entries must be provided as a top-level yaml dictionary!")
 
 # Record start timestamp to calculate uptime
 start_timestamp = time.time()
@@ -31,24 +39,26 @@ start_timestamp = time.time()
 app = Flask(__name__)
 CORS(app)
 
-# Get path to python interpreter, such that we can use it to launch ravestate
-py_interpreter = os.path.join(os.__file__.split("lib/")[0], "bin", "python")
-
-# Session database path. Maintains a sessions table with cols. `port`, `state`, `sio_uri`, `last_used`, `secret`
-session_db_path = os.path.abspath("sessions.sqlite")
-
 # Child ravestate process call.
-ravestate_session_command = []
+ravestate_session_command = config.pop(RAVESTATE_SESSION_COMMAND, [
+    "{python}",
+    "-m", "raveboard",
+    "ravestate_hibye",
+    "-d", "raveboard", "port",       "{port}",
+    "-d", "raveboard", "session_db", "{session_db}",
+    "-d", "raveboard", "announce",   "skip",
+    "-d", "raveboard", "greet",      "connect"
+])
 
 # Session manager. Manages raveboard subprocesses.
 sessions = SessionManager(
-    db_path=session_db_path,
-    refresh_iv_secs=2.,
+    db_path=config.pop(SESSION_DB_PATH, os.path.abspath("sessions.sqlite")),
+    refresh_iv_secs=config.pop(SESSION_REFRESH_INTERVAL, 2.),
     session_launch_args=ravestate_session_command,
-    num_idle_instances=2,
-    usable_ports=set(range(5010, 5020)),
-    hostname="localhost",
-    zombie_heartbeat_threshold=30)
+    num_idle_instances=config.pop(NUM_IDLE_SESSIONS, 2),
+    usable_ports=set(range(*config.pop(USABLE_PORT_RANGE, [5010, 5020]))),
+    hostname=config.pop(HOSTNAME, "localhost"),
+    zombie_heartbeat_threshold=config.pop(ZOMBIE_HEARTBEAT_THRESHOLD, 30))
 
 
 @app.route('/', methods=['GET'])
