@@ -13,18 +13,19 @@ module: core
 config:
   tickrate: 10
   import:
-  - ravestate_fillers
-  - ravestate_wildtalk
+#  - ravestate_fillers
+#  - ravestate_wildtalk
   - ravestate_hibye
-  - ravestate_roboyqa
-  - ravestate_genqa
-  - ravestate_persqa
+#  - ravestate_roboyqa
+#  - ravestate_genqa
+#  - ravestate_persqa
 
 ---
 module: raveboard
 config:
   announce: "skip"
   greet: "connect"
+
 
 ---
 module: genqa

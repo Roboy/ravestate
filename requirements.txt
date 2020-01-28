@@ -17,3 +17,4 @@ pytorch-pretrained-bert
 pytorch_transformers
 python-socketio
 uwsgi
+psutil

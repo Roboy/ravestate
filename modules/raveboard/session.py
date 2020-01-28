@@ -3,6 +3,8 @@ import secrets
 import sqlite3
 import time
 import os
+import psutil
+import signal
 from typing import Dict, List, Set, Optional, Tuple
 from threading import RLock, Thread
 
@@ -18,7 +20,7 @@ class Session:
     def __init__(self, *, secret, process, port, sio_url):
         self.secret = secret
         self.port = port
-        self.process = process
+        self.process: psutil.Process = process
         self.sio_url = sio_url
 
 
@@ -144,7 +146,7 @@ class SessionManager:
             # commit before starting the new process, such that the entry is definitely seen
             self.conn.commit()
             # start raveboard on the selected port
-            new_session.process = subprocess.Popen([
+            new_session.process = psutil.Popen([
                 arg.replace(
                     "{port}", str(new_session.port)
                 ).replace(
@@ -175,14 +177,17 @@ class SessionManager:
                 """).fetchall()
                 dead_ports = set()
                 for port_row in dead_sessions:
-                    port = port_row[0]
+                    port = int(port_row[0])
                     dead_ports.add(port)
                     if port not in self.current_sessions:
                         logger.error("A port was marked as `KILLME`, but is not recorded in `current_sessions`.")
                         continue
                     sess = self.current_sessions[port]
                     del self.current_sessions[port]
-                    sess.process.kill()
+                    for proc in (*sess.process.children(recursive=True), sess.process):
+                        print(f"Killing {proc.pid} for port {port}.")
+                        proc.send_signal(signal.SIGKILL)
+                    sess.process.wait()
                 if dead_ports:
                     self.conn.execute(f"""
                     delete from sessions where {" or ".join(f"port = {port}" for port in dead_ports)}

@@ -7,26 +7,28 @@
 # - {python}: Will be replaced with the path of the python executable running the session manager.
 # - {session-db}: Will be replaced with the path to the session tracking database.
 #
-# For uwsgi-driven sessions, adapt the following config snippet:
-ravestate_session_command: [
-  "uwsgi",
-  "-H",          "/Users/joseph/py37",  # Change to your personal python venv folder or leave out
-  "--http",      ":{port}",
-  "--wsgi-file", "uwsgi_instance.py",
-  "--processes", "1",
-  "--callable",  "app",
-  "--pyargv",    "-f uwsgi_instance.yml -d raveboard port {port} -d raveboard session_db {session_db}",
-  "--enable-threads"
-]
+# For production, adapt the following config snippet (and uwsgi_instance.yml):
 # ravestate_session_command: [
-#   "{python}",
-#   "-m", "raveboard",
-#   "ravestate_hibye",
-#   "-d", "raveboard", "port",       "{port}",
-#   "-d", "raveboard", "session_db", "{session_db}",
-#   "-d", "raveboard", "announce",   "skip",
-#   "-d", "raveboard", "greet",      "connect"
+#   "uwsgi",
+#   "-H",          "/Users/joseph/py37",  # Change to your personal python venv folder or leave out
+#   "--http",      ":{port}",
+#   "--wsgi-file", "uwsgi_instance.py",
+#   "--callable",  "app",
+#   "-i",
+#   "--enable-threads",
+#   "--die-on-term",
+#   "--pyargv",    "-f uwsgi_instance.yml -d raveboard port {port} -d raveboard session_db {session_db}"
 # ]
+For debugging use werkzeug, the flask debug server, with a config like this:
+ravestate_session_command: [
+  "{python}",
+  "-m", "raveboard",
+  "ravestate_hibye",
+  "-d", "raveboard", "port",       "{port}",
+  "-d", "raveboard", "session_db", "{session_db}",
+  "-d", "raveboard", "announce",   "skip",
+  "-d", "raveboard", "greet",      "connect"
+]
 
 # Path to the session tracker SQLite database. If a relative path is used,
 # it will be relative to the working directory of the session server.
