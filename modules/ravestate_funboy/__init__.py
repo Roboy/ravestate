@@ -19,9 +19,9 @@ verbaliser.add_file(join(dirname(realpath(__file__)), "jokes_data.yml"))
 with rs.Module(
         name="funboy",
         config={},
-        depends=(nlp.mod, verbaliser.mod, idle.mod, rawio.mod)) as mod:
+        depends=(verbaliser.mod, rawio.mod)) as mod:
 
-    @rs.state(cond=nlp.sig_contains_roboy & nlp.sig_is_question, read=nlp.prop_triples, write=rawio.prop_out)
+    @rs.state(cond=rawio.prop_in.changed().max_age(-1), read=rawio.prop_in, write=rawio.prop_out)
     def funboy(ctx):
         session: Session = ravestate_ontology.get_session()
         ontology: Ontology = ravestate_ontology.get_ontology()
