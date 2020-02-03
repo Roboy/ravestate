@@ -1,0 +1,125 @@
+---
+type: phrases
+name: "charades_offer_game"
+opts:
+- "Would you like to play Charades?"
+- "I love playing charades. Do you want to give it a try?"
+- "Do you want to play Charades with me?"
+- "I heard Jimmy Fallon plays charades with hollywood folks. Do you want to play it with me?"
+- "Charades is a game loved by many robots, big and small alike. Do you want to play a couple of rounds?"
+---
+type: phrases
+name: "charades_refuse_offer"
+opts:
+- "Bad for you."
+- "Well, then may be next time."
+- "I feel rejected. But I will be fine."
+- "Ok, but let me know if you would want to later."
+---
+type: phrases
+name: "charades_misunderstanding"
+opts:
+- "I'm sorry I didn't get it."
+- "I didn't understand what you said."
+- "I am not sure about your answer."
+- "Even robots have flaws. I didn't quite get what you said."
+---
+type: phrases
+name: "charades_countdown"
+opts:
+- "Great. Then prepare yourself. Ready? Three, two, one, Go!"
+- "Ok. I am starting the countdown. Three, two, one, rock it!"
+- "Cool. Let's do it when I count to three. One and two and three!"
+- "Nice. Now wait till I count to three. One, two, three, go!"
+---
+type: phrases
+name: "charades_offer_activity_choice"
+opts:
+- "Please pick an activity that you like. When you are ready say 'ready'"
+- "Now choose one activity that you will show to me. Once you choose it say 'ready'"
+- "Please choose one activity for this round. Say 'ready' after you made the choice"
+- "Now you need to choose one of the activities and then say 'ready' to proceed"
+---
+type: phrases
+name: "charades_positive_expressions"
+opts:
+- "Cool."
+- "Lovely."
+- "Nice."
+- "Great."
+- "Ok."
+---
+type: phrases
+name: "charades_winning_exclamations"
+opts:
+  - "Yay! I'm so smart!"
+  - "Nice! I'm right this time!"
+  - "Hooray! I am so happy!"
+  - "Now isn't it marvelous how smart I am!"
+---
+type: phrases
+name: "charades_losing_exclamations"
+opts:
+  - "Oh no! Silly me."
+  - "No way! I need to practice more."
+  - "It's a pity. I thought I got it right."
+  - "Too bad. I have to try harder."
+---
+type: phrases
+name: "charades_new_guess_attempt"
+opts:
+  - "Oh no! Let me make another guess."
+  - "No way! Wait! I have another idea."
+  - "It's a pity, please give me another try."
+  - "Oh, perhaps my next guess is better."
+---
+type: phrases
+name: "charades_offer_another_round"
+opts:
+  - "Would you like to play another round?"
+  - "I think we should play one more round. Should we?"
+  - "Do you want to continue playing?"
+---
+type: phrases
+name: "charades_no_continuation"
+opts:
+  - "Ok. Thanks for playing. It was fun."
+  - "I had a great time playing. Come to play with me some time later!"
+  - "Sure. Let me know if you want to play again later."
+---
+type: phrases
+name: "charades_lower_confidence_prediction"
+opts:
+  - "I think it might be"
+  - "Perhaps it is"
+  - "I guess it's"
+  - "I'm not sure, but it looks like"
+---
+type: phrases
+name: "charades_higher_confidence_prediction"
+opts:
+  - "Isn't it"
+  - "This looks like"
+  - "I would say it's"
+---
+type: phrases
+name: "charades_highest_confidence_prediction"
+opts:
+  - "Oh, that's for sure"
+  - "Quite sure it's"
+  - "This is definitely"
+  - "It must be"
+---
+type: phrases
+name: "charades_ping_activity_choice"
+opts:
+  - "Have you chosen anything? Say 'ready' when you're ready."
+  - "Are you ready yet? Don't forget to say 'ready' when you are."
+  - "How is it going? Remember to say 'ready' when you make a choice"
+---
+type: phrases
+name: "charades_ask_for_feedback"
+opts:
+  - "Am I right?"
+  - "Did I guess correctly?"
+  - "Is it correct?"

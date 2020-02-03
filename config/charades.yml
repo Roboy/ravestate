@@ -1,0 +1,22 @@
+---
+module: core
+config:
+  tickrate: 10
+  import:
+          #- ravestate_roboyio
+    - ravestate_conio
+    - ravestate_charades
+    - ravestate_hibye
+
+---
+module: ontology
+config:
+  neo4j_address: bolt://neo4j:7687
+  neo4j_username: neo4j
+  neo4j_pw: enter_your_password
+  
+---
+module: ravestate_charades
+config:
+  # set to True if Roboy face emotions service is available
+  emotions: False
