@@ -9,7 +9,6 @@ from os.path import realpath, dirname, join
 from reggol import get_logger
 logger = get_logger(__name__)
 
-
 verbaliser.add_folder(join(dirname(realpath(__file__)), "charades_phrases"))
 global count_round
 count_round = 0
@@ -19,7 +18,6 @@ try:
     import rospy
     from ha_recognition.srv import RecordActivity
     from ha_recognition.msg import ActivityLabel
-    from std_msgs.msg import String
     import ravestate_ros1 as ros1
     from roboy_control_msgs.srv import ShowEmotion
     ROS_AVAILABLE = True
@@ -36,22 +34,29 @@ Please make sure to have the following items installed & sourced:
 BROKEN_MESSAGE = "Sorry, something went wrong. Let's try again later"
 
 # emotions
-SHY_EMOTION = "shy"
-LUCKY_EMOTION = "lucky"
-KISS_EMOTION = "kiss"
-ROLL_EYES_EMOTION = "rolling"
+SHY_EMOTION = 'shy'
+LUCKY_EMOTION = 'lucky'
+KISS_EMOTION = 'kiss'
+ROLL_EYES_EMOTION = 'rolling'
 # does not stop, need to call again to turn the sunglasses off
-SUNGLASSES_ON_EMOTION = "sunglasses_on"
-LOOK_LEFT_EMOTION = "lookleft"
-LOOK_RIGHT_EMOTION = "lookright"
-HEARTS_EMOTION = "hearts"
-# not used
-SMILEBLINK_EMOTION = "smileblink"
+SUNGLASSES_ON_EMOTION = 'sunglasses_on'
+LOOK_LEFT_EMOTION = 'lookleft'
+LOOK_RIGHT_EMOTION = 'lookright'
+HEARTS_EMOTION = 'hearts'
+SMILEBLINK_EMOTION = 'smileblink'
+HYPNO_EMOTION = 'hypno'
+
+USE_EMOTIONS = "emotions"
+CONFIG = {
+    USE_EMOTIONS: False
+    # defines if Roboy's emotions will be used
+}
 
 
 if ROS_AVAILABLE:
 
     with rs.Module(name="charades",
+                   config=CONFIG,
                    depends=(nlp.mod,
                             idle.mod,
                             rawio.mod,
@@ -61,7 +66,7 @@ if ROS_AVAILABLE:
         # signals
         sig_mentioned_charades = rs.Signal("mentioned_charades")
         sig_offered_charades = rs.Signal("offer_game")
-        sig_play_decision_processed = rs.Signal("play_decision_processed")
+        sig_offered_rules = rs.Signal("play_offered_rules")
         sig_rules_decision_done = rs.Signal("rules_decision_done")
         sig_activity_choice_prompted = rs.Signal("activity_choice_propmted")
         sig_readiness_check_started = rs.Signal("readiness_check_started")
@@ -129,11 +134,11 @@ if ROS_AVAILABLE:
             msg_type=ActivityLabel,
             always_signal_changed=True)
 
-        prop_emotion_publisher = ros1.Ros1PubProperty(
-            name="emotion_publisher",
-            topic="/roboy/cognition/face/show_emotion",
-            msg_type=String)
-
+        # not used for now. use direct client call with emo_client()
+        # prop_emotion_publisher = ros1.Ros1PubProperty(
+        #   name="emotion_publisher",
+        #  topic="/roboy/cognition/face/show_emotion",
+        # msg_type=String)
 
         def recognition_client():
             rospy.wait_for_service("ha_recognition")
@@ -145,19 +150,23 @@ if ROS_AVAILABLE:
             except rospy.ServiceException as e:
                 print('Service call failed: ', e)
 
-        # def emo_client(str):
-        #     rospy.wait_for_service("/roboy/cognition/face/emotion")
-        #     try:
-        #         record = rospy.ServiceProxy("/roboy/cognition/face/emotion", ShowEmotion)
-        #         resp = record()
-
+        def emo_client(str):
+            rospy.wait_for_service("/roboy/cognition/face/emotion")
+            try:
+                show_emotion = rospy.ServiceProxy(
+                    "/roboy/cognition/face/emotion", ShowEmotion)
+                resp = show_emotion(str)
+                if resp:
+                    return True
+            except rospy.ServiceException as e:
+                print('Service call failed: ', e)
 
         # general states
 
         @rs.state(cond=nlp.prop_tokens.changed(),
                   read=(nlp.prop_lemmas, prop_game_in_progress),
                   signal=sig_mentioned_charades)
-        def signal_charades(ctx: rs.ContextWrapper):
+        def recognize_intent_charades(ctx: rs.ContextWrapper):
             '''
             reacts to mentioning charades with a sig_mentioned_charades signal
             '''
@@ -169,30 +178,31 @@ if ROS_AVAILABLE:
 
         '''
         This state allows to exit the game when signals are timed out.
-        The write properties with mutex part in the name
+        The write properties with mutex suffix in the name
         are needed to make the states that react to these signals within
         normal timefrime (capped by max_age) mutually exclusive with
         this state. i.e. this state will only activate if any of the above
         signals did not activate other states within the min_age - 1 period.
         '''
-        @rs.state(cond=(sig_offered_charades.min_age(11).max_age(11) |
-                        sig_play_decision_processed.min_age(11).max_age(11) |
-                        sig_label_named.min_age(15).max_age(15) |
-                        sig_feedback_repeat.min_age(15).max_age(15) |
-                        sig_asked_to_continue.min_age(12).max_age(12)),
+        @rs.state(cond=(sig_offered_charades.min_age(13).max_age(13) |
+                        sig_offered_rules.min_age(13).max_age(13) |
+                        sig_label_named.min_age(17).max_age(17) |
+                        sig_feedback_repeat.min_age(17).max_age(17) |
+                        sig_asked_to_continue.min_age(13).max_age(13)),
                   write=(prop_stop_game,
                          prop_play_prompt_mutex,
                          prop_accept_game_mutex,
                          prop_feedback_mutex,
                          prop_continue_mutex))
-        def signal_stop_the_game(ctx: rs.ContextWrapper):
+        def trigger_stop_the_game(ctx: rs.ContextWrapper):
             ctx[prop_stop_game] = True
 
         @rs.state(cond=(prop_stop_game.changed()),
-                  read=prop_game_stopped,
+                  read=(prop_game_stopped, prop_sunglasses_on),
                   write=(rawio.prop_out,
                          prop_game_in_progress,
                          prop_game_stopped,
+                         prop_sunglasses_on,
                          prop_waiting_for_label,
                          prop_ping_choice_count))
         def stop_game_session(ctx: rs.ContextWrapper):
@@ -200,11 +210,15 @@ if ROS_AVAILABLE:
             go off the game session so new game can be started
             '''
             if not ctx[prop_game_stopped]:
+                if ctx[prop_sunglasses_on] and ctx.conf(key=USE_EMOTIONS):
+                    emo_client(SUNGLASSES_ON_EMOTION)
+                    ctx[prop_sunglasses_on] = False
                 ctx[prop_game_in_progress] = False
                 ctx[prop_waiting_for_label] = False
                 ctx[prop_ping_choice_count] = 0
                 ctx[prop_game_stopped] = True
-                ctx[rawio.prop_out] = "Stopping game session"
+                ctx[rawio.prop_out] = "I will stop now but if you want to " \
+                    "play again just tell me"
 
         # main game convo flow
 
@@ -225,15 +239,14 @@ if ROS_AVAILABLE:
             else:
                 rs.Resign()
 
-        @rs.state(cond=(sig_offered_charades.max_age(10) &
+        @rs.state(cond=(sig_offered_charades.max_age(12) &
                         nlp.prop_tokens.changed()),
                   read=(nlp.prop_yesno, prop_game_in_progress, prop_stop_game),
                   write=(rawio.prop_out,
                          prop_decision_unclear,
                          prop_stop_game,
-                         prop_emotion_publisher,
                          prop_play_prompt_mutex),
-                  signal=sig_play_decision_processed,
+                  signal=sig_offered_rules,
                   emit_detached=True)
         def process_play_decision(ctx: rs.ContextWrapper):
             if not ctx[prop_game_in_progress]:
@@ -241,11 +254,12 @@ if ROS_AVAILABLE:
                     ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                         "charades_positive_expressions") + \
                         " Do you want to hear the rules?"
+                    if ctx.conf(key=USE_EMOTIONS):
+                        emo_client(SMILEBLINK_EMOTION)
                     return rs.Emit()
                 elif ctx[nlp.prop_yesno].no():
-                    if random.random() < 0.5:
-                        ctx[prop_emotion_publisher] = String(
-                            data=ROLL_EYES_EMOTION)
+                    if random.random() < 0.5 and ctx.conf(key=USE_EMOTIONS):
+                        emo_client(ROLL_EYES_EMOTION)
                     ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                         "charades_refuse_offer")
                     ctx[prop_stop_game] = True
@@ -257,15 +271,15 @@ if ROS_AVAILABLE:
                 return rs.Resign()
 
         @rs.state(cond=(nlp.prop_yesno.changed() &
-                        sig_play_decision_processed.max_age(10)),
+                        sig_offered_rules.max_age(12)),
                   read=(nlp.prop_yesno, prop_game_in_progress),
                   write=(rawio.prop_out, prop_game_in_progress,
                          prop_accept_game_mutex),
                   signal=sig_rules_decision_done,
                   emit_detached=True)
-        def react_to_rules_decision(ctx: rs.ContextWrapper):
+        def process_rules_decision(ctx: rs.ContextWrapper):
             if not ctx[prop_game_in_progress]:
-                rules = "You pick an activity from the list on my tablet " \
+                rules = "You pick an activity " \
                     "and show it to me and I try to guess it. " \
                     "You will have 3 seconds for the demonstration. I will " \
                     "tell you when to start."
@@ -294,8 +308,7 @@ if ROS_AVAILABLE:
                   read=(prop_ping_choice_count, prop_game_in_progress),
                   write=(rawio.prop_out,
                          prop_ping_choice_count,
-                         prop_stop_game,
-                         prop_emotion_publisher),
+                         prop_stop_game),
                   signal=sig_activity_choice_prompted,
                   emit_detached=True)
         def ping_activity_choice(ctx: rs.ContextWrapper):
@@ -303,12 +316,12 @@ if ROS_AVAILABLE:
                 rand = random.random()
                 pinged_times = ctx[prop_ping_choice_count]
                 if pinged_times < 5:
-                    if rand < 0.15:
-                        ctx[prop_emotion_publisher] = String(
-                            data=LOOK_RIGHT_EMOTION)
-                    elif rand > 0.15 and rand < 0.3:
-                        ctx[prop_emotion_publisher] = String(
-                            data=LOOK_LEFT_EMOTION)
+                    if rand < 0.4 and ctx.conf(key=USE_EMOTIONS):
+                        emo_client(LOOK_RIGHT_EMOTION)
+                    elif (rand > 0.4 and
+                          rand < 0.8 and
+                          ctx.conf(key=USE_EMOTIONS)):
+                        emo_client(LOOK_LEFT_EMOTION)
                     ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                         "charades_ping_activity_choice")
                     ctx[prop_ping_choice_count] = pinged_times + 1
@@ -320,7 +333,7 @@ if ROS_AVAILABLE:
                   write=rawio.prop_out,
                   signal=sig_activity_choice_prompted,
                   emit_detached=True)
-        def react_to_unclear_choice(ctx: rs.ContextWrapper):
+        def clarify_activity_choice(ctx: rs.ContextWrapper):
             ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                 "charades_misunderstanding") + " " + \
                 "Say 'ready' when you're ready"
@@ -335,7 +348,13 @@ if ROS_AVAILABLE:
                   signal=sig_readiness_check_started, emit_detached=True)
         def react_to_choice(ctx: rs.ContextWrapper):
             if ctx[prop_game_in_progress]:
-                if "ready" in ctx[nlp.prop_lemmas]:
+                if ("ready" in ctx[nlp.prop_lemmas] or
+                    "already" in ctx[nlp.prop_lemmas] or
+                    "reading" in ctx[nlp.prop_lemmas] or
+                        "reddit" in ctx[nlp.prop_lemmas] or
+                        "reggie" in ctx[nlp.prop_lemmas] or
+                        "meridian" in ctx[nlp.prop_lemmas] or
+                        "radio" in ctx[nlp.prop_lemmas]):
                     ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                         "charades_countdown")
                     ctx[prop_ping_choice_count] = 0
@@ -351,11 +370,13 @@ if ROS_AVAILABLE:
                   signal=sig_action_captured,
                   emit_detached=True)
         def start_recording(ctx: rs.ContextWrapper):
+            if ctx.conf(key=USE_EMOTIONS):
+                emo_client(HYPNO_EMOTION)
             resp = recognition_client()
             if resp:
                 global count_round
                 count_round = count_round + 1
-                logger.debug(f"Round {count_round}")
+                logger.info(f"Round {count_round}")
                 ctx[rawio.prop_out] = "Beep! Now let me think a little bit"
                 ctx[prop_waiting_for_label] = True
                 ctx[prop_guess_attempt_count] = 0
@@ -364,7 +385,7 @@ if ROS_AVAILABLE:
                 ctx[rawio.prop_out] = BROKEN_MESSAGE
                 ctx[prop_stop_game] = True
 
-        @rs.state(cond=((sig_action_captured.max_age(20) &
+        @rs.state(cond=((sig_action_captured.max_age(24) &
                          prop_label_subscriber.changed()) |
                         prop_another_attempt.changed()),
                   read=(prop_label_subscriber, prop_waiting_for_label,
@@ -394,7 +415,8 @@ if ROS_AVAILABLE:
                     ctx[rawio.prop_out] = conf_expr + " " + str(label) +\
                         " " + verbaliser.get_random_phrase(
                         "charades_ask_for_feedback")
-                    logger.debug(f"Label named {label}, attempt {ctx[prop_guess_attempt_count]}")
+                    logger.info(
+                        f"Label named {label}, attempt {ctx[prop_guess_attempt_count]}")
                     ctx[prop_waiting_for_label] = False
                     ctx[prop_feedback_received] = False
                     ctx[prop_guess_attempt_count] = ctx[prop_guess_attempt_count] + 1
@@ -404,15 +426,14 @@ if ROS_AVAILABLE:
             else:
                 return rs.Resign()
 
-        @rs.state(cond=((sig_label_named.max_age(14) &
+        @rs.state(cond=((sig_label_named.max_age(16) &
                          nlp.prop_yesno.changed()) |
-                        (sig_feedback_repeat.max_age(14) &
+                        (sig_feedback_repeat.max_age(16) &
                          nlp.prop_yesno.changed())),
                   read=(nlp.prop_yesno, prop_game_in_progress,
                         prop_guess_attempt_count),
                   write=(rawio.prop_out,
                          prop_feedback_received,
-                         prop_emotion_publisher,
                          prop_another_attempt,
                          prop_sunglasses_on,
                          prop_feedback_mutex),
@@ -429,21 +450,21 @@ if ROS_AVAILABLE:
                         ctx[prop_sunglasses_on] = True
                     else:
                         emotion = HEARTS_EMOTION
-                    ctx[prop_emotion_publisher] = String(data=emotion)
+                    if ctx.conf(key=USE_EMOTIONS):
+                        emo_client(emotion)
                     ctx[prop_feedback_received] = True
-                    logger.debug("correct")
+                    logger.info("correct")
                 elif ctx[nlp.prop_yesno].no():
                     if ctx[prop_guess_attempt_count] < 3:
                         ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                             "charades_new_guess_attempt")
                         ctx[prop_another_attempt] = True
-                        logger.debug("wrong guess")
+                        logger.info("wrong guess")
                     else:
                         ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                             "charades_losing_exclamations")
-                        if rand < 0.7:
-                            ctx[prop_emotion_publisher] = String(
-                                data=SHY_EMOTION)
+                        if ctx.conf(key=USE_EMOTIONS):
+                            emo_client(SHY_EMOTION)
                         ctx[prop_feedback_received] = True
                 else:
                     ctx[prop_feedback_received] = False
@@ -456,7 +477,7 @@ if ROS_AVAILABLE:
                   write=rawio.prop_out,
                   signal=sig_feedback_repeat,
                   emit_detached=True)
-        def feedback_not_clear(ctx: rs.ContextWrapper):
+        def clarify_feedback(ctx: rs.ContextWrapper):
             if ctx[prop_game_in_progress] and not ctx[prop_feedback_received]:
                 ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                     "charades_misunderstanding") + " " + \
@@ -465,7 +486,7 @@ if ROS_AVAILABLE:
             else:
                 return rs.Resign()
 
-        @rs.state(cond=sig_action_captured.min_age(21).max_age(-1),
+        @rs.state(cond=sig_action_captured.min_age(25).max_age(-1),
                   read=(prop_waiting_for_label, prop_feedback_received,
                         prop_game_in_progress),
                   write=(rawio.prop_out, prop_stop_game,
@@ -477,31 +498,29 @@ if ROS_AVAILABLE:
                 ctx[rawio.prop_out] = BROKEN_MESSAGE
                 ctx[prop_stop_game] = True
 
-        @rs.state(cond=(prop_feedback_received.changed() |
-                        prop_continuation_unclear.changed()),
+        @rs.state(cond=(prop_feedback_received.changed().min_age(1) |
+                        prop_continuation_unclear.changed().min_age(1)),
                   read=(prop_feedback_received, prop_sunglasses_on),
-                  write=(rawio.prop_out, prop_sunglasses_on,
-                         prop_emotion_publisher),
+                  write=(rawio.prop_out, prop_sunglasses_on),
                   signal=sig_asked_to_continue,
                   emit_detached=True)
         def ask_to_continue(ctx: rs.ContextWrapper):
             if ctx[prop_feedback_received]:
                 ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                     "charades_offer_another_round")
-                if ctx[prop_sunglasses_on]:
-                    ctx[prop_emotion_publisher] = SUNGLASSES_ON_EMOTION
+                if ctx[prop_sunglasses_on] and ctx.conf(key=USE_EMOTIONS):
+                    emo_client(SUNGLASSES_ON_EMOTION)
                     ctx[prop_sunglasses_on] = False
                 return rs.Emit()
             else:
                 return rs.Resign()
 
         @rs.state(cond=(nlp.prop_yesno.changed() &
-                        sig_asked_to_continue.max_age(11)),
+                        sig_asked_to_continue.max_age(12)),
                   read=nlp.prop_yesno,
                   write=(rawio.prop_out,
                          prop_continuation_unclear,
                          prop_stop_game,
-                         prop_emotion_publisher,
                          prop_continue_mutex),
                   signal=sig_continue_game,
                   emit_detached=True)
@@ -510,15 +529,14 @@ if ROS_AVAILABLE:
             if ctx[nlp.prop_yesno].yes():
                 ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                     "charades_positive_expressions") + " Let's continue then"
-                if rand < 0.7:
-                    ctx[prop_emotion_publisher] = String(
-                        data=LUCKY_EMOTION)
+                if rand < 0.7 and ctx.conf(key=USE_EMOTIONS):
+                    emo_client(LUCKY_EMOTION)
                 return rs.Emit()
             elif ctx[nlp.prop_yesno].no():
                 ctx[rawio.prop_out] = verbaliser.get_random_phrase(
                     "charades_no_continuation")
-                if rand < 0.7:
-                    ctx[prop_emotion_publisher] = String(data=KISS_EMOTION)
+                if ctx.conf(key=USE_EMOTIONS):
+                    emo_client(KISS_EMOTION)
                 ctx[prop_stop_game] = True
             else:
                 ctx[rawio.prop_out] = verbaliser.get_random_phrase(
