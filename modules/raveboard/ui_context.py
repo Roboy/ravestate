@@ -24,6 +24,7 @@ SESSION_DB_KEY = "session_db"
 URL_ANNOUNCE_KEY = "announce"
 GREETING_KEY = "greet"
 SESSION_TIMEOUT_KEY = "timeout"
+SSL_CRT_AND_KEY_CONTEXT = "ssl_context"
 
 ANNOUNCE_URL_YES = "yes"
 GREET_ON_CONNECT = "connect"
@@ -34,7 +35,8 @@ RAVEBOARD_CONFIG = {
     SESSION_DB_KEY: "",
     URL_ANNOUNCE_KEY: ANNOUNCE_URL_YES,
     GREETING_KEY: "",
-    SESSION_TIMEOUT_KEY: 30
+    SESSION_TIMEOUT_KEY: 30,
+    SSL_CRT_AND_KEY_CONTEXT: []
 }
 
 
@@ -57,7 +59,16 @@ class UIContext(rs.Context):
     def ui_serve_events_async(self):
         app = flask.Flask(__name__, static_folder="dist/ravestate")
         app.wsgi_app = socketio.Middleware(self.sio, app.wsgi_app)
-        app.run(host='0.0.0.0', port=self.conf(mod=RAVEBOARD, key=PORT_CONFIG_KEY), threaded=True)
+        ssl_context = self.conf(mod=RAVEBOARD, key=SSL_CRT_AND_KEY_CONTEXT)
+        if not ssl_context or len(ssl_context) != 2:
+            ssl_context = None
+        else:
+            ssl_context = tuple(ssl_context)
+        app.run(
+            host='0.0.0.0',
+            port=self.conf(mod=RAVEBOARD, key=PORT_CONFIG_KEY),
+            threaded=True,
+            ssl_context=ssl_context)
 
     def _authorize_client(self, _, msg):
         self.config_parsed.wait()
