@@ -83,6 +83,12 @@ export class NodeData {
             <span class="separator">|</span>
             <button (click)="clear()">Clear Graph</button>
         </div>
+        <div class="controls-mobile">
+            <button (click)="scaleUp()" class="round">+</button>
+            <button (click)="scaleDown()" class="round margin-b">-</button>
+
+            <button (click)="clear()">×</button>
+        </div>
     `,
     styleUrls: ['./activation-spike-graph.component.scss']
 })

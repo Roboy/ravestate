@@ -11,6 +11,14 @@ $header-height: 50px;
   grid-template-areas: "header header" "main side";
 }
 
+@media only screen and (max-width: 768px) {
+  .root-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: $header-height 1fr 1fr;
+    grid-template-areas: "header" "main" "side";
+  }
+}
+
 .header {
   grid-area: header;
   line-height: $header-height;
