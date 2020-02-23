@@ -22,6 +22,27 @@ svg {
   user-select: none;
 }
 
+@media only screen and (max-width: 768px) {
+  .controls {
+    display: none;
+  }
+}
+
+.controls-mobile {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 10px;
+  display: none;
+}
+
+@media only screen and (max-width: 768px) {
+  .controls-mobile {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
 .percentage-label {
   font-size: 12px;
   width: 50px;
@@ -37,4 +58,8 @@ svg {
 
 g {
   transition: opacity 0.5s;
+}
+
+.margin-b {
+  margin-bottom: 15px;
 }

@@ -11,11 +11,32 @@ $header-height: 50px;
   grid-template-areas: "header header" "main side";
 }
 
+@media only screen and (max-width: 768px) {
+  .root-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+    grid-template-areas: "main" "side";
+  }
+}
+
 .header {
   grid-area: header;
   line-height: $header-height;
   font-size: 20px;
+  font-weight: bold;
   text-align: center;
+}
+
+@media only screen and (max-width: 768px) {
+  .header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: #222222;
+    padding: 10px;
+    border-radius: 0 0 15px 0;
+    line-height: 20px;
+  }
 }
 
 .main {
