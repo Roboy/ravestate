@@ -1,10 +1,10 @@
+from .emotion import Emotion
 
 
-class AudioEmotion():
+class AudioEmotion(Emotion):
 
-    def __init__(self):
-        self.model = ""
+    def get(self):
+        pass
 
-
-    def get_emotion(self, audio_input):
+    def is_positive(self) -> bool:
         pass

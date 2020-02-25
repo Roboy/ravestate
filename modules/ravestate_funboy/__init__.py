@@ -14,7 +14,7 @@ from scientio.ontology.ontology import Ontology
 from scientio.session import Session
 from scientio.ontology.node import Node
 
-from ravestate_funboy.deep_comedian import DeepComedian
+from .strategy import ComedianStrategy
 from ravestate_funboy.video_emotion import VideoEmotion
 from reggol import get_logger
 logger = get_logger(__name__)
@@ -33,14 +33,14 @@ with rs.Module(
     prop_start_timestamp = rs.Property(name="start_timestamp")
     prop_interloc_emotion = rs.Property(name="interloc_emotion")
     prop_joke_category = rs.Property(name="joke_category")
-    prop_deep_comedian = rs.Property(name="deep_comedian")
+    prop_comedian = rs.Property(name="comedian")
     prop_video_emotion = rs.Property(name="video_emotion")
 
     @rs.state(cond=rs.sig_startup,
-              write=(prop_start_timestamp, prop_deep_comedian))
+              write=(prop_start_timestamp, prop_comedian))
     def start(ctx):
         ctx[prop_start_timestamp] = datetime.now()
-        ctx[prop_deep_comedian] = DeepComedian()
+        ctx[prop_comedian] = ComedianStrategy(random=True)
         ctx[prop_video_emotion] = VideoEmotion()
 
     @rs.state(cond=nlp.prop_triples.changed(),
@@ -66,6 +66,7 @@ with rs.Module(
         # Get associated joketypes
         # Retrieve the affinity values
         nodes = []
+        interloc_id = 0
         affinities = {x.name: x.get_relationships("AFFINITY")[interloc_id] for x in nodes}
         category = "chicken"  # TODO: Selection
 
@@ -73,7 +74,7 @@ with rs.Module(
 
 
     @rs.state(cond=sig_tell_joke & prop_joke_category.changed(),
-              read=(rawio.prop_in, prop_joke_category, prop_deep_comedian),
+              read=(rawio.prop_in, prop_joke_category, prop_comedian),
               write=rawio.prop_out, signal=sig_joke_told)
     def render(ctx):
         """
@@ -81,7 +82,7 @@ with rs.Module(
         :param ctx:
         :return:
         """
-        joke = ctx[prop_deep_comedian].render(input=ctx[rawio.prop_in], type=ctx[prop_joke_category])
+        joke = ctx[prop_comedian].render(input=ctx[rawio.prop_in], type=ctx[prop_joke_category])
         ctx[rawio.prop_out] = joke
         return rs.Emit()
 

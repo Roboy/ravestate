@@ -7,7 +7,7 @@ from reggol import get_logger
 logger = get_logger(__name__)
 
 
-class DeepComedian(Comedian):
+class SimpleComedian(Comedian):
 
     def __init__(self):
         self.model = verbaliser
