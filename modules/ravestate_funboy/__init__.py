@@ -37,8 +37,9 @@ with rs.Module(
     prop_video_emotion = rs.Property(name="video_emotion")
 
     @rs.state(cond=rs.sig_startup,
-              write=(prop_start_timestamp, prop_comedian))
+              write=(prop_start_timestamp, prop_comedian, prop_video_emotion))
     def start(ctx):
+        logger.info("Starting funboy")
         ctx[prop_start_timestamp] = datetime.now()
         ctx[prop_comedian] = ComedianStrategy(random=True)
         ctx[prop_video_emotion] = VideoEmotion()
@@ -49,10 +50,10 @@ with rs.Module(
     def decide(ctx):
         triples = ctx[nlp.prop_triples]
         do_jokes = True
-        if do_jokes and datetime.now() - ctx[prop_start_timestamp] > 120:
+        if do_jokes and (datetime.now() - ctx[prop_start_timestamp]).seconds > 12:
             return rs.Emit()
 
-    @rs.state(cond=sig_tell_joke, write=prop_joke_category)
+    @rs.state(cond=sig_tell_joke, write=prop_joke_category, read=interloc.prop_all)
     def assess_category(ctx):
         session: Session = ravestate_ontology.get_session()
         ontology: Ontology = ravestate_ontology.get_ontology()
@@ -62,6 +63,7 @@ with rs.Module(
         for i in ctx.enum(interloc.prop_all):
             node = ctx[i]
         # interact with the Node via scientio
+        print(node)
 
         # Get associated joketypes
         # Retrieve the affinity values
@@ -82,7 +84,7 @@ with rs.Module(
         :param ctx:
         :return:
         """
-        joke = ctx[prop_comedian].render(input=ctx[rawio.prop_in], type=ctx[prop_joke_category])
+        joke = ctx[prop_comedian].render(type=ctx[prop_joke_category], utterance=ctx[rawio.prop_in])
         ctx[rawio.prop_out] = joke
         return rs.Emit()
 
@@ -117,10 +119,10 @@ with rs.Module(
 
         return rs.Emit()
 
-    @rs.state(cond=rs.sig_startup, read=prop_video_emotion)
+    @rs.state(cond=nlp.prop_triples.changed(), read=prop_video_emotion)
     def emotionizer(ctx):
         @rs.receptor(ctx_wrap=ctx, write=prop_interloc_emotion)
         def write_interloc_emotion(ctx, emotion):
             ctx[prop_interloc_emotion] = emotion
 
-        write_interloc_emotion(ctx[prop_video_emotion].get_emotion())
+        write_interloc_emotion(ctx[prop_video_emotion].get())

@@ -15,4 +15,3 @@ numpy
 pytorch-pretrained-bert
 pytorch_transformers
 python-socketio
-emopy

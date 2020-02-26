@@ -22,7 +22,7 @@ CONFIG = {
     MODEL_KEY: AVAILABLE_MODELS[0],  # one of "convai_gpt", "gpt2", "parlai"
     SERVER_ADDRESS_KEY: "http://localhost",  # can be changed if server is running on its own on a separate machine
     SERVER_PORT_KEY: 5100,
-    TEMPERATURE_KEY: 0.7,  # convai_gpt, gpt2: higher value -> more variation in output
+    TEMPERATURE_KEY: 0.9,  # convai_gpt, gpt2: higher value -> more variation in output
     MAX_LENGTH_KEY: 20,  # convai_gpt, gpt2: maximal length of generated output
     TOP_K_KEY: 0,  # convai_gpt, gpt2: <=0: no filtering, >0: keep only top k tokens with highest probability.
     TOP_P_KEY: 0.9,  # convai_gpt: <=0.0 no filtering, >0.0: keep smallest subset whose total probability mass >= top_p

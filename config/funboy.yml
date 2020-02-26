@@ -1,0 +1,81 @@
+# In addition to this file, load a config file `keys.yml`, where
+#  `keys.yml` should contain the following content:
+#
+#   module: telegramio
+#   config:
+#     telegram-token: <sexycactus>  # Your telegram token here
+#   ---
+#   module: ontology
+#   config:
+#     neo4j_address: bolt://localhost:7687  # Your neo4j server uri here
+#     neo4j_username: neo4j                 # Your neo4j user here
+#     neo4j_pw: <cornycrab>                 # Your neo4j pw here
+#
+# Then, start `python3 -m ravestate` with `-f config/generic.yml -f config/keys.yml`
+
+---
+module: core
+config:
+  tickrate: 10
+  import:
+    - ravestate_conio
+    - ravestate_roboyio
+    - ravestate_funboy
+    - ravestate_roboyqa
+    - ravestate_genqa
+    - ravestate_persqa
+    - ravestate_wildtalk
+    - ravestate_hibye
+    #- ravestate_stalker
+    - ravestate_fillers
+    #- ravestate_akinator
+
+---
+module: idle
+config:
+  impatience_threshold: 9.0  # number of seconds of "pressure" after which a filler should be sent
+  bored_threshold: 12.0 # number of seconds of "no activity" after which active engagement should activate
+---
+module: genqa
+config:
+  drqa_server_address: http://talkto.roboy.org:5000
+  roboy_answer_sanity: 1000
+---
+module: roboyqa
+config:
+  roboy_node_id: 356
+---
+module: roboyio
+config:
+  head_axis0_lower_limit: -0.3    # minimum lean backwards
+  head_axis0_upper_limit: 0.3     # maximum lean forwards
+  head_axis1_lower_limit: -0.3    # minimum lean right
+  head_axis1_upper_limit: 0.3     # maximum lean left
+  head_axis2_lower_limit: -0.3    # minimum turn right
+  head_axis2_upper_limit: 0.3     # maximum turn left
+  head_movement_probability: 0.0  # probability for a head axis to move on input/bored; decided separately for each axis
+  eye_movement_probability: 0.0   # probability for eyes to look left/right on input/bored
+---
+module: emotion
+config:
+  shy_probability: 0.0            # Probability for being shy when input is about Roboy
+  surprise_probability: 0.0       # Probability for being surprised when input is question
+  happy_probability: 0.0          # Probability for being happy when output is generated
+  affectionate_probability: 0.0   # Probability for being affectionate when keyword is in input and input is about Roboy
+---
+module: ontology
+config:
+  neo4j_address: bolt://localhost:7687
+  neo4j_username: neo4j
+  neo4j_pw: roboy
+---
+module: wildtalk
+config:
+  model: "gpt2" # one of "convai_gpt", "gpt2", "parlai"
+  server_address: "http://127.0.0.1"  # can be changed if server is running on its own on a separate machine
+  server_port: 5100
+  temperature: 0.9  # convai_gpt, gpt2: higher value -> more variation in output
+  max_length: 20    # convai_gpt, gpt2: maximal length of generated output
+  top_k: 0          # convai_gpt, gpt2: <=0: no filtering, >0: keep only top k tokens with highest probability.
+  top_p: 0.9        # convai_gpt: <=0.0 no filtering, >0.0: keep smallest subset whose total probability mass >= top_p
+  max_history: 4    # convai_gpt: maximal number of previous dialog turns to be used for output generation

@@ -2,7 +2,7 @@
 !OType
 entity: Person
 properties: [name, sex, full_name, birthdate, timestamp, familiar, face_vector]
-relationships: [EQUALS, FROM, HAS_HOBBY, LIVE_IN, STUDY_AT, OCCUPIED_AS, WORK_FOR, FRIEND_OF, MEMBER_OF, CHILD_OF, SIBLING_OF]
+relationships: [EQUALS, FROM, HAS_HOBBY, LIVE_IN, STUDY_AT, OCCUPIED_AS, WORK_FOR, FRIEND_OF, MEMBER_OF, CHILD_OF, SIBLING_OF, AFFINITY]
 
 ---
 !OType
@@ -87,3 +87,9 @@ meta: [Occupation]
 entity: Object
 properties: [name, timestamp]
 relationships: [EQUALS, IN, PART_OF, KNOW, HEAR, SEE, TOUCH, GRASP, PLAY, TURN_ON]
+
+---
+!OType
+entity: Object
+properties: [name, timestamp]
+relationships: [EQUALS]

@@ -32,7 +32,7 @@ class S(BaseHTTPRequestHandler):
         self._set_headers()
 
 
-def run(port=5100, model="convai_gpt"):
+def run(port=5100, model="gpt2"):
     responder_map = {"convai_gpt": ConvAI_GPT_Responder, "gpt2": GPT2_Responder}
     global responder
     if model == "parlai":
