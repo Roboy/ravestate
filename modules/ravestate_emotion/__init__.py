@@ -48,7 +48,7 @@ with rs.Module(name="emotion", config=CONFIG, depends=(rawio.mod, nlp.mod)) as m
             return rs.Emit()
         return rs.Resign()
 
-    @rs.state(cond=nlp.prop_lemmas.changed() & nlp.sig_contains_roboy, signal=sig_affectionate, read=nlp.prop_lemmas)
+    @rs.state(cond=nlp.sig_contains_roboy, signal=sig_affectionate, read=nlp.prop_lemmas)
     def is_affectionate(ctx: rs.ContextWrapper):
         if any(l in ctx[nlp.prop_lemmas] for l in AFFECTIONATE_LIST) and \
                 random.random() < ctx.conf(key=AFFECTIONATE_PROB_KEY):

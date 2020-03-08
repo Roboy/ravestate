@@ -80,7 +80,7 @@ class Signal(Constraint):
     #  not introduce a new causal group into the parent conjunct.
     #  the back-references to the completing signals allow it
     #  to dereference the completing signals when the causal tail
-    #  is dereferences because of death_clock.
+    #  is dereferenced because of death_clock.
     completed_by: Optional[Set['Signal']]
 
     # tells whether this signal is a potential cause for another signal,
