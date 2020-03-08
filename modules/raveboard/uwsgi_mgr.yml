@@ -23,7 +23,8 @@ For debugging use werkzeug, the flask debug server, with a config like this:
 ravestate_session_command: [
   "{python}",
   "-m", "raveboard",
-  "ravestate_hibye",
+  "-f", "../../config/raveboard.yml",
+  "-f", "../../config/keys.yml",
   "-d", "raveboard", "port",       "{port}",
   "-d", "raveboard", "session_db", "{session_db}",
   "-d", "raveboard", "announce",   "skip",
@@ -41,7 +42,7 @@ session_refresh_interval: 2
 
 # At every point in time, the session server has a minimum number of idle worker
 # sessions `in reserve` to assign to new sessions. This number must not be smaller than one.
-num_idle_sessions: 2
+num_idle_sessions: 1
 
 # The session server launches session workers, which use individual ports to perform their
 # communication. The usable_port_range includes that maximum port.
