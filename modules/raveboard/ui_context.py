@@ -35,7 +35,7 @@ RAVEBOARD_CONFIG = {
     SESSION_DB_KEY: "",
     URL_ANNOUNCE_KEY: ANNOUNCE_URL_YES,
     GREETING_KEY: "",
-    SESSION_TIMEOUT_KEY: 30,
+    SESSION_TIMEOUT_KEY: 40,
     SSL_CRT_AND_KEY_CONTEXT: []
 }
 
@@ -115,18 +115,10 @@ class UIContext(rs.Context):
                     self.session_client.heartbeat()
                     return rs.Emit()
 
-            @rs.state(read=rawio.prop_out, signal=sig_last_output, emit_detached=True)
+            @rs.state(read=rawio.prop_out, signal=sig_last_output, emit_detached=True, boring=True)
             def emit_output(ctx):
                 self.sio.emit("output", {"type": "output", "text": ctx[rawio.prop_out.changed()]})
                 return rs.Emit(wipe=True)
-
-            @rs.state(
-                cond=sig_last_output.min_age(rs.ConfigurableAge(key=SESSION_TIMEOUT_KEY)).max_age(-1).detached(),
-                write=verbaliser.prop_intent)
-            def end_session(ctx):
-                if self.session_client:
-                    self.session_client.killme()
-                    ctx[verbaliser.prop_intent] = lang.intent_farewells
 
         self._add_ravestate_module(mod)
 
@@ -142,6 +134,19 @@ class UIContext(rs.Context):
         def new_connection(ctx):
             if ctx.conf(mod=RAVEBOARD, key=GREETING_KEY) == GREET_ON_CONNECT:
                 ctx[rawio.prop_in] = "hi"
+
+            @rs.state(
+                cond=sig_last_output.min_age(rs.ConfigurableAge(key=SESSION_TIMEOUT_KEY)).max_age(-1).detached(),
+                write=verbaliser.prop_intent,
+                boring=True)
+            def end_session(ctx):
+                if self.session_client:
+                    self.session_client.killme()
+                    ctx[verbaliser.prop_intent] = lang.intent_farewells
+
+            mod.add(end_session)
+            ctx.add_state(end_session)
+
         self.new_connection = new_connection
 
     def ui_model(self, spike_or_act: Union[rs.Spike, rs.Activation], parent_spikes=()) -> Union[UIActivationModel, UISpikeModel]:
