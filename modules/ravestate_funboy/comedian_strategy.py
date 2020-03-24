@@ -1,6 +1,5 @@
-from typing import List
-
 import random as rand
+from typing import List
 
 from .simple_comedian import SimpleComedian
 from .deep_comedian import DeepComedian
@@ -12,17 +11,17 @@ logger = get_logger(__name__)
 class ComedianStrategy:
     comedian = None
 
-    def __init__(self, random: bool = False, interleaving: bool = False):
+    def __init__(self, threshold: float = 0.5):
         self.deep_comedian = DeepComedian()
         self.simple_comedian = SimpleComedian()
+        self.count = 0
+        self.threshold = threshold
+
+    def configure(self, random: bool = False, interleaving: bool = False):
         self.random = random
         self.interleaving = interleaving
-        self.count = 0
-        self.threshold = 0.5
-
-    def _configure(self):
-        self.count += 1
         if self.interleaving:
+            self.count += 1
             logger.info(f"Interleaving. Count: {self.count}")
             if self.count % 2 == 0:
                 logger.info(f"Choosing SimpleComedian")
@@ -44,10 +43,9 @@ class ComedianStrategy:
             logger.info(f"Choosing DeepComedian")
             self.comedian = self.deep_comedian
 
-    def render(self, types: List, utterance: str) -> str:
-        self._configure()
+    def render(self, type, utterance: str) -> str:
         if self.comedian is not None:
-            return self.comedian.render(types, utterance)
+            return self.comedian.render(type, utterance)
         else:
             logger.error("No comedian specified!")
             return ""

@@ -11,23 +11,25 @@
 #     neo4j_username: neo4j                 # Your neo4j user here
 #     neo4j_pw: <cornycrab>                 # Your neo4j pw here
 #
-# Then, start `python3 -m ravestate` with `-f config/generic.yml -f config/keys.yml`
+# Then, start `python3 -m ravestate` with `-f config/funboy.yml -f config/keys.yml`
 
 ---
 module: core
 config:
   tickrate: 10
   import:
-    - ravestate_conio
+    #- ravestate_conio
     - ravestate_roboyio
     - ravestate_funboy
-    - ravestate_roboyqa
-    - ravestate_genqa
-    - ravestate_persqa
-    - ravestate_wildtalk
+    # - ravestate_roboyqa
+    # - ravestate_genqa
+    # - ravestate_persqa
+    # - ravestate_wildtalk
     - ravestate_hibye
-    #- ravestate_stalker
-    - ravestate_fillers
+    # - ravestate_stalker
+    # - ravestate_fillers
+    - ravestate_ros1
+    #- ravestate_emotion
     #- ravestate_akinator
 
 ---
@@ -58,10 +60,10 @@ config:
 ---
 module: emotion
 config:
-  shy_probability: 0.0            # Probability for being shy when input is about Roboy
-  surprise_probability: 0.0       # Probability for being surprised when input is question
-  happy_probability: 0.0          # Probability for being happy when output is generated
-  affectionate_probability: 0.0   # Probability for being affectionate when keyword is in input and input is about Roboy
+  shy_probability: 0.5           # Probability for being shy when input is about Roboy
+  surprise_probability: 0.2       # Probability for being surprised when input is question
+  happy_probability: 0.1          # Probability for being happy when output is generated
+  affectionate_probability: 0.2  # Probability for being affectionate when keyword is in input and input is about Roboy
 ---
 module: ontology
 config:
@@ -69,9 +71,9 @@ config:
   neo4j_username: neo4j
   neo4j_pw: roboy
 ---
-module: wildtalk
+module: funboy
 config:
-  model: "gpt2" # one of "convai_gpt", "gpt2", "parlai"
+  model: "convai_gpt" # one of "convai_gpt", "gpt2", "parlai"
   server_address: "http://127.0.0.1"  # can be changed if server is running on its own on a separate machine
   server_port: 5100
   temperature: 0.9  # convai_gpt, gpt2: higher value -> more variation in output
