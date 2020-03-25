@@ -10,7 +10,7 @@
                              \____/     
 ```
 
-Funboy is an implementation of the DARVAH framework for the Ravestate Dialogue System.
+Funboy is an implementation of the [DARVAH](https://github.com/Roboy/tss19-funboy) framework for the Ravestate Dialogue System.
 
 ## Running
 
