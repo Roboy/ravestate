@@ -31,7 +31,7 @@ class DeepComedian(Comedian):
                 "\nThe server does not seem to be running!"
                 "\n--------")
         else:
-            types = ", ".join(self._get_tokens(type))
+            types = ",".join(self._get_tokens(type))
             params = {
                 'types': types,
                 'utterance': " " if utterance is None else utterance
