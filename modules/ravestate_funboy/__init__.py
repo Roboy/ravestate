@@ -224,7 +224,7 @@ with rs.Module(
             if random.random() > 0.7:
                 joke = f"{verbaliser.get_random_phrase('segue')} {joke}"
             if random.random() > 0.5:
-                joke = f"{joke}. Ha-ha-ha!"
+                joke = f"{joke}. {verbaliser.get_random_phrase('haha')}"
 
             ctx[rawio.prop_out] = joke
         else:

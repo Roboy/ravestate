@@ -10,6 +10,14 @@ opts:
   - "Let me tell you a joke."
 ---
 type: phrases
+name: "haha"
+opts:
+  - "Ha-ha!"
+  - "Ha-ha-ha!"
+  - "He-he!"
+  - "Huh!"
+---
+type: phrases
 name: "chicken"
 opts:
   - "why did the chicken cross the road? to say hello from the other side."
