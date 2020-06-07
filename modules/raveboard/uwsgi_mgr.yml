@@ -1,0 +1,60 @@
+# === This is a sample config file for the raveboard session server. ===
+
+# Arguments that should be used with subprocess.Popen() to start new ravestate sessions.
+#
+# The following placeholders are supported inside arguments:
+# - {port}: Will be replaced with the port in which the session will run.
+# - {python}: Will be replaced with the path of the python executable running the session manager.
+# - {session-db}: Will be replaced with the path to the session tracking database.
+#
+# For production, adapt the following config snippet (and uwsgi_instance.yml):
+# ravestate_session_command: [
+#   "uwsgi",
+#   "-H",          "/Users/joseph/py37",  # Change to your personal python venv folder or leave out
+#   "--http",      ":{port}",
+#   "--wsgi-file", "uwsgi_instance.py",
+#   "--callable",  "app",
+#   "-i",
+#   "--enable-threads",
+#   "--die-on-term",
+#   "--pyargv",    "-f uwsgi_instance.yml -d raveboard port {port} -d raveboard session_db {session_db}"
+# ]
+For debugging use werkzeug, the flask debug server, with a config like this:
+ravestate_session_command: [
+  "{python}",
+  "-m", "raveboard",
+  "-f", "../../config/raveboard.yml",
+  "-f", "../../config/keys.yml",
+  "-d", "raveboard", "port",       "{port}",
+  "-d", "raveboard", "session_db", "{session_db}",
+  "-d", "raveboard", "announce",   "skip",
+  "-d", "raveboard", "greet",      "connect"
+]
+
+# Path to the session tracker SQLite database. If a relative path is used,
+# it will be relative to the working directory of the session server.
+session_db_path: sessions.sqlite
+
+# Time interval in seconds between session server cleanup refreshes.
+# During a cleanup, the session server terminates sessions that have stalled,
+# and readies new idle sessions (if necessary).
+session_refresh_interval: 2
+
+# At every point in time, the session server has a minimum number of idle worker
+# sessions `in reserve` to assign to new sessions. This number must not be smaller than one.
+num_idle_sessions: 1
+
+# The session server launches session workers, which use individual ports to perform their
+# communication. The usable_port_range includes that maximum port.
+usable_port_range: [5010, 5020]
+
+# Session clients are referred to Socket.IO URLs which serve their session backend.
+# This is the prefix for the URL, :<port> will be appended.
+hostname: localhost
+
+# Session processes are updating a heartbeat time on a regular basis.
+# If the heartbeat is not updated for a minimum threshold time, the session is
+# treated as crashed.
+zombie_heartbeat_threshold: 30
+
+

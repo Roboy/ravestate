@@ -56,10 +56,6 @@ active_chats: Dict[int, Tuple[Timestamp, Optional[mp.connection.Connection]]] = 
 # A user_id is mapped to a set containing the chat_id of every Chat that the User is involved in
 active_users: Dict[int, Set[int]] = dict()
 
-SHY_EMOJIS = ["\U0000263A"]
-SURPRISE_EMOJIS = ["\U0001F914"]
-HAPPY_EMOJIS = ["\U0001F60A", "\U0001F603"]
-AFFECTIONATE_EMOJIS = ["\U0001F618", "\U0001F970"]
 
 
 @rs.state(cond=rs.sig_startup)
@@ -337,27 +333,3 @@ def telegram_output(ctx: rs.ContextWrapper):
     """
     text = ctx[rawio.prop_out.changed()]
     return send_on_telegram(ctx=ctx, text=text.lower().strip())
-
-
-@rs.state(cond=emotion.sig_shy)
-def show_shy(ctx: rs.ContextWrapper):
-    logger.info("Sending shy emoji on telegram")
-    send_on_telegram(ctx=ctx, text=random.choice(SHY_EMOJIS))
-
-
-@rs.state(cond=emotion.sig_surprise)
-def show_surprise(ctx: rs.ContextWrapper):
-    logger.info("Sending surprise emoji on telegram")
-    send_on_telegram(ctx=ctx, text=random.choice(SURPRISE_EMOJIS))
-
-
-@rs.state(cond=emotion.sig_happy)
-def show_happy(ctx: rs.ContextWrapper):
-    logger.info("Sending happy emoji on telegram")
-    send_on_telegram(ctx=ctx, text=random.choice(HAPPY_EMOJIS))
-
-
-@rs.state(cond=emotion.sig_affectionate)
-def show_affectionate(ctx: rs.ContextWrapper):
-    logger.info("Sending affectionate emoji on telegram")
-    send_on_telegram(ctx=ctx, text=random.choice(AFFECTIONATE_EMOJIS))

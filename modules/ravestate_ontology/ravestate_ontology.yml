@@ -87,3 +87,10 @@ meta: [Occupation]
 entity: Object
 properties: [name, timestamp]
 relationships: [EQUALS, IN, PART_OF, KNOW, HEAR, SEE, TOUCH, GRASP, PLAY, TURN_ON]
+
+
+---
+!OType
+entity: JokeType
+properties: [name]
+relationships: [AFFINITY]

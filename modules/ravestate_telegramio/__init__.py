@@ -4,7 +4,6 @@ from ravestate_telegramio import telegram_bot
 import ravestate_rawio as rawio
 import ravestate_interloc as interloc
 import ravestate_ontology as ontology
-import ravestate_emotion as emotion
 
 
 CONFIG = {
@@ -24,11 +23,7 @@ CONFIG = {
 with Module(
         name=telegram_bot.MODULE_NAME,
         config=CONFIG,
-        depends=(rawio.mod, interloc.mod, ontology.mod, emotion.mod)) as mod:
+        depends=(rawio.mod, interloc.mod, ontology.mod)) as mod:
 
     mod.add(telegram_bot.telegram_run)
     mod.add(telegram_bot.telegram_output)
-    mod.add(telegram_bot.show_shy)
-    mod.add(telegram_bot.show_surprise)
-    mod.add(telegram_bot.show_happy)
-    mod.add(telegram_bot.show_affectionate)
