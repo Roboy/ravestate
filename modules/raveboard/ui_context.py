@@ -252,3 +252,7 @@ class UIContext(rs.Context):
     def _state_activated(self, act: rs.Activation):
         super(UIContext, self)._state_activated(act)
         self.ui_update_act(act, is_running=True)
+
+    def _spike_discarded(self, spike: rs.Spike):
+        super(UIContext, self)._spike_discarded(spike)
+        self.ui_objects.pop(spike)

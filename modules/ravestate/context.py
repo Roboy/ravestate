@@ -603,6 +603,7 @@ class Context(IContext):
                             # This should lead to the deletion of the spike
                             spikes.remove(spike)
                             spike.wipe(already_wiped_in_causal_group=True)
+                            self._spike_discarded(spike)
                             logger.debug(f"{cg}.stale({spike})->Y")
 
             # ----------------- Increment age on active spikes -----------------
@@ -623,6 +624,9 @@ class Context(IContext):
 
     def _state_activated(self, act: Activation):
         self._activations_per_state[act.state_to_activate].discard(act)
+
+    def _spike_discarded(self, spike: Spike):
+        pass
 
     def _add_sig(self, sig: Signal):
         if sig in self._needy_acts_per_state_per_signal:
