@@ -64,7 +64,7 @@ class SessionManager:
         # -- prepare db: create table
         self.conn.execute("""
         create table if not exists sessions (
-            port real primary key, state text, url text, heartbeat real, secret text, since real
+            port integer primary key, state text, url text, heartbeat real, secret text, since real
         )
         """)
 
