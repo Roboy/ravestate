@@ -22,7 +22,7 @@ config:  # Connection to the locally running DrQA server
 module: idle
 config:
   impatience_threshold: 2.0  # number of seconds of "pressure" after which a filler should be sent
-  bored_threshold: 2.0 # number of seconds of "no activity" after which active engagement should activate
+  bored_threshold: 4.0 # number of seconds of "no activity" after which active engagement should activate
 
 ---
 module: emotion
