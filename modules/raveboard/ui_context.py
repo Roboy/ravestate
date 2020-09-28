@@ -51,6 +51,7 @@ class UIContext(rs.Context):
         self.session_client: Optional[SessionClient] = None
         self.config_parsed = Event()
         self.new_connection: Callable = lambda: None
+        self.new_connection_called: bool = False
 
         super().__init__(*arguments, runtime_overrides=runtime_overrides)
         if not skip_http_serve:
@@ -84,7 +85,9 @@ class UIContext(rs.Context):
         else:
             # Not a managed session, no auth required
             pass
-        self.new_connection()
+        if not self.new_connection_called:
+            self.new_connection()
+            self.new_connection_called = True
         return True
 
     def _load_modules(self, modules: List[str]):
