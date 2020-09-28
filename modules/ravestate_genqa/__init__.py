@@ -29,7 +29,7 @@ with rs.Module(name="genqa", config=CONFIG, depends=(rawio.mod, idle.mod, nlp.mo
         if not server_up(server):
             return rs.Delete()
 
-    @rs.state(cond=idle.sig_bored, write=rawio.prop_out, weight=1.15, cooldown=30.)
+    @rs.state(cond=idle.sig_bored_by_user, write=rawio.prop_out, weight=1.15, cooldown=30.)
     def prompt(ctx):
         ctx[rawio.prop_out] = verbaliser.get_random_phrase("question-answering-prompt")
 

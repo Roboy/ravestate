@@ -37,7 +37,7 @@ with rs.Module(name="sendpics", config=CONFIG, depends=(rawio.mod, nlp.mod, idle
 
     sig_repeat_name = rs.Signal("repeat_name")
 
-    @rs.state(cond=idle.sig_bored, write=rawio.prop_out, weight=0.8, cooldown=30.)
+    @rs.state(cond=idle.sig_bored_by_user, write=rawio.prop_out, weight=0.8, cooldown=30.)
     def prompt_send(ctx):
         ctx[rawio.prop_out] = verbaliser.get_random_phrase("sendpics-prompt")
 
