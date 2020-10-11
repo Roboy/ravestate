@@ -337,7 +337,7 @@ class CausalGroup(ICausalGroup):
         """
         Called by activation which previously received a go-ahead
          from consent(), when it is truly proceeding with
-         running (after it got the go-ahead from all it's depended-on
+         running (after it got the go-ahead from all its depended-on
          causal groups).
 
         * `act`: The activation that is now running.
