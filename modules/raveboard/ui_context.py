@@ -114,7 +114,7 @@ class UIContext(rs.Context):
             @rs.state(cond=rs.sig_startup | sig_heartbeat.min_age(1.), signal=sig_heartbeat, emit_detached=True, boring=True)
             def heartbeat(ctx):
                 self.config_parsed.wait()
-                if self.session_client:
+                if self.session_client and not self.session_client.dead():
                     self.session_client.heartbeat()
                     return rs.Emit()
 
@@ -235,7 +235,7 @@ class UIContext(rs.Context):
 
     def emit(self, signal, parents=None, wipe: bool = False, payload=None, boring=False) -> rs.Spike:
         new_spike = super().emit(signal, parents, wipe, payload, boring)
-        # create spike ui model, but only send it on demand when it is ref'd by an activation
+        # create spike ui model, but only send it on demand when it is referenced by an activation
         #  exception: the spike is an offspring spike
         spike_model = self.ui_model(new_spike, parent_spikes=parents if parents else ())
         if parents:

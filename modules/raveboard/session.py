@@ -26,6 +26,7 @@ class Session:
 
 # Valid value for state column
 IDLE_STATE = "idle"
+ALLOCATED_STATE = "allocated"
 IN_USE_STATE = "in_use"
 KILLME_STATE = "killme"
 
@@ -64,7 +65,7 @@ class SessionManager:
         # -- prepare db: create table
         self.conn.execute("""
         create table if not exists sessions (
-            port integer primary key, state text, url text, heartbeat real, secret text, since real
+            port integer primary key, state text, url text, heartbeat real, secret text, since real, use_before real
         )
         """)
 
@@ -112,7 +113,8 @@ class SessionManager:
             result = self.current_sessions[port]
             self.conn.execute(f"""
             update sessions
-            set state = "{IN_USE_STATE}"
+            set state = "{ALLOCATED_STATE}",
+                use_before = {time.time() + 10.}
             where port = {port}
             """)
             self.conn.commit()
@@ -134,14 +136,15 @@ class SessionManager:
             new_session.sio_url = f"{self.hostname}:{new_session.port}"
             self.current_sessions[new_session.port] = new_session
             self.conn.execute(f"""
-            insert or replace into sessions (port, state, url, heartbeat, secret, since)
+            insert or replace into sessions (port, state, url, heartbeat, secret, since, use_before)
             values (
                 {new_session.port},
                 "{IDLE_STATE}",
                 "{new_session.sio_url}",
-                "{time.time()}",
+                {time.time()},
                 "{new_session.secret}",
-                "{time.time()}")
+                {time.time()},
+                {0})
             """)
             # commit before starting the new process, such that the entry is definitely seen
             self.conn.commit()
@@ -173,7 +176,9 @@ class SessionManager:
                 # the grim reaper has arrived
                 dead_sessions = self.conn.execute(f"""
                 select port from sessions where
-                state = "{KILLME_STATE}" or heartbeat < {time.time() - self.zombie_heartbeat_threshold}
+                    state = "{KILLME_STATE}" or
+                    heartbeat < {time.time() - self.zombie_heartbeat_threshold} or
+                    (state = "{ALLOCATED_STATE}" and {time.time()} > use_before)
                 """).fetchall()
                 dead_ports = set()
                 for port_row in dead_sessions:
@@ -219,6 +224,7 @@ class SessionClient:
         self.lock = RLock()
         if not self.conn:
             logger.error("Failed to open SQLite DB at {}!".format(self.db_path))
+        self.is_dead = False
         self.heartbeat()
 
     def heartbeat(self):
@@ -234,6 +240,11 @@ class SessionClient:
             update sessions set state = "{KILLME_STATE}" where port = {self.port}
             """)
             self.conn.commit()
+            self.is_dead = True
+
+    def dead(self) -> bool:
+        with self.lock:
+            return self.is_dead
 
     def authorized(self, token) -> bool:
         with self.lock:
@@ -242,4 +253,10 @@ class SessionClient:
             """).fetchall()
             if len(secret) < 1:
                 return False
-            return secret[0][0] == token
+            if secret[0][0] == token:
+                self.conn.execute(f"""
+                update sessions set state = "{IN_USE_STATE}" where port = {self.port}
+                """)
+                self.conn.commit()
+                return True
+            return False
