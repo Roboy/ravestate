@@ -51,7 +51,7 @@ def sync_ros_properties(ctx: rs.ContextWrapper):
     if rospy.get_name():
         node_name = rospy.get_name()[1:]  # cut off leading /
     # init ROS1
-    #rospy.init_node(node_name, disable_signals=True)
+    # rospy.init_node(node_name, disable_signals=True)
     global global_prop_set
     # current_props: hash -> Subscriber/Publisher/ServiceProxy
     current_props: Dict = dict()
@@ -76,7 +76,13 @@ def sync_ros_properties(ctx: rs.ContextWrapper):
                     ctx[prop_name] = msg
 
                 prop.ros_to_ctx_callback = ros_to_ctx_callback
+                
                 prop.subscriber = rospy.Subscriber(prop.topic, prop.msg_type, prop.ros_subscription_callback)
+                # logger.info("wait_for_message")
+                # msg = rospy.wait_for_message(prop.topic, prop.msg_type)
+                # logger.info(msg)
+
+                logger.info(f"Subscribed to topic {prop.topic}")
                 current_props[prop.__hash__()] = prop.subscriber
             # register publishers in ROS1
             if isinstance(prop, Ros1PubProperty):
@@ -155,6 +161,7 @@ class Ros1SubProperty(rs.Property):
 
         * `msg`: ROS1-Message that should be written into the property
         """
+        # logger.info(f"{self.id()} received message {str(msg)} from topic {self.topic}")
         if self.ros_to_ctx_callback:
             logger.debug(f"{self.id()} received message {str(msg)} from topic {self.topic}")
             self.ros_to_ctx_callback(msg=msg, prop_name=self.id())

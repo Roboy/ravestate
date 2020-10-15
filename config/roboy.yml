@@ -18,12 +18,12 @@ module: core
 config:
   tickrate: 10
   import:
-      #- ravestate_conio
+    # - ravestate_conio
     - ravestate_roboyio
     - ravestate_roboyqa
-    - ravestate_genqa
+    # - ravestate_genqa
     - ravestate_persqa
-    - ravestate_wildtalk
+    - ravestate_gpt3
     - ravestate_hibye
     #- ravestate_stalker
     - ravestate_fillers
@@ -76,3 +76,15 @@ config:
   top_k: 0          # convai_gpt, gpt2: <=0: no filtering, >0: keep only top k tokens with highest probability.
   top_p: 0.9        # convai_gpt: <=0.0 no filtering, >0.0: keep smallest subset whose total probability mass >= top_p
   max_history: 4    # convai_gpt: maximal number of previous dialog turns to be used for output generation
+---
+module: gpt3
+config:
+  # Note: Look here for how to write multiline YAML strings: https://yaml-multiline.info/
+  prompt: |
+    The following is a conversation between a human and a robot avatar called "Roboy 3.0". He is curious, kind, lovable and nerdy:
+  prompt-roboy-prefix: "Roboy: "
+  prompt-human-prefix: "Human: "
+  temperature: 1.2
+  max-tokens: 64
+  min-probability: 0.5
+  stop-indicators: ["\n"]

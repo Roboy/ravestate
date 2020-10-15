@@ -63,7 +63,9 @@ with rs.Module(name="gpt3", config=CONFIG, depends=(rawio.mod,)) as mod:
     @rs.state(cond=rawio.prop_in.changed().max_age(-1), read=(rawio.prop_in,), write=(rawio.prop_out,))
     def gpt3(ctx: rs.ContextWrapper):
         append_to_history(ctx.conf(key=HUMAN_PROMPT_PREFIX_KEY), ctx[rawio.prop_in])
-        prompt = ctx.conf(key=PROMPT_KEY) + "\n".join(history + ctx.conf(key=ROBOY_PROMPT_PREFIX_KEY))
+        
+        logger.warn(history)
+        prompt = ctx.conf(key=PROMPT_KEY) + "\n".join(history[-3:] + [ctx.conf(key=ROBOY_PROMPT_PREFIX_KEY)])
         logger.info(prompt)
         result = requests.post("https://api.openai.com/v1/engines/davinci/completions", json={
             "prompt": prompt,
