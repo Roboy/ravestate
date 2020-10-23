@@ -78,10 +78,10 @@ pip install ravestate
 ``
 
 __Note:__ Ravestate requires Python 3.6 or higher. It is tested
-on Ubuntu 16.04 and 18.04, as well as macOS > High Sierra.
-It is currently not tested on Windows.
+on Ubuntu 18.04 and 20.04, as well as macOS > High Sierra.
+It is currently not tested on Windows, but seems to run fine in WSL2.
 
-For reliability, we recommend using an environment virtualization tool,
+For reliability, we recommend using an environment virtualization tool with Ravestate,
 like [virtualenv](https://virtualenv.pypa.io/en/latest/)
 or [conda](https://conda.io/en/latest/).
 

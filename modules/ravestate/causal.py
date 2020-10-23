@@ -337,7 +337,7 @@ class CausalGroup(ICausalGroup):
         """
         Called by activation which previously received a go-ahead
          from consent(), when it is truly proceeding with
-         running (after it got the go-ahead from all it's depended=on
+         running (after it got the go-ahead from all its depended-on
          causal groups).
 
         * `act`: The activation that is now running.
@@ -345,17 +345,28 @@ class CausalGroup(ICausalGroup):
         # Mark the consented w-props as unavailable
         self._available_resources -= act.resources()
 
-    def resigned(self, act: IActivation) -> None:
+    def resigned(self, resigned_act: IActivation) -> None:
         """
         Called by activation, to let the causal group know that it failed,
          and a less specific activation may now be considered for
          the resigned state's write props.
 
-        * `act`: The activation that is unexpectedly not consuming it's resources,
+        * `resigned_act`: The activation that is unexpectedly not consuming it's resources,
          because it's state resigned/failed.
         """
         # Mark the act's w-props as available again
-        self._available_resources |= act.resources()
+        self._available_resources |= resigned_act.resources()
+        acts_to_forget = set()
+        # Notify all activations for the same state to resign too
+        for resource in resigned_act.resources():
+            for spike in self._ref_index[resource].copy():
+                for act in self._ref_index[resource][spike].copy():
+                    if act.name == resigned_act.name:
+                        act.dereference(spike=spike, reacquire=True, reject=True)
+                        acts_to_forget.add(act)
+        for resigned_act in acts_to_forget:
+            self._change_effect_causes(resigned_act, None)
+        logger.debug(f"{self}.resigned({resigned_act})")
 
     def consumed(self, resources: Set[str]) -> None:
         """

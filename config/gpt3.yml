@@ -1,0 +1,20 @@
+# This file contains some good, tested config values for ravestate_gpt3.
+#
+# In addition to this file, load at least another config file `keys.yml`,
+# which contains your GPT-3 API key:
+#
+#   module: gpt3
+#   config:
+#     key: <sexycactus>
+
+module: gpt3
+config:
+  # Note: Look here for how to write multiline YAML strings: https://yaml-multiline.info/
+  prompt: |
+    The following is a conversation between a human and a young Robot called "Roboy". He is curious, cheeky and nerdy:
+  prompt-roboy-prefix: "Roboy: "
+  prompt-human-prefix: "Human: "
+  temperature: 1.2
+  max-tokens: 64
+  min-probability: 0.5
+  stop-indicators: ["\n"]

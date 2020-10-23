@@ -100,7 +100,7 @@ with rs.Module(name="persqa", depends=(verbaliser.mod, mem.mod, nlp.mod, idle.mo
         used_follow_up_preds = set()
 
         @rs.state(
-            cond=idle.sig_bored,
+            cond=idle.sig_bored_by_user,
             write=(rawio.prop_out, prop_predicate, prop_subject),
             read=(interloc_path, prop_predicate),
             weight=1.2,

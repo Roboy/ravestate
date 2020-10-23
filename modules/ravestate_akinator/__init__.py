@@ -44,7 +44,7 @@ with rs.Module(name="akinator", config={CERTAINTY: 90}):
     sig_is_it_asked = rs.Signal("is-it")
 
     @rs.state(
-        cond=nlp.sig_intent_play | idle.sig_bored,
+        cond=nlp.sig_intent_play | idle.sig_bored_by_user,
         write=rawio.prop_out,
         signal=sig_initiate_play,
         emit_detached=True,

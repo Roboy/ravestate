@@ -51,6 +51,7 @@ class UIContext(rs.Context):
         self.session_client: Optional[SessionClient] = None
         self.config_parsed = Event()
         self.new_connection: Callable = lambda: None
+        self.new_connection_called: bool = False
 
         super().__init__(*arguments, runtime_overrides=runtime_overrides)
         if not skip_http_serve:
@@ -84,7 +85,9 @@ class UIContext(rs.Context):
         else:
             # Not a managed session, no auth required
             pass
-        self.new_connection()
+        if not self.new_connection_called:
+            self.new_connection()
+            self.new_connection_called = True
         return True
 
     def _load_modules(self, modules: List[str]):
@@ -111,7 +114,7 @@ class UIContext(rs.Context):
             @rs.state(cond=rs.sig_startup | sig_heartbeat.min_age(1.), signal=sig_heartbeat, emit_detached=True, boring=True)
             def heartbeat(ctx):
                 self.config_parsed.wait()
-                if self.session_client:
+                if self.session_client and not self.session_client.dead():
                     self.session_client.heartbeat()
                     return rs.Emit()
 
@@ -232,7 +235,7 @@ class UIContext(rs.Context):
 
     def emit(self, signal, parents=None, wipe: bool = False, payload=None, boring=False) -> rs.Spike:
         new_spike = super().emit(signal, parents, wipe, payload, boring)
-        # create spike ui model, but only send it on demand when it is ref'd by an activation
+        # create spike ui model, but only send it on demand when it is referenced by an activation
         #  exception: the spike is an offspring spike
         spike_model = self.ui_model(new_spike, parent_spikes=parents if parents else ())
         if parents:
@@ -252,3 +255,7 @@ class UIContext(rs.Context):
     def _state_activated(self, act: rs.Activation):
         super(UIContext, self)._state_activated(act)
         self.ui_update_act(act, is_running=True)
+
+    def _spike_discarded(self, spike: rs.Spike):
+        super(UIContext, self)._spike_discarded(spike)
+        self.ui_objects.pop(spike)

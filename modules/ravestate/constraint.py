@@ -139,7 +139,7 @@ class Signal(Constraint):
         return f"Signal({self.id()}, {self.min_age_value}, {self.max_age_value}, {self.detached_value})"
 
     def __str__(self):
-        return self.id()
+        return self.id()+("[x]" if self.spike else "")
 
     def id(self):
         return f'{self.parent_path}:{self.name}'
@@ -235,7 +235,7 @@ class SignalRef(Signal):
     Signal reference. Almost the same as a signal, except that
      it will not try to auto-discover it's module out of thread-local context
      (module_name will stay unfilled). Needed, because sometimes
-     you need to reference a singal within a module scope
+     you need to reference a signal within a module scope
      without assigning that signal to the contextual module.
     """
 

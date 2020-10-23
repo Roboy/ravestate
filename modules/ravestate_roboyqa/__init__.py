@@ -26,7 +26,7 @@ with rs.Module(
         config={ROBOY_NODE_PROP_CONF_KEY: {"name": "roboy two"}},
         depends=(nlp.mod, verbaliser.mod, idle.mod, rawio.mod)) as mod:
 
-    @rs.state(cond=idle.sig_bored, write=rawio.prop_out, weight=1.2, cooldown=30.)
+    @rs.state(cond=idle.sig_bored_by_user, write=rawio.prop_out, weight=1.01, cooldown=30.)
     def hello_world_roboyqa(ctx):
        ctx[rawio.prop_out] = verbaliser.get_random_phrase("roboyqa-prompt")
 
