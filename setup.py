@@ -36,7 +36,8 @@ setuptools.setup(
         'ravestate_phrases_basic_en': ['en/*.yml'],
         'ravestate_ontology': ['ravestate_ontology.yml'],
         'ravestate_roboyqa': ['answering_phrases/RoboyInfoList.yml'],
-        'ravestate_persqa': ['persqa_phrases/*.yml']
+        'ravestate_persqa': ['persqa_phrases/*.yml'],
+        'ravestate_gpt3': ['bad-words.txt']
     },
 
     install_requires=required + ["reggol>=0.2.0"],

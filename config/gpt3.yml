@@ -11,10 +11,12 @@ module: gpt3
 config:
   # Note: Look here for how to write multiline YAML strings: https://yaml-multiline.info/
   prompt: |
-    The following is a conversation between a human and a young Robot called "Roboy". He is curious, cheeky and nerdy:
-  prompt-roboy-prefix: "Roboy: "
-  prompt-human-prefix: "Human: "
-  temperature: 1.2
+    the following is a conversation between a human and a young robot called "roboy". he is curious, cheeky and nerdy:
+  prompt-roboy-prefix: "roboy: "
+  prompt-human-prefix: "human: "
+  temperature: 1.1
   max-tokens: 64
   min-probability: 0.5
   stop-indicators: ["\n"]
+  censor: True
+  censor-response: "i'm not sure. can we can talk about something else?"
