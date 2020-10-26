@@ -60,7 +60,7 @@ with rs.Module(name="gpt3", config=CONFIG, depends=(rawio.mod,)) as mod:
     def output_seen(ctx):
         append_to_history(ctx.conf(key=ROBOY_PROMPT_PREFIX_KEY), ctx[rawio.prop_out])
 
-    @rs.state(cond=rawio.prop_in.changed().max_age(-1), read=(rawio.prop_in,), write=(rawio.prop_out,))
+    @rs.state(cond=rawio.prop_in.changed().min_age(1), read=(rawio.prop_in,), write=(rawio.prop_out,))
     def gpt3(ctx: rs.ContextWrapper):
         append_to_history(ctx.conf(key=HUMAN_PROMPT_PREFIX_KEY), ctx[rawio.prop_in])
         

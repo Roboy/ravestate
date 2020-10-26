@@ -23,7 +23,7 @@ ROBOY_NODE_PROP_CONF_KEY = "roboy_node_properties"
 
 with rs.Module(
         name="roboyqa",
-        config={ROBOY_NODE_PROP_CONF_KEY: {"name": "roboy two"}},
+        config={ROBOY_NODE_PROP_CONF_KEY: {"name": "roboy three o"}},
         depends=(nlp.mod, verbaliser.mod, idle.mod, rawio.mod)) as mod:
 
     @rs.state(cond=idle.sig_bored_by_user, write=rawio.prop_out, weight=1.01, cooldown=30.)
@@ -127,6 +127,9 @@ with rs.Module(
                 memory_info = roboy_age(roboy.get_properties(key="birthdate"))
             elif triple.match_either_lemma(pred={"be"}):
                 category = "well_being"
+            elif triple.match_either_lemma(pred={"build", "work"}):
+                logger.info("assigned build category!")
+                category = "build"
         elif triple.match_either_lemma(obj={"skill"}):
             category = "skills"
         elif triple.match_either_lemma(obj={"ability"}):
@@ -142,7 +145,7 @@ with rs.Module(
 
         if memory_info:
             ctx[rawio.prop_out] = verbaliser.get_random_successful_answer("roboy_"+category) % memory_info
-        elif category == "well_being":
+        elif category == "well_being" or category == "build":
             ctx[rawio.prop_out] = verbaliser.get_random_successful_answer("roboy_"+category)
         else:
             return rs.Resign()

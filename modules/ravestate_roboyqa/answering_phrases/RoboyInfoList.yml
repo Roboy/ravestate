@@ -66,7 +66,7 @@ A:
   - "My friends built this body for me, so I would be able to %s."
   - "A physical embodiment is very convenient, it helps me to %s."
   - "Robots are becoming more complex. For example, I evolved to %s."
-  - "I believe robot evolution is very fast, now, I can %s almost like you!"
+  - "I believe robot evolution is very fast, now, I can %s! Can you?"
 ---
 type: qa
 name: "roboy_future"
@@ -202,3 +202,10 @@ A:
   - "If I had a tail, I would wag it."
   - "I dunno. Is it Friday yet?"
   - "I worry a bit about the future of our planet. But otherwise I feel fine."
+---
+type: qa
+name: "roboy_build"
+A:
+  SUCCESS:
+  - "Probably, my morphology makes me a very special robot. My body is actuated by muscles. My creators built everything in-house - and here Alona and Raf will are happy to share more details."
+  - "Every part of me is open source, so technically you could just go and figure it out yourself instead of asking these funny questions."

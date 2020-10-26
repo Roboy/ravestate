@@ -44,7 +44,7 @@ config:
 ---
 module: roboyqa
 config:
-  roboy_node_id: 356
+  roboy_node_id: 10
 
 ---
 module: roboyio
