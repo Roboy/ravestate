@@ -3,6 +3,7 @@ import ravestate as rs
 import ravestate_rawio as rawio
 import ravestate_verbaliser as verbaliser
 import ravestate_phrases_basic_en as lang
+import re
 
 from .question_word import QuestionWord
 from .triple import Triple
@@ -59,12 +60,25 @@ with rs.Module(name="nlp", depends=(rawio.mod,)) as mod:
     sig_intent_hi = rs.Signal(name="intent-hi")
     sig_intent_bye = rs.Signal(name="intent-bye")
 
+    # TODO: Also react to [prefix]. but [sentence] when sentence does not star with question word.
+    # Also there are many, many other unconsidered cases.
+    stupid_prefix_truncate_regex = re.compile(r"\b(where|who|when|why|what|which|how)\b")
+    def stupid_prefix_truncate(utterance: str):
+        global stupid_prefix_truncate_regex
+        match = stupid_prefix_truncate_regex.search(utterance)
+        if match and match.start() > -1:
+            utterance = utterance[match.start():]
+        return utterance
+
     @rs.state(read=rawio.prop_in, write=(prop_tokens, prop_postags, prop_lemmas, prop_tags, prop_ner, prop_triples, prop_roboy, prop_yesno))
     def nlp_preprocess(ctx):
         text = ctx[rawio.prop_in]
         if not text:
             return False
+
         text = text.lower()
+        text = stupid_prefix_truncate(text)
+
         nlp_doc = spacy_nlp_en(text)
 
         nlp_tokens = tuple(str(token) for token in nlp_doc)
