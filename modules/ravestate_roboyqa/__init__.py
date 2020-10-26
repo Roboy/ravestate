@@ -20,6 +20,27 @@ verbaliser.add_folder(join(dirname(realpath(__file__)), "answering_phrases"))
 
 ROBOY_NODE_PROP_CONF_KEY = "roboy_node_properties"
 
+WELL_BEING_CAT = "well_being"
+PURPOSE_CAT = "purpose"
+SPECIAL_CAT = "special"
+SENSE_CAT = "sense"
+SENSORS_ARMS_CAT = "sensors_arms"
+HOWBUILT_CAT = "howbuilt"
+BODY_CAT = "body"
+WALK_CAT = "walk"
+TALKATIVENESS_CAT = "talkativeness"
+
+NO_MEMORY_RESPONSE_CATS = {
+    WELL_BEING_CAT,
+    PURPOSE_CAT,
+    SPECIAL_CAT,
+    SENSE_CAT,
+    SENSORS_ARMS_CAT,
+    HOWBUILT_CAT,
+    BODY_CAT,
+    WALK_CAT,
+    TALKATIVENESS_CAT
+}
 
 with rs.Module(
         name="roboyqa",
@@ -77,13 +98,31 @@ with rs.Module(
                              f"{ctx.conf(key=ROBOY_NODE_PROP_CONF_KEY)} exists!")
                 return rs.Resign()
         
-        triple = ctx[nlp.prop_triples][0]
+        triple: nlp.Triple = ctx[nlp.prop_triples][0]
 
         category = None
         memory_info = None
 
+        # question word not relevant
+        if triple.match_either_lemma(pred={"special", "different"}):
+            category = SPECIAL_CAT
+        elif triple.match_either_lemma(obj={"arms"}):
+            category = SENSORS_ARMS_CAT
+        elif triple.match_either_lemma(pred={"walk"}):
+            category = WALK_CAT
+        elif triple.match_either_lemma(obj={"talkative"}):
+            category = TALKATIVENESS_CAT
+        elif triple.match_either_lemma(obj={"skill"}):
+            category = "skills"
+        elif triple.match_either_lemma(obj={"skill"}):
+            category = "skills"
+        elif triple.match_either_lemma(obj={"ability", "capability"}):
+            category = "abilities"
+
+        # TODO: I was talking about your body.
+
         # question word: What?
-        if triple.is_question(nlp.QuestionWord.OBJECT):
+        elif triple.is_question(nlp.QuestionWord.OBJECT):
             if triple.match_either_lemma(pred={"like"}, subj={"hobby"}):
                 category = "HAS_HOBBY"
             elif triple.match_either_lemma(pred={"learn"}, subj={"skill"}):
@@ -98,6 +137,8 @@ with rs.Module(
                 memory_info = roboy.get_properties(key=category)
             elif triple.match_either_lemma(pred={"become"}):
                 category = "future"
+            elif triple.match_either_lemma(obj={"here"}):
+                category = PURPOSE_CAT
 
         # question word: Where?
         elif triple.is_question(nlp.QuestionWord.PLACE):
@@ -127,10 +168,15 @@ with rs.Module(
                 memory_info = roboy_age(roboy.get_properties(key="birthdate"))
             elif triple.match_either_lemma(pred={"be"}):
                 category = "well_being"
-        elif triple.match_either_lemma(obj={"skill"}):
-            category = "skills"
-        elif triple.match_either_lemma(obj={"ability"}):
-            category = "abilities"
+            elif triple.match_either_lemma(pred={"sense", "feel"}):
+                category = SENSE_CAT
+            elif triple.match_either_lemma(pred={"build"}):
+                category = HOWBUILT_CAT
+
+        # question word: why
+        elif triple.is_question(nlp.QuestionWord.REASON):
+            if triple.match_either_lemma(obj={"here"}):
+                category = PURPOSE_CAT
 
         if category and category.isupper() and not isinstance(roboy.get_relationships(key=category), dict):
             node_id = random.sample(roboy.get_relationships(key=category), 1)[0]
@@ -142,7 +188,7 @@ with rs.Module(
 
         if memory_info:
             ctx[rawio.prop_out] = verbaliser.get_random_successful_answer("roboy_"+category) % memory_info
-        elif category == "well_being":
+        elif category in NO_MEMORY_RESPONSE_CATS:
             ctx[rawio.prop_out] = verbaliser.get_random_successful_answer("roboy_"+category)
         else:
             return rs.Resign()

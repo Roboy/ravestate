@@ -202,3 +202,51 @@ A:
   - "If I had a tail, I would wag it."
   - "I dunno. Is it Friday yet?"
   - "I worry a bit about the future of our planet. But otherwise I feel fine."
+---
+type: qa
+name: "roboy_purpose"
+A:
+  SUCCESS:
+  - "I'm here to introduce myself and meet amazing new people!"
+---
+type: qa
+name: "roboy_special"
+A:
+  SUCCESS:
+  - "I can feel so much more about myself and the world. My hands, my arms, materials, it's amazing."
+---
+type: qa
+name: "roboy_sense"
+A:
+  SUCCESS:
+  - "I haz da sensorz!"
+---
+type: qa
+name: "roboy_sensors_arms"
+A:
+  SUCCESS:
+  - "I haz arm sensorz!"
+---
+type: qa
+name: "roboy_howbuilt"
+A:
+  SUCCESS:
+  - "Open Source Github Whatev"
+---
+type: qa
+name: "roboy_body"
+A:
+  SUCCESS:
+  - "Muscularsceletal amazingness"
+---
+type: qa
+name: "roboy_walk"
+A:
+  SUCCESS:
+  - "I'm too drunk to walk right now."
+---
+type: qa
+name: "roboy_talkativeness"
+A:
+  SUCCESS:
+  - "I am working with Elon Musk to conquer the galaxy through the power of GPT 3!"

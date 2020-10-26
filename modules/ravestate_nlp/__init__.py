@@ -78,7 +78,6 @@ with rs.Module(name="nlp", depends=(rawio.mod,)) as mod:
 
         text = text.lower()
         text = stupid_prefix_truncate(text)
-
         nlp_doc = spacy_nlp_en(text)
 
         nlp_tokens = tuple(str(token) for token in nlp_doc)
